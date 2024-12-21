@@ -265,7 +265,7 @@ static bool TestMemory_GlobalHeap()
     GlobalReAlloc_t GlobalReAlloc = runtime->Library.GetProc(hModule, "GlobalReAlloc");
     GlobalFree_t    GlobalFree    = runtime->Library.GetProc(hModule, "GlobalFree");
 
-    HGLOBAL hGlobal = GlobalAlloc(GPTR, 8);
+    HGLOBAL hGlobal = GlobalAlloc(GPTR, 4);
     if (hGlobal == NULL)
     {
         printf_s("failed to alloc global heap 0x%X\n", GetLastErrno());
@@ -273,7 +273,7 @@ static bool TestMemory_GlobalHeap()
     }
     *(uint*)hGlobal = 0x1234;
 
-    hGlobal = GlobalReAlloc(hGlobal, 32, GPTR);
+    hGlobal = GlobalReAlloc(hGlobal, 8, GPTR);
     if (hGlobal == NULL)
     {
         printf_s("failed to realloc global heap 0x%X\n", GetLastErrno());
@@ -303,7 +303,7 @@ static bool TestMemory_LocalHeap()
     LocalReAlloc_t LocalReAlloc = runtime->Library.GetProc(hModule, "LocalReAlloc");
     LocalFree_t    LocalFree    = runtime->Library.GetProc(hModule, "LocalFree");
 
-    HLOCAL hLocal = LocalAlloc(LPTR, 8);
+    HLOCAL hLocal = LocalAlloc(LPTR, 4);
     if (hLocal == NULL)
     {
         printf_s("failed to alloc local heap 0x%X\n", GetLastErrno());
@@ -311,7 +311,7 @@ static bool TestMemory_LocalHeap()
     }
     *(uint*)hLocal = 0x1234;
 
-    hLocal = LocalReAlloc(hLocal, 32, LPTR);
+    hLocal = LocalReAlloc(hLocal, 8, LPTR);
     if (hLocal == NULL)
     {
         printf_s("failed to realloc local heap 0x%X\n", GetLastErrno());
@@ -341,13 +341,24 @@ static bool TestMemory_msvcrt()
     msvcrt_calloc_t  calloc  = runtime->Library.GetProc(hModule, "calloc");
     msvcrt_realloc_t realloc = runtime->Library.GetProc(hModule, "realloc");
     msvcrt_free_t    free    = runtime->Library.GetProc(hModule, "free");
+    msvcrt_msize_t   msize   = runtime->Library.GetProc(hModule, "_msize");
 
     uint* test1 = malloc(8);
+    if (msize(test1) != 8)
+    {
+        printf_s("incorrect memory block size");
+        return false;
+    }
+
     uint* test2 = calloc(4, 8);
     uint* test3 = realloc(test1, 27);
-    
     *test2 = 0x5678;
     *test3 = 0x1212;
+    if (msize(test3) != 27)
+    {
+        printf_s("incorrect memory block size");
+        return false;
+    }
 
     runtime->Core.Sleep(10);
     free(test2);
@@ -362,7 +373,7 @@ static bool TestMemory_msvcrt()
 
     if (!runtime->Library.Free(hModule))
     {
-        printf_s("failed to free kernel32.dll: 0x%X\n", GetLastErrno());
+        printf_s("failed to free msvcrt.dll: 0x%X\n", GetLastErrno());
         return false;
     }
     return true;
@@ -370,5 +381,46 @@ static bool TestMemory_msvcrt()
 
 static bool TestMemory_ucrtbase()
 {
+    HMODULE hModule = runtime->Library.LoadA("ucrtbase.dll");
+
+    msvcrt_malloc_t  malloc  = runtime->Library.GetProc(hModule, "malloc");
+    msvcrt_calloc_t  calloc  = runtime->Library.GetProc(hModule, "calloc");
+    msvcrt_realloc_t realloc = runtime->Library.GetProc(hModule, "realloc");
+    msvcrt_free_t    free    = runtime->Library.GetProc(hModule, "free");
+    msvcrt_msize_t   msize   = runtime->Library.GetProc(hModule, "_msize");
+
+    uint* test1 = malloc(8);
+    if (msize(test1) != 8)
+    {
+        printf_s("incorrect memory block size");
+        return false;
+    }
+
+    uint* test2 = calloc(4, 8);
+    uint* test3 = realloc(test1, 27);
+    *test2 = 0x5678;
+    *test3 = 0x1212;
+    if (msize(test3) != 27)
+    {
+        printf_s("incorrect memory block size");
+        return false;
+    }
+
+    runtime->Core.Sleep(10);
+    free(test2);
+    runtime->Core.Sleep(10);
+    free(test3);
+    runtime->Core.Sleep(10);
+
+    // not free
+    test1 = malloc(8);
+    *test1 = 0x1234;
+    runtime->Core.Sleep(10);
+
+    if (!runtime->Library.Free(hModule))
+    {
+        printf_s("failed to free ucrtbase.dll: 0x%X\n", GetLastErrno());
+        return false;
+    }
     return true;
 }

@@ -34,6 +34,7 @@ typedef struct {
     HeapAlloc_t      HeapAlloc;
     HeapReAlloc_t    HeapReAlloc;
     HeapFree_t       HeapFree;
+    HeapSize_t       HeapSize;
     GlobalAlloc_t    GlobalAlloc;
     GlobalReAlloc_t  GlobalReAlloc;
     GlobalFree_t     GlobalFree;

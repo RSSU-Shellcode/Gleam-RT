@@ -134,11 +134,13 @@ void* __cdecl MT_msvcrt_malloc(uint size);
 void* __cdecl MT_msvcrt_calloc(uint num, uint size);
 void* __cdecl MT_msvcrt_realloc(void* ptr, uint size);
 void  __cdecl MT_msvcrt_free(void* ptr);
+uint  __cdecl MT_msvcrt_msize(void* ptr);
 
 void* __cdecl MT_ucrtbase_malloc(uint size);
 void* __cdecl MT_ucrtbase_calloc(uint num, uint size);
 void* __cdecl MT_ucrtbase_realloc(void* ptr, uint size);
 void  __cdecl MT_ucrtbase_free(void* ptr);
+uint  __cdecl MT_ucrtbase_msize(void* ptr);
 
 // methods for runtime and hooks about msvcrt.dll
 void* MT_MemAlloc(uint size);
@@ -265,11 +267,13 @@ MemoryTracker_M* InitMemoryTracker(Context* context)
     module->msvcrt_calloc  = GetFuncAddr(&MT_msvcrt_calloc);
     module->msvcrt_realloc = GetFuncAddr(&MT_msvcrt_realloc);
     module->msvcrt_free    = GetFuncAddr(&MT_msvcrt_free);
+    module->msvcrt_msize   = GetFuncAddr(&MT_msvcrt_msize);
     // hooks for ucrtbase.dll
     module->ucrtbase_malloc  = GetFuncAddr(&MT_ucrtbase_malloc);
     module->ucrtbase_calloc  = GetFuncAddr(&MT_ucrtbase_calloc);
     module->ucrtbase_realloc = GetFuncAddr(&MT_ucrtbase_realloc);
     module->ucrtbase_free    = GetFuncAddr(&MT_ucrtbase_free);
+    module->ucrtbase_msize   = GetFuncAddr(&MT_ucrtbase_msize);
     // methods for runtime
     module->Alloc   = GetFuncAddr(&MT_MemAlloc);
     module->Calloc  = GetFuncAddr(&MT_MemCalloc);
@@ -1545,7 +1549,7 @@ void* __cdecl MT_msvcrt_malloc(uint size)
         break;
     }
 
-    dbg_log("[memory]", "msvcrt malloc: 0x%zX, size: %zu", address, size);
+    dbg_log("[memory]", "msvcrt.malloc: 0x%zX, size: %zu", address, size);
 
     if (!MT_Unlock())
     {
@@ -1600,7 +1604,7 @@ void* __cdecl MT_msvcrt_calloc(uint num, uint size)
         break;
     }
 
-    dbg_log("[memory]", "msvcrt calloc: 0x%zX, num: %zu size: %zu", num, size);
+    dbg_log("[memory]", "msvcrt.calloc: 0x%zX, num: %zu size: %zu", num, size);
 
     if (!MT_Unlock())
     {
@@ -1687,7 +1691,7 @@ void* __cdecl MT_msvcrt_realloc(void* ptr, uint size)
         break;
     }
 
-    dbg_log("[memory]", "msvcrt realloc: 0x%zX, ptr: 0x%zX size: %zu", address, ptr, size);
+    dbg_log("[memory]", "msvcrt.realloc: 0x%zX, ptr: 0x%zX size: %zu", address, ptr, size);
 
     if (!MT_Unlock())
     {
@@ -1768,7 +1772,7 @@ void __cdecl MT_msvcrt_free(void* ptr)
         break;
     }
 
-    dbg_log("[memory]", "msvcrt free, ptr: 0x%zX", ptr);
+    dbg_log("[memory]", "msvcrt.free, ptr: 0x%zX", ptr);
 
     if (!MT_Unlock())
     {
@@ -1776,6 +1780,62 @@ void __cdecl MT_msvcrt_free(void* ptr)
     }
 
     SetLastErrno(lastErr);
+}
+
+__declspec(noinline)
+uint __cdecl MT_msvcrt_msize(void* ptr)
+{
+    MemoryTracker* tracker = getTrackerPointer();
+
+    if (!MT_Lock())
+    {
+        return (SIZE_T)(-1);
+    }
+
+    SIZE_T size = (SIZE_T)(-1);
+    errno lastErr = NO_ERROR;
+    for (;;)
+    {
+        if (ptr == NULL)
+        {
+            break;
+        }
+        msvcrt_msize_t msize;
+    #ifdef _WIN64
+        msize = FindAPI(0xE7B940EB83B3983E, 0xE43C2000635615DF);
+    #elif _WIN32
+        msize = FindAPI(0x7C44CF77, 0x9D44F8EA);
+    #endif
+        if (msize == NULL)
+        {
+            lastErr = ERR_MEMORY_API_NOT_FOUND;
+            break;
+        }
+        size = msize(ptr);
+        if (size < BLOCK_MARK_SIZE)
+        {
+            break;
+        }
+        // check it is a marked block and adjust the return size
+        uintptr block = (uintptr)ptr;
+        uint bSize = size - BLOCK_MARK_SIZE;
+        uint mark  = *(uint*)(block + bSize);
+        if (calcHeapMark(tracker->HeapMark, block, bSize) == mark)
+        {
+            size -= BLOCK_MARK_SIZE;
+        }
+        break;
+    }
+
+    dbg_log("[memory]", "msvcrt.msize: %zu, ptr: 0x%zX", size, ptr);
+
+    if (!MT_Unlock())
+    {
+        return (SIZE_T)(-1);
+    }
+
+    SetLastErrno(lastErr);
+    return size;
 }
 
 __declspec(noinline) 
@@ -1817,7 +1877,7 @@ void* __cdecl MT_ucrtbase_malloc(uint size)
         break;
     }
 
-    dbg_log("[memory]", "ucrtbase malloc: 0x%zX, size: %zu", address, size);
+    dbg_log("[memory]", "ucrtbase.malloc: 0x%zX, size: %zu", address, size);
 
     if (!MT_Unlock())
     {
@@ -1872,7 +1932,7 @@ void* __cdecl MT_ucrtbase_calloc(uint num, uint size)
         break;
     }
 
-    dbg_log("[memory]", "ucrtbase calloc: 0x%zX, num: %zu size: %zu", num, size);
+    dbg_log("[memory]", "ucrtbase.calloc: 0x%zX, num: %zu size: %zu", num, size);
 
     if (!MT_Unlock())
     {
@@ -1959,7 +2019,7 @@ void* __cdecl MT_ucrtbase_realloc(void* ptr, uint size)
         break;
     }
 
-    dbg_log("[memory]", "ucrtbase realloc: 0x%zX, ptr: 0x%zX size: %zu", address, ptr, size);
+    dbg_log("[memory]", "ucrtbase.realloc: 0x%zX, ptr: 0x%zX size: %zu", address, ptr, size);
 
     if (!MT_Unlock())
     {
@@ -2040,7 +2100,7 @@ void __cdecl MT_ucrtbase_free(void* ptr)
         break;
     }
 
-    dbg_log("[memory]", "ucrtbase free, ptr: 0x%zX", ptr);
+    dbg_log("[memory]", "ucrtbase.free, ptr: 0x%zX", ptr);
 
     if (!MT_Unlock())
     {
@@ -2048,6 +2108,62 @@ void __cdecl MT_ucrtbase_free(void* ptr)
     }
 
     SetLastErrno(lastErr);
+}
+
+__declspec(noinline)
+uint __cdecl MT_ucrtbase_msize(void* ptr)
+{
+    MemoryTracker* tracker = getTrackerPointer();
+
+    if (!MT_Lock())
+    {
+        return (SIZE_T)(-1);
+    }
+
+    SIZE_T size = (SIZE_T)(-1);
+    errno lastErr = NO_ERROR;
+    for (;;)
+    {
+        if (ptr == NULL)
+        {
+            break;
+        }
+        ucrtbase_msize_t msize;
+    #ifdef _WIN64
+        msize = FindAPI(0x4BD07C13CBA8FB0F, 0x0941BE2FAF2EE80A);
+    #elif _WIN32
+        msize = FindAPI(0x502F79C9, 0xFF5CE830);
+    #endif
+        if (msize == NULL)
+        {
+            lastErr = ERR_MEMORY_API_NOT_FOUND;
+            break;
+        }
+        size = msize(ptr);
+        if (size < BLOCK_MARK_SIZE)
+        {
+            break;
+        }
+        // check it is a marked block and adjust the return size
+        uintptr block = (uintptr)ptr;
+        uint bSize = size - BLOCK_MARK_SIZE;
+        uint mark  = *(uint*)(block + bSize);
+        if (calcHeapMark(tracker->HeapMark, block, bSize) == mark)
+        {
+            size -= BLOCK_MARK_SIZE;
+        }
+        break;
+    }
+
+    dbg_log("[memory]", "ucrtbase.msize: %zu, ptr: 0x%zX", size, ptr);
+
+    if (!MT_Unlock())
+    {
+        return (SIZE_T)(-1);
+    }
+
+    SetLastErrno(lastErr);
+    return size;
 }
 
 static uint calcHeapMark(uint mark, uintptr addr, uint size)

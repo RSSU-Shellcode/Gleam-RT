@@ -121,6 +121,7 @@ BOOL   MT_HeapDestroy(HANDLE hHeap);
 LPVOID MT_HeapAlloc(HANDLE hHeap, DWORD dwFlags, SIZE_T dwBytes);
 LPVOID MT_HeapReAlloc(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem, SIZE_T dwBytes);
 BOOL   MT_HeapFree(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem);
+SIZE_T MT_HeapSize(HANDLE hHeap, DWORD dwFlags, LPCVOID lpMem);
 
 HGLOBAL MT_GlobalAlloc(UINT uFlags, SIZE_T dwBytes);
 HGLOBAL MT_GlobalReAlloc(HGLOBAL hMem, SIZE_T dwBytes, UINT uFlags);
@@ -252,6 +253,7 @@ MemoryTracker_M* InitMemoryTracker(Context* context)
     module->HeapAlloc      = GetFuncAddr(&MT_HeapAlloc);
     module->HeapReAlloc    = GetFuncAddr(&MT_HeapReAlloc);
     module->HeapFree       = GetFuncAddr(&MT_HeapFree);
+    module->HeapSize       = GetFuncAddr(&MT_HeapSize);
     module->GlobalAlloc    = GetFuncAddr(&MT_GlobalAlloc);
     module->GlobalReAlloc  = GetFuncAddr(&MT_GlobalReAlloc);
     module->GlobalFree     = GetFuncAddr(&MT_GlobalFree);
@@ -1212,9 +1214,9 @@ BOOL MT_HeapFree(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem)
         if (size >= BLOCK_MARK_SIZE)
         {
             uintptr block = (uintptr)lpMem;
-            uint  bSize = size - BLOCK_MARK_SIZE;
-            uint* mark  = (uint*)(block + bSize);
-            if (calcHeapMark(tracker->HeapMark, block, bSize) == *mark)
+            uint bSize = size - BLOCK_MARK_SIZE;
+            uint mark  = *(uint*)(block + bSize);
+            if (calcHeapMark(tracker->HeapMark, block, bSize) == mark)
             {
                 marked = true;
             }
@@ -1244,6 +1246,48 @@ BOOL MT_HeapFree(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem)
 
     SetLastErrno(lastErr);
     return success;
+}
+
+__declspec(noinline)
+SIZE_T MT_HeapSize(HANDLE hHeap, DWORD dwFlags, LPCVOID lpMem)
+{
+    MemoryTracker* tracker = getTrackerPointer();
+
+    if (!MT_Lock())
+    {
+        return (SIZE_T)(-1);
+    }
+
+    SIZE_T size = (SIZE_T)(-1);
+    for (;;)
+    {
+        if (lpMem == NULL)
+        {
+            break;
+        }
+        size = tracker->HeapSize(hHeap, dwFlags, lpMem);
+        if (size < BLOCK_MARK_SIZE)
+        {
+            break;
+        }
+        // check it is a marked block and adjust the return size
+        uintptr block = (uintptr)lpMem;
+        uint bSize = size - BLOCK_MARK_SIZE;
+        uint mark  = *(uint*)(block + bSize);
+        if (calcHeapMark(tracker->HeapMark, block, bSize) == mark)
+        {
+            size -= BLOCK_MARK_SIZE;
+        }
+        break;
+    }
+
+    dbg_log("[memory]", "HeapSize: %zu, addr: 0x%zX", size, lpMem);
+
+    if (!MT_Unlock())
+    {
+        return (SIZE_T)(-1);
+    }
+    return size;
 }
 
 __declspec(noinline)
@@ -1707,9 +1751,9 @@ void __cdecl MT_msvcrt_free(void* ptr)
         if (oSize >= BLOCK_MARK_SIZE)
         {
             uintptr block = (uintptr)ptr;
-            uint  bSize = oSize - BLOCK_MARK_SIZE;
-            uint* mark  = (uint*)(block + bSize);
-            if (calcHeapMark(tracker->HeapMark, block, bSize) == *mark)
+            uint bSize = oSize - BLOCK_MARK_SIZE;
+            uint mark  = *(uint*)(block + bSize);
+            if (calcHeapMark(tracker->HeapMark, block, bSize) == mark)
             {
                 marked = true;
             }
@@ -1979,9 +2023,9 @@ void __cdecl MT_ucrtbase_free(void* ptr)
         if (oSize >= BLOCK_MARK_SIZE)
         {
             uintptr block = (uintptr)ptr;
-            uint  bSize = oSize - BLOCK_MARK_SIZE;
-            uint* mark  = (uint*)(block + bSize);
-            if (calcHeapMark(tracker->HeapMark, block, bSize) == *mark)
+            uint bSize = oSize - BLOCK_MARK_SIZE;
+            uint mark  = *(uint*)(block + bSize);
+            if (calcHeapMark(tracker->HeapMark, block, bSize) == mark)
             {
                 marked = true;
             }

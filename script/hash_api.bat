@@ -77,6 +77,7 @@ hash_api -fmt 64 -conc -func LocalFree
 hash_api -fmt 64 -conc -mod "ntdll.dll" -func RtlAllocateHeap
 hash_api -fmt 64 -conc -mod "ntdll.dll" -func RtlReAllocateHeap
 hash_api -fmt 64 -conc -mod "ntdll.dll" -func RtlFreeHeap
+hash_api -fmt 64 -conc -mod "ntdll.dll" -func RtlSizeHeap
 hash_api -fmt 64 -conc -mod "msvcrt.dll" -func malloc
 hash_api -fmt 64 -conc -mod "msvcrt.dll" -func calloc
 hash_api -fmt 64 -conc -mod "msvcrt.dll" -func realloc
@@ -218,6 +219,7 @@ hash_api -fmt 32 -conc -func LocalFree
 hash_api -fmt 32 -conc -mod "ntdll.dll" -func RtlAllocateHeap
 hash_api -fmt 32 -conc -mod "ntdll.dll" -func RtlReAllocateHeap
 hash_api -fmt 32 -conc -mod "ntdll.dll" -func RtlFreeHeap
+hash_api -fmt 32 -conc -mod "ntdll.dll" -func RtlSizeHeap
 hash_api -fmt 32 -conc -mod "msvcrt.dll" -func malloc
 hash_api -fmt 32 -conc -mod "msvcrt.dll" -func calloc
 hash_api -fmt 32 -conc -mod "msvcrt.dll" -func realloc

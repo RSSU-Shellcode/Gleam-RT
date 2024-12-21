@@ -83,7 +83,7 @@ typedef struct {
     HANDLE hThreadEvent; // event handler thread
 
     // IAT hooks about GetProcAddress
-    Hook IATHooks[41];
+    Hook IATHooks[43];
 
     // runtime submodules
     LibraryTracker_M*  LibraryTracker;
@@ -788,6 +788,7 @@ static bool initIATHooks(Runtime* runtime)
         { 0x2D5BD20546A9F7FF, 0xD1569863116D78AA, memoryTracker->HeapAlloc },
         { 0x622C7DF56116553C, 0x4545A260B5B4EE4F, memoryTracker->HeapReAlloc },
         { 0xEB6C5AC538D9CB88, 0x31C1AE2150C892FA, memoryTracker->HeapFree },
+        { 0xF07CA2BE1E1D44B0, 0xF5D1D9ACFCC34F21, memoryTracker->HeapSize },
         { 0xDD0B1C33C5E8DE6B, 0x8E5C390C6FA06475, memoryTracker->GlobalAlloc },
         { 0x96EA754ECF447CB9, 0xB041E8B71EC6E6AE, memoryTracker->GlobalReAlloc },
         { 0x402039178195F587, 0x31AC6524EF5DB181, memoryTracker->GlobalFree },
@@ -797,6 +798,7 @@ static bool initIATHooks(Runtime* runtime)
         { 0x1E8B0246BF18CA97, 0xC131B02374BDDB50, memoryTracker->HeapAlloc },   // ntdll.RtlAllocateHeap
         { 0x3E96C8D55DF611FB, 0x9BD65CE3AABE9404, memoryTracker->HeapReAlloc }, // ntdll.RtlReAllocateHeap
         { 0xCB9C04169B2FE6A6, 0xFE277A3C4C7E6B27, memoryTracker->HeapFree },    // ntdll.RtlFreeHeap
+        { 0x0AA12F40EDAD881E, 0x3C699B9AB31D2007, memoryTracker->HeapSize },    // ntdll.RtlSizeHeap
         { 0x84AC57FA4D95DE2E, 0x5FF86AC14A334443, threadTracker->CreateThread },
         { 0xA6E10FF27A1085A8, 0x24815A68A9695B16, threadTracker->ExitThread },
         { 0x82ACE4B5AAEB22F1, 0xF3132FCE3AC7AD87, threadTracker->SuspendThread },
@@ -832,6 +834,7 @@ static bool initIATHooks(Runtime* runtime)
         { 0x05810867, 0xF2ABDB50, memoryTracker->HeapAlloc },
         { 0x7A3662A9, 0x71FAAA63, memoryTracker->HeapReAlloc },
         { 0xDB3AEF73, 0x380DB39D, memoryTracker->HeapFree },
+        { 0x7CD7678E, 0x7004C8D0, memoryTracker->HeapSize },
         { 0x7B033FBA, 0x35363CF6, memoryTracker->GlobalAlloc },
         { 0x7DFE57A5, 0x8119A6D8, memoryTracker->GlobalReAlloc },
         { 0x08756F00, 0x7111FC71, memoryTracker->GlobalFree },
@@ -841,6 +844,7 @@ static bool initIATHooks(Runtime* runtime)
         { 0x92E5F4A5, 0xA3F5C520, memoryTracker->HeapAlloc },   // ntdll.RtlAllocateHeap
         { 0x51FDFBBA, 0x4DBA4387, memoryTracker->HeapReAlloc }, // ntdll.RtlReAllocateHeap
         { 0xD59A6BA8, 0x1B0A7768, memoryTracker->HeapFree },    // ntdll.RtlFreeHeap
+        { 0xEDFA2017, 0x9F4BDE59, memoryTracker->HeapSize },    // ntdll.RtlSizeHeap
         { 0x20744CA1, 0x4FA1647D, threadTracker->CreateThread },
         { 0xED42C0F0, 0xC59EBA39, threadTracker->ExitThread },
         { 0x133B00D5, 0x48E02627, threadTracker->SuspendThread },
@@ -1423,7 +1427,6 @@ void* RT_GetProcAddressOriginal(HMODULE hModule, LPCSTR lpProcName)
 }
 #pragma optimize("", on)
 
-// TODO add more about basic modules
 static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
 {
     Runtime* runtime = getRuntimePointer();

@@ -46,11 +46,13 @@ typedef struct {
     msvcrt_calloc_t  msvcrt_calloc;
     msvcrt_realloc_t msvcrt_realloc;
     msvcrt_free_t    msvcrt_free;
+    msvcrt_msize_t   msvcrt_msize;
 
     ucrtbase_malloc_t  ucrtbase_malloc;
     ucrtbase_calloc_t  ucrtbase_calloc;
     ucrtbase_realloc_t ucrtbase_realloc;
     ucrtbase_free_t    ucrtbase_free;
+    ucrtbase_msize_t   ucrtbase_msize;
 
     MemAlloc_t   Alloc;
     MemCalloc_t  Calloc;

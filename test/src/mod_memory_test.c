@@ -103,7 +103,7 @@ bool TestMemory_Virtual()
     errno = runtime->Core.Sleep(100);
     if (errno != NO_ERROR)
     {
-        printf_s("failed to call SleepHR: 0x%X\n", errno);
+        printf_s("failed to call Core.Sleep: 0x%X\n", errno);
         return false;
     }
 
@@ -128,9 +128,9 @@ static bool TestMemory_Heap()
     // test HeapAlloc
     uint* mem = HeapAlloc(hHeap, 0, 16);
     *mem = 0x12345678;
-    if (HeapSize(hHeap, 0, mem) != (uint)(16 + sizeof(uint)))
+    if (HeapSize(hHeap, 0, mem) != 16)
     {
-        printf_s("incorrect heap block size\n");
+        printf_s("incorrect allocated heap block size\n");
         return false;
     }
     if (!HeapFree(hHeap, 0, mem))
@@ -143,6 +143,11 @@ static bool TestMemory_Heap()
     if (mem == NULL)
     {
         printf_s("failed to alloc heap with zero size\n");
+        return false;
+    }
+    if (HeapSize(hHeap, 0, mem) != 0)
+    {
+        printf_s("incorrect allocated heap block size\n");
         return false;
     }
     if (!HeapFree(hHeap, 0, mem))
@@ -161,10 +166,20 @@ static bool TestMemory_Heap()
         printf_s("incorrect heap block data after HeapReAlloc\n");
         return false;
     }
+    if (HeapSize(hHeap, 0, mem) != 8)
+    {
+        printf_s("incorrect reallocated heap block size\n");
+        return false;
+    }
     mem = HeapReAlloc(hHeap, 0, mem, 32);
     if (*mem != 0x12345678)
     {
         printf_s("incorrect heap block data after HeapReAlloc\n");
+        return false;
+    }
+    if (HeapSize(hHeap, 0, mem) != 32)
+    {
+        printf_s("incorrect reallocated heap block size\n");
         return false;
     }
     if (!HeapFree(hHeap, 0, mem))
@@ -179,6 +194,11 @@ static bool TestMemory_Heap()
     if (mem == NULL)
     {
         printf_s("failed to realloc heap with zero size\n");
+        return false;
+    }
+    if (HeapSize(hHeap, 0, mem) != 0)
+    {
+        printf_s("incorrect reallocated heap block size\n");
         return false;
     }
     if (!HeapFree(hHeap, 0, mem))
@@ -201,6 +221,7 @@ static bool TestMemory_Heap()
     HeapAlloc_t   RtlAllocateHeap   = runtime->Library.GetProc(ntdll, "RtlAllocateHeap");
     HeapReAlloc_t RtlReAllocateHeap = runtime->Library.GetProc(ntdll, "RtlReAllocateHeap");
     HeapFree_t    RtlFreeHeap       = runtime->Library.GetProc(ntdll, "RtlFreeHeap");
+    HeapSize_t    RtlSizeHeap       = runtime->Library.GetProc(ntdll, "RtlSizeHeap");
 
     if (RtlAllocateHeap != HeapAlloc)
     {
@@ -215,6 +236,11 @@ static bool TestMemory_Heap()
     if (RtlFreeHeap != HeapFree)
     {
         printf_s("incorrect RtlFreeHeap address\n");
+        return false;
+    }
+    if (RtlSizeHeap != HeapSize)
+    {
+        printf_s("incorrect RtlSizeHeap address\n");
         return false;
     }
     if (!runtime->Library.Free(ntdll))

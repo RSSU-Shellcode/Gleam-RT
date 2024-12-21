@@ -2,6 +2,7 @@
 #include "c_types.h"
 #include "windows_t.h"
 #include "msvcrt_t.h"
+#include "ucrtbase_t.h"
 #include "errno.h"
 #include "runtime.h"
 #include "test.h"
@@ -110,20 +111,23 @@ bool TestMemory_Virtual()
     runtime->Memory.Free(test2);
     runtime->Memory.Free(test4);
     runtime->Memory.Free(test5);
+
+    printf_s("test Memory_Virtual passed\n");
     return true;
 }
 
 static bool TestMemory_Heap()
 {
-    HMODULE kernel32 = runtime->Library.LoadA("kernel32.dll");
+    HMODULE hKernel32 = runtime->Library.LoadA("kernel32.dll");
+    HMODULE hNtdll    = runtime->Library.LoadA("ntdll.dll");
 
-    GetProcessHeap_t GetProcessHeap = runtime->Library.GetProc(kernel32, "GetProcessHeap");
+    HeapAlloc_t   HeapAlloc   = runtime->Library.GetProc(hKernel32, "HeapAlloc");
+    HeapReAlloc_t HeapReAlloc = runtime->Library.GetProc(hKernel32, "HeapReAlloc");
+    HeapFree_t    HeapFree    = runtime->Library.GetProc(hKernel32, "HeapFree");
+    HeapSize_t    HeapSize    = runtime->Library.GetProc(hKernel32, "HeapSize");
+
+    GetProcessHeap_t GetProcessHeap = runtime->Library.GetProc(hKernel32, "GetProcessHeap");
     HANDLE hHeap = GetProcessHeap();
-
-    HeapAlloc_t   HeapAlloc   = runtime->Library.GetProc(kernel32, "HeapAlloc");
-    HeapReAlloc_t HeapReAlloc = runtime->Library.GetProc(kernel32, "HeapReAlloc");
-    HeapFree_t    HeapFree    = runtime->Library.GetProc(kernel32, "HeapFree");
-    HeapSize_t    HeapSize    = runtime->Library.GetProc(kernel32, "HeapSize");
 
     // test HeapAlloc
     uint* mem = HeapAlloc(hHeap, 0, 16);
@@ -217,11 +221,10 @@ static bool TestMemory_Heap()
     runtime->Core.Sleep(10);
 
     // compare the hook function address
-    HMODULE ntdll = runtime->Library.LoadA("ntdll.dll");
-    HeapAlloc_t   RtlAllocateHeap   = runtime->Library.GetProc(ntdll, "RtlAllocateHeap");
-    HeapReAlloc_t RtlReAllocateHeap = runtime->Library.GetProc(ntdll, "RtlReAllocateHeap");
-    HeapFree_t    RtlFreeHeap       = runtime->Library.GetProc(ntdll, "RtlFreeHeap");
-    HeapSize_t    RtlSizeHeap       = runtime->Library.GetProc(ntdll, "RtlSizeHeap");
+    HeapAlloc_t   RtlAllocateHeap   = runtime->Library.GetProc(hNtdll, "RtlAllocateHeap");
+    HeapReAlloc_t RtlReAllocateHeap = runtime->Library.GetProc(hNtdll, "RtlReAllocateHeap");
+    HeapFree_t    RtlFreeHeap       = runtime->Library.GetProc(hNtdll, "RtlFreeHeap");
+    HeapSize_t    RtlSizeHeap       = runtime->Library.GetProc(hNtdll, "RtlSizeHeap");
 
     if (RtlAllocateHeap != HeapAlloc)
     {
@@ -243,17 +246,19 @@ static bool TestMemory_Heap()
         printf_s("incorrect RtlSizeHeap address\n");
         return false;
     }
-    if (!runtime->Library.Free(ntdll))
+
+    if (!runtime->Library.Free(hKernel32))
+    {
+        printf_s("failed to free kernel32.dll: 0x%X\n", GetLastErrno());
+        return false;
+    }
+    if (!runtime->Library.Free(hNtdll))
     {
         printf_s("failed to free ntdll.dll: 0x%X\n", GetLastErrno());
         return false;
     }
 
-    if (!runtime->Library.Free(kernel32))
-    {
-        printf_s("failed to free kernel32.dll: 0x%X\n", GetLastErrno());
-        return false;
-    }
+    printf_s("test Memory_Heap passed\n");
     return true;
 }
 
@@ -292,6 +297,8 @@ static bool TestMemory_GlobalHeap()
         printf_s("failed to free kernel32.dll: 0x%X\n", GetLastErrno());
         return false;
     }
+
+    printf_s("test Memory_GlobalHeap passed\n");
     return true;
 }
 
@@ -330,6 +337,8 @@ static bool TestMemory_LocalHeap()
         printf_s("failed to free kernel32.dll: 0x%X\n", GetLastErrno());
         return false;
     }
+
+    printf_s("test Memory_LocalHeap passed\n");
     return true;
 }
 
@@ -376,6 +385,8 @@ static bool TestMemory_msvcrt()
         printf_s("failed to free msvcrt.dll: 0x%X\n", GetLastErrno());
         return false;
     }
+
+    printf_s("test Memory_msvcrt passed\n");
     return true;
 }
 
@@ -383,11 +394,11 @@ static bool TestMemory_ucrtbase()
 {
     HMODULE hModule = runtime->Library.LoadA("ucrtbase.dll");
 
-    msvcrt_malloc_t  malloc  = runtime->Library.GetProc(hModule, "malloc");
-    msvcrt_calloc_t  calloc  = runtime->Library.GetProc(hModule, "calloc");
-    msvcrt_realloc_t realloc = runtime->Library.GetProc(hModule, "realloc");
-    msvcrt_free_t    free    = runtime->Library.GetProc(hModule, "free");
-    msvcrt_msize_t   msize   = runtime->Library.GetProc(hModule, "_msize");
+    ucrtbase_malloc_t  malloc  = runtime->Library.GetProc(hModule, "malloc");
+    ucrtbase_calloc_t  calloc  = runtime->Library.GetProc(hModule, "calloc");
+    ucrtbase_realloc_t realloc = runtime->Library.GetProc(hModule, "realloc");
+    ucrtbase_free_t    free    = runtime->Library.GetProc(hModule, "free");
+    ucrtbase_msize_t   msize   = runtime->Library.GetProc(hModule, "_msize");
 
     uint* test1 = malloc(8);
     if (msize(test1) != 8)
@@ -422,5 +433,7 @@ static bool TestMemory_ucrtbase()
         printf_s("failed to free ucrtbase.dll: 0x%X\n", GetLastErrno());
         return false;
     }
+
+    printf_s("test Memory_ucrtbase passed\n");
     return true;
 }

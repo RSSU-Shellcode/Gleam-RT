@@ -1,8 +1,10 @@
-#ifndef RESOURCE_H
-#define RESOURCE_H
+#ifndef MOD_RESOURCE_H
+#define MOD_RESOURCE_H
 
 #include "c_types.h"
-#include "windows_t.h"
+#include "win_types.h"
+#include "dll_kernel32.h"
+#include "dll_ws2_32.h"
 #include "context.h"
 #include "errno.h"
 
@@ -34,4 +36,4 @@ typedef struct {
 
 ResourceTracker_M* InitResourceTracker(Context* context);
 
-#endif // RESOURCE_H
+#endif // MOD_RESOURCE_H

@@ -1,10 +1,11 @@
-#ifndef MEMORY_H
-#define MEMORY_H
+#ifndef MOD_MEMORY_H
+#define MOD_MEMORY_H
 
 #include "c_types.h"
-#include "windows_t.h"
-#include "msvcrt_t.h"
-#include "ucrtbase_t.h"
+#include "win_types.h"
+#include "dll_kernel32.h"
+#include "dll_msvcrt.h"
+#include "dll_ucrtbase.h"
 #include "context.h"
 #include "errno.h"
 
@@ -71,4 +72,4 @@ typedef struct {
 
 MemoryTracker_M* InitMemoryTracker(Context* context);
 
-#endif // MEMORY_H
+#endif // MOD_MEMORY_H

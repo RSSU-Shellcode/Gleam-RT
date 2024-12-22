@@ -1,8 +1,9 @@
-#ifndef LIBRARY_H
-#define LIBRARY_H
+#ifndef MOD_LIBRARY_H
+#define MOD_LIBRARY_H
 
 #include "c_types.h"
-#include "windows_t.h"
+#include "win_types.h"
+#include "dll_kernel32.h"
 #include "context.h"
 #include "errno.h"
 
@@ -31,4 +32,4 @@ typedef struct {
 
 LibraryTracker_M* InitLibraryTracker(Context* context);
 
-#endif // LIBRARY_H
+#endif // MOD_LIBRARY_H

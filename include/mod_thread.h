@@ -1,8 +1,9 @@
-#ifndef THREAD_H
-#define THREAD_H
+#ifndef MOD_THREAD_H
+#define MOD_THREAD_H
 
 #include "c_types.h"
-#include "windows_t.h"
+#include "win_types.h"
+#include "dll_kernel32.h"
 #include "context.h"
 #include "errno.h"
 
@@ -40,4 +41,4 @@ typedef struct {
 
 ThreadTracker_M* InitThreadTracker(Context* context);
 
-#endif // THREAD_H
+#endif // MOD_THREAD_H

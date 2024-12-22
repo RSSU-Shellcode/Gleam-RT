@@ -1,5 +1,5 @@
-#ifndef ARGUMENT_H
-#define ARGUMENT_H
+#ifndef MOD_ARGUMENT_H
+#define MOD_ARGUMENT_H
 
 #include "c_types.h"
 #include "context.h"
@@ -52,4 +52,4 @@ ArgumentStore_M* InitArgumentStore(Context* context);
 extern void Argument_Stub();
 #pragma warning(pop)
 
-#endif // ARGUMENT_H
+#endif // MOD_ARGUMENT_H

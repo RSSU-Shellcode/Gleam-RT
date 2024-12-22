@@ -1,187 +1,8 @@
-#ifndef WINDOWS_T_H
-#define WINDOWS_T_H
+#ifndef DLL_KERNEL32_H
+#define DLL_KERNEL32_H
 
 #include "c_types.h"
-
-typedef uint8  BYTE;
-typedef uint16 WORD;
-typedef uint32 DWORD;
-typedef uint64 QWORD;
-
-typedef int8  CHAR;
-typedef int16 SHORT;
-typedef int32 LONG;
-typedef int64 LONGLONG;
-
-typedef uint UINT;
-typedef bool BOOL;
-typedef uint SIZE_T;
-
-typedef void* POINTER;
-typedef void* PVOID;
-typedef void* HANDLE;
-typedef void* FARPROC;
-
-typedef void*   LPVOID;
-typedef uint8*  LPSTR;
-typedef uint16* LPWSTR;
-typedef HANDLE* LPHANDLE;
-
-typedef const void*   LPCVOID;
-typedef const uint8*  LPCSTR;
-typedef const uint16* LPCWSTR;
-
-typedef void* HMODULE;
-typedef void* HGLOBAL;
-typedef void* HLOCAL;
-typedef void* HINTERNET;
-
-typedef struct {
-    DWORD   OEMID;
-    DWORD   PageSize;
-    POINTER MinimumApplicationAddress;
-    POINTER MaximumApplicationAddress;
-    POINTER ActiveProcessorMask;
-    DWORD   NumberOfProcessors;
-    DWORD   ProcessorType;
-    DWORD   AllocationGranularity;
-    WORD    ProcessorLevel;
-    WORD    ProcessorRevision;
-} SYSTEM_INFO;
-
-typedef struct {
-    PVOID lpData;
-    DWORD cbData;
-    BYTE  cbOverhead;
-    BYTE  iRegionIndex;
-    WORD  wFlags;
-    union {
-        struct {
-            HANDLE hMem;
-            DWORD  dwReserved[3];
-        } Block;
-        struct {
-            DWORD  dwCommittedSize;
-            DWORD  dwUnCommittedSize;
-            LPVOID lpFirstBlock;
-            LPVOID lpLastBlock;
-        } Region;
-    } DUMMYUNIONNAME;
-} HEAP_ENTRY;
-
-#ifdef _WIN64
-typedef struct __declspec(align(16)) {
-    QWORD    Low; 
-    LONGLONG High;
-} M128A;
-
-typedef struct __declspec(align(16)) {
-    QWORD P1Home;
-    QWORD P2Home;
-    QWORD P3Home;
-    QWORD P4Home;
-    QWORD P5Home;
-    QWORD P6Home;
-    DWORD ContextFlags;
-    DWORD MxCSR;
-    WORD  SegCS;
-    WORD  SegDS;
-    WORD  SegES;
-    WORD  SegFS;
-    WORD  SegGS;
-    WORD  SegSS;
-    DWORD EFlags;
-    QWORD DR0;
-    QWORD DR1;
-    QWORD DR2;
-    QWORD DR3;
-    QWORD DR6;
-    QWORD DR7;
-    QWORD RAX;
-    QWORD RCX;
-    QWORD RDX;
-    QWORD RBX;
-    QWORD RSP;
-    QWORD RBP;
-    QWORD RSI;
-    QWORD RDI;
-    QWORD R8;
-    QWORD R9;
-    QWORD R10;
-    QWORD R11;
-    QWORD R12;
-    QWORD R13;
-    QWORD R14;
-    QWORD R15;
-    QWORD RIP;
-    BYTE  Anon0[512];
-    M128A VectorRegister[26];
-    QWORD VectorControl;
-    QWORD DebugControl;
-    QWORD LastBranchToRIP;
-    QWORD LastBranchFromRIP;
-    QWORD LastExceptionToRIP;
-    QWORD LastExceptionFromRIP;
-} CONTEXT;
-#elif _WIN32
-typedef struct {
-    DWORD ControlWord;
-    DWORD StatusWord;
-	DWORD TagWord;
-	DWORD ErrorOffset;
-	DWORD ErrorSelector;
-	DWORD DataOffset;
-    DWORD DataSelector;
-    BYTE  RegisterArea[80];
-    DWORD CR0NPXState;
-} FS_AREA;
-
-typedef struct {
-    DWORD   ContextFlags;
-    DWORD   DR0;
-    DWORD   DR1;
-    DWORD   DR2;
-    DWORD   DR3;
-    DWORD   DR6;
-    DWORD   DR7;
-    FS_AREA FloatSave;
-    DWORD   SegGS;
-    DWORD   SegFS;
-    DWORD   SegES;
-    DWORD   SegDS;
-    DWORD   EDI;
-    DWORD   ESI;
-    DWORD   EBX;
-    DWORD   EDX;
-    DWORD   ECX;
-    DWORD   EAX;
-    DWORD   EBP;
-    DWORD   EIP;
-    DWORD   SegCS;
-    DWORD   EFlags;
-    DWORD   ESP;
-    DWORD   SegSS;
-    BYTE    ExtRegs[512];
-} CONTEXT;
-#endif
-
-typedef struct {
-    DWORD  dwStructSize;
-    LPWSTR lpszScheme;
-    DWORD  dwSchemeLength;
-    DWORD  nScheme;
-    LPWSTR lpszHostName;
-    DWORD  dwHostNameLength;
-    WORD   nPort;
-    LPWSTR lpszUserName;
-    DWORD  dwUserNameLength;
-    LPWSTR lpszPassword;
-    DWORD  dwPasswordLength;
-    LPWSTR lpszUrlPath;
-    DWORD  dwUrlPathLength;
-    LPWSTR lpszExtraInfo;
-    DWORD  dwExtraInfoLength;
-} URL_COMPONENTS;
+#include "windows_t.h"
 
 #define MAX_PATH 260
 
@@ -275,31 +96,172 @@ typedef struct {
 #define FILE_FLAG_NO_BUFFERING    0x20000000
 #define FILE_FLAG_WRITE_THROUGH   0x80000000
 
-#define WSASYSNOTREADY 10091
-#define WSAEINPROGRESS 10036
-
 #define CP_ACP 0
 
-#define INTERNET_SCHEME_HTTP  1
-#define INTERNET_SCHEME_HTTPS 2
+typedef uint8  BYTE;
+typedef uint16 WORD;
+typedef uint32 DWORD;
+typedef uint64 QWORD;
 
-#define WINHTTP_OPTION_DECOMPRESSION 0x00000076
+typedef int8  CHAR;
+typedef int16 SHORT;
+typedef int32 LONG;
+typedef int64 LONGLONG;
 
-#define WINHTTP_DECOMPRESSION_FLAG_GZIP    1
-#define WINHTTP_DECOMPRESSION_FLAG_DEFLATE 2
-#define WINHTTP_DECOMPRESSION_FLAG_ALL     3
+typedef uint UINT;
+typedef bool BOOL;
+typedef uint SIZE_T;
 
-#define WINHTTP_ACCESS_TYPE_DEFAULT_PROXY   0
-#define WINHTTP_ACCESS_TYPE_NO_PROXY        1
-#define WINHTTP_ACCESS_TYPE_NAMED_PROXY     3
-#define WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY 4
+typedef void* POINTER;
+typedef void* PVOID;
+typedef void* HANDLE;
+typedef void* FARPROC;
 
-#define WINHTTP_NO_REFERER            NULL
-#define WINHTTP_DEFAULT_ACCEPT_TYPES  NULL
-#define WINHTTP_NO_ADDITIONAL_HEADERS NULL
-#define WINHTTP_NO_REQUEST_DATA       NULL
+typedef void*   LPVOID;
+typedef uint8*  LPSTR;
+typedef uint16* LPWSTR;
+typedef HANDLE* LPHANDLE;
 
-#define WINHTTP_FLAG_SECURE 0x00800000
+typedef const void*   LPCVOID;
+typedef const uint8*  LPCSTR;
+typedef const uint16* LPCWSTR;
+
+typedef void* HMODULE;
+typedef void* HGLOBAL;
+typedef void* HLOCAL;
+
+typedef struct {
+    DWORD   OEMID;
+    DWORD   PageSize;
+    POINTER MinimumApplicationAddress;
+    POINTER MaximumApplicationAddress;
+    POINTER ActiveProcessorMask;
+    DWORD   NumberOfProcessors;
+    DWORD   ProcessorType;
+    DWORD   AllocationGranularity;
+    WORD    ProcessorLevel;
+    WORD    ProcessorRevision;
+} SYSTEM_INFO;
+
+typedef struct {
+    PVOID lpData;
+    DWORD cbData;
+    BYTE  cbOverhead;
+    BYTE  iRegionIndex;
+    WORD  wFlags;
+    union {
+        struct {
+            HANDLE hMem;
+            DWORD  dwReserved[3];
+        } Block;
+        struct {
+            DWORD  dwCommittedSize;
+            DWORD  dwUnCommittedSize;
+            LPVOID lpFirstBlock;
+            LPVOID lpLastBlock;
+        } Region;
+    } DUMMYUNIONNAME;
+} HEAP_ENTRY;
+
+#ifdef _WIN64
+
+typedef struct __declspec(align(16)) {
+    QWORD    Low; 
+    LONGLONG High;
+} M128A;
+
+typedef struct __declspec(align(16)) {
+    QWORD P1Home;
+    QWORD P2Home;
+    QWORD P3Home;
+    QWORD P4Home;
+    QWORD P5Home;
+    QWORD P6Home;
+    DWORD ContextFlags;
+    DWORD MxCSR;
+    WORD  SegCS;
+    WORD  SegDS;
+    WORD  SegES;
+    WORD  SegFS;
+    WORD  SegGS;
+    WORD  SegSS;
+    DWORD EFlags;
+    QWORD DR0;
+    QWORD DR1;
+    QWORD DR2;
+    QWORD DR3;
+    QWORD DR6;
+    QWORD DR7;
+    QWORD RAX;
+    QWORD RCX;
+    QWORD RDX;
+    QWORD RBX;
+    QWORD RSP;
+    QWORD RBP;
+    QWORD RSI;
+    QWORD RDI;
+    QWORD R8;
+    QWORD R9;
+    QWORD R10;
+    QWORD R11;
+    QWORD R12;
+    QWORD R13;
+    QWORD R14;
+    QWORD R15;
+    QWORD RIP;
+    BYTE  Anon0[512];
+    M128A VectorRegister[26];
+    QWORD VectorControl;
+    QWORD DebugControl;
+    QWORD LastBranchToRIP;
+    QWORD LastBranchFromRIP;
+    QWORD LastExceptionToRIP;
+    QWORD LastExceptionFromRIP;
+} CONTEXT;
+
+#elif _WIN32
+
+typedef struct {
+    DWORD ControlWord;
+    DWORD StatusWord;
+	DWORD TagWord;
+	DWORD ErrorOffset;
+	DWORD ErrorSelector;
+	DWORD DataOffset;
+    DWORD DataSelector;
+    BYTE  RegisterArea[80];
+    DWORD CR0NPXState;
+} FS_AREA;
+
+typedef struct {
+    DWORD   ContextFlags;
+    DWORD   DR0;
+    DWORD   DR1;
+    DWORD   DR2;
+    DWORD   DR3;
+    DWORD   DR6;
+    DWORD   DR7;
+    FS_AREA FloatSave;
+    DWORD   SegGS;
+    DWORD   SegFS;
+    DWORD   SegES;
+    DWORD   SegDS;
+    DWORD   EDI;
+    DWORD   ESI;
+    DWORD   EBX;
+    DWORD   EDX;
+    DWORD   ECX;
+    DWORD   EAX;
+    DWORD   EBP;
+    DWORD   EIP;
+    DWORD   SegCS;
+    DWORD   EFlags;
+    DWORD   ESP;
+    DWORD   SegSS;
+    BYTE    ExtRegs[512];
+} CONTEXT;
+
+#endif
 
 typedef void (*GetSystemInfo_t)
 (
@@ -576,13 +538,6 @@ typedef BOOL (*FindClose_t)
     HANDLE hFindFile
 );
 
-typedef int(*WSAStartup_t)
-(
-    WORD wVersionRequired, POINTER lpWSAData
-);
-
-typedef int (*WSACleanup_t)();
-
 typedef HANDLE (*CreateMutexA_t)
 (
     POINTER lpMutexAttributes, BOOL bInitialOwner, LPCSTR lpName
@@ -660,80 +615,4 @@ typedef int (*WideCharToMultiByte_t)
     byte* lpDefaultChar, BOOL* lpUsedDefaultChar
 );
 
-typedef BOOL (*WinHttpCrackUrl_t)
-(
-    LPCWSTR pwszUrl, DWORD dwUrlLength, DWORD dwFlags,
-    URL_COMPONENTS* lpUrlComponents
-);
-
-typedef HINTERNET (*WinHttpOpen_t)
-(
-    LPCWSTR pszAgentW, DWORD dwAccessType, LPCWSTR pszProxyW,
-    LPCWSTR pszProxyBypassW, DWORD dwFlags
-);
-
-typedef HINTERNET (*WinHttpConnect_t)
-(
-    HINTERNET hSession, LPCWSTR pswzServerName, WORD nServerPort,
-    DWORD dwReserved
-);
-
-typedef BOOL (*WinHttpSetOption_t)
-(
-    HINTERNET hInternet, DWORD dwOption, LPVOID lpBuffer, DWORD dwBufferLength
-);
-
-typedef BOOL (*WinHttpSetTimeouts_t)
-(
-    HINTERNET hInternet, int nResolveTimeout, int nConnectTimeout,
-    int nSendTimeout, int nReceiveTimeout
-);
-
-typedef HINTERNET (*WinHttpOpenRequest_t)
-(
-    HINTERNET hConnect, LPCWSTR pwszVerb, LPCWSTR pwszObjectName,
-    LPCWSTR pwszVersion, LPCWSTR pwszReferrer, LPCWSTR* ppwszAcceptTypes, 
-    DWORD dwFlags
-);
-
-typedef BOOL (*WinHttpSetCredentials_t)
-(
-    HINTERNET hRequest, DWORD AuthTargets, DWORD AuthScheme,
-    LPCWSTR pwszUserName, LPCWSTR pwszPassword, LPVOID pAuthParams
-);
-
-typedef BOOL (*WinHttpSendRequest_t)
-(
-    HINTERNET hRequest, LPCWSTR lpszHeaders, DWORD dwHeadersLength,
-    LPVOID lpOptional, DWORD dwOptionalLength, DWORD dwTotalLength,
-    DWORD* dwContext
-);
-
-typedef BOOL (*WinHttpReceiveResponse_t)
-(
-    HINTERNET hRequest, LPVOID lpReserved
-);
-
-typedef BOOL (*WinHttpQueryHeaders_t)
-(
-    HINTERNET hRequest, DWORD dwInfoLevel, LPCWSTR pwszName,
-    LPVOID lpBuffer, DWORD* lpdwBufferLength, DWORD* lpdwIndex
-);
-
-typedef BOOL (*WinHttpQueryDataAvailable_t)
-(
-    HINTERNET hRequest, DWORD* lpdwNumberOfBytesAvailable
-);
-
-typedef BOOL (*WinHttpReadData_t)
-(
-    HINTERNET hRequest, LPVOID lpBuffer, DWORD dwNumberOfBytesToRead, 
-    DWORD* lpdwNumberOfBytesRead
-);
-
-typedef BOOL (*WinHttpCloseHandle_t)
-(
-    HINTERNET hInternet
-);
-
-#endif // WINDOWS_T_H
+#endif // DLL_KERNEL32_H

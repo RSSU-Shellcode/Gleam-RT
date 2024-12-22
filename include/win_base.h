@@ -2,7 +2,6 @@
 #define WIN_BASE_H
 
 #include "c_types.h"
-#include "windows_t.h"
 #include "lib_string.h"
 #include "context.h"
 #include "errno.h"

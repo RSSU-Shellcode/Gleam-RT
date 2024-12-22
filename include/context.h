@@ -2,7 +2,8 @@
 #define CONTEXT_H
 
 #include "c_types.h"
-#include "windows_t.h"
+#include "win_types.h"
+#include "dll_kernel32.h"
 #include "lib_memory.h"
 #include "errno.h"
 

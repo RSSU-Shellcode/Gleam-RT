@@ -2,7 +2,9 @@
 #define DLL_WINHTTP_H
 
 #include "c_types.h"
-#include "windows_t.h"
+#include "win_types.h"
+
+typedef HANDLE HINTERNET;
 
 #define INTERNET_SCHEME_HTTP  1
 #define INTERNET_SCHEME_HTTPS 2
@@ -24,8 +26,6 @@
 #define WINHTTP_NO_REQUEST_DATA       NULL
 
 #define WINHTTP_FLAG_SECURE 0x00800000
-
-typedef void* HINTERNET;
 
 typedef struct {
     DWORD  dwStructSize;

@@ -2,7 +2,12 @@
 #define DLL_KERNEL32_H
 
 #include "c_types.h"
-#include "windows_t.h"
+#include "win_types.h"
+
+typedef void*  FARPROC;
+typedef HANDLE HMODULE;
+typedef HANDLE HGLOBAL;
+typedef HANDLE HLOCAL;
 
 #define MAX_PATH 260
 
@@ -97,38 +102,6 @@
 #define FILE_FLAG_WRITE_THROUGH   0x80000000
 
 #define CP_ACP 0
-
-typedef uint8  BYTE;
-typedef uint16 WORD;
-typedef uint32 DWORD;
-typedef uint64 QWORD;
-
-typedef int8  CHAR;
-typedef int16 SHORT;
-typedef int32 LONG;
-typedef int64 LONGLONG;
-
-typedef uint UINT;
-typedef bool BOOL;
-typedef uint SIZE_T;
-
-typedef void* POINTER;
-typedef void* PVOID;
-typedef void* HANDLE;
-typedef void* FARPROC;
-
-typedef void*   LPVOID;
-typedef uint8*  LPSTR;
-typedef uint16* LPWSTR;
-typedef HANDLE* LPHANDLE;
-
-typedef const void*   LPCVOID;
-typedef const uint8*  LPCSTR;
-typedef const uint16* LPCWSTR;
-
-typedef void* HMODULE;
-typedef void* HGLOBAL;
-typedef void* HLOCAL;
 
 typedef struct {
     DWORD   OEMID;

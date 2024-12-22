@@ -2,7 +2,7 @@
 #define DLL_NTDLL_H
 
 #include "c_types.h"
-#include "windows_t.h"
+#include "win_types.h"
 
 typedef LPVOID (*RtlAllocateHeap_t)
 (

@@ -2,7 +2,7 @@
 #define DLL_WS2_32_H
 
 #include "c_types.h"
-#include "windows_t.h"
+#include "win_types.h"
 
 #define WSASYSNOTREADY 10091
 #define WSAEINPROGRESS 10036

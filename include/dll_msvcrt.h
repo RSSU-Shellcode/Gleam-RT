@@ -2,7 +2,7 @@
 #define DLL_MSVCRT_H
 
 #include "c_types.h"
-#include "windows_t.h"
+#include "win_types.h"
 
 typedef void* (__cdecl *msvcrt_malloc_t)
 (

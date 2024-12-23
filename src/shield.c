@@ -1,6 +1,6 @@
 #include "c_types.h"
-#include "rel_addr.h"
 #include "lib_memory.h"
+#include "rel_addr.h"
 #include "shield.h"
 
 // Only the instructions related to the DefenseRT function are

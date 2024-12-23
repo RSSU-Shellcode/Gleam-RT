@@ -1,9 +1,10 @@
 #include "build.h"
 #include "c_types.h"
-#include "windows_t.h"
-#include "rel_addr.h"
+#include "win_types.h"
+#include "dll_kernel32.h"
 #include "lib_memory.h"
 #include "lib_string.h"
+#include "rel_addr.h"
 #include "hash_api.h"
 #include "random.h"
 #include "crypto.h"
@@ -1738,7 +1739,7 @@ errno RT_SleepHR(DWORD dwMilliseconds)
 #ifndef RELEASE_MODE
     dwMilliseconds = 5 + (DWORD)RandUintN(0, 50);
 #endif
-    
+
     errno errno = NO_ERROR;
     for (;;)
     {

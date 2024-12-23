@@ -97,9 +97,6 @@
     <ClInclude Include="..\include\random.h">
       <Filter>Header</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\windows_t.h">
-      <Filter>Header</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\runtime.h">
       <Filter>Header</Filter>
     </ClInclude>
@@ -148,9 +145,6 @@
     <ClInclude Include="..\include\win_base.h">
       <Filter>Header</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\msvcrt_t.h">
-      <Filter>Header</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\mod_argument.h">
       <Filter>Header</Filter>
     </ClInclude>
@@ -164,6 +158,27 @@
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="..\include\mod_thread.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\dll_kernel32.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\dll_msvcrt.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\dll_ntdll.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\dll_ucrtbase.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\dll_winhttp.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\dll_ws2_32.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\win_types.h">
       <Filter>Header</Filter>
     </ClInclude>
   </ItemGroup>

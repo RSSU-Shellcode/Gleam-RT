@@ -116,8 +116,13 @@
   <ItemGroup>
     <ClInclude Include="build.h" />
     <ClInclude Include="..\include\c_types.h" />
-    <ClInclude Include="..\include\windows_t.h" />
-    <ClInclude Include="..\include\msvcrt_t.h" />
+	<ClInclude Include="..\include\win_types.h" />
+	<ClInclude Include="..\include\dll_kernel32.h" />
+    <ClInclude Include="..\include\dll_ntdll.h" />
+	<ClInclude Include="..\include\dll_msvcrt.h" />
+    <ClInclude Include="..\include\dll_ucrtbase.h" />
+	<ClInclude Include="..\include\dll_ws2_32.h" />
+    <ClInclude Include="..\include\dll_winhttp.h" />
     <ClInclude Include="..\include\lib_memory.h" />
     <ClInclude Include="..\include\lib_string.h" />
     <ClInclude Include="..\include\rel_addr.h" />
@@ -132,7 +137,7 @@
     <ClInclude Include="..\include\errno.h" />
     <ClInclude Include="..\include\mod_library.h" />
     <ClInclude Include="..\include\mod_memory.h" />
-	<ClInclude Include="..\include\mod_thread.h" />
+    <ClInclude Include="..\include\mod_thread.h" />
     <ClInclude Include="..\include\mod_resource.h" />
     <ClInclude Include="..\include\mod_argument.h" />
     <ClInclude Include="..\include\win_base.h" />
@@ -160,7 +165,7 @@
     <ClCompile Include="..\src\mod_memory.c" />
     <ClCompile Include="..\src\mod_thread.c" />
     <ClCompile Include="..\src\mod_resource.c" />
-	<ClCompile Include="..\src\mod_argument.c" />
+    <ClCompile Include="..\src\mod_argument.c" />
     <ClCompile Include="..\src\win_base.c" />
     <ClCompile Include="..\src\win_file.c" />
     <ClCompile Include="..\src\win_http.c" />

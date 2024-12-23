@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "build.h"
 #include "c_types.h"
-#include "windows_t.h"
+#include "win_types.h"
 #include "lib_memory.h"
 #include "rel_addr.h"
 #include "hash_api.h"

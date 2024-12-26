@@ -4,6 +4,7 @@
 #include "test.h"
 
 static bool TestMem_copy();
+static bool TestMem_move();
 static bool TestMem_init();
 static bool TestMem_set();
 static bool TestMem_cmp();
@@ -15,6 +16,7 @@ bool TestLibMemory()
     test_t tests[] = 
     {
         { TestMem_copy    },
+        { TestMem_move    },
         { TestMem_init    },
         { TestMem_set     },
         { TestMem_cmp     },
@@ -45,6 +47,31 @@ static bool TestMem_copy()
         return false;
     }
     printf_s("test mem_copy passed\n");
+    return true;
+}
+
+static bool TestMem_move()
+{
+    byte src[8] = { 1, 2, 3, 4, 5, 6, 7, 8 };
+    byte* dst = &src[1];
+    mem_move(dst, src, 4);
+
+    if (dst[0] != 1 || dst[1] != 2 || dst[2] != 3 || dst[3] != 4)
+    {
+        printf_s("mem_move move invalid data\n");
+        return false;
+    }
+    if (src[0] != 1 || src[1] != 1 || src[2] != 2 || src[3] != 3)
+    {
+        printf_s("mem_move process invalid data\n");
+        return false;
+    }
+    if (src[4] != 4 || src[5] != 6 || src[6] != 7 || src[7] != 8)
+    {
+        printf_s("mem_move process invalid data\n");
+        return false;
+    }
+    printf_s("test mem_move passed\n");
     return true;
 }
 

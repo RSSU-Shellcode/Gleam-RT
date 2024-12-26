@@ -7,6 +7,9 @@
 #include "context.h"
 #include "errno.h"
 
+typedef bool (*LibLockModule_t)(HMODULE hModule);
+typedef bool (*LibUnlockModule_t)(HMODULE hModule);
+
 typedef bool  (*LibLock_t)();
 typedef bool  (*LibUnlock_t)();
 typedef errno (*LibEncrypt_t)();
@@ -21,6 +24,9 @@ typedef struct {
     LoadLibraryExW_t           LoadLibraryExW;
     FreeLibrary_t              FreeLibrary;
     FreeLibraryAndExitThread_t FreeLibraryAndExitThread;
+
+    LibLockModule_t   LockModule;
+    LibUnlockModule_t UnlockModule;
 
     LibLock_t    Lock;
     LibUnlock_t  Unlock;

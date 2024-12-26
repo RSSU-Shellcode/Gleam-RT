@@ -17,6 +17,7 @@
 typedef struct {
     HMODULE hModule;
     uint    counter;
+    bool    locked;
 } module;
 
 typedef struct {
@@ -50,6 +51,10 @@ HMODULE LT_LoadLibraryExA(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags);
 HMODULE LT_LoadLibraryExW(LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags);
 BOOL    LT_FreeLibrary(HMODULE hLibModule);
 void    LT_FreeLibraryAndExitThread(HMODULE hLibModule, DWORD dwExitCode);
+
+// methods for user
+bool LT_LockModule(HMODULE hModule);
+bool LT_UnlockModule(HMODULE hModule);
 
 // methods for runtime
 bool  LT_Lock();
@@ -125,6 +130,9 @@ LibraryTracker_M* InitLibraryTracker(Context* context)
     module->LoadLibraryExW           = GetFuncAddr(&LT_LoadLibraryExW);
     module->FreeLibrary              = GetFuncAddr(&LT_FreeLibrary);
     module->FreeLibraryAndExitThread = GetFuncAddr(&LT_FreeLibraryAndExitThread);
+    // methods for user
+    module->LockModule   = GetFuncAddr(&LT_LockModule);
+    module->UnlockModule = GetFuncAddr(&LT_UnlockModule);
     // methods for runtime
     module->Lock    = GetFuncAddr(&LT_Lock);
     module->Unlock  = GetFuncAddr(&LT_Unlock);
@@ -589,6 +597,52 @@ static bool delModule(LibraryTracker* tracker, HMODULE hModule)
 }
 
 __declspec(noinline)
+bool LT_LockModule(HMODULE hModule)
+{
+    LibraryTracker* tracker = getTrackerPointer();
+
+    List* modules = &tracker->Modules; 
+
+    // search module list
+    module mod = {
+        .hModule = hModule,
+    };
+    uint idx;
+    if (!List_Find(modules, &mod, sizeof(mod.hModule), &idx))
+    {
+        return false;
+    }
+    // lock module
+    module* module = List_Get(modules, idx);
+    module->locked = true;
+    dbg_log("[library]", "lock module: 0x%zX", hModule);
+    return true;
+}
+
+__declspec(noinline)
+bool LT_UnlockModule(HMODULE hModule)
+{
+    LibraryTracker* tracker = getTrackerPointer();
+
+    List* modules = &tracker->Modules; 
+
+    // search module list
+    module mod = {
+        .hModule = hModule,
+    };
+    uint idx;
+    if (!List_Find(modules, &mod, sizeof(mod.hModule), &idx))
+    {
+        return false;
+    }
+    // unlock module
+    module* module = List_Get(modules, idx);
+    module->locked = false;
+    dbg_log("[library]", "unlock module: 0x%zX", hModule);
+    return true;
+}
+
+__declspec(noinline)
 bool LT_Lock()
 {
     LibraryTracker* tracker = getTrackerPointer();
@@ -651,7 +705,7 @@ errno LT_FreeAll()
         {
             continue;
         }
-        if (module->hModule != MODULE_UNLOADED)
+        if (module->hModule != MODULE_UNLOADED && !module->locked)
         {
             if (!cleanModule(tracker, module))
             {

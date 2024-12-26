@@ -4,19 +4,48 @@
 #pragma optimize("t", on)
 
 __declspec(noinline)
-void mem_copy(void* dst, void* src, uint size)
+void mem_copy(void* dst, void* src, uint num)
 {
-    if (size == 0)
+    if (num == 0)
     {
         return;
     }
     byte* d = (byte*)dst;
     byte* s = (byte*)src;
-    for (uint i = 0; i < size; i++)
+    if (d == s)
     {
-        *d = *s;
-        d++;
-        s++;
+        return;
+    }
+    for (uint i = 0; i < num; i++)
+    {
+        d[i] = s[i];
+    }
+}
+
+__declspec(noinline)
+void mem_move(void* dst, void* src, uint num)
+{
+    if (num == 0)
+    {
+        return;
+    }
+    byte* d = (byte*)dst;
+    byte* s = (byte*)src;
+    if (d == s)
+    {
+        return;
+    }
+    if (d < s || d >= s + num) 
+    {
+        for (uint i = 0; i < num; i++)
+        {
+            d[i] = s[i];
+        }
+        return;
+    }
+    for (uint i = num; i > 0; i--)
+    {
+        d[i - 1] = s[i - 1];
     }
 }
 
@@ -41,22 +70,21 @@ void mem_set(void* ptr, byte val, uint num)
     byte* p = (byte*)ptr;
     for (uint i = 0; i < num; i++)
     {
-        *p = val;
-        p++;
+        p[i] = val;
     }
 }
 #pragma optimize("", on)
 
 __declspec(noinline)
-int mem_cmp(void* a, void* b, uint size)
+int mem_cmp(void* a, void* b, uint num)
 {
-    if (size == 0)
+    if (num == 0)
     {
         return 0;
     }
     byte* p0 = (byte*)a;
     byte* p1 = (byte*)b;
-    for (uint i = 0; i < size; i++)
+    for (uint i = 0; i < num; i++)
     {
         if (*p0 == *p1)
         {
@@ -75,15 +103,15 @@ int mem_cmp(void* a, void* b, uint size)
 }
 
 __declspec(noinline)
-bool mem_equal(void* a, void* b, uint size)
+bool mem_equal(void* a, void* b, uint num)
 {
-    if (size == 0)
+    if (num == 0)
     {
         return true;
     }
     byte* p0 = (byte*)a;
     byte* p1 = (byte*)b;
-    for (uint i = 0; i < size; i++)
+    for (uint i = 0; i < num; i++)
     {
         if (*p0 != *p1)
         {
@@ -96,14 +124,14 @@ bool mem_equal(void* a, void* b, uint size)
 }
 
 __declspec(noinline)
-bool mem_is_zero(void* ptr, uint size)
+bool mem_is_zero(void* ptr, uint num)
 {
-    if (size == 0)
+    if (num == 0)
     {
         return true;
     }
     byte* p = (byte*)ptr;
-    for (uint i = 0; i < size; i++)
+    for (uint i = 0; i < num; i++)
     {
         if (*p != 0)
         {

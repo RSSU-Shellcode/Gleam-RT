@@ -5,7 +5,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include "c_types.h"
-#include "windows_t.h"
+#include "win_types.h"
+#include "dll_kernel32.h"
 #include "hash_api.h"
 #include "debug.h"
 

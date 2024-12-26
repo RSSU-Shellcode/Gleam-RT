@@ -86,13 +86,11 @@ int mem_cmp(void* a, void* b, uint num)
     byte* p1 = (byte*)b;
     for (uint i = 0; i < num; i++)
     {
-        if (*p0 == *p1)
+        if (p0[i] == p1[i])
         {
-            p0++;
-            p1++;
             continue;
         }
-        if (*p0 > *p1)
+        if (p0[i] > p1[i])
         {
             return 1;
         } else {
@@ -113,12 +111,10 @@ bool mem_equal(void* a, void* b, uint num)
     byte* p1 = (byte*)b;
     for (uint i = 0; i < num; i++)
     {
-        if (*p0 != *p1)
+        if (p0[i] != p1[i])
         {
             return false;
         }
-        p0++;
-        p1++;
     }
     return true;
 }
@@ -133,11 +129,10 @@ bool mem_is_zero(void* ptr, uint num)
     byte* p = (byte*)ptr;
     for (uint i = 0; i < num; i++)
     {
-        if (*p != 0)
+        if (p[i] != 0)
         {
             return false;
         }
-        p++;
     }
     return true;
 }

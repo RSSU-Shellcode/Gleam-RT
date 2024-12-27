@@ -16,6 +16,9 @@ typedef void  (*MemFree_t)(void* ptr);
 typedef uint  (*MemSize_t)(void* ptr);
 typedef uint  (*MemCap_t)(void* ptr);
 
+typedef bool (*MemLockRegion_t)(LPVOID address);
+typedef bool (*MemUnlockRegion_t)(LPVOID address);
+
 typedef bool  (*MemLock_t)();
 typedef bool  (*MemUnlock_t)();
 typedef errno (*MemEncrypt_t)();
@@ -28,8 +31,6 @@ typedef struct {
     VirtualFree_t    VirtualFree;
     VirtualProtect_t VirtualProtect;
     VirtualQuery_t   VirtualQuery;
-    VirtualLock_t    VirtualLock;
-    VirtualUnlock_t  VirtualUnlock;
     HeapCreate_t     HeapCreate;
     HeapDestroy_t    HeapDestroy;
     HeapAlloc_t      HeapAlloc;
@@ -61,6 +62,9 @@ typedef struct {
     MemFree_t    Free;
     MemSize_t    Size;
     MemCap_t     Cap;
+
+    MemLockRegion_t   LockRegion;
+    MemUnlockRegion_t UnlockRegion;
 
     MemLock_t    Lock;
     MemUnlock_t  Unlock;

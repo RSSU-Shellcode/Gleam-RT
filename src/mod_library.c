@@ -78,6 +78,7 @@ static bool recoverTrackerPointer(LibraryTracker* tracker);
 static bool initTrackerEnvironment(LibraryTracker* tracker, Context* context);
 static bool addModule(LibraryTracker* tracker, HMODULE hModule);
 static bool delModule(LibraryTracker* tracker, HMODULE hModule);
+static bool setModuleLocker(HMODULE hModule, bool lock);
 static bool cleanModule(LibraryTracker* tracker, module* module);
 
 static void eraseTrackerMethods(Context* context);
@@ -599,32 +600,45 @@ static bool delModule(LibraryTracker* tracker, HMODULE hModule)
 __declspec(noinline)
 bool LT_LockModule(HMODULE hModule)
 {
-    LibraryTracker* tracker = getTrackerPointer();
-
-    List* modules = &tracker->Modules; 
-
-    // search module list
-    module mod = {
-        .hModule = hModule,
-    };
-    uint idx;
-    if (!List_Find(modules, &mod, sizeof(mod.hModule), &idx))
+    if (!LT_Lock())
     {
         return false;
     }
-    // lock module
-    module* module = List_Get(modules, idx);
-    module->locked = true;
+
+    bool success = setModuleLocker(hModule, true);
     dbg_log("[library]", "lock module: 0x%zX", hModule);
-    return true;
+
+    if (!LT_Unlock())
+    {
+        return false;
+    }
+    return success;
 }
 
 __declspec(noinline)
 bool LT_UnlockModule(HMODULE hModule)
 {
+    if (!LT_Lock())
+    {
+        return false;
+    }
+
+    bool success = setModuleLocker(hModule, false);
+    dbg_log("[library]", "unlock module: 0x%zX", hModule);
+
+    if (!LT_Unlock())
+    {
+        return false;
+    }
+    return success;
+}
+
+__declspec(noinline)
+static bool setModuleLocker(HMODULE hModule, bool lock)
+{
     LibraryTracker* tracker = getTrackerPointer();
 
-    List* modules = &tracker->Modules; 
+    List* modules = &tracker->Modules;
 
     // search module list
     module mod = {
@@ -637,8 +651,7 @@ bool LT_UnlockModule(HMODULE hModule)
     }
     // unlock module
     module* module = List_Get(modules, idx);
-    module->locked = false;
-    dbg_log("[library]", "unlock module: 0x%zX", hModule);
+    module->locked = lock;
     return true;
 }
 

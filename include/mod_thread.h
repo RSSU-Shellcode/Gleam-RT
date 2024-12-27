@@ -8,7 +8,10 @@
 #include "errno.h"
 
 typedef HANDLE (*ThdNew_t)(void* address, void* parameter, bool track);
-typedef void   (*ThdExit_t)();
+typedef void   (*ThdExit_t)(uint32 code);
+
+typedef bool (*ThdLockThread_t)(DWORD id);
+typedef bool (*ThdUnlockThread_t)(DWORD id);
 
 typedef bool  (*ThdLock_t)();
 typedef bool  (*ThdUnlock_t)();
@@ -30,6 +33,9 @@ typedef struct {
 
     ThdNew_t  New;
     ThdExit_t Exit;
+
+    ThdLockThread_t   LockThread;
+    ThdUnlockThread_t UnlockThread;
 
     ThdLock_t    Lock;
     ThdUnlock_t  Unlock;

@@ -17,14 +17,22 @@
 #define OPT_OFFSET_NOT_TRACK_CURRENT_THREAD 3
 
 // for generic shellcode development.
+
+// about library tracker
+typedef bool (*LibLockModule_t)(HMODULE hModule);
+typedef bool (*LibUnlockModule_t)(HMODULE hModule);
+
+// about memory tracker
 typedef void* (*MemAlloc_t)(uint size);
 typedef void* (*MemCalloc_t)(uint num, uint size);
 typedef void* (*MemRealloc_t)(void* ptr, uint size);
 typedef void  (*MemFree_t)(void* ptr);
 typedef uint  (*MemSize_t)(void* ptr);
 typedef uint  (*MemCap_t)(void* ptr);
+typedef bool  (*MemLockRegion_t)(LPVOID address);
+typedef bool  (*MemUnlockRegion_t)(LPVOID address);
 
-// about thread module
+// about thread tracker
 typedef HANDLE (*ThdNew_t)(void* address, void* parameter, bool track);
 typedef void   (*ThdExit_t)();
 
@@ -145,6 +153,9 @@ typedef struct {
         LoadLibraryExW_t LoadExW;
         FreeLibrary_t    Free;
         GetProcAddress_t GetProc;
+
+        LibLockModule_t   Lock;
+        LibUnlockModule_t Unlock;
     } Library;
 
     struct {
@@ -154,6 +165,9 @@ typedef struct {
         MemFree_t    Free;
         MemSize_t    Size;
         MemCap_t     Cap;
+
+        MemLockRegion_t   Lock;
+        MemUnlockRegion_t Unlock;
     } Memory;
 
     struct {

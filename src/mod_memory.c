@@ -23,13 +23,13 @@
 typedef struct {
     uintptr address;
     uint    size;
-    bool    lock;
+    bool    locked;
 } memRegion;
 
 typedef struct {
     uintptr address;
     uint32  protect;
-    bool    lock;
+    bool    locked;
 
     byte key[CRYPTO_KEY_SIZE];
     byte iv [CRYPTO_IV_SIZE];
@@ -579,7 +579,7 @@ static bool reserveRegion(MemoryTracker* tracker, uintptr address, uint size)
     memRegion region = {
         .address = address,
         .size    = size,
-        .lock    = false,
+        .locked  = false,
     };
     return List_Insert(&tracker->Regions, &region);
 }
@@ -596,7 +596,7 @@ static bool commitPage(MemoryTracker* tracker, uintptr address, uint size, uint3
     }
     memPage page = {
         .protect = protect,
-        .lock    = false,
+        .locked  = false,
     };
     register List* pages = &tracker->Pages;
     for (uint i = 0; i < numPage; i++)
@@ -2307,8 +2307,8 @@ static bool setRegionLocker(uintptr address, bool lock)
             num++;
             continue;
         }
+        region->locked = lock;
         regionSize = region->size;
-        region->lock = lock;
         found = true;
         break;
     }
@@ -2334,7 +2334,7 @@ static bool setRegionLocker(uintptr address, bool lock)
             num++;
             continue;
         }
-        page->lock = lock;
+        page->locked = lock;
         found = true;
         num++;
     }
@@ -2699,7 +2699,7 @@ errno MT_FreeAll()
             continue;
         }
         // skip locked memory page
-        if (page->lock)
+        if (page->locked)
         {
             num++;
             continue;
@@ -2722,7 +2722,7 @@ errno MT_FreeAll()
             continue;
         }
         // skip locked memory page
-        if (page->lock)
+        if (page->locked)
         {
             num++;
             continue;
@@ -2750,7 +2750,7 @@ errno MT_FreeAll()
             continue;
         }
         // skip locked memory region
-        if (region->lock)
+        if (region->locked)
         {
             num++;
             continue;

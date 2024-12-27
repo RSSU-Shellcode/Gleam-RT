@@ -11,8 +11,6 @@ https://learn.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-virtu
 https://learn.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-virtualfree
 https://learn.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-virtualprotect
 https://learn.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-virtualquery
-https://learn.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-virtuallock
-https://learn.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-virtualunlock
 https://learn.microsoft.com/en-us/windows/win32/api/heapapi/nf-heapapi-getprocessheap
 https://learn.microsoft.com/en-us/windows/win32/api/heapapi/nf-heapapi-getprocessheaps
 https://learn.microsoft.com/en-us/windows/win32/api/heapapi/nf-heapapi-heapcreate

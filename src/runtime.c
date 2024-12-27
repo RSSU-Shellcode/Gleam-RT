@@ -304,6 +304,8 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->Library.LoadExW = runtime->LibraryTracker->LoadLibraryExW;
     module->Library.Free    = runtime->LibraryTracker->FreeLibrary;
     module->Library.GetProc = GetFuncAddr(&RT_GetProcAddress);
+    module->Library.Lock    = runtime->LibraryTracker->LockModule;
+    module->Library.Unlock  = runtime->LibraryTracker->UnlockModule;
     // memory tracker
     module->Memory.Alloc   = runtime->MemoryTracker->Alloc;
     module->Memory.Calloc  = runtime->MemoryTracker->Calloc;
@@ -311,6 +313,8 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->Memory.Free    = runtime->MemoryTracker->Free;
     module->Memory.Size    = runtime->MemoryTracker->Size;
     module->Memory.Cap     = runtime->MemoryTracker->Cap;
+    module->Memory.Lock    = runtime->MemoryTracker->LockRegion;
+    module->Memory.Unlock  = runtime->MemoryTracker->UnlockRegion;
     // thread tracker
     module->Thread.New   = runtime->ThreadTracker->New;
     module->Thread.Exit  = runtime->ThreadTracker->Exit;
@@ -782,8 +786,6 @@ static bool initIATHooks(Runtime* runtime)
         { 0xDB54AA6683574A8B, 0x3137DE2D71D3FF3E, memoryTracker->VirtualFree },
         { 0xF5469C21B43D23E5, 0xF80028997F625A05, memoryTracker->VirtualProtect },
         { 0xE9ECDC63F6D3DC53, 0x815C2FDFE640307E, memoryTracker->VirtualQuery },
-        { 0xDCFB29E5457FC2AC, 0xE730BA5E1DAF71D7, memoryTracker->VirtualLock },
-        { 0x6BA2D5251AA73581, 0x74B6BED239151714, memoryTracker->VirtualUnlock },
         { 0xFFDAAC40C9760BF6, 0x75E3BCA6D545E130, memoryTracker->HeapCreate },
         { 0xF2B10CAD6B4626E6, 0x14D21E0224A81F33, memoryTracker->HeapDestroy },
         { 0x2D5BD20546A9F7FF, 0xD1569863116D78AA, memoryTracker->HeapAlloc },
@@ -828,8 +830,6 @@ static bool initIATHooks(Runtime* runtime)
         { 0x4F0FC063, 0x182F3CC6, memoryTracker->VirtualFree },
         { 0xEBD60441, 0x280A4A9F, memoryTracker->VirtualProtect },
         { 0xD17B0461, 0xFB4E5DB5, memoryTracker->VirtualQuery },
-        { 0x105F3B24, 0x2919B75B, memoryTracker->VirtualLock },
-        { 0x78F96542, 0x1FCAE820, memoryTracker->VirtualUnlock },
         { 0xDEBEFC7A, 0x5430728E, memoryTracker->HeapCreate },
         { 0x939FB28D, 0x2A9F34C6, memoryTracker->HeapDestroy },
         { 0x05810867, 0xF2ABDB50, memoryTracker->HeapAlloc },

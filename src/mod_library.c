@@ -489,16 +489,6 @@ BOOL LT_FreeLibrary(HMODULE hLibModule)
     bool success = true;
     for (;;)
     {
-        // TODO move it to a standalone method, think to remove it
-        // if hLibModule is NULL, free all library
-        if (hLibModule == NULL)
-        {
-            if (LT_FreeAll() != NO_ERROR)
-            {
-                success = false;
-            }
-            break;
-        }
         if (!tracker->FreeLibrary(hLibModule))
         {
             success = false;

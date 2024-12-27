@@ -49,8 +49,6 @@ typedef struct {
     VirtualFree_t           VirtualFree;
     VirtualProtect_t        VirtualProtect;
     VirtualQuery_t          VirtualQuery;
-    VirtualLock_t           VirtualLock;
-    VirtualUnlock_t         VirtualUnlock;
     GetProcessHeap_t        GetProcessHeap;
     GetProcessHeaps_t       GetProcessHeaps;
     HeapCreate_t            HeapCreate;
@@ -114,8 +112,6 @@ LPVOID MT_VirtualAlloc(LPVOID address, SIZE_T size, DWORD type, DWORD protect);
 BOOL   MT_VirtualFree(LPVOID address, SIZE_T size, DWORD type);
 BOOL   MT_VirtualProtect(LPVOID address, SIZE_T size, DWORD new, DWORD* old);
 SIZE_T MT_VirtualQuery(LPCVOID address, POINTER buffer, SIZE_T length);
-BOOL   MT_VirtualLock(LPVOID address, SIZE_T size);
-BOOL   MT_VirtualUnlock(LPVOID address, SIZE_T size);
 
 HANDLE MT_HeapCreate(DWORD flOptions, SIZE_T dwInitialSize, SIZE_T dwMaximumSize);
 BOOL   MT_HeapDestroy(HANDLE hHeap);
@@ -143,14 +139,17 @@ void* __cdecl MT_ucrtbase_realloc(void* ptr, uint size);
 void  __cdecl MT_ucrtbase_free(void* ptr);
 uint  __cdecl MT_ucrtbase_msize(void* ptr);
 
-// methods for runtime and hooks about msvcrt.dll
+// methods for user
 void* MT_MemAlloc(uint size);
 void* MT_MemCalloc(uint num, uint size);
 void* MT_MemRealloc(void* ptr, uint size);
 void  MT_MemFree(void* ptr);
 uint  MT_MemSize(void* ptr);
 uint  MT_MemCap(void* ptr);
+bool  MT_LockRegion(LPVOID address);
+bool  MT_UnlockRegion(LPVOID address);
 
+// methods for runtime
 bool  MT_Lock();
 bool  MT_Unlock();
 errno MT_Encrypt();
@@ -178,9 +177,6 @@ static bool decommitPage(MemoryTracker* tracker, uintptr address, uint size);
 static bool releasePage(MemoryTracker* tracker, uintptr address, uint size);
 static bool deletePages(MemoryTracker* tracker, uintptr address, uint size);
 static void protectPage(MemoryTracker* tracker, uintptr address, uint size, uint32 protect);
-static bool lockPages(MemoryTracker* tracker, uintptr address);
-static bool unlockPages(MemoryTracker* tracker, uintptr address);
-static bool setPagesLocker(MemoryTracker* tracker, uintptr address, bool lock);
 static bool addHeapObject(MemoryTracker* tracker, HANDLE hHeap, uint32 options);
 static bool delHeapObject(MemoryTracker* tracker, HANDLE hHeap);
 static uint calcHeapMark(uint mark, uintptr addr, uint size);
@@ -190,6 +186,7 @@ static bool   isPageTypeTrackable(uint32 type);
 static bool   isPageProtectWriteable(uint32 protect);
 static bool   adjustPageProtect(MemoryTracker* tracker, memPage* page);
 static bool   recoverPageProtect(MemoryTracker* tracker, memPage* page);
+static bool   setRegionLocker(uintptr address, bool lock);
 
 static bool encryptPage(MemoryTracker* tracker, memPage* page);
 static bool decryptPage(MemoryTracker* tracker, memPage* page);
@@ -249,8 +246,6 @@ MemoryTracker_M* InitMemoryTracker(Context* context)
     module->VirtualFree    = GetFuncAddr(&MT_VirtualFree);
     module->VirtualProtect = GetFuncAddr(&MT_VirtualProtect);
     module->VirtualQuery   = GetFuncAddr(&MT_VirtualQuery);
-    module->VirtualLock    = GetFuncAddr(&MT_VirtualLock);
-    module->VirtualUnlock  = GetFuncAddr(&MT_VirtualUnlock);
     module->HeapCreate     = GetFuncAddr(&MT_HeapCreate);
     module->HeapDestroy    = GetFuncAddr(&MT_HeapDestroy);
     module->HeapAlloc      = GetFuncAddr(&MT_HeapAlloc);
@@ -275,13 +270,16 @@ MemoryTracker_M* InitMemoryTracker(Context* context)
     module->ucrtbase_realloc = GetFuncAddr(&MT_ucrtbase_realloc);
     module->ucrtbase_free    = GetFuncAddr(&MT_ucrtbase_free);
     module->ucrtbase_msize   = GetFuncAddr(&MT_ucrtbase_msize);
-    // methods for runtime
+    // methods for user
     module->Alloc   = GetFuncAddr(&MT_MemAlloc);
     module->Calloc  = GetFuncAddr(&MT_MemCalloc);
     module->Realloc = GetFuncAddr(&MT_MemRealloc);
     module->Free    = GetFuncAddr(&MT_MemFree);
     module->Size    = GetFuncAddr(&MT_MemSize);
     module->Cap     = GetFuncAddr(&MT_MemCap);
+    module->LockRegion   = GetFuncAddr(&MT_LockRegion);
+    module->UnlockRegion = GetFuncAddr(&MT_UnlockRegion);
+    // methods for runtime
     module->Lock    = GetFuncAddr(&MT_Lock);
     module->Unlock  = GetFuncAddr(&MT_Unlock);
     module->Encrypt = GetFuncAddr(&MT_Encrypt);
@@ -301,8 +299,6 @@ static bool initTrackerAPI(MemoryTracker* tracker, Context* context)
 #ifdef _WIN64
     {
         { 0x69E4CD5EB08400FD, 0x648D50E649F8C06E }, // VirtualQuery
-        { 0x24AB671FD240FDCB, 0x40A8B468E734C166 }, // VirtualLock
-        { 0x5BE15B295B21235B, 0x5E6AFF64FB431502 }, // VirtualUnlock
         { 0xA9CA8BFA460B3D0E, 0x30FECC3CA9988F6A }, // GetProcessHeap
         { 0x075A8238EE27E826, 0xE930AB7A27AD9691 }, // GetProcessHeaps
         { 0x3CF9F7C4C1B8FD43, 0x34B7FC51484FB2A3 }, // HeapCreate
@@ -324,8 +320,6 @@ static bool initTrackerAPI(MemoryTracker* tracker, Context* context)
 #elif _WIN32
     {
         { 0x79D75104, 0x92F1D233 }, // VirtualQuery
-        { 0x2149FD08, 0x6537772D }, // VirtualLock
-        { 0xCE162EEC, 0x5D903E73 }, // VirtualUnlock
         { 0x758C3172, 0x23E44CDB }, // GetProcessHeap
         { 0xD9EDA55E, 0x77F2EC35 }, // GetProcessHeaps
         { 0x857D374F, 0x7DC1A133 }, // HeapCreate
@@ -355,25 +349,23 @@ static bool initTrackerAPI(MemoryTracker* tracker, Context* context)
         list[i].proc = proc;
     }
     tracker->VirtualQuery    = list[0x00].proc;
-    tracker->VirtualLock     = list[0x01].proc;
-    tracker->VirtualUnlock   = list[0x02].proc;
-    tracker->GetProcessHeap  = list[0x03].proc;
-    tracker->GetProcessHeaps = list[0x04].proc;
-    tracker->HeapCreate      = list[0x05].proc;
-    tracker->HeapDestroy     = list[0x06].proc;
-    tracker->HeapAlloc       = list[0x07].proc;
-    tracker->HeapReAlloc     = list[0x08].proc;
-    tracker->HeapFree        = list[0x09].proc;
-    tracker->HeapSize        = list[0x0A].proc;
-    tracker->HeapLock        = list[0x0B].proc;
-    tracker->HeapUnlock      = list[0x0C].proc;
-    tracker->HeapWalk        = list[0x0D].proc;
-    tracker->GlobalAlloc     = list[0x0E].proc;
-    tracker->GlobalReAlloc   = list[0x0F].proc;
-    tracker->GlobalFree      = list[0x10].proc;
-    tracker->LocalAlloc      = list[0x11].proc;
-    tracker->LocalReAlloc    = list[0x12].proc;
-    tracker->LocalFree       = list[0x13].proc;
+    tracker->GetProcessHeap  = list[0x01].proc;
+    tracker->GetProcessHeaps = list[0x02].proc;
+    tracker->HeapCreate      = list[0x03].proc;
+    tracker->HeapDestroy     = list[0x04].proc;
+    tracker->HeapAlloc       = list[0x05].proc;
+    tracker->HeapReAlloc     = list[0x06].proc;
+    tracker->HeapFree        = list[0x07].proc;
+    tracker->HeapSize        = list[0x08].proc;
+    tracker->HeapLock        = list[0x09].proc;
+    tracker->HeapUnlock      = list[0x0A].proc;
+    tracker->HeapWalk        = list[0x0B].proc;
+    tracker->GlobalAlloc     = list[0x0C].proc;
+    tracker->GlobalReAlloc   = list[0x0D].proc;
+    tracker->GlobalFree      = list[0x0E].proc;
+    tracker->LocalAlloc      = list[0x0F].proc;
+    tracker->LocalReAlloc    = list[0x10].proc;
+    tracker->LocalFree       = list[0x11].proc;
 
     tracker->VirtualAlloc          = context->VirtualAlloc;
     tracker->VirtualFree           = context->VirtualFree;
@@ -846,135 +838,6 @@ SIZE_T MT_VirtualQuery(LPCVOID address, POINTER buffer, SIZE_T length)
     }
     return size;
 }
-
-__declspec(noinline)
-BOOL MT_VirtualLock(LPVOID address, SIZE_T size)
-{
-    MemoryTracker* tracker = getTrackerPointer();
-
-    if (!MT_Lock())
-    {
-        return false;
-    }
-
-    dbg_log("[memory]", "VirtualLock: 0x%zX", address);
-
-    // if size is zero, only set a flag to memory page and
-    // region that prevent MT_FreeAll free these memory 
-    BOOL success;
-    if (size == 0)
-    {
-        success = lockPages(tracker, (uintptr)address);
-    } else {
-        success = tracker->VirtualLock(address, size);
-    }
-
-    if (!MT_Unlock())
-    {
-        return false;
-    }
-    return success;
-}
-
-__declspec(noinline)
-BOOL MT_VirtualUnlock(LPVOID address, SIZE_T size)
-{
-    MemoryTracker* tracker = getTrackerPointer();
-
-    if (!MT_Lock())
-    {
-        return false;
-    }
-
-    dbg_log("[memory]", "VirtualUnlock: 0x%zX", address);
-
-    // if size is zero, only unset a flag to memory page
-    // and region that MT_FreeAll will free these memory 
-    BOOL success;
-    if (size == 0)
-    {
-        success = unlockPages(tracker, (uintptr)address);
-    } else {
-        success = tracker->VirtualUnlock(address, size);
-    }
-
-    if (!MT_Unlock())
-    {
-        return false;
-    }
-    return success;
-}
-
-static bool lockPages(MemoryTracker* tracker, uintptr address)
-{
-    return setPagesLocker(tracker, address, true);
-}
-
-static bool unlockPages(MemoryTracker* tracker, uintptr address)
-{
-    return setPagesLocker(tracker, address, false);
-}
-
-#pragma optimize("t", on)
-static bool setPagesLocker(MemoryTracker* tracker, uintptr address, bool lock)
-{
-    // search memory regions list
-    register List* regions = &tracker->Regions;
-    register uint  len     = regions->Len;
-    register uint  index   = 0;
-    register memRegion* region;
-
-    // record region size and set locker
-    uint regionSize = 0;
-    bool found = false;
-    for (uint num = 0; num < len; index++)
-    {
-        region = List_Get(regions, index);
-        if (region->address == 0)
-        {
-            continue;
-        }
-        if (region->address != address)
-        {
-            num++;
-            continue;
-        }
-        regionSize = region->size;
-        region->lock = lock;
-        found = true;
-        break;
-    }
-    if (!found || regionSize == 0)
-    {
-        return false;
-    }
-
-    // set memory page locker
-    register uint pageSize = tracker->PageSize;
-    register List* pages   = &tracker->Pages;
-    len   = pages->Len;
-    index = 0;
-    register memPage* page;
-    found = false;
-    for (uint num = 0; num < len; index++)
-    {
-        page = List_Get(pages, index);
-        if (page->address == 0)
-        {
-            continue;
-        }
-        if ((page->address + pageSize <= address) || (page->address >= address + regionSize))
-        {
-            num++;
-            continue;
-        }
-        page->lock = lock;
-        found = true;
-        num++;
-    }
-    return found;
-}
-#pragma optimize("t", off)
 
 __declspec(noinline)
 HANDLE MT_HeapCreate(DWORD flOptions, SIZE_T dwInitialSize, SIZE_T dwMaximumSize)
@@ -2381,6 +2244,103 @@ uint MT_MemCap(void* ptr)
     }
     return *(uint*)((uintptr)(ptr)-16+sizeof(uint));
 }
+
+__declspec(noinline)
+bool MT_LockRegion(LPVOID address)
+{
+    if (!MT_Lock())
+    {
+        return false;
+    }
+
+    bool success = setRegionLocker((uintptr)address, true);
+    dbg_log("[memory]", "unlock region: 0x%zX", address);
+
+    if (!MT_Unlock())
+    {
+        return false;
+    }
+    return success;
+}
+
+__declspec(noinline)
+bool MT_UnlockRegion(LPVOID address)
+{
+    if (!MT_Lock())
+    {
+        return false;
+    }
+
+    bool success = setRegionLocker((uintptr)address, false);
+    dbg_log("[memory]", "unlock region: 0x%zX", address);
+
+    if (!MT_Unlock())
+    {
+        return false;
+    }
+    return success;
+}
+
+#pragma optimize("t", on)
+static bool setRegionLocker(uintptr address, bool lock)
+{
+    MemoryTracker* tracker = getTrackerPointer();
+
+    List* regions = &tracker->Regions;
+    List* pages   = &tracker->Pages;
+
+    // search memory regions list
+    uint len = regions->Len;
+    uint idx = 0;
+    // record region size and set locker
+    uint regionSize = 0;
+    bool found = false;
+    for (uint num = 0; num < len; idx++)
+    {
+        memRegion* region = List_Get(regions, idx);
+        if (region->address == 0)
+        {
+            continue;
+        }
+        if (region->address != address)
+        {
+            num++;
+            continue;
+        }
+        regionSize = region->size;
+        region->lock = lock;
+        found = true;
+        break;
+    }
+    if (!found || regionSize == 0)
+    {
+        return false;
+    }
+
+    // set memory page locker
+    uint pageSize = tracker->PageSize;
+    len = pages->Len;
+    idx = 0;
+    found = false;
+    for (uint num = 0; num < len; idx++)
+    {
+        memPage* page = List_Get(pages, idx);
+        if (page->address == 0)
+        {
+            continue;
+        }
+        if ((page->address + pageSize <= address) || (page->address >= address + regionSize))
+        {
+            num++;
+            continue;
+        }
+        page->lock = lock;
+        found = true;
+        num++;
+    }
+    return found;
+}
+#pragma optimize("t", off)
 
 __declspec(noinline)
 bool MT_Lock()

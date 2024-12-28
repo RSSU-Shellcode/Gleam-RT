@@ -16,7 +16,9 @@
 
 typedef struct {
     DWORD  threadID;
-    HANDLE hThread;  // add numSuspend
+    HANDLE hThread;
+    int32  numSuspend;
+    bool   locked;
 } thread;
 
 typedef struct {
@@ -47,7 +49,7 @@ typedef struct {
     // protect data
     HANDLE hMutex;
 
-    // record the number of SuspendThread
+    // record the number of total SuspendThread
     int64 numSuspend;
 
     // store all threads information
@@ -75,12 +77,13 @@ BOOL  TT_TerminateThread(HANDLE hThread, DWORD dwExitCode);
 DWORD TT_TlsAlloc();
 BOOL  TT_TlsFree(DWORD dwTlsIndex);
 
-// methods for runtime
+// methods for user
 HANDLE TT_ThdNew(void* address, void* parameter, bool track);
-void   TT_ThdExit();
-bool   TT_ThdLock(DWORD threadID);
-bool   TT_ThdUnlock(DWORD threadID);
+void   TT_ThdExit(uint32 code);
+bool   TT_LockThread(DWORD id);
+bool   TT_UnlockThread(DWORD id);
 
+// methods for runtime
 bool  TT_Lock();
 bool  TT_Unlock();
 errno TT_Suspend();
@@ -110,6 +113,7 @@ static bool  addThread(ThreadTracker* tracker, DWORD threadID, HANDLE hThread);
 static void  delThread(ThreadTracker* tracker, DWORD threadID);
 static bool  addTLSIndex(ThreadTracker* tracker, DWORD index);
 static void  delTLSIndex(ThreadTracker* tracker, DWORD index);
+static bool  setThreadLocker(DWORD threadID, bool lock);
 
 static void eraseTrackerMethods(Context* context);
 static void cleanTracker(ThreadTracker* tracker);
@@ -164,9 +168,12 @@ ThreadTracker_M* InitThreadTracker(Context* context)
     module->TerminateThread  = GetFuncAddr(&TT_TerminateThread);
     module->TlsAlloc         = GetFuncAddr(&TT_TlsAlloc);
     module->TlsFree          = GetFuncAddr(&TT_TlsFree);
+    // methods for user
+    module->New  = GetFuncAddr(&TT_ThdNew);
+    module->Exit = GetFuncAddr(&TT_ThdExit);
+    module->LockThread   = GetFuncAddr(&TT_LockThread);
+    module->UnlockThread = GetFuncAddr(&TT_UnlockThread);
     // methods for runtime
-    module->New     = GetFuncAddr(&TT_ThdNew);
-    module->Exit    = GetFuncAddr(&TT_ThdExit);
     module->Lock    = GetFuncAddr(&TT_Lock);
     module->Unlock  = GetFuncAddr(&TT_Unlock);
     module->Suspend = GetFuncAddr(&TT_Suspend);
@@ -875,20 +882,66 @@ HANDLE TT_ThdNew(void* address, void* parameter, bool track)
 }
 
 __declspec(noinline)
-void TT_ThdExit()
+void TT_ThdExit(uint32 code)
 {
-    TT_ExitThread(0);
+    TT_ExitThread(code);
 }
 
 __declspec(noinline)
-bool TT_ThdLock(DWORD threadID)
+bool TT_LockThread(DWORD id)
 {
-    return true;
+    if (!TT_Lock())
+    {
+        return false;
+    }
+
+    bool success = setThreadLocker(id, true);
+    dbg_log("[thread]", "lock thread: %d", id);
+
+    if (!TT_Unlock())
+    {
+        return false;
+    }
+    return success;
 }
 
 __declspec(noinline)
-bool TT_ThdUnlock(DWORD threadID)
+bool TT_UnlockThread(DWORD id)
 {
+    if (!TT_Lock())
+    {
+        return false;
+    }
+
+    bool success = setThreadLocker(id, false);
+    dbg_log("[thread]", "unlock thread: %d", id);
+
+    if (!TT_Unlock())
+    {
+        return false;
+    }
+    return success;
+}
+
+__declspec(noinline)
+static bool setThreadLocker(DWORD id, bool lock)
+{
+    ThreadTracker* tracker = getTrackerPointer();
+
+    List* threads = &tracker->Threads;
+
+    // search thread list
+    thread thd = {
+        .threadID = id,
+    };
+    uint idx;
+    if (!List_Find(threads, &thd, sizeof(thd.threadID), &idx))
+    {
+        return false;
+    }
+    // set thread locker
+    thread* thread = List_Get(threads, idx);
+    thread->locked = lock;
     return true;
 }
 
@@ -1047,6 +1100,12 @@ errno TT_KillAll()
         {
             continue;
         }
+        // skip locked thread
+        if (thread->locked)
+        {
+            num++;
+            continue;
+        }
         // skip self thread
         if (thread->threadID == currentTID)
         {
@@ -1068,6 +1127,12 @@ errno TT_KillAll()
         thread* thread = List_Get(threads, idx);
         if (thread->threadID == 0)
         {
+            continue;
+        }
+        // skip locked thread
+        if (thread->locked)
+        {
+            num++;
             continue;
         }
         // skip self thread

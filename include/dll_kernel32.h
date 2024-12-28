@@ -516,6 +516,11 @@ typedef HANDLE (*CreateMutexA_t)
     POINTER lpMutexAttributes, BOOL bInitialOwner, LPCSTR lpName
 );
 
+typedef HANDLE (*CreateMutexW_t)
+(
+    POINTER lpMutexAttributes, BOOL bInitialOwner, LPCWSTR lpName
+);
+
 typedef BOOL (*ReleaseMutex_t)
 (
     HANDLE hMutex
@@ -524,6 +529,11 @@ typedef BOOL (*ReleaseMutex_t)
 typedef HANDLE (*CreateEventA_t)
 (
     POINTER lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCSTR lpName
+);
+
+typedef HANDLE (*CreateEventW_t)
+(
+    POINTER lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCWSTR lpName
 );
 
 typedef BOOL (*SetEvent_t)

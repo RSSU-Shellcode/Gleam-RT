@@ -84,7 +84,7 @@ typedef struct {
     HANDLE hThreadEvent; // event handler thread
 
     // IAT hooks about GetProcAddress
-    Hook IATHooks[43];
+    Hook IATHooks[53];
 
     // runtime submodules
     LibraryTracker_M*  LibraryTracker;
@@ -164,8 +164,8 @@ static bool  initIATHooks(Runtime* runtime);
 static bool  flushInstructionCache(Runtime* runtime);
 
 static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName);
+static void* getIATHook(Runtime* runtime, void* proc);
 static void* getLazyAPIHook(Runtime* runtime, void* proc);
-static void* replaceToIATHook(Runtime* runtime, void* proc);
 
 static void  eventHandler();
 static errno processEvent(Runtime* runtime, bool* exit);
@@ -316,9 +316,14 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->Memory.Lock    = runtime->MemoryTracker->LockRegion;
     module->Memory.Unlock  = runtime->MemoryTracker->UnlockRegion;
     // thread tracker
-    module->Thread.New   = runtime->ThreadTracker->New;
-    module->Thread.Exit  = runtime->ThreadTracker->Exit;
-    module->Thread.Sleep = GetFuncAddr(&RT_Sleep);
+    module->Thread.New    = runtime->ThreadTracker->New;
+    module->Thread.Exit   = runtime->ThreadTracker->Exit;
+    module->Thread.Sleep  = GetFuncAddr(&RT_Sleep);
+    module->Thread.Lock   = runtime->ThreadTracker->LockThread;
+    module->Thread.Unlock = runtime->ThreadTracker->UnlockThread;
+    // resource tracker
+    module->Resource.LockMutex   = runtime->ResourceTracker->LockMutex;
+    module->Resource.UnlockMutex = runtime->ResourceTracker->UnlockMutex;
     // argument store
     module->Argument.GetValue   = runtime->ArgumentStore->GetValue;
     module->Argument.GetPointer = runtime->ArgumentStore->GetPointer;
@@ -760,9 +765,10 @@ static errno initWinHTTP(Runtime* runtime, Context* context)
 
 static bool initIATHooks(Runtime* runtime)
 {
-    LibraryTracker_M* libraryTracker = runtime->LibraryTracker;
-    MemoryTracker_M*  memoryTracker  = runtime->MemoryTracker;
-    ThreadTracker_M*  threadTracker  = runtime->ThreadTracker;
+    LibraryTracker_M*  libraryTracker  = runtime->LibraryTracker;
+    MemoryTracker_M*   memoryTracker   = runtime->MemoryTracker;
+    ThreadTracker_M*   threadTracker   = runtime->ThreadTracker;
+    ResourceTracker_M* resourceTracker = runtime->ResourceTracker;
 
     typedef struct {
         uint hash; uint key; void* hook;
@@ -811,6 +817,18 @@ static bool initIATHooks(Runtime* runtime)
         { 0x248E1CDD11AB444F, 0x195932EA70030929, threadTracker->TerminateThread },
         { 0xFA78B22F20F4A6AE, 0xBE9C88DB7A69D0FA, threadTracker->TlsAlloc },
         { 0x04ACE48652C6FABB, 0x19401007C082388D, threadTracker->TlsFree },
+        { 0x58926BA5F71CBB5B, 0x1E1F604F6035248A, resourceTracker->CreateMutexA },
+        { 0x95A1D6B96343624E, 0xA7C4DE10EA2DA12F, resourceTracker->CreateMutexW },
+        { 0x7875DE52EC02CD8B, 0xB95F39E380958D5E, resourceTracker->CreateEventA },
+        { 0xE116F3576A0D31F5, 0x3E535616ED1E31A4, resourceTracker->CreateEventW },
+        { 0x94DAFAE03484102D, 0x300F881516DC2FF5, resourceTracker->CreateFileA },
+        { 0xC3D28B35396A90DA, 0x8BA6316E5F5DC86E, resourceTracker->CreateFileW },
+        { 0x4015A18370E27D65, 0xA5B47007B7B8DD26, resourceTracker->FindFirstFileA },
+        { 0x7C520EB61A85181B, 0x933C760F029EF1DD, resourceTracker->FindFirstFileW },
+        { 0xFB272B44E7E9CFC6, 0xB5F76233869E347D, resourceTracker->FindFirstFileExA },
+        { 0x1C30504D9D6BC5E5, 0xF5C232B8DEEC41C8, resourceTracker->FindFirstFileExW },
+        { 0x78AEE64CADBBC72F, 0x480A328AEFFB1A39, resourceTracker->CloseHandle },
+        { 0x3D3A73632A3BCEDA, 0x72E6CA3A0850F779, resourceTracker->FindClose },
     };
 #elif _WIN32
     {
@@ -855,6 +873,18 @@ static bool initIATHooks(Runtime* runtime)
         { 0x6EF0E2AA, 0xE014E29F, threadTracker->TerminateThread },
         { 0x52598AD3, 0xD7C6183F, threadTracker->TlsAlloc },
         { 0x218DD96E, 0x05FED0A2, threadTracker->TlsFree },
+        { 0xC6B5D6DD, 0x36010787, resourceTracker->CreateMutexA },
+        { 0x144D7209, 0xB789D747, resourceTracker->CreateMutexW },
+        { 0x5E43201A, 0xFE7C8A22, resourceTracker->CreateEventA },
+        { 0x15746F79, 0x83C4C211, resourceTracker->CreateEventW },
+        { 0x79796D6E, 0x6DBBA55C, resourceTracker->CreateFileA },
+        { 0x0370C4B8, 0x76254EF3, resourceTracker->CreateFileW },
+        { 0x629ADDFA, 0x749D1CC9, resourceTracker->FindFirstFileA },
+        { 0x612273CD, 0x563EDF55, resourceTracker->FindFirstFileW },
+        { 0x8C692AD6, 0xB63ECE85, resourceTracker->FindFirstFileExA },
+        { 0xE52EE07C, 0x6C2F10B6, resourceTracker->FindFirstFileExW },
+        { 0xCB5BD447, 0x49A6FC78, resourceTracker->CloseHandle },
+        { 0x6CD807C4, 0x812C40E9, resourceTracker->FindClose },
     };
 #endif
     for (int i = 0; i < arrlen(items); i++)
@@ -1405,15 +1435,15 @@ void* RT_GetProcAddressByHash(uint hash, uint key, bool hook)
     {
         return proc;
     }
-    void* lzHook = getLazyAPIHook(runtime, proc);
-    if (lzHook != proc)
-    {
-        return lzHook;
-    }
-    void* iatHook = replaceToIATHook(runtime, proc);
+    void* iatHook = getIATHook(runtime, proc);
     if (iatHook != proc)
     {
         return iatHook;
+    }
+    void* lazyHook = getLazyAPIHook(runtime, proc);
+    if (lazyHook != proc)
+    {
+        return lazyHook;
     }
     return proc;
 }
@@ -1471,6 +1501,19 @@ static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
     return NULL;
 }
 
+static void* getIATHook(Runtime* runtime, void* proc)
+{
+    for (int i = 0; i < arrlen(runtime->IATHooks); i++)
+    {
+        if (proc != runtime->IATHooks[i].Proc)
+        {
+            continue;
+        }
+        return runtime->IATHooks[i].Hook;
+    }
+    return proc;
+}
+
 // getLazyAPIHook is used to FindAPI after call LoadLibrary.
 // Hooks in initIATHooks() are all in kernel32.dll.
 static void* getLazyAPIHook(Runtime* runtime, void* proc)
@@ -1484,49 +1527,33 @@ static void* getLazyAPIHook(Runtime* runtime, void* proc)
     hook hooks[] =
 #ifdef _WIN64
     {
-        { 0x4D084BEDB72AB139, 0x0C3B997786E5B372, memoryTracker->msvcrt_malloc      },
-        { 0x608A1F623962E67B, 0xABB120953420F49C, memoryTracker->msvcrt_calloc      },
-        { 0xCDE1ED75FE80407B, 0xC64B380372D117F2, memoryTracker->msvcrt_realloc     },
-        { 0xECC6F0177F0CCDE2, 0x43C1FCC7169E67D3, memoryTracker->msvcrt_free        },
-        { 0xDA453E9BB2309BF6, 0xB13F111E4C0EA643, memoryTracker->msvcrt_msize       },
-        { 0x53E4A1AC095BE0F6, 0xD152CAB732698100, memoryTracker->ucrtbase_malloc    },
-        { 0x78B916AE84F7B39A, 0x32CF4F009411A2FB, memoryTracker->ucrtbase_calloc    },
-        { 0x732F61E2A8E95DFC, 0x4A40B46C41B074F5, memoryTracker->ucrtbase_realloc   },
-        { 0x8C9673E7033C926C, 0x0BED866A2B82FABD, memoryTracker->ucrtbase_free      },
-        { 0x765FF1E84D3CA299, 0x2B93B5CE54D15111, memoryTracker->ucrtbase_msize     },
-        { 0x94DAFAE03484102D, 0x300F881516DC2FF5, resourceTracker->CreateFileA      },
-        { 0xC3D28B35396A90DA, 0x8BA6316E5F5DC86E, resourceTracker->CreateFileW      },
-        { 0x4015A18370E27D65, 0xA5B47007B7B8DD26, resourceTracker->FindFirstFileA   },
-        { 0x7C520EB61A85181B, 0x933C760F029EF1DD, resourceTracker->FindFirstFileW   },
-        { 0xFB272B44E7E9CFC6, 0xB5F76233869E347D, resourceTracker->FindFirstFileExA },
-        { 0x1C30504D9D6BC5E5, 0xF5C232B8DEEC41C8, resourceTracker->FindFirstFileExW },
-        { 0x78AEE64CADBBC72F, 0x480A328AEFFB1A39, resourceTracker->CloseHandle      },
-        { 0x3D3A73632A3BCEDA, 0x72E6CA3A0850F779, resourceTracker->FindClose        },
-        { 0x7749934E33C18703, 0xCFB41E32B03DC637, resourceTracker->WSAStartup       },
-        { 0x46C76E87C13DF670, 0x37B6B54E4B2FBECC, resourceTracker->WSACleanup       },
+        { 0x4D084BEDB72AB139, 0x0C3B997786E5B372, memoryTracker->msvcrt_malloc    },
+        { 0x608A1F623962E67B, 0xABB120953420F49C, memoryTracker->msvcrt_calloc    },
+        { 0xCDE1ED75FE80407B, 0xC64B380372D117F2, memoryTracker->msvcrt_realloc   },
+        { 0xECC6F0177F0CCDE2, 0x43C1FCC7169E67D3, memoryTracker->msvcrt_free      },
+        { 0xDA453E9BB2309BF6, 0xB13F111E4C0EA643, memoryTracker->msvcrt_msize     },
+        { 0x53E4A1AC095BE0F6, 0xD152CAB732698100, memoryTracker->ucrtbase_malloc  },
+        { 0x78B916AE84F7B39A, 0x32CF4F009411A2FB, memoryTracker->ucrtbase_calloc  },
+        { 0x732F61E2A8E95DFC, 0x4A40B46C41B074F5, memoryTracker->ucrtbase_realloc },
+        { 0x8C9673E7033C926C, 0x0BED866A2B82FABD, memoryTracker->ucrtbase_free    },
+        { 0x765FF1E84D3CA299, 0x2B93B5CE54D15111, memoryTracker->ucrtbase_msize   },
+        { 0x7749934E33C18703, 0xCFB41E32B03DC637, resourceTracker->WSAStartup     },
+        { 0x46C76E87C13DF670, 0x37B6B54E4B2FBECC, resourceTracker->WSACleanup     },
     };
 #elif _WIN32
     {
-        { 0xD15ACBB7, 0x2881CB25, memoryTracker->msvcrt_malloc      },
-        { 0xD34DACA0, 0xD69C094E, memoryTracker->msvcrt_calloc      },
-        { 0x644CBC49, 0x332496CD, memoryTracker->msvcrt_realloc     },
-        { 0xDFACD52A, 0xE56FB206, memoryTracker->msvcrt_free        },
-        { 0xB15ED11C, 0xEB107AD8, memoryTracker->msvcrt_msize       },
-        { 0xD475868A, 0x9A240ADB, memoryTracker->ucrtbase_malloc    },
-        { 0xC407B737, 0xBBA2D057, memoryTracker->ucrtbase_calloc    },
-        { 0xE8B6449C, 0x1AABE77E, memoryTracker->ucrtbase_realloc   },
-        { 0xCBF17F60, 0x205DDE4D, memoryTracker->ucrtbase_free      },
-        { 0x203FE479, 0xDE2A742F, memoryTracker->ucrtbase_msize     },
-        { 0x79796D6E, 0x6DBBA55C, resourceTracker->CreateFileA      },
-        { 0x0370C4B8, 0x76254EF3, resourceTracker->CreateFileW      },
-        { 0x629ADDFA, 0x749D1CC9, resourceTracker->FindFirstFileA   },
-        { 0x612273CD, 0x563EDF55, resourceTracker->FindFirstFileW   },
-        { 0x8C692AD6, 0xB63ECE85, resourceTracker->FindFirstFileExA },
-        { 0xE52EE07C, 0x6C2F10B6, resourceTracker->FindFirstFileExW },
-        { 0xCB5BD447, 0x49A6FC78, resourceTracker->CloseHandle      },
-        { 0x6CD807C4, 0x812C40E9, resourceTracker->FindClose        },
-        { 0xE487BC0B, 0x283C1684, resourceTracker->WSAStartup       },
-        { 0x175B553E, 0x541A996E, resourceTracker->WSACleanup       },
+        { 0xD15ACBB7, 0x2881CB25, memoryTracker->msvcrt_malloc    },
+        { 0xD34DACA0, 0xD69C094E, memoryTracker->msvcrt_calloc    },
+        { 0x644CBC49, 0x332496CD, memoryTracker->msvcrt_realloc   },
+        { 0xDFACD52A, 0xE56FB206, memoryTracker->msvcrt_free      },
+        { 0xB15ED11C, 0xEB107AD8, memoryTracker->msvcrt_msize     },
+        { 0xD475868A, 0x9A240ADB, memoryTracker->ucrtbase_malloc  },
+        { 0xC407B737, 0xBBA2D057, memoryTracker->ucrtbase_calloc  },
+        { 0xE8B6449C, 0x1AABE77E, memoryTracker->ucrtbase_realloc },
+        { 0xCBF17F60, 0x205DDE4D, memoryTracker->ucrtbase_free    },
+        { 0x203FE479, 0xDE2A742F, memoryTracker->ucrtbase_msize   },
+        { 0xE487BC0B, 0x283C1684, resourceTracker->WSAStartup     },
+        { 0x175B553E, 0x541A996E, resourceTracker->WSACleanup     },
     };
 #endif
     for (int i = 0; i < arrlen(hooks); i++)
@@ -1536,19 +1563,6 @@ static void* getLazyAPIHook(Runtime* runtime, void* proc)
             continue;
         }
         return hooks[i].hook;
-    }
-    return proc;
-}
-
-static void* replaceToIATHook(Runtime* runtime, void* proc)
-{
-    for (int i = 0; i < arrlen(runtime->IATHooks); i++)
-    {
-        if (proc != runtime->IATHooks[i].Proc)
-        {
-            continue;
-        }
-        return runtime->IATHooks[i].Hook;
     }
     return proc;
 }

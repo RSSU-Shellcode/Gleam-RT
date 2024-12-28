@@ -39,6 +39,10 @@ typedef struct {
     bool NotEraseInstruction;
 
     // API addresses
+    CreateMutexA_t        CreateMutexA;
+    CreateMutexW_t        CreateMutexW;
+    CreateEventA_t        CreateEventA;
+    CreateEventW_t        CreateEventW;
     CreateFileA_t         CreateFileA;
     CreateFileW_t         CreateFileW;
     FindFirstFileA_t      FindFirstFileA;
@@ -63,6 +67,14 @@ typedef struct {
 } ResourceTracker;
 
 // methods for IAT hooks
+HANDLE RT_CreateMutexA(POINTER lpMutexAttributes, BOOL bInitialOwner, LPCSTR lpName);
+HANDLE RT_CreateMutexW(POINTER lpMutexAttributes, BOOL bInitialOwner, LPCWSTR lpName);
+HANDLE RT_CreateEventA(
+    POINTER lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCSTR lpName
+);
+HANDLE RT_CreateEventW(
+    POINTER lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCWSTR lpName
+);
 HANDLE RT_CreateFileA(
     LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
     POINTER lpSecurityAttributes, DWORD dwCreationDisposition,
@@ -90,11 +102,16 @@ BOOL RT_FindClose(HANDLE hFindFile);
 int RT_WSAStartup(WORD wVersionRequired, POINTER lpWSAData);
 int RT_WSACleanup();
 
+// methods for user
+bool ResLockMutex(HANDLE hMutex);
+bool ResUnlockMutex(HANDLE hMutex);
+
 // methods for runtime
 bool  RT_Lock();
 bool  RT_Unlock();
 errno RT_Encrypt();
 errno RT_Decrypt();
+errno RT_FreeAll();
 errno RT_Clean();
 
 // hard encoded address in getTrackerPointer for replacement
@@ -156,6 +173,10 @@ ResourceTracker_M* InitResourceTracker(Context* context)
     // create methods for tracker
     ResourceTracker_M* module = (ResourceTracker_M*)moduleAddr;
     // Windows API hooks
+    module->CreateMutexA     = GetFuncAddr(&RT_CreateMutexA);
+    module->CreateMutexW     = GetFuncAddr(&RT_CreateMutexW);
+    module->CreateEventA     = GetFuncAddr(&RT_CreateEventA);
+    module->CreateEventW     = GetFuncAddr(&RT_CreateEventW);
     module->CreateFileA      = GetFuncAddr(&RT_CreateFileA);
     module->CreateFileW      = GetFuncAddr(&RT_CreateFileW);
     module->FindFirstFileA   = GetFuncAddr(&RT_FindFirstFileA);
@@ -184,6 +205,10 @@ static bool initTrackerAPI(ResourceTracker* tracker, Context* context)
     winapi list[] =
 #ifdef _WIN64
     {
+        { 0xBE6B0C7A1989DA3F, 0x8709FD5F025268A3 }, // CreateMutexA
+        { 0x2E98327F9F2AE9E4, 0x0CA92ECD20195756 }, // CreateMutexW
+        { 0x9674DB87FD1910B4, 0xFD2DAA24B68F47BA }, // CreateEventA
+        { 0xD61926485F233211, 0xC188F868A19D7BBB }, // CreateEventW
         { 0x31399C47B70A8590, 0x5C59C3E176954594 }, // CreateFileA
         { 0xD1B5E30FA8812243, 0xFD9A53B98C9A437E }, // CreateFileW
         { 0x60041DBB2B0D19DF, 0x7BD2C85D702B4DDC }, // FindFirstFileA
@@ -194,6 +219,10 @@ static bool initTrackerAPI(ResourceTracker* tracker, Context* context)
     };
 #elif _WIN32
     {
+        { 0xD62A0D2B, 0x4E5739E6 }, // CreateMutexA
+        { 0xC3AD063F, 0x38B9DD21 }, // CreateMutexW
+        { 0xAEC1E87F, 0x3673CCA7 }, // CreateEventA
+        { 0xAAEAB0D5, 0xE49D9F91 }, // CreateEventW
         { 0x0BB8EEBE, 0x28E70E8D }, // CreateFileA
         { 0x2CB7048A, 0x76AC9783 }, // CreateFileW
         { 0x131B6345, 0x65478818 }, // FindFirstFileA
@@ -212,13 +241,17 @@ static bool initTrackerAPI(ResourceTracker* tracker, Context* context)
         }
         list[i].proc = proc;
     }
-    tracker->CreateFileA      = list[0x00].proc;
-    tracker->CreateFileW      = list[0x01].proc;
-    tracker->FindFirstFileA   = list[0x02].proc;
-    tracker->FindFirstFileW   = list[0x03].proc;
-    tracker->FindFirstFileExA = list[0x04].proc;
-    tracker->FindFirstFileExW = list[0x05].proc;
-    tracker->FindClose        = list[0x06].proc;
+    tracker->CreateMutexA     = list[0x00].proc;
+    tracker->CreateMutexW     = list[0x01].proc;
+    tracker->CreateEventA     = list[0x02].proc;
+    tracker->CreateEventW     = list[0x03].proc;
+    tracker->CreateFileA      = list[0x04].proc;
+    tracker->CreateFileW      = list[0x05].proc;
+    tracker->FindFirstFileA   = list[0x06].proc;
+    tracker->FindFirstFileW   = list[0x07].proc;
+    tracker->FindFirstFileExA = list[0x08].proc;
+    tracker->FindFirstFileExW = list[0x09].proc;
+    tracker->FindClose        = list[0x0A].proc;
 
     tracker->CloseHandle         = context->CloseHandle;
     tracker->ReleaseMutex        = context->ReleaseMutex;
@@ -336,12 +369,103 @@ static ResourceTracker* getTrackerPointer()
 #pragma optimize("", on)
 
 __declspec(noinline)
+HANDLE RT_CreateMutexA(POINTER lpMutexAttributes, BOOL bInitialOwner, LPCSTR lpName)
+{
+    ResourceTracker* tracker = getTrackerPointer();
+
+    if (!RT_Lock())
+    {
+        return NULL;
+    }
+
+    HANDLE hMutex  = NULL;
+    errno  lastErr = NO_ERROR;
+    for (;;)
+    {
+        hMutex = tracker->CreateMutexA(lpMutexAttributes, bInitialOwner, lpName);
+        if (hMutex == NULL)
+        {
+            lastErr = GetLastErrno();
+            break;
+        }
+        if (!addHandle(tracker, hMutex, 123))
+        {
+            lastErr = ERR_RESOURCE_ADD_MUTEX;
+            break;
+        }
+        break;
+    }
+
+    dbg_log("[resource]", "CreateMutexA: 0x%zu", hMutex);
+
+    if (!RT_Unlock())
+    {
+        return NULL;
+    }
+
+    SetLastErrno(lastErr);
+    return hMutex;
+}
+
+__declspec(noinline)
+HANDLE RT_CreateMutexW(POINTER lpMutexAttributes, BOOL bInitialOwner, LPCWSTR lpName)
+{
+    ResourceTracker* tracker = getTrackerPointer();
+
+    if (!RT_Lock())
+    {
+        return NULL;
+    }
+
+    HANDLE hMutex  = NULL;
+    errno  lastErr = NO_ERROR;
+    for (;;)
+    {
+        hMutex = tracker->CreateMutexW(lpMutexAttributes, bInitialOwner, lpName);
+        if (hMutex == NULL)
+        {
+            lastErr = GetLastErrno();
+            break;
+        }
+        if (!addHandle(tracker, hMutex, 123))
+        {
+            lastErr = ERR_RESOURCE_ADD_MUTEX;
+            break;
+        }
+        break;
+    }
+
+    dbg_log("[resource]", "CreateMutexW: 0x%zu", hMutex);
+
+    if (!RT_Unlock())
+    {
+        return NULL;
+    }
+
+    SetLastErrno(lastErr);
+    return hMutex;
+}
+
+__declspec(noinline)
+HANDLE RT_CreateEventA(
+    POINTER lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCSTR lpName
+){
+
+}
+
+__declspec(noinline)
+HANDLE RT_CreateEventW(
+    POINTER lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCWSTR lpName
+){
+
+}
+
+__declspec(noinline)
 HANDLE RT_CreateFileA(
     LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
     POINTER lpSecurityAttributes, DWORD dwCreationDisposition,
     DWORD dwFlagsAndAttributes, HANDLE hTemplateFile
-)
-{
+){
     ResourceTracker* tracker = getTrackerPointer();
 
     if (!RT_Lock())
@@ -375,10 +499,6 @@ HANDLE RT_CreateFileA(
 
     if (!RT_Unlock())
     {
-        if (success)
-        {
-            tracker->CloseHandle(hFile);
-        }
         return INVALID_HANDLE_VALUE;
     }
     if (!success)
@@ -393,8 +513,7 @@ HANDLE RT_CreateFileW(
     LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
     POINTER lpSecurityAttributes, DWORD dwCreationDisposition,
     DWORD dwFlagsAndAttributes, HANDLE hTemplateFile
-)
-{
+){
     ResourceTracker* tracker = getTrackerPointer();
 
     if (!RT_Lock())
@@ -428,10 +547,6 @@ HANDLE RT_CreateFileW(
 
     if (!RT_Unlock())
     {
-        if (success)
-        {
-            tracker->CloseHandle(hFile);
-        }
         return INVALID_HANDLE_VALUE;
     }
     if (!success)
@@ -474,10 +589,6 @@ HANDLE RT_FindFirstFileA(LPCSTR lpFileName, POINTER lpFindFileData)
 
     if (!RT_Unlock())
     {
-        if (success)
-        {
-            tracker->FindClose(hFindFile);
-        }
         return INVALID_HANDLE_VALUE;
     }
     if (!success)
@@ -520,10 +631,6 @@ HANDLE RT_FindFirstFileW(LPCWSTR lpFileName, POINTER lpFindFileData)
 
     if (!RT_Unlock())
     {
-        if (success)
-        {
-            tracker->FindClose(hFindFile);
-        }
         return INVALID_HANDLE_VALUE;
     }
     if (!success)
@@ -536,8 +643,7 @@ HANDLE RT_FindFirstFileW(LPCWSTR lpFileName, POINTER lpFindFileData)
 HANDLE RT_FindFirstFileExA(
     LPCSTR lpFileName, UINT fInfoLevelId, LPVOID lpFindFileData,
     UINT fSearchOp, LPVOID lpSearchFilter, DWORD dwAdditionalFlags
-)
-{
+){
     ResourceTracker* tracker = getTrackerPointer();
 
     if (!RT_Lock())
@@ -571,10 +677,6 @@ HANDLE RT_FindFirstFileExA(
 
     if (!RT_Unlock())
     {
-        if (success)
-        {
-            tracker->FindClose(hFindFile);
-        }
         return INVALID_HANDLE_VALUE;
     }
     if (!success)
@@ -587,8 +689,7 @@ HANDLE RT_FindFirstFileExA(
 HANDLE RT_FindFirstFileExW(
     LPCWSTR lpFileName, UINT fInfoLevelId, LPVOID lpFindFileData,
     UINT fSearchOp, LPVOID lpSearchFilter, DWORD dwAdditionalFlags
-)
-{
+){
     ResourceTracker* tracker = getTrackerPointer();
 
     if (!RT_Lock())
@@ -622,10 +723,6 @@ HANDLE RT_FindFirstFileExW(
 
     if (!RT_Unlock())
     {
-        if (success)
-        {
-            tracker->FindClose(hFindFile);
-        }
         return INVALID_HANDLE_VALUE;
     }
     if (!success)
@@ -841,6 +938,18 @@ int RT_WSACleanup()
 }
 
 __declspec(noinline)
+bool ResLockMutex(HANDLE hMutex)
+{
+
+}
+
+__declspec(noinline)
+bool ResUnlockMutex(HANDLE hMutex)
+{
+
+}
+
+__declspec(noinline)
 bool RT_Lock()
 {
     ResourceTracker* tracker = getTrackerPointer();
@@ -883,6 +992,12 @@ errno RT_Decrypt()
 
     dbg_log("[resource]", "handles: %zu", list->Len);
     return NO_ERROR;
+}
+
+__declspec(noinline)
+errno RT_FreeAll()
+{
+
 }
 
 __declspec(noinline)

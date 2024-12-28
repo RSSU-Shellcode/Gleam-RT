@@ -13,25 +13,50 @@
 #include "mod_resource.h"
 #include "debug.h"
 
+// 00，，，，，， types of close function
+// ，，0000，， functions about resource
+// ，，，，，，00 function suffix types
+
+#define TYPE_MASK 0xFF000000
+#define FUNC_MASK 0xFFFFFF00
+
 // function types about release handle
-#define TYPE_CLOSE_HANDLE 0x0100
-#define TYPE_FIND_CLOSE   0x0200
+#define TYPE_CLOSE_HANDLE 0x01000000
+#define TYPE_FIND_CLOSE   0x02000000
 
-// handles created by functions
-#define SRC_CREATE_FILE_A (TYPE_CLOSE_HANDLE|0x01)
-#define SRC_CREATE_FILE_W (TYPE_CLOSE_HANDLE|0x02)
+// major function types
+#define FUNC_CREATE_MUTEX (TYPE_CLOSE_HANDLE|0x00000100)
+#define FUNC_CREATE_EVENT (TYPE_CLOSE_HANDLE|0x00000200)
+#define FUNC_CREATE_FILE  (TYPE_CLOSE_HANDLE|0x00000300)
 
-#define SRC_FIND_FIRST_FILE_A    (TYPE_FIND_CLOSE|0x01)
-#define SRC_FIND_FIRST_FILE_W    (TYPE_FIND_CLOSE|0x02)
-#define SRC_FIND_FIRST_FILE_EX_A (TYPE_FIND_CLOSE|0x03)
-#define SRC_FIND_FIRST_FILE_EX_W (TYPE_FIND_CLOSE|0x04)
+#define FUNC_FIND_FIRST_FILE (TYPE_FIND_CLOSE|0x00000100)
+
+// source of handles created by functions
+#define SRC_CREATE_MUTEX_A    (FUNC_CREATE_MUTEX|0x01)
+#define SRC_CREATE_MUTEX_W    (FUNC_CREATE_MUTEX|0x02)
+#define SRC_CREATE_MUTEX_EX_A (FUNC_CREATE_MUTEX|0x03)
+#define SRC_CREATE_MUTEX_EX_W (FUNC_CREATE_MUTEX|0x04)
+
+#define SRC_CREATE_EVENT_A    (FUNC_CREATE_EVENT|0x01)
+#define SRC_CREATE_EVENT_W    (FUNC_CREATE_EVENT|0x02)
+#define SRC_CREATE_EVENT_EX_A (FUNC_CREATE_EVENT|0x03)
+#define SRC_CREATE_EVENT_EX_W (FUNC_CREATE_EVENT|0x04)
+
+#define SRC_CREATE_FILE_A (FUNC_CREATE_FILE|0x01)
+#define SRC_CREATE_FILE_W (FUNC_CREATE_FILE|0x02)
+
+#define SRC_FIND_FIRST_FILE_A    (FUNC_FIND_FIRST_FILE|0x01)
+#define SRC_FIND_FIRST_FILE_W    (FUNC_FIND_FIRST_FILE|0x02)
+#define SRC_FIND_FIRST_FILE_EX_A (FUNC_FIND_FIRST_FILE|0x03)
+#define SRC_FIND_FIRST_FILE_EX_W (FUNC_FIND_FIRST_FILE|0x04)
 
 // resource counters index
 #define CTR_WSA_STARTUP 0x0000
 
 typedef struct {
+    uint32 source;
     void*  handle;
-    uint16 source;
+    bool   locked;
 } handle;
 
 typedef struct {
@@ -126,8 +151,8 @@ static bool initTrackerAPI(ResourceTracker* tracker, Context* context);
 static bool updateTrackerPointer(ResourceTracker* tracker);
 static bool recoverTrackerPointer(ResourceTracker* tracker);
 static bool initTrackerEnvironment(ResourceTracker* tracker, Context* context);
-static bool addHandle(ResourceTracker* tracker, void* hObject, uint16 source);
-static void delHandle(ResourceTracker* tracker, void* hObject, uint16 type);
+static bool addHandle(ResourceTracker* tracker, void* hObject, uint32 source);
+static void delHandle(ResourceTracker* tracker, void* hObject, uint32 func);
 
 static void eraseTrackerMethods(Context* context);
 static void cleanTracker(ResourceTracker* tracker);
@@ -388,7 +413,7 @@ HANDLE RT_CreateMutexA(POINTER lpMutexAttributes, BOOL bInitialOwner, LPCSTR lpN
             lastErr = GetLastErrno();
             break;
         }
-        if (!addHandle(tracker, hMutex, 123))
+        if (!addHandle(tracker, hMutex, SRC_CREATE_MUTEX_A))
         {
             lastErr = ERR_RESOURCE_ADD_MUTEX;
             break;
@@ -427,7 +452,7 @@ HANDLE RT_CreateMutexW(POINTER lpMutexAttributes, BOOL bInitialOwner, LPCWSTR lp
             lastErr = GetLastErrno();
             break;
         }
-        if (!addHandle(tracker, hMutex, 123))
+        if (!addHandle(tracker, hMutex, SRC_CREATE_MUTEX_W))
         {
             lastErr = ERR_RESOURCE_ADD_MUTEX;
             break;
@@ -450,14 +475,84 @@ __declspec(noinline)
 HANDLE RT_CreateEventA(
     POINTER lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCSTR lpName
 ){
+    ResourceTracker* tracker = getTrackerPointer();
 
+    if (!RT_Lock())
+    {
+        return NULL;
+    }
+
+    HANDLE hEvent  = NULL;
+    errno  lastErr = NO_ERROR;
+    for (;;)
+    {
+        hEvent = tracker->CreateEventA(
+            lpEventAttributes, bManualReset, bInitialState, lpName
+        );
+        if (hEvent == NULL)
+        {
+            lastErr = GetLastErrno();
+            break;
+        }
+        if (!addHandle(tracker, hEvent, SRC_CREATE_EVENT_A))
+        {
+            lastErr = ERR_RESOURCE_ADD_EVENT;
+            break;
+        }
+        break;
+    }
+
+    dbg_log("[resource]", "CreateEventA: 0x%zu", hEvent);
+
+    if (!RT_Unlock())
+    {
+        return NULL;
+    }
+
+    SetLastErrno(lastErr);
+    return hEvent;
 }
 
 __declspec(noinline)
 HANDLE RT_CreateEventW(
     POINTER lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCWSTR lpName
 ){
+    ResourceTracker* tracker = getTrackerPointer();
 
+    if (!RT_Lock())
+    {
+        return NULL;
+    }
+
+    HANDLE hEvent  = NULL;
+    errno  lastErr = NO_ERROR;
+    for (;;)
+    {
+        hEvent = tracker->CreateEventW(
+            lpEventAttributes, bManualReset, bInitialState, lpName
+        );
+        if (hEvent == NULL)
+        {
+            lastErr = GetLastErrno();
+            break;
+        }
+        if (!addHandle(tracker, hEvent, SRC_CREATE_EVENT_W))
+        {
+            lastErr = ERR_RESOURCE_ADD_EVENT;
+            break;
+        }
+        break;
+    }
+
+    dbg_log("[resource]", "CreateEventW: 0x%zu", hEvent);
+
+    if (!RT_Unlock())
+    {
+        return NULL;
+    }
+
+    SetLastErrno(lastErr);
+    return hEvent;
 }
 
 __declspec(noinline)
@@ -794,43 +889,32 @@ BOOL RT_FindClose(HANDLE hFindFile)
     return success;
 };
 
-static bool addHandle(ResourceTracker* tracker, void* hObject, uint16 source)
+static bool addHandle(ResourceTracker* tracker, void* hObject, uint32 source)
 {
-    if (hObject == NULL)
-    {
-        return false;
-    }
+    List* handles = &tracker->Handles;
 
-    List*  handles = &tracker->Handles;
-    handle handle  = {
-        .handle = hObject,
+    handle handle = {
         .source = source,
+        .handle = hObject,
+        .locked = false,
     };
-    if (!List_Insert(handles, &handle))
-    {
-        tracker->CloseHandle(hObject);
-        return false;
-    }
-    return true;
+    return List_Insert(handles, &handle);
 };
 
-static void delHandle(ResourceTracker* tracker, void* hObject, uint16 type)
+static void delHandle(ResourceTracker* tracker, void* hObject, uint32 func)
 {
-    if (hObject == NULL)
-    {
-        return;
-    }
-
     List* handles = &tracker->Handles;
-    uint  index   = 0;
-    for (uint num = 0; num < handles->Len; index++)
+
+    uint len = handles->Len;
+    uint idx = 0;
+    for (uint num = 0; num < len; idx++)
     {
-        handle* handle = List_Get(handles, index);
-        if (handle->handle == NULL && handle->source == 0)
+        handle* handle = List_Get(handles, idx);
+        if (handle->source == 0)
         {
             continue;
         }
-        if ((handle->source & type) != type)
+        if ((handle->source & FUNC_MASK) != func)
         {
             num++;
             continue;
@@ -840,7 +924,7 @@ static void delHandle(ResourceTracker* tracker, void* hObject, uint16 type)
             num++;
             continue;
         }
-        List_Delete(handles, index);
+        List_Delete(handles, idx);
         return;
     }
 };

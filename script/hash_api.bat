@@ -103,6 +103,10 @@ hash_api -fmt 64 -conc -func TlsFree
 echo.
 
 echo [Resource Tracker]
+hash_api -fmt 64 -conc -func CreateMutexA
+hash_api -fmt 64 -conc -func CreateMutexW
+hash_api -fmt 64 -conc -func CreateEventA
+hash_api -fmt 64 -conc -func CreateEventW
 hash_api -fmt 64 -conc -func CreateFileA
 hash_api -fmt 64 -conc -func CreateFileW
 hash_api -fmt 64 -conc -func FindFirstFileA
@@ -243,6 +247,10 @@ hash_api -fmt 32 -conc -func TlsFree
 echo.
 
 echo [Resource Tracker]
+hash_api -fmt 32 -conc -func CreateMutexA
+hash_api -fmt 32 -conc -func CreateMutexW
+hash_api -fmt 32 -conc -func CreateEventA
+hash_api -fmt 32 -conc -func CreateEventW
 hash_api -fmt 32 -conc -func CreateFileA
 hash_api -fmt 32 -conc -func CreateFileW
 hash_api -fmt 32 -conc -func FindFirstFileA

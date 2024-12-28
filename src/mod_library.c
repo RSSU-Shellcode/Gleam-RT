@@ -639,7 +639,7 @@ static bool setModuleLocker(HMODULE hModule, bool lock)
     {
         return false;
     }
-    // unlock module
+    // set module locker
     module* module = List_Get(modules, idx);
     module->locked = lock;
     return true;
@@ -708,7 +708,13 @@ errno LT_FreeAll()
         {
             continue;
         }
-        if (module->hModule != MODULE_UNLOADED && !module->locked)
+        // skip locked module
+        if (module->locked)
+        {
+            num++;
+            continue;
+        }
+        if (module->hModule != MODULE_UNLOADED)
         {
             if (!cleanModule(tracker, module))
             {

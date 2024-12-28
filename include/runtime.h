@@ -35,6 +35,12 @@ typedef bool  (*MemUnlockRegion_t)(LPVOID address);
 // about thread tracker
 typedef HANDLE (*ThdNew_t)(void* address, void* parameter, bool track);
 typedef void   (*ThdExit_t)();
+typedef bool   (*ThdLockThread_t)(DWORD id);
+typedef bool   (*ThdUnlockThread_t)(DWORD id);
+
+// about resource tracker
+typedef bool (*ResLockMutex_t)(HANDLE hMutex);
+typedef bool (*ResUnlockMutex_t)(HANDLE hMutex);
 
 // about argument store
 typedef bool (*GetArgValue_t)(uint index, void* value, uint32* size);
@@ -174,7 +180,15 @@ typedef struct {
         ThdNew_t  New;
         ThdExit_t Exit;
         Sleep_t   Sleep;
+
+        ThdLockThread_t   Lock;
+        ThdUnlockThread_t Unlock;
     } Thread;
+
+    struct {
+        ResLockMutex_t   LockMutex;
+        ResUnlockMutex_t UnlockMutex;
+    } Resource;
 
     struct {
         GetArgValue_t   GetValue;

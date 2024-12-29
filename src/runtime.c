@@ -1688,30 +1688,36 @@ errno RT_ExitProcess(UINT uExitCode)
     {
         return errlm;
     }
-    
+
     if (uExitCode == 0)
     {
         // TODO disable watchdog ?
     }
 
+    // clean runtime modules
     errno err = NO_ERROR;
+    typedef errno (*submodule_t)();
+    submodule_t submodules[] = 
+    {
+        // first kill all threads
+        runtime->ThreadTracker->KillAll,
 
-    errno etk = runtime->ThreadTracker->KillAll();
-    if (etk != NO_ERROR && err == NO_ERROR)
-    {
-        err = etk;
-    }
-    // TODO add release objects
+        // high-level modules
+        runtime->WinHTTP->Clean,
 
-    errno elf = runtime->LibraryTracker->FreeAll();
-    if (elf != NO_ERROR && err == NO_ERROR)
+        // runtime submodules
+        runtime->ResourceTracker->FreeAll,
+        runtime->MemoryTracker->FreeAll,
+        runtime->LibraryTracker->FreeAll,
+    };
+    errno enmod = NO_ERROR;
+    for (int i = 0; i < arrlen(submodules); i++)
     {
-        err = elf;
-    }
-    errno etf = runtime->MemoryTracker->FreeAll();
-    if (etf != NO_ERROR && err == NO_ERROR)
-    {
-        err = etf;
+        enmod = submodules[i]();
+        if (enmod != NO_ERROR && err == NO_ERROR)
+        {
+            err = enmod;
+        }
     }
 
     errlm = RT_unlock_mods();
@@ -2199,13 +2205,9 @@ errno RT_Exit()
 
         // runtime submodules
         runtime->ArgumentStore->Clean,
-        runtime->LibraryTracker->Clean,
-
-        // maybe some librarys will use the tracked
-        // memory page or resource, so clean resource
-        // and memory page after clean library.
         runtime->ResourceTracker->Clean,
         runtime->MemoryTracker->Clean,
+        runtime->LibraryTracker->Clean,
     };
     errno enmod = NO_ERROR;
     for (int i = 0; i < arrlen(submodules); i++)

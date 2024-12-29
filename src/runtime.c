@@ -1705,10 +1705,14 @@ errno RT_ExitProcess(UINT uExitCode)
         // high-level modules
         runtime->WinHTTP->Clean,
 
+        // maybe some librarys will use the tracked
+        // memory page or heap, so free memory after
+        // free all library.
+
         // runtime submodules
         runtime->ResourceTracker->FreeAll,
-        runtime->MemoryTracker->FreeAll,
         runtime->LibraryTracker->FreeAll,
+        runtime->MemoryTracker->FreeAll,
     };
     errno enmod = NO_ERROR;
     for (int i = 0; i < arrlen(submodules); i++)
@@ -2203,11 +2207,15 @@ errno RT_Exit()
         runtime->WinFile->Uninstall,
         runtime->WinBase->Uninstall,
 
+        // maybe some librarys will use the tracked
+        // memory page or heap, so free memory after
+        // free all library.
+
         // runtime submodules
         runtime->ArgumentStore->Clean,
         runtime->ResourceTracker->Clean,
-        runtime->MemoryTracker->Clean,
         runtime->LibraryTracker->Clean,
+        runtime->MemoryTracker->Clean,
     };
     errno enmod = NO_ERROR;
     for (int i = 0; i < arrlen(submodules); i++)

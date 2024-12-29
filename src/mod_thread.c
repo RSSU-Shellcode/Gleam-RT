@@ -601,8 +601,10 @@ static bool addThread(ThreadTracker* tracker, DWORD threadID, HANDLE hThread)
         return false;
     }
     thread thread = {
-        .threadID = threadID,
-        .hThread  = dupHandle,
+        .threadID   = threadID,
+        .hThread    = dupHandle,
+        .numSuspend = 0,
+        .locked     = false,
     };
     if (!List_Insert(&tracker->Threads, &thread))
     {

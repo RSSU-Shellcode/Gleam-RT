@@ -542,6 +542,8 @@ static bool addModule(LibraryTracker* tracker, HMODULE hModule)
     List*  modules = &tracker->Modules;
     module mod = {
         .hModule = hModule,
+        .counter = 0,
+        .locked  = false,
     };
     uint index;
     if (List_Find(modules, &mod, sizeof(mod.hModule), &index))

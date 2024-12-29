@@ -590,30 +590,6 @@ static void* camouflageStartAddress(uint seed)
     return (void*)begin;
 }
 
-static bool addThread(ThreadTracker* tracker, DWORD threadID, HANDLE hThread)
-{
-    // duplicate thread handle
-    HANDLE dupHandle;
-    if (!tracker->DuplicateHandle(
-        CURRENT_PROCESS, hThread, CURRENT_PROCESS, &dupHandle,
-        0, false, DUPLICATE_SAME_ACCESS
-    )){
-        return false;
-    }
-    thread thread = {
-        .threadID   = threadID,
-        .hThread    = dupHandle,
-        .numSuspend = 0,
-        .locked     = false,
-    };
-    if (!List_Insert(&tracker->Threads, &thread))
-    {
-        tracker->CloseHandle(dupHandle);
-        return false;
-    }
-    return true;
-}
-
 __declspec(noinline)
 void TT_ExitThread(DWORD dwExitCode)
 {
@@ -637,24 +613,6 @@ void TT_ExitThread(DWORD dwExitCode)
         return;
     }
     tracker->ExitThread(dwExitCode);
-}
-
-static void delThread(ThreadTracker* tracker, DWORD threadID)
-{
-    List* threads = &tracker->Threads;
-    thread thread = {
-        .threadID = threadID,
-    };
-    uint idx;
-    if (!List_Find(threads, &thread, sizeof(thread.threadID), &idx))
-    {
-        return;
-    }
-    if (!List_Delete(threads, idx))
-    {
-        return;
-    }
-    tracker->CloseHandle(thread.hThread);
 }
 
 __declspec(noinline)
@@ -772,6 +730,48 @@ BOOL TT_TerminateThread(HANDLE hThread, DWORD dwExitCode)
     return tracker->TerminateThread(hThread, dwExitCode);
 }
 
+static bool addThread(ThreadTracker* tracker, DWORD threadID, HANDLE hThread)
+{
+    // duplicate thread handle
+    HANDLE dupHandle;
+    if (!tracker->DuplicateHandle(
+        CURRENT_PROCESS, hThread, CURRENT_PROCESS,
+        &dupHandle, 0, false, DUPLICATE_SAME_ACCESS
+    )){
+        return false;
+    }
+    thread thread = {
+        .threadID   = threadID,
+        .hThread    = dupHandle,
+        .numSuspend = 0,
+        .locked     = false,
+    };
+    if (!List_Insert(&tracker->Threads, &thread))
+    {
+        tracker->CloseHandle(dupHandle);
+        return false;
+    }
+    return true;
+}
+
+static void delThread(ThreadTracker* tracker, DWORD threadID)
+{
+    List* threads = &tracker->Threads;
+    thread thread = {
+        .threadID = threadID,
+    };
+    uint idx;
+    if (!List_Find(threads, &thread, sizeof(thread.threadID), &idx))
+    {
+        return;
+    }
+    if (!List_Delete(threads, idx))
+    {
+        return;
+    }
+    tracker->CloseHandle(thread.hThread);
+}
+
 __declspec(noinline)
 DWORD TT_TlsAlloc()
 {
@@ -815,19 +815,6 @@ DWORD TT_TlsAlloc()
     return index;
 }
 
-static bool addTLSIndex(ThreadTracker* tracker, DWORD index)
-{
-    // for prevent zero index and conflict in List
-    DWORD idx = index + 1;
-
-    if (!List_Insert(&tracker->TLSIndex, &idx))
-    {
-        tracker->TlsFree(index);
-        return false;
-    }
-    return true;
-}
-
 __declspec(noinline)
 BOOL TT_TlsFree(DWORD dwTlsIndex)
 {
@@ -863,6 +850,19 @@ BOOL TT_TlsFree(DWORD dwTlsIndex)
     return success;
 }
 
+static bool addTLSIndex(ThreadTracker* tracker, DWORD index)
+{
+    // for prevent zero index and conflict in List
+    DWORD idx = index + 1;
+
+    if (!List_Insert(&tracker->TLSIndex, &idx))
+    {
+        tracker->TlsFree(index);
+        return false;
+    }
+    return true;
+}
+
 static void delTLSIndex(ThreadTracker* tracker, DWORD index)
 {
     // for prevent zero index and conflict in List
@@ -892,36 +892,16 @@ void TT_ThdExit(uint32 code)
 __declspec(noinline)
 bool TT_LockThread(DWORD id)
 {
-    if (!TT_Lock())
-    {
-        return false;
-    }
-
     bool success = setThreadLocker(id, true);
     dbg_log("[thread]", "lock thread: %d", id);
-
-    if (!TT_Unlock())
-    {
-        return false;
-    }
     return success;
 }
 
 __declspec(noinline)
 bool TT_UnlockThread(DWORD id)
 {
-    if (!TT_Lock())
-    {
-        return false;
-    }
-
     bool success = setThreadLocker(id, false);
     dbg_log("[thread]", "unlock thread: %d", id);
-
-    if (!TT_Unlock())
-    {
-        return false;
-    }
     return success;
 }
 
@@ -930,21 +910,36 @@ static bool setThreadLocker(DWORD id, bool lock)
 {
     ThreadTracker* tracker = getTrackerPointer();
 
-    List* threads = &tracker->Threads;
-
-    // search thread list
-    thread thd = {
-        .threadID = id,
-    };
-    uint idx;
-    if (!List_Find(threads, &thd, sizeof(thd.threadID), &idx))
+    if (!TT_Lock())
     {
         return false;
     }
-    // set thread locker
-    thread* thread = List_Get(threads, idx);
-    thread->locked = lock;
-    return true;
+
+    bool success = false;
+    for (;;)
+    {
+        List* threads = &tracker->Threads;
+        // search thread list
+        thread thd = {
+            .threadID = id,
+        };
+        uint idx;
+        if (!List_Find(threads, &thd, sizeof(thd.threadID), &idx))
+        {
+            break;
+        }
+        // set thread locker
+        thread* thread = List_Get(threads, idx);
+        thread->locked = lock;
+        success = true;
+        break;
+    }
+
+    if (!TT_Unlock())
+    {
+        return false;
+    }
+    return success;
 }
 
 __declspec(noinline)

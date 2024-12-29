@@ -538,21 +538,21 @@ static bool addModule(LibraryTracker* tracker, HMODULE hModule)
     {
         return false;
     }
+    List* modules = &tracker->Modules;
     // check this module is already exists
-    List*  modules = &tracker->Modules;
     module mod = {
         .hModule = hModule,
         .counter = 0,
         .locked  = false,
     };
-    uint index;
-    if (List_Find(modules, &mod, sizeof(mod.hModule), &index))
+    uint idx;
+    if (List_Find(modules, &mod, sizeof(mod.hModule), &idx))
     {
-        module* module = List_Get(modules, index);
+        module* module = List_Get(modules, idx);
         module->counter++;
         return true;
     }
-    // if not exist, add new item
+    // if it is not exist, add new item
     mod.counter = 1;
     if (!List_Insert(modules, &mod))
     {
@@ -568,17 +568,17 @@ static bool delModule(LibraryTracker* tracker, HMODULE hModule)
     {
         return false;
     }
+    List* modules = &tracker->Modules;
     // search module and decrease counter
-    List*  modules = &tracker->Modules;
     module mod = {
         .hModule = hModule,
     };
-    uint index;
-    if (!List_Find(modules, &mod, sizeof(mod.hModule), &index))
+    uint idx;
+    if (!List_Find(modules, &mod, sizeof(mod.hModule), &idx))
     {
         return false;
     }
-    module* module = List_Get(modules, index);
+    module* module = List_Get(modules, idx);
     module->counter--;
     // mark it is deleted and reserve space
     // for free the loaded DLL in reverse order
@@ -592,36 +592,16 @@ static bool delModule(LibraryTracker* tracker, HMODULE hModule)
 __declspec(noinline)
 bool LT_LockModule(HMODULE hModule)
 {
-    if (!LT_Lock())
-    {
-        return false;
-    }
-
     bool success = setModuleLocker(hModule, true);
     dbg_log("[library]", "lock module: 0x%zX", hModule);
-
-    if (!LT_Unlock())
-    {
-        return false;
-    }
     return success;
 }
 
 __declspec(noinline)
 bool LT_UnlockModule(HMODULE hModule)
 {
-    if (!LT_Lock())
-    {
-        return false;
-    }
-
     bool success = setModuleLocker(hModule, false);
     dbg_log("[library]", "unlock module: 0x%zX", hModule);
-
-    if (!LT_Unlock())
-    {
-        return false;
-    }
     return success;
 }
 
@@ -630,21 +610,36 @@ static bool setModuleLocker(HMODULE hModule, bool lock)
 {
     LibraryTracker* tracker = getTrackerPointer();
 
-    List* modules = &tracker->Modules;
-
-    // search module list
-    module mod = {
-        .hModule = hModule,
-    };
-    uint idx;
-    if (!List_Find(modules, &mod, sizeof(mod.hModule), &idx))
+    if (!LT_Lock())
     {
         return false;
     }
-    // set module locker
-    module* module = List_Get(modules, idx);
-    module->locked = lock;
-    return true;
+
+    bool success = false;
+    for (;;)
+    {
+        List* modules = &tracker->Modules;
+        // search module list
+        module mod = {
+            .hModule = hModule,
+        };
+        uint idx;
+        if (!List_Find(modules, &mod, sizeof(mod.hModule), &idx))
+        {
+            break;
+        }
+        // set module locker
+        module* module = List_Get(modules, idx);
+        module->locked = lock;
+        success = true;
+        break;
+    }
+
+    if (!LT_Unlock())
+    {
+        return false;
+    }
+    return success;
 }
 
 __declspec(noinline)

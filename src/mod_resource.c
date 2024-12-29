@@ -152,7 +152,7 @@ static bool updateTrackerPointer(ResourceTracker* tracker);
 static bool recoverTrackerPointer(ResourceTracker* tracker);
 static bool initTrackerEnvironment(ResourceTracker* tracker, Context* context);
 static bool addHandle(ResourceTracker* tracker, void* hObject, uint32 source);
-static void delHandle(ResourceTracker* tracker, void* hObject, uint32 func);
+static void delHandle(ResourceTracker* tracker, void* hObject, uint32 type);
 static bool setHandleLocker(HANDLE hObject, uint32 func, bool lock);
 
 static void eraseTrackerMethods(Context* context);
@@ -902,7 +902,7 @@ static bool addHandle(ResourceTracker* tracker, void* hObject, uint32 source)
     return List_Insert(handles, &handle);
 };
 
-static void delHandle(ResourceTracker* tracker, void* hObject, uint32 func)
+static void delHandle(ResourceTracker* tracker, void* hObject, uint32 type)
 {
     List* handles = &tracker->Handles;
 
@@ -915,7 +915,7 @@ static void delHandle(ResourceTracker* tracker, void* hObject, uint32 func)
         {
             continue;
         }
-        if ((handle->source & FUNC_MASK) != func)
+        if ((handle->source & TYPE_MASK) != type)
         {
             num++;
             continue;
@@ -1176,6 +1176,11 @@ errno RT_FreeAll()
         }
         num++;
     }
+
+    // about WSACleanup
+    errno = doWSACleanup(tracker);
+
+    dbg_log("[resource]", "handles: %zu", handles->Len);
     return errno;
 }
 
@@ -1184,7 +1189,7 @@ errno RT_Clean()
 {
     ResourceTracker* tracker = getTrackerPointer();
 
-    errno firstErr = NO_ERROR;
+    errno err = NO_ERROR;
     
     // close all tracked handles
     List* handles = &tracker->Handles;
@@ -1201,20 +1206,20 @@ errno RT_Clean()
         switch (handle->source & TYPE_MASK)
         {
         case TYPE_CLOSE_HANDLE:
-            if (!tracker->CloseHandle(handle->handle) && firstErr == NO_ERROR)
+            if (!tracker->CloseHandle(handle->handle) && err == NO_ERROR)
             {
-                firstErr = ERR_RESOURCE_CLOSE_HANDLE;
+                err = ERR_RESOURCE_CLOSE_HANDLE;
             }
             break;
         case TYPE_FIND_CLOSE:
-            if (!tracker->FindClose(handle->handle) && firstErr == NO_ERROR)
+            if (!tracker->FindClose(handle->handle) && err == NO_ERROR)
             {
-                firstErr = ERR_RESOURCE_FIND_CLOSE;
+                err = ERR_RESOURCE_FIND_CLOSE;
             }
             break;
         default:
             // must cover previous errno
-            firstErr = ERR_RESOURCE_INVALID_SRC_TYPE;
+            err = ERR_RESOURCE_INVALID_SRC_TYPE;
             break;
         }
         num++;
@@ -1222,33 +1227,35 @@ errno RT_Clean()
 
     // clean handle list
     RandBuffer(handles->Data, List_Size(handles));
-    if (!List_Free(handles) && firstErr == NO_ERROR)
+    if (!List_Free(handles) && err == NO_ERROR)
     {
-        firstErr = ERR_RESOURCE_FREE_HANDLE_LIST;
+        err = ERR_RESOURCE_FREE_HANDLE_LIST;
     }
 
     // about WSACleanup
-    errno err = doWSACleanup(tracker);
-    if (err != NO_ERROR && firstErr == NO_ERROR)
+    errno ewc = doWSACleanup(tracker);
+    if (ewc != NO_ERROR && err == NO_ERROR)
     {
-        firstErr = err;
+        err = ewc;
     }
 
     // close mutex
-    if (!tracker->CloseHandle(tracker->hMutex) && firstErr == NO_ERROR)
+    if (!tracker->CloseHandle(tracker->hMutex) && err == NO_ERROR)
     {
-        firstErr = ERR_RESOURCE_CLOSE_MUTEX;
+        err = ERR_RESOURCE_CLOSE_MUTEX;
     }
 
     // recover instructions
     if (tracker->NotEraseInstruction)
     {
-        if (!recoverTrackerPointer(tracker) && firstErr == NO_ERROR)
+        if (!recoverTrackerPointer(tracker) && err == NO_ERROR)
         {
-            firstErr = ERR_RESOURCE_RECOVER_INST;
+            err = ERR_RESOURCE_RECOVER_INST;
         }
     }
-    return firstErr;
+
+    dbg_log("[resource]", "handles: %zu", handles->Len);
+    return err;
 }
 
 static errno doWSACleanup(ResourceTracker* tracker)

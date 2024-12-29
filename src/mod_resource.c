@@ -128,8 +128,8 @@ int RT_WSAStartup(WORD wVersionRequired, POINTER lpWSAData);
 int RT_WSACleanup();
 
 // methods for user
-bool ResLockMutex(HANDLE hMutex);
-bool ResUnlockMutex(HANDLE hMutex);
+bool RT_LockMutex(HANDLE hMutex);
+bool RT_UnlockMutex(HANDLE hMutex);
 
 // methods for runtime
 bool  RT_Lock();
@@ -153,9 +153,12 @@ static bool recoverTrackerPointer(ResourceTracker* tracker);
 static bool initTrackerEnvironment(ResourceTracker* tracker, Context* context);
 static bool addHandle(ResourceTracker* tracker, void* hObject, uint32 source);
 static void delHandle(ResourceTracker* tracker, void* hObject, uint32 func);
+static bool setHandleLocker(HANDLE hObject, uint32 func, bool lock);
 
 static void eraseTrackerMethods(Context* context);
 static void cleanTracker(ResourceTracker* tracker);
+
+static errno doWSACleanup(ResourceTracker* tracker);
 
 ResourceTracker_M* InitResourceTracker(Context* context)
 {
@@ -212,11 +215,15 @@ ResourceTracker_M* InitResourceTracker(Context* context)
     module->FindClose        = GetFuncAddr(&RT_FindClose);
     module->WSAStartup       = GetFuncAddr(&RT_WSAStartup);
     module->WSACleanup       = GetFuncAddr(&RT_WSACleanup);
+    // methods for user
+    module->LockMutex   = GetFuncAddr(&RT_LockMutex);
+    module->UnlockMutex = GetFuncAddr(&RT_UnlockMutex);
     // methods for runtime
     module->Lock    = GetFuncAddr(&RT_Lock);
     module->Unlock  = GetFuncAddr(&RT_Unlock);
     module->Encrypt = GetFuncAddr(&RT_Encrypt);
     module->Decrypt = GetFuncAddr(&RT_Decrypt);
+    module->FreeAll = GetFuncAddr(&RT_FreeAll);
     module->Clean   = GetFuncAddr(&RT_Clean);
     return module;
 }
@@ -232,8 +239,8 @@ static bool initTrackerAPI(ResourceTracker* tracker, Context* context)
     {
         { 0xBE6B0C7A1989DA3F, 0x8709FD5F025268A3 }, // CreateMutexA
         { 0x2E98327F9F2AE9E4, 0x0CA92ECD20195756 }, // CreateMutexW
-        { 0x9674DB87FD1910B4, 0xFD2DAA24B68F47BA }, // CreateEventA
-        { 0xD61926485F233211, 0xC188F868A19D7BBB }, // CreateEventW
+        { 0x7F663FAF25E1C782, 0x4A44C351427113CD }, // CreateEventA
+        { 0x923A0A427C8A4AF7, 0xF608FFAFE8DA485F }, // CreateEventW
         { 0x31399C47B70A8590, 0x5C59C3E176954594 }, // CreateFileA
         { 0xD1B5E30FA8812243, 0xFD9A53B98C9A437E }, // CreateFileW
         { 0x60041DBB2B0D19DF, 0x7BD2C85D702B4DDC }, // FindFirstFileA
@@ -246,8 +253,8 @@ static bool initTrackerAPI(ResourceTracker* tracker, Context* context)
     {
         { 0xD62A0D2B, 0x4E5739E6 }, // CreateMutexA
         { 0xC3AD063F, 0x38B9DD21 }, // CreateMutexW
-        { 0xAEC1E87F, 0x3673CCA7 }, // CreateEventA
-        { 0xAAEAB0D5, 0xE49D9F91 }, // CreateEventW
+        { 0x208C03DA, 0x501FAE59 }, // CreateEventA
+        { 0x4B422F89, 0xB1533D9B }, // CreateEventW
         { 0x0BB8EEBE, 0x28E70E8D }, // CreateFileA
         { 0x2CB7048A, 0x76AC9783 }, // CreateFileW
         { 0x131B6345, 0x65478818 }, // FindFirstFileA
@@ -408,9 +415,9 @@ HANDLE RT_CreateMutexA(POINTER lpMutexAttributes, BOOL bInitialOwner, LPCSTR lpN
     for (;;)
     {
         hMutex = tracker->CreateMutexA(lpMutexAttributes, bInitialOwner, lpName);
+        lastErr = GetLastErrno();
         if (hMutex == NULL)
         {
-            lastErr = GetLastErrno();
             break;
         }
         if (!addHandle(tracker, hMutex, SRC_CREATE_MUTEX_A))
@@ -447,9 +454,9 @@ HANDLE RT_CreateMutexW(POINTER lpMutexAttributes, BOOL bInitialOwner, LPCWSTR lp
     for (;;)
     {
         hMutex = tracker->CreateMutexW(lpMutexAttributes, bInitialOwner, lpName);
+        lastErr = GetLastErrno();
         if (hMutex == NULL)
         {
-            lastErr = GetLastErrno();
             break;
         }
         if (!addHandle(tracker, hMutex, SRC_CREATE_MUTEX_W))
@@ -489,9 +496,9 @@ HANDLE RT_CreateEventA(
         hEvent = tracker->CreateEventA(
             lpEventAttributes, bManualReset, bInitialState, lpName
         );
+        lastErr = GetLastErrno();
         if (hEvent == NULL)
         {
-            lastErr = GetLastErrno();
             break;
         }
         if (!addHandle(tracker, hEvent, SRC_CREATE_EVENT_A))
@@ -531,9 +538,9 @@ HANDLE RT_CreateEventW(
         hEvent = tracker->CreateEventW(
             lpEventAttributes, bManualReset, bInitialState, lpName
         );
+        lastErr = GetLastErrno();
         if (hEvent == NULL)
         {
-            lastErr = GetLastErrno();
             break;
         }
         if (!addHandle(tracker, hEvent, SRC_CREATE_EVENT_W))
@@ -1022,15 +1029,63 @@ int RT_WSACleanup()
 }
 
 __declspec(noinline)
-bool ResLockMutex(HANDLE hMutex)
+bool RT_LockMutex(HANDLE hMutex)
 {
-
+    bool success = setHandleLocker(hMutex, FUNC_CREATE_MUTEX, true);
+    dbg_log("[resource]", "lock mutex: 0x%zX", hMutex);
+    return success;
 }
 
 __declspec(noinline)
-bool ResUnlockMutex(HANDLE hMutex)
+bool RT_UnlockMutex(HANDLE hMutex)
 {
+    bool success = setHandleLocker(hMutex, FUNC_CREATE_MUTEX, false);
+    dbg_log("[resource]", "unlock mutex: 0x%zX", hMutex);
+    return success;
+}
 
+__declspec(noinline)
+static bool setHandleLocker(HANDLE hObject, uint32 func, bool lock)
+{
+    ResourceTracker* tracker = getTrackerPointer();
+
+    if (!RT_Lock())
+    {
+        return false;
+    }
+
+    List* handles = &tracker->Handles;
+    bool  success = false;
+
+    uint len = handles->Len;
+    uint idx = 0;
+    for (uint num = 0; num < len; idx++)
+    {
+        handle* handle = List_Get(handles, idx);
+        if (handle->source == 0)
+        {
+            continue;
+        }
+        if ((handle->source & FUNC_MASK) != func)
+        {
+            num++;
+            continue;
+        }
+        if (handle->handle != hObject)
+        {
+            num++;
+            continue;
+        }
+        handle->locked = lock;
+        success = true;
+        break;
+    }
+
+    if (!RT_Unlock())
+    {
+        return false;
+    }
+    return success;
 }
 
 __declspec(noinline)
@@ -1039,7 +1094,7 @@ bool RT_Lock()
     ResourceTracker* tracker = getTrackerPointer();
 
     uint32 event = tracker->WaitForSingleObject(tracker->hMutex, INFINITE);
-    return event == WAIT_OBJECT_0;
+    return event == WAIT_OBJECT_0 || event == WAIT_ABANDONED;
 }
 
 __declspec(noinline)
@@ -1081,7 +1136,7 @@ errno RT_Decrypt()
 __declspec(noinline)
 errno RT_FreeAll()
 {
-
+    return NO_ERROR;
 }
 
 __declspec(noinline)
@@ -1089,35 +1144,37 @@ errno RT_Clean()
 {
     ResourceTracker* tracker = getTrackerPointer();
 
-    List* handles = &tracker->Handles;
-    errno errno   = NO_ERROR;
+    errno firstErr = NO_ERROR;
     
     // close all tracked handles
-    uint index = 0;
-    for (uint num = 0; num < handles->Len; index++)
+    List* handles = &tracker->Handles;
+
+    uint len = handles->Len;
+    uint idx = 0;
+    for (uint num = 0; num < len; idx++)
     {
-        handle* handle = List_Get(handles, index);
-        if (handle->handle == NULL)
+        handle* handle = List_Get(handles, idx);
+        if (handle->source == 0)
         {
             continue;
         }
-        switch (handle->source & 0xFF00)
+        switch (handle->source & TYPE_MASK)
         {
         case TYPE_CLOSE_HANDLE:
-            if (!tracker->CloseHandle(handle->handle) && errno == NO_ERROR)
+            if (!tracker->CloseHandle(handle->handle) && firstErr == NO_ERROR)
             {
-                errno = ERR_RESOURCE_CLOSE_HANDLE;
+                firstErr = ERR_RESOURCE_CLOSE_HANDLE;
             }
             break;
         case TYPE_FIND_CLOSE:
-            if (!tracker->FindClose(handle->handle) && errno == NO_ERROR)
+            if (!tracker->FindClose(handle->handle) && firstErr == NO_ERROR)
             {
-                errno = ERR_RESOURCE_FIND_CLOSE;
+                firstErr = ERR_RESOURCE_FIND_CLOSE;
             }
             break;
         default:
-            // must cover prevent errno
-            errno = ERR_RESOURCE_INVALID_SRC_TYPE;
+            // must cover previous errno
+            firstErr = ERR_RESOURCE_INVALID_SRC_TYPE;
             break;
         }
         num++;
@@ -1125,42 +1182,56 @@ errno RT_Clean()
 
     // clean handle list
     RandBuffer(handles->Data, List_Size(handles));
-    if (!List_Free(handles) && errno == NO_ERROR)
+    if (!List_Free(handles) && firstErr == NO_ERROR)
     {
-        errno = ERR_RESOURCE_FREE_HANDLE_LIST;
+        firstErr = ERR_RESOURCE_FREE_HANDLE_LIST;
     }
 
-    // process init function trackers
-#ifdef _WIN64
-    WSACleanup_t WSACleanup = FindAPI(0x2D5ED79692C593E4, 0xF65130FCB6DB3FD4);
-#elif _WIN32
-    WSACleanup_t WSACleanup = FindAPI(0x59F727E0, 0x156A74C5);
-#endif
-    if (WSACleanup != NULL)
+    // about WSACleanup
+    errno err = doWSACleanup(tracker);
+    if (err != NO_ERROR && firstErr == NO_ERROR)
     {
-        int64 counter = tracker->Counters[CTR_WSA_STARTUP];
-        for (int64 i = 0; i < counter; i++)
-        {
-            if (WSACleanup() != 0 && errno == NO_ERROR)
-            {
-                errno = ERR_RESOURCE_WSA_CLEANUP;
-            }
-        }
+        firstErr = err;
     }
 
     // close mutex
-    if (!tracker->CloseHandle(tracker->hMutex) && errno == NO_ERROR)
+    if (!tracker->CloseHandle(tracker->hMutex) && firstErr == NO_ERROR)
     {
-        errno = ERR_RESOURCE_CLOSE_MUTEX;
+        firstErr = ERR_RESOURCE_CLOSE_MUTEX;
     }
 
     // recover instructions
     if (tracker->NotEraseInstruction)
     {
-        if (!recoverTrackerPointer(tracker) && errno == NO_ERROR)
+        if (!recoverTrackerPointer(tracker) && firstErr == NO_ERROR)
         {
-            errno = ERR_RESOURCE_RECOVER_INST;
+            firstErr = ERR_RESOURCE_RECOVER_INST;
         }
     }
+    return firstErr;
+}
+
+static errno doWSACleanup(ResourceTracker* tracker)
+{
+#ifdef _WIN64
+    WSACleanup_t WSACleanup = FindAPI(0x2D5ED79692C593E4, 0xF65130FCB6DB3FD4);
+#elif _WIN32
+    WSACleanup_t WSACleanup = FindAPI(0x59F727E0, 0x156A74C5);
+#endif
+    if (WSACleanup == NULL)
+    {
+        return NO_ERROR;
+    }
+    errno errno = NO_ERROR;
+
+    int64 counter = tracker->Counters[CTR_WSA_STARTUP];
+    for (int64 i = 0; i < counter; i++)
+    {
+        if (WSACleanup() != 0)
+        {
+            errno = ERR_RESOURCE_WSA_CLEANUP;
+        }
+    }
+    tracker->Counters[CTR_WSA_STARTUP] = 0;
     return errno;
 }

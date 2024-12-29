@@ -400,23 +400,30 @@ static ResourceTracker* getTrackerPointer()
 }
 #pragma optimize("", on)
 
+// For unknown reasons, placing RT_Lock before a function call like CreateEventA
+// will cause Go runtime to fail during initialization, so the lock granularity 
+// can only be further reduced.
+// In a normal function, the lock granularity is large, almost spanning the entire
+// function, in order to reduce the impact on the context when suspending the thread.
+
 __declspec(noinline)
 HANDLE RT_CreateMutexA(POINTER lpMutexAttributes, BOOL bInitialOwner, LPCSTR lpName)
 {
     ResourceTracker* tracker = getTrackerPointer();
 
-    if (!RT_Lock())
-    {
-        return NULL;
-    }
-
     HANDLE hMutex  = NULL;
     errno  lastErr = NO_ERROR;
     for (;;)
     {
-        hMutex = tracker->CreateMutexA(lpMutexAttributes, bInitialOwner, lpName);
+        hMutex = tracker->CreateMutexA(
+            lpMutexAttributes, bInitialOwner, lpName
+        );
         lastErr = GetLastErrno();
         if (hMutex == NULL)
+        {
+            break;
+        }
+        if (!RT_Lock())
         {
             break;
         }
@@ -425,16 +432,14 @@ HANDLE RT_CreateMutexA(POINTER lpMutexAttributes, BOOL bInitialOwner, LPCSTR lpN
             lastErr = ERR_RESOURCE_ADD_MUTEX;
             break;
         }
+        if (!RT_Unlock())
+        {
+            break;
+        }
         break;
     }
 
     dbg_log("[resource]", "CreateMutexA: 0x%zu", hMutex);
-
-    if (!RT_Unlock())
-    {
-        return NULL;
-    }
-
     SetLastErrno(lastErr);
     return hMutex;
 }
@@ -444,18 +449,19 @@ HANDLE RT_CreateMutexW(POINTER lpMutexAttributes, BOOL bInitialOwner, LPCWSTR lp
 {
     ResourceTracker* tracker = getTrackerPointer();
 
-    if (!RT_Lock())
-    {
-        return NULL;
-    }
-
     HANDLE hMutex  = NULL;
     errno  lastErr = NO_ERROR;
     for (;;)
     {
-        hMutex = tracker->CreateMutexW(lpMutexAttributes, bInitialOwner, lpName);
+        hMutex = tracker->CreateMutexW(
+            lpMutexAttributes, bInitialOwner, lpName
+        );
         lastErr = GetLastErrno();
         if (hMutex == NULL)
+        {
+            break;
+        }
+        if (!RT_Lock())
         {
             break;
         }
@@ -464,16 +470,14 @@ HANDLE RT_CreateMutexW(POINTER lpMutexAttributes, BOOL bInitialOwner, LPCWSTR lp
             lastErr = ERR_RESOURCE_ADD_MUTEX;
             break;
         }
+        if (!RT_Unlock())
+        {
+            break;
+        }
         break;
     }
 
     dbg_log("[resource]", "CreateMutexW: 0x%zu", hMutex);
-
-    if (!RT_Unlock())
-    {
-        return NULL;
-    }
-
     SetLastErrno(lastErr);
     return hMutex;
 }
@@ -483,11 +487,6 @@ HANDLE RT_CreateEventA(
     POINTER lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCSTR lpName
 ){
     ResourceTracker* tracker = getTrackerPointer();
-
-    if (!RT_Lock())
-    {
-        return NULL;
-    }
 
     HANDLE hEvent  = NULL;
     errno  lastErr = NO_ERROR;
@@ -501,21 +500,23 @@ HANDLE RT_CreateEventA(
         {
             break;
         }
+        if (!RT_Lock())
+        {
+            break;
+        }
         if (!addHandle(tracker, hEvent, SRC_CREATE_EVENT_A))
         {
             lastErr = ERR_RESOURCE_ADD_EVENT;
+            break;
+        }
+        if (!RT_Unlock())
+        {
             break;
         }
         break;
     }
 
     dbg_log("[resource]", "CreateEventA: 0x%zu", hEvent);
-
-    if (!RT_Unlock())
-    {
-        return NULL;
-    }
-
     SetLastErrno(lastErr);
     return hEvent;
 }
@@ -525,11 +526,6 @@ HANDLE RT_CreateEventW(
     POINTER lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCWSTR lpName
 ){
     ResourceTracker* tracker = getTrackerPointer();
-
-    if (!RT_Lock())
-    {
-        return NULL;
-    }
 
     HANDLE hEvent  = NULL;
     errno  lastErr = NO_ERROR;
@@ -543,21 +539,23 @@ HANDLE RT_CreateEventW(
         {
             break;
         }
+        if (!RT_Lock())
+        {
+            break;
+        }
         if (!addHandle(tracker, hEvent, SRC_CREATE_EVENT_W))
         {
             lastErr = ERR_RESOURCE_ADD_EVENT;
+            break;
+        }
+        if (!RT_Unlock())
+        {
             break;
         }
         break;
     }
 
     dbg_log("[resource]", "CreateEventW: 0x%zu", hEvent);
-
-    if (!RT_Unlock())
-    {
-        return NULL;
-    }
-
     SetLastErrno(lastErr);
     return hEvent;
 }
@@ -839,29 +837,27 @@ BOOL RT_CloseHandle(HANDLE hObject)
 {
     ResourceTracker* tracker = getTrackerPointer();
 
-    if (!RT_Lock())
-    {
-        return false;
-    }
-
-    BOOL success;
+    BOOL success = false;
     for (;;)
     {
-        success = tracker->CloseHandle(hObject);
-        if (!success)
+        if (!tracker->CloseHandle(hObject))
+        {
+            break;
+        }
+        if (!RT_Lock())
         {
             break;
         }
         delHandle(tracker, hObject, TYPE_CLOSE_HANDLE);
+        if (!RT_Unlock())
+        {
+            break;
+        }
+        success = true;
         break;
     }    
 
     dbg_log("[resource]", "CloseHandle: 0x%zX", hObject);
-
-    if (!RT_Unlock())
-    {
-        return false;
-    }
     return success;
 };
 
@@ -870,29 +866,27 @@ BOOL RT_FindClose(HANDLE hFindFile)
 {
     ResourceTracker* tracker = getTrackerPointer();
 
-    if (!RT_Lock())
-    {
-        return false;
-    }
-
-    BOOL success;
+    BOOL success = false;
     for (;;)
     {
-        success = tracker->FindClose(hFindFile);
-        if (!success)
+        if (!tracker->FindClose(hFindFile))
+        {
+            break;
+        }
+        if (!RT_Lock())
         {
             break;
         }
         delHandle(tracker, hFindFile, TYPE_FIND_CLOSE);
+        if (!RT_Unlock())
+        {
+            break;
+        }
+        success = true;
         break;
     }
 
     dbg_log("[resource]", "FindClose: 0x%zX", hFindFile);
-
-    if (!RT_Unlock())
-    {
-        return false;
-    }
     return success;
 };
 
@@ -1136,7 +1130,53 @@ errno RT_Decrypt()
 __declspec(noinline)
 errno RT_FreeAll()
 {
-    return NO_ERROR;
+    ResourceTracker* tracker = getTrackerPointer();
+
+    // close all tracked handles
+    List* handles = &tracker->Handles;
+    errno errno   = NO_ERROR;
+
+    uint len = handles->Len;
+    uint idx = 0;
+    for (uint num = 0; num < len; idx++)
+    {
+        handle* handle = List_Get(handles, idx);
+        if (handle->source == 0)
+        {
+            continue;
+        }
+        // skip locked handle
+        if (handle->locked)
+        {
+            num++;
+            continue;
+        }
+        switch (handle->source & TYPE_MASK)
+        {
+        case TYPE_CLOSE_HANDLE:
+            if (!tracker->CloseHandle(handle->handle))
+            {
+                errno = ERR_RESOURCE_CLOSE_HANDLE;
+            }
+            break;
+        case TYPE_FIND_CLOSE:
+            if (!tracker->FindClose(handle->handle))
+            {
+                errno = ERR_RESOURCE_FIND_CLOSE;
+            }
+            break;
+        default:
+            // must cover previous errno
+            errno = ERR_RESOURCE_INVALID_SRC_TYPE;
+            break;
+        }
+        if (!List_Delete(handles, idx))
+        {
+            errno = ERR_RESOURCE_DELETE_HANDLE;
+        }
+        num++;
+    }
+    return errno;
 }
 
 __declspec(noinline)

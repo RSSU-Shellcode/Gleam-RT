@@ -724,6 +724,8 @@ errno LT_FreeAll()
         }
         num++;
     }
+
+    dbg_log("[library]", "modules: %zu", modules->Len);
     return errno;
 }
 
@@ -775,6 +777,8 @@ errno LT_Clean()
             errno = ERR_LIBRARY_RECOVER_INST;
         }
     }
+
+    dbg_log("[library]", "modules: %zu", modules->Len);
     return errno;
 }
 

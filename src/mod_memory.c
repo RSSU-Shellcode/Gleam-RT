@@ -2254,7 +2254,7 @@ bool MT_LockRegion(LPVOID address)
     }
 
     bool success = setRegionLocker((uintptr)address, true);
-    dbg_log("[memory]", "unlock region: 0x%zX", address);
+    dbg_log("[memory]", "lock region: 0x%zX", address);
 
     if (!MT_Unlock())
     {

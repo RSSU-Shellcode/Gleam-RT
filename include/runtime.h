@@ -108,8 +108,18 @@ typedef void (*Encrypt_t)(byte* buf, uint size, byte* key, byte* iv);
 typedef void (*Decrypt_t)(byte* buf, uint size, byte* key, byte* iv);
 
 // about compress module
-typedef uint (*Compress_t)(void* dst, void* src);
-typedef uint (*Decompress_t)(void* dst, void* src);
+// 
+// In general, the size of the destination buffer is 1.125
+// times the size of the source buffer to handle the worst
+// case (no compressible data).
+// 
+// Since the algorithm is relatively simple to implement, 
+// it is NOT recommended to compress data exceeding 1MB.
+// 
+// Please record the original size when compressing to 
+// facilitate decompression¡£
+typedef uint (*Compress_t)(void* dst, void* src, uint len);
+typedef uint (*Decompress_t)(void* dst, void* src, uint len);
 
 // GetProcAddress, GetProcAddressByName and GetProcAddressByHash
 // are use Hash API module for implement original GetProcAddress.
@@ -121,12 +131,18 @@ typedef void* (*GetProcByHash_t)(uint hash, uint key, bool hook);
 typedef void* (*GetProcOriginal_t)(HMODULE hModule, LPCSTR lpProcName);
 
 // runtime core methods
+//
 // it is NOT recommended use "Hide" and "Recover", these functions
 // are used to test and research, if use them, runtime will loss
 // the shield protect and structure data encrypt.
+//
+// SleepHR is used to call Hide, Sleep and Recover, usually it called by hook.
+// Cleanup is used to clean all tracked object except locked.
+// Exit is used to clean all tracked object and clean runtime self.
 typedef errno (*SleepHR_t)(uint32 milliseconds);
 typedef errno (*Hide_t)();
 typedef errno (*Recover_t)();
+typedef errno (*Cleanup_t)();
 typedef errno (*Exit_t)();
 
 typedef struct {
@@ -247,8 +263,11 @@ typedef struct {
         SleepHR_t Sleep;
         Hide_t    Hide;
         Recover_t Recover;
+        Cleanup_t Cleanup;
         Exit_t    Exit;
     } Core;
+
+    ExitProcess_t ExitProcess;
 } Runtime_M;
 
 // InitRuntime is used to initialize runtime and return module methods.

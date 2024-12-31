@@ -10,6 +10,7 @@ echo ------------------------x64------------------------
 echo [Runtime Core]
 hash_api -fmt 64 -conc -func GetSystemInfo
 hash_api -fmt 64 -conc -func FlushInstructionCache
+hash_api -fmt 64 -conc -func ExitProcess
 hash_api -fmt 64 -conc -func SetCurrentDirectoryA
 hash_api -fmt 64 -conc -func SetCurrentDirectoryW
 hash_api -fmt 64 -conc -func CreateMutexA
@@ -28,6 +29,7 @@ echo [Runtime Methods]
 hash_api -fmt 64 -conc -func RT_GetProcAddressByName
 hash_api -fmt 64 -conc -func RT_GetProcAddressByHash
 hash_api -fmt 64 -conc -func RT_GetProcAddressOriginal
+hash_api -fmt 64 -conc -func RT_ExitProcess
 hash_api -fmt 64 -conc -func RT_GetArgValue
 hash_api -fmt 64 -conc -func RT_GetArgPointer
 hash_api -fmt 64 -conc -func RT_EraseArgument
@@ -36,7 +38,6 @@ echo.
 
 echo [Runtime IAT Hooks]
 hash_api -fmt 64 -conc -func GetProcAddress
-hash_api -fmt 64 -conc -func ExitProcess
 hash_api -fmt 64 -conc -func Sleep
 hash_api -fmt 64 -conc -func SleepEx
 echo.
@@ -154,6 +155,7 @@ echo ------------------------x86------------------------
 echo [Runtime Core]
 hash_api -fmt 32 -conc -func GetSystemInfo
 hash_api -fmt 32 -conc -func FlushInstructionCache
+hash_api -fmt 32 -conc -func ExitProcess
 hash_api -fmt 32 -conc -func SetCurrentDirectoryA
 hash_api -fmt 32 -conc -func SetCurrentDirectoryW
 hash_api -fmt 32 -conc -func CreateMutexA
@@ -172,6 +174,7 @@ echo [Runtime Methods]
 hash_api -fmt 32 -conc -func RT_GetProcAddressByName
 hash_api -fmt 32 -conc -func RT_GetProcAddressByHash
 hash_api -fmt 32 -conc -func RT_GetProcAddressOriginal
+hash_api -fmt 32 -conc -func RT_ExitProcess
 hash_api -fmt 32 -conc -func RT_GetArgValue
 hash_api -fmt 32 -conc -func RT_GetArgPointer
 hash_api -fmt 32 -conc -func RT_EraseArgument
@@ -180,7 +183,6 @@ echo.
 
 echo [Runtime IAT Hooks]
 hash_api -fmt 32 -conc -func GetProcAddress
-hash_api -fmt 32 -conc -func ExitProcess
 hash_api -fmt 32 -conc -func Sleep
 hash_api -fmt 32 -conc -func SleepEx
 echo.

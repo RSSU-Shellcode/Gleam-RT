@@ -50,7 +50,7 @@ typedef struct {
     VirtualFree_t           VirtualFree;
     VirtualProtect_t        VirtualProtect;
     FlushInstructionCache_t FlushInstructionCache;
-    GetProcessHeap_t        GetProcessHeap;
+    ExitProcess_t           ExitProcess;
     SetCurrentDirectoryA_t  SetCurrentDirectoryA;
     SetCurrentDirectoryW_t  SetCurrentDirectoryW;
     CreateMutexA_t          CreateMutexA;
@@ -70,7 +70,6 @@ typedef struct {
     void*  MainMemPage; // store all structures
     void*  Epilogue;    // store shellcode epilogue
     uint32 PageSize;    // for memory management
-    HANDLE hHeap;       // process default heap handle
     HANDLE hMutex;      // global method mutex
 
     // about event handler
@@ -84,7 +83,7 @@ typedef struct {
     HANDLE hThreadEvent; // event handler thread
 
     // IAT hooks about GetProcAddress
-    Hook IATHooks[53];
+    Hook IATHooks[52];
 
     // runtime submodules
     LibraryTracker_M*  LibraryTracker;
@@ -113,11 +112,12 @@ BOOL  RT_SetCurrentDirectoryA(LPSTR lpPathName);
 BOOL  RT_SetCurrentDirectoryW(LPWSTR lpPathName);
 void  RT_Sleep(DWORD dwMilliseconds);
 DWORD RT_SleepEx(DWORD dwMilliseconds, BOOL bAlertable);
-errno RT_ExitProcess(UINT uExitCode);
+void  RT_ExitProcess(UINT uExitCode);
 
 errno RT_SleepHR(DWORD dwMilliseconds);
 errno RT_Hide();
 errno RT_Recover();
+errno RT_Cleanup();
 errno RT_Exit();
 
 // internal methods for Runtime submodules
@@ -367,7 +367,9 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->Core.Sleep   = GetFuncAddr(&RT_SleepHR);
     module->Core.Hide    = GetFuncAddr(&RT_Hide);
     module->Core.Recover = GetFuncAddr(&RT_Recover);
+    module->Core.Cleanup = GetFuncAddr(&RT_Cleanup);
     module->Core.Exit    = GetFuncAddr(&RT_Exit);
+    module->ExitProcess  = GetFuncAddr(&RT_ExitProcess);
     return module;
 }
 
@@ -432,7 +434,7 @@ static bool initRuntimeAPI(Runtime* runtime)
         { 0xAC150252A6CA3960, 0x12EFAEA421D60C3E }, // VirtualFree
         { 0xEA5B0C76C7946815, 0x8846C203C35DE586 }, // VirtualProtect
         { 0x8172B49F66E495BA, 0x8F0D0796223B56C2 }, // FlushInstructionCache
-        { 0xA9CA8BFA460B3D0E, 0x30FECC3CA9988F6A }, // GetProcessHeap
+        { 0xB8D0B91323A24997, 0xBC36CA6282477A43 }, // EXitProcess
         { 0x94EC785163801E26, 0xCBF66516D38443F0 }, // SetCurrentDirectoryA
         { 0x7A6FB9987CB1DB85, 0xF6A56D0FD43D9096 }, // SetCurrentDirectoryW
         { 0x31FE697F93D7510C, 0x77C8F05FE04ED22D }, // CreateMutexA
@@ -455,7 +457,7 @@ static bool initRuntimeAPI(Runtime* runtime)
         { 0xF76A2ADE, 0x4D8938BD }, // VirtualFree
         { 0xB2AC456D, 0x2A690F63 }, // VirtualProtect
         { 0x87A2CEE8, 0x42A3C1AF }, // FlushInstructionCache
-        { 0x758C3172, 0x23E44CDB }, // GetProcessHeap
+        { 0xB6CEC366, 0xA0CF5E10 }, // EXitProcess
         { 0xBCCEAFB1, 0x99C565BD }, // SetCurrentDirectoryA
         { 0x499657EA, 0x7D23F113 }, // SetCurrentDirectoryW
         { 0x8F5BAED2, 0x43487DC7 }, // CreateMutexA
@@ -487,7 +489,7 @@ static bool initRuntimeAPI(Runtime* runtime)
     runtime->VirtualFree           = list[0x02].proc;
     runtime->VirtualProtect        = list[0x03].proc;
     runtime->FlushInstructionCache = list[0x04].proc;
-    runtime->GetProcessHeap        = list[0x05].proc;
+    runtime->ExitProcess           = list[0x05].proc;
     runtime->SetCurrentDirectoryA  = list[0x06].proc;
     runtime->SetCurrentDirectoryW  = list[0x07].proc;
     runtime->CreateMutexA          = list[0x08].proc;
@@ -553,8 +555,6 @@ static errno initRuntimeEnvironment(Runtime* runtime)
     SYSTEM_INFO sysInfo;
     runtime->GetSystemInfo(&sysInfo);
     runtime->PageSize = sysInfo.PageSize;
-    // get process default heap handle
-    runtime->hHeap = runtime->GetProcessHeap();
     // create global mutex
     HANDLE hMutex = runtime->CreateMutexA(NULL, false, NAME_RT_MUTEX_GLOBAL);
     if (hMutex == NULL)
@@ -781,7 +781,6 @@ static bool initIATHooks(Runtime* runtime)
         { 0x6A8F6B893B3E7468, 0x1C4D6ABB7E274A8A, GetFuncAddr(&RT_SetCurrentDirectoryW) },
         { 0xCED5CC955152CD43, 0xAA22C83C068CB037, GetFuncAddr(&RT_SleepHR) },
         { 0xF8AFE6686E40E6E7, 0xE461B3ED286DAF92, GetFuncAddr(&RT_SleepEx) },
-        { 0xB8D0B91323A24997, 0xBC36CA6282477A43, GetFuncAddr(&RT_ExitProcess) },
         { 0xD823D640CA9D87C3, 0x15821AE3463EFBE8, libraryTracker->LoadLibraryA },
         { 0xDE75B0371B7500C0, 0x2A1CF678FC737D0F, libraryTracker->LoadLibraryW },
         { 0x448751B1385751E8, 0x3AE522A4E9435111, libraryTracker->LoadLibraryExA },
@@ -837,7 +836,6 @@ static bool initIATHooks(Runtime* runtime)
         { 0xCA170DA2, 0x73683646, GetFuncAddr(&RT_SetCurrentDirectoryA) },
         { 0x705D4FAD, 0x94CF33BF, GetFuncAddr(&RT_SleepHR) },
         { 0x57601363, 0x0F03636B, GetFuncAddr(&RT_SleepEx) },
-        { 0xB6CEC366, 0xA0CF5E10, GetFuncAddr(&RT_ExitProcess) },
         { 0x0149E478, 0x86A603D3, libraryTracker->LoadLibraryA },
         { 0x90E21596, 0xEBEA7D19, libraryTracker->LoadLibraryW },
         { 0xD6C482CE, 0xC6063014, libraryTracker->LoadLibraryExA },
@@ -1473,6 +1471,7 @@ static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
         { 0xA23FAC0E6398838A, 0xE4990D7D4933EE6A, GetFuncAddr(&RT_GetProcAddressByName)   },
         { 0xABD1E8F0D28E9F46, 0xAF34F5979D300C70, GetFuncAddr(&RT_GetProcAddressByHash)   },
         { 0xC9C5D350BB118FAE, 0x061A602F681F2636, GetFuncAddr(&RT_GetProcAddressOriginal) },
+        { 0xED817580D5E2DD81, 0x84025019004D432B, GetFuncAddr(&RT_ExitProcess)            },
         { 0x6FC9E56C1F7B2D65, 0x13DA8BAC05E7183C, argumentStore->GetValue   }, // RT_GetArgValue
         { 0xD4868056137A5E3F, 0x1648F372F2649601, argumentStore->GetPointer }, // RT_GetArgPointer
         { 0x2FEB65B0CF6A233A, 0x24B8204DA5F3FA2F, argumentStore->Erase      }, // RT_EraseArgument
@@ -1483,6 +1482,7 @@ static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
         { 0xCF983018, 0x3ECBF2DF, GetFuncAddr(&RT_GetProcAddressByName)   },
         { 0x40D5BD08, 0x302D5D2B, GetFuncAddr(&RT_GetProcAddressByHash)   },
         { 0x45556AA5, 0xB3BEF31D, GetFuncAddr(&RT_GetProcAddressOriginal) },
+        { 0x39A658B0, 0x8C837EFD, GetFuncAddr(&RT_ExitProcess)            },
         { 0x8443915E, 0x6C4AA230, argumentStore->GetValue   }, // RT_GetArgValue
         { 0xB6403531, 0x011D36DB, argumentStore->GetPointer }, // RT_GetArgPointer
         { 0xC33C2108, 0x8A90E020, argumentStore->Erase      }, // RT_EraseArgument
@@ -1590,7 +1590,7 @@ BOOL RT_SetCurrentDirectoryW(LPWSTR lpPathName)
 {
     Runtime* runtime = getRuntimePointer();
 
-    dbg_log("[runtime]", "SetCurrentDirectoryA: %ls", lpPathName);
+    dbg_log("[runtime]", "SetCurrentDirectoryW: %ls", lpPathName);
 
     if (lpPathName == NULL)
     {
@@ -1675,65 +1675,11 @@ DWORD RT_SleepEx(DWORD dwMilliseconds, BOOL bAlertable)
 }
 
 __declspec(noinline)
-errno RT_ExitProcess(UINT uExitCode)
+void RT_ExitProcess(UINT uExitCode)
 {
     Runtime* runtime = getRuntimePointer();
 
-    if (!rt_lock())
-    {
-        return ERR_RUNTIME_LOCK;
-    }
-    errno errlm = RT_lock_mods();
-    if (errlm != NO_ERROR)
-    {
-        return errlm;
-    }
-
-    if (uExitCode == 0)
-    {
-        // TODO disable watchdog ?
-    }
-
-    // clean runtime modules
-    errno err = NO_ERROR;
-    typedef errno (*submodule_t)();
-    submodule_t submodules[] = 
-    {
-        // first kill all threads
-        runtime->ThreadTracker->KillAll,
-
-        // high-level modules
-        runtime->WinHTTP->Clean,
-
-        // maybe some librarys will use the tracked
-        // memory page or heap, so free memory after
-        // free all library.
-
-        // runtime submodules
-        runtime->ResourceTracker->FreeAll,
-        runtime->LibraryTracker->FreeAll,
-        runtime->MemoryTracker->FreeAll,
-    };
-    errno enmod = NO_ERROR;
-    for (int i = 0; i < arrlen(submodules); i++)
-    {
-        enmod = submodules[i]();
-        if (enmod != NO_ERROR && err == NO_ERROR)
-        {
-            err = enmod;
-        }
-    }
-
-    errlm = RT_unlock_mods();
-    if (errlm != NO_ERROR)
-    {
-        return errlm;
-    }
-    if (!rt_unlock())
-    {
-        return ERR_RUNTIME_UNLOCK;
-    }
-    return err;
+    runtime->ExitProcess(uExitCode);
 }
 
 __declspec(noinline)
@@ -2171,6 +2117,63 @@ errno RT_Recover()
         return ERR_RUNTIME_UNLOCK;
     }
     return errno;
+}
+
+__declspec(noinline)
+errno RT_Cleanup()
+{
+    Runtime* runtime = getRuntimePointer();
+
+    if (!rt_lock())
+    {
+        return ERR_RUNTIME_LOCK;
+    }
+    errno errlm = RT_lock_mods();
+    if (errlm != NO_ERROR)
+    {
+        return errlm;
+    }
+
+    // clean runtime modules
+    errno err = NO_ERROR;
+    typedef errno (*submodule_t)();
+    submodule_t submodules[] = 
+    {
+        // first kill all threads
+        runtime->ThreadTracker->KillAll,
+
+        // high-level modules
+        runtime->WinHTTP->Clean,
+
+        // maybe some librarys will use the tracked
+        // memory page or heap, so free memory after
+        // free all library.
+
+        // runtime submodules
+        runtime->ResourceTracker->FreeAll,
+        runtime->LibraryTracker->FreeAll,
+        runtime->MemoryTracker->FreeAll,
+    };
+    errno enmod = NO_ERROR;
+    for (int i = 0; i < arrlen(submodules); i++)
+    {
+        enmod = submodules[i]();
+        if (enmod != NO_ERROR && err == NO_ERROR)
+        {
+            err = enmod;
+        }
+    }
+
+    errlm = RT_unlock_mods();
+    if (errlm != NO_ERROR)
+    {
+        return errlm;
+    }
+    if (!rt_unlock())
+    {
+        return ERR_RUNTIME_UNLOCK;
+    }
+    return err;
 }
 
 __declspec(noinline)

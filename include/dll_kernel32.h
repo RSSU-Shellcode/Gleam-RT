@@ -443,6 +443,11 @@ typedef BOOL (*FlushInstructionCache_t)
     HANDLE hProcess, LPCVOID lpBaseAddress, SIZE_T dwSize
 );
 
+typedef void (*ExitProcess_t)
+(
+    UINT uExitCode
+);
+
 typedef BOOL (*SetCurrentDirectoryA_t)
 (
     LPSTR lpPathName

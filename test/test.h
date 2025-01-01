@@ -14,6 +14,7 @@ bool TestLibMemory();
 bool TestLibString();
 bool TestRandom();
 bool TestCrypto();
+bool TestCompress();
 
 bool TestInitRuntime();
 bool TestRuntime_Memory();
@@ -29,12 +30,14 @@ typedef struct { byte* Name; test_t Test; } unit;
 
 static unit tests[] = 
 {
+    { "InitRuntime", TestInitRuntime },
+
     { "Lib_Memory", TestLibMemory },
     { "Lib_String", TestLibString },
     { "Random",     TestRandom    },
     { "Crypto",     TestCrypto    },
+    { "Compress",   TestCompress  },
 
-    { "InitRuntime",      TestInitRuntime      },
     { "Runtime_Memory",   TestRuntime_Memory   },
     { "Runtime_Argument", TestRuntime_Argument },
     { "Runtime_WinBase",  TestRuntime_WinBase  },

@@ -14,12 +14,12 @@
     <ClInclude Include="build.h" />
     <ClInclude Include="test.h" />
     <ClInclude Include="..\include\c_types.h" />
-	<ClInclude Include="..\include\win_types.h" />
-	<ClInclude Include="..\include\dll_kernel32.h" />
+    <ClInclude Include="..\include\win_types.h" />
+    <ClInclude Include="..\include\dll_kernel32.h" />
     <ClInclude Include="..\include\dll_ntdll.h" />
-	<ClInclude Include="..\include\dll_msvcrt.h" />
+    <ClInclude Include="..\include\dll_msvcrt.h" />
     <ClInclude Include="..\include\dll_ucrtbase.h" />
-	<ClInclude Include="..\include\dll_ws2_32.h" />
+    <ClInclude Include="..\include\dll_ws2_32.h" />
     <ClInclude Include="..\include\dll_winhttp.h" />
     <ClInclude Include="..\include\lib_memory.h" />
     <ClInclude Include="..\include\lib_string.h" />
@@ -51,6 +51,7 @@
     <ClCompile Include="src\lib_string_test.c" />
     <ClCompile Include="src\random_test.c" />
     <ClCompile Include="src\crypto_test.c" />
+	<ClCompile Include="src\compress_test.c" />
     <ClCompile Include="src\runtime_test.c" />
     <ClCompile Include="src\mod_memory_test.c" />
     <ClCompile Include="src\mod_thread_test.c" />

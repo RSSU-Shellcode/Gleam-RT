@@ -122,6 +122,9 @@
     <ClCompile Include="src\mod_thread_test.c">
       <Filter>Test</Filter>
     </ClCompile>
+    <ClCompile Include="src\compress_test.c">
+      <Filter>Test</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\crypto.h">

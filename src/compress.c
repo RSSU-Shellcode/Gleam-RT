@@ -1,179 +1,130 @@
 #include "c_types.h"
+#include "lib_memory.h"
 #include "compress.h"
 
-/* internal data structure */
-struct APDSTATE {
-    uint8* src;
-    uint8* dst;
-    uint   nbit;
-    uint   tag;
-};
+#define MIN_MATCH_LENGTH 3
+#define MAX_MATCH_LENGTH 18
 
-static uint aP_getbit(struct APDSTATE* ud)
+#define DEFAULT_WINDOW_SIZE 512
+#define MAXIMUM_WINDOW_SIZE 4096
+
+integer find(byte* s, uint ns, byte* sep, uint nsep);
+
+uint Compress(void* dst, void* src, uint len, uint win)
 {
-    uint bit;
-
-    /* check if tag is empty */
-    if (!ud->nbit--)
+    if (win > MAXIMUM_WINDOW_SIZE)
     {
-        /* load next tag */
-        ud->tag = *ud->src++;
-        ud->nbit = 7;
+        return (uint)(-1);
     }
-
-    /* shift bit out of tag */
-    bit = (ud->tag >> 7) & 0x01;
-    ud->tag <<= 1;
-
-    return bit;
-}
-
-static uint aP_getgamma(struct APDSTATE* ud)
-{
-    uint result = 1;
-
-    /* input gamma2-encoded bits */
-    do
+    if (win == 0)
     {
-        result = (result << 1) + aP_getbit(ud);
-    } while (aP_getbit(ud));
+        win = DEFAULT_WINDOW_SIZE;
+    }
+    byte* output = (byte*)dst;
+    byte* input  = (byte*)src;
 
-    return result;
+    integer dataLen = (integer)len;
+    integer winSize = (integer)win;
+
+    byte* window = (byte*)src;
+    uint  winLen = 0;
+
+    // initialize flag block;
+    output[0] = 0;
+    byte flag = 0;
+    integer flagPtr = 0;
+    integer flagCtr = 0;
+
+    integer srcPtr = 0;
+    integer dstPtr = 1;
+    while (srcPtr < dataLen)
+    {
+        integer rem = dataLen - srcPtr;
+        // search the same data in current window
+        integer offset = 0;
+        integer length = 0;
+        for (integer l = MIN_MATCH_LENGTH; l <= MAX_MATCH_LENGTH; l++)
+        {
+			if (rem < l)
+            {
+                break;
+			}
+            integer idx = find(window, winLen, input + srcPtr, l);
+			if (idx == -1)
+            {
+                break;
+			}
+            offset = winLen - idx - 1;
+			length = l;
+		}
+        // set compress flag and write data
+		if (length != 0)
+        {
+            flag |= 1;
+			// 12 bit = offset, 4 bit = length
+			// offset max is 4095, max length value is [0-15] + 3
+            uint16 mark = (uint16)((offset << 4) + (length - MIN_MATCH_LENGTH));
+            // encode mark to buffer
+            output[dstPtr+0] = (byte)(mark >> 8);
+            output[dstPtr+1] = (byte)(mark >> 0);
+            dstPtr+=2;
+		} else {
+            output[dstPtr] = input[srcPtr];
+			dstPtr++;
+		}
+        // update flag block
+		if (flagCtr == 7) 
+        {
+            output[flagPtr] = flag;
+			// update pointer
+            flagPtr = dstPtr;
+            dstPtr++;
+			// reset status
+            flag = 0;
+            flagCtr = 0;
+		} else {
+            flag <<= 1;
+            flagCtr++;
+		}
+		// update source pointer
+		if (length != 0) 
+        {
+            srcPtr += length;
+		} else {
+            srcPtr++;
+		}
+		// update window
+        integer start = srcPtr - winSize;
+		if (start < 0)
+        {
+            start = 0;
+		} 
+        window = input + start;
+        winLen = srcPtr - start;
+    }
+	// process the final flag block
+	if (flagCtr != 0) 
+    {
+        flag <<= (byte)(7 - flagCtr);
+        output[flagPtr] = flag;
+	}
+    return dstPtr;
 }
 
-uint Compress(void* dst, void* src)
+uint Decompress(void* dst, void* src, uint len)
 {
     return 0;
 }
 
-uint Decompress(void* dst, void* src)
+integer find(byte* s, uint ns, byte* sep, uint nsep)
 {
-    struct APDSTATE ud = {
-        .src  = (uint8*)src,
-        .dst  = (uint8*)dst,
-        .tag  = 0,
-        .nbit = 0,
-    };
-    uint offs, len, R0, LWM;
-    int  done;
-    int  i;
-
-    R0 = (uint)-1;
-    LWM = 0;
-    done = 0;
-
-    /* first byte verbatim */
-    *ud.dst++ = *ud.src++;
-
-    /* main decompression loop */
-    while (!done)
+    for (integer i = 0; i < (integer)ns - (integer)nsep +1 ; i++)
     {
-        if (aP_getbit(&ud))
+        if (mem_equal(s, sep, nsep))
         {
-            if (aP_getbit(&ud))
-            {
-                if (aP_getbit(&ud))
-                {
-                    offs = 0;
-
-                    for (i = 4; i; i--)
-                    {
-                        offs = (offs << 1) + aP_getbit(&ud);
-                    }
-
-                    if (offs)
-                    {
-                        *ud.dst = *(ud.dst - offs);
-                        ud.dst++;
-                    } else
-                    {
-                        *ud.dst++ = 0x00;
-                    }
-
-                    LWM = 0;
-                } else
-                {
-                    offs = *ud.src++;
-
-                    len = 2 + (offs & 0x0001);
-
-                    offs >>= 1;
-
-                    if (offs)
-                    {
-                        for (; len; len--)
-                        {
-                            *ud.dst = *(ud.dst - offs);
-                            ud.dst++;
-                        }
-                    } else
-                    {
-                        done = 1;
-                    }
-
-                    R0 = offs;
-                    LWM = 1;
-                }
-            } else
-            {
-                offs = aP_getgamma(&ud);
-
-                if ((LWM == 0) && (offs == 2))
-                {
-                    offs = R0;
-
-                    len = aP_getgamma(&ud);
-
-                    for (; len; len--)
-                    {
-                        *ud.dst = *(ud.dst - offs);
-                        ud.dst++;
-                    }
-                } else
-                {
-                    if (LWM == 0)
-                    {
-                        offs -= 3;
-                    } else
-                    {
-                        offs -= 2;
-                    }
-
-                    offs <<= 8;
-                    offs += *ud.src++;
-
-                    len = aP_getgamma(&ud);
-
-                    if (offs >= 32000)
-                    {
-                        len++;
-                    }
-                    if (offs >= 1280)
-                    {
-                        len++;
-                    }
-                    if (offs < 128)
-                    {
-                        len += 2;
-                    }
-
-                    for (; len; len--)
-                    {
-                        *ud.dst = *(ud.dst - offs);
-                        ud.dst++;
-                    }
-
-                    R0 = offs;
-                }
-
-                LWM = 1;
-            }
-        } else
-        {
-            *ud.dst++ = *ud.src++;
-            LWM = 0;
+            return i;
         }
+        s++;
     }
-
-    return (uint)(ud.dst - (uint8*)dst);
+    return -1;
 }

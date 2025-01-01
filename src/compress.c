@@ -30,7 +30,6 @@ uint Compress(void* dst, void* src, uint len, uint win)
     uint  winLen = 0;
 
     // initialize flag block;
-    output[0] = 0;
     byte flag = 0;
     integer flagPtr = 0;
     integer flagCtr = 0;
@@ -65,9 +64,9 @@ uint Compress(void* dst, void* src, uint len, uint win)
 			// offset max is 4095, max length value is [0-15] + 3
             uint16 mark = (uint16)((offset << 4) + (length - MIN_MATCH_LENGTH));
             // encode mark to buffer
-            output[dstPtr+0] = (byte)(mark >> 8);
-            output[dstPtr+1] = (byte)(mark >> 0);
-            dstPtr+=2;
+            output[dstPtr+0] = (byte)(mark >> 0);
+            output[dstPtr+1] = (byte)(mark >> 8);
+            dstPtr += 2;
 		} else {
             output[dstPtr] = input[srcPtr];
 			dstPtr++;
@@ -107,13 +106,59 @@ uint Compress(void* dst, void* src, uint len, uint win)
     {
         flag <<= (byte)(7 - flagCtr);
         output[flagPtr] = flag;
-	}
+	} else {
+        dstPtr--; // rollback pointer
+    }
     return dstPtr;
 }
 
 uint Decompress(void* dst, void* src, uint len)
 {
-    return 0;
+    byte* output = (byte*)dst;
+    byte* input  = (byte*)src;
+    integer dataLen = (integer)len;
+
+    bool flag[8];
+    mem_init(flag, sizeof(flag));
+    integer flagIdx = 8;
+
+    integer dstPtr = 0;
+    integer srcPtr = 0;
+    while (srcPtr < dataLen)
+    {
+        // check need read flag block
+		if (flagIdx == 8) 
+        {
+            byte b = input[srcPtr];
+			flag[0] = (b & (1 << 7)) != 0;
+			flag[1] = (b & (1 << 6)) != 0;
+			flag[2] = (b & (1 << 5)) != 0;
+			flag[3] = (b & (1 << 4)) != 0;
+			flag[4] = (b & (1 << 3)) != 0;
+			flag[5] = (b & (1 << 2)) != 0;
+			flag[6] = (b & (1 << 1)) != 0;
+			flag[7] = (b & (1 << 0)) != 0;
+            srcPtr++;
+            flagIdx = 0;
+		}
+		if (flag[flagIdx])
+        {
+            uint16 mark = *(uint16*)(input+srcPtr);
+            integer offset = (integer)((mark >> 4) + 1);
+            integer length = (integer)((mark & 0xF) + MIN_MATCH_LENGTH);
+            integer start = dstPtr - offset;
+            mem_copy(output + dstPtr, output + start, length);
+            srcPtr += 2;
+            dstPtr += length;
+		} else {
+            output[dstPtr] = input[srcPtr];
+            srcPtr++;
+            dstPtr++;
+		}
+		// update flag index
+        flagIdx++;
+    }
+    return dstPtr;
 }
 
 integer find(byte* s, uint ns, byte* sep, uint nsep)

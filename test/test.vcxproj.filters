@@ -125,6 +125,12 @@
     <ClCompile Include="src\compress_test.c">
       <Filter>Test</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\lib_match.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\lib_match_test.c">
+      <Filter>Test</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\crypto.h">
@@ -224,6 +230,9 @@
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="..\include\win_types.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\lib_match.h">
       <Filter>Header</Filter>
     </ClInclude>
   </ItemGroup>

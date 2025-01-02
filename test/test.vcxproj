@@ -23,6 +23,7 @@
     <ClInclude Include="..\include\dll_winhttp.h" />
     <ClInclude Include="..\include\lib_memory.h" />
     <ClInclude Include="..\include\lib_string.h" />
+	<ClInclude Include="..\include\lib_match.h" />
     <ClInclude Include="..\include\rel_addr.h" />
     <ClInclude Include="..\include\hash_api.h" />
     <ClInclude Include="..\include\list_md.h" />
@@ -49,9 +50,10 @@
     <ClCompile Include="test_main.c" />
     <ClCompile Include="src\lib_memory_test.c" />
     <ClCompile Include="src\lib_string_test.c" />
+	<ClCompile Include="src\lib_match_test.c" />
     <ClCompile Include="src\random_test.c" />
     <ClCompile Include="src\crypto_test.c" />
-	<ClCompile Include="src\compress_test.c" />
+    <ClCompile Include="src\compress_test.c" />
     <ClCompile Include="src\runtime_test.c" />
     <ClCompile Include="src\mod_memory_test.c" />
     <ClCompile Include="src\mod_thread_test.c" />
@@ -62,6 +64,7 @@
     <ClCompile Include="..\src\runtime.c" />
     <ClCompile Include="..\src\lib_memory.c" />
     <ClCompile Include="..\src\lib_string.c" />
+	<ClCompile Include="..\src\lib_match.c" />
     <ClCompile Include="..\src\rel_addr.c" />
     <ClCompile Include="..\src\hash_api.c" />
     <ClCompile Include="..\src\list_md.c" />

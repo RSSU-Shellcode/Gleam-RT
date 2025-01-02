@@ -12,6 +12,7 @@ Runtime_M* runtime;
 #pragma warning(disable: 4276)
 bool TestLibMemory();
 bool TestLibString();
+bool TestLibMatch();
 bool TestRandom();
 bool TestCrypto();
 bool TestCompress();
@@ -34,6 +35,7 @@ static unit tests[] =
 
     { "Lib_Memory", TestLibMemory },
     { "Lib_String", TestLibString },
+    { "Lib_Match",  TestLibMatch  },
     { "Random",     TestRandom    },
     { "Crypto",     TestCrypto    },
     { "Compress",   TestCompress  },

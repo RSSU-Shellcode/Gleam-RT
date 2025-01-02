@@ -1,5 +1,6 @@
 #include "c_types.h"
 #include "lib_memory.h"
+#include "lib_match.h"
 #include "compress.h"
 
 #define MIN_MATCH_LENGTH 3
@@ -7,8 +8,6 @@
 
 #define DEFAULT_WINDOW_SIZE 512
 #define MAXIMUM_WINDOW_SIZE 4096
-
-integer find(byte* s, uint ns, byte* sep, uint nsep);
 
 uint Compress(void* dst, void* src, uint len, uint win)
 {
@@ -44,69 +43,69 @@ uint Compress(void* dst, void* src, uint len, uint win)
         integer length = 0;
         for (integer l = MIN_MATCH_LENGTH; l <= MAX_MATCH_LENGTH; l++)
         {
-			if (rem < l)
+            if (rem < l)
             {
                 break;
-			}
-            integer idx = find(window, winLen, input + srcPtr, l);
-			if (idx == -1)
+            }
+            integer idx = MatchBytes(window, winLen, input + srcPtr, l);
+            if (idx == -1)
             {
                 break;
-			}
+            }
             offset = winLen - idx - 1;
-			length = l;
-		}
+            length = l;
+        }
         // set compress flag and write data
-		if (length != 0)
+        if (length != 0)
         {
             flag |= 1;
-			// 12 bit = offset, 4 bit = length
-			// offset max is 4095, max length value is [0-15] + 3
+            // 12 bit = offset, 4 bit = length
+            // offset max is 4095, max length value is [0-15] + 3
             uint16 mark = (uint16)((offset << 4) + (length - MIN_MATCH_LENGTH));
             // encode mark to buffer
             output[dstPtr+0] = (byte)(mark >> 0);
             output[dstPtr+1] = (byte)(mark >> 8);
             dstPtr += 2;
-		} else {
+        } else {
             output[dstPtr] = input[srcPtr];
-			dstPtr++;
-		}
+            dstPtr++;
+        }
         // update flag block
-		if (flagCtr == 7) 
+        if (flagCtr == 7) 
         {
             output[flagPtr] = flag;
-			// update pointer
+            // update pointer
             flagPtr = dstPtr;
             dstPtr++;
-			// reset status
+            // reset status
             flag = 0;
             flagCtr = 0;
-		} else {
+        } else {
             flag <<= 1;
             flagCtr++;
-		}
-		// update source pointer
-		if (length != 0) 
+        }
+        // update source pointer
+        if (length != 0) 
         {
             srcPtr += length;
-		} else {
+        } else {
             srcPtr++;
-		}
-		// update window
+        }
+        // update window
         integer start = srcPtr - winSize;
-		if (start < 0)
+        if (start < 0)
         {
             start = 0;
-		} 
+        } 
         window = input + start;
         winLen = srcPtr - start;
     }
-	// process the final flag block
-	if (flagCtr != 0) 
+    // process the final flag block
+    if (flagCtr != 0) 
     {
         flag <<= (byte)(7 - flagCtr);
         output[flagPtr] = flag;
-	} else {
+    } else {
         dstPtr--; // rollback pointer
     }
     return dstPtr;
@@ -127,21 +126,21 @@ uint Decompress(void* dst, void* src, uint len)
     while (srcPtr < dataLen)
     {
         // check need read flag block
-		if (flagIdx == 8) 
+        if (flagIdx == 8) 
         {
             byte b = input[srcPtr];
-			flag[0] = (b & (1 << 7)) != 0;
-			flag[1] = (b & (1 << 6)) != 0;
-			flag[2] = (b & (1 << 5)) != 0;
-			flag[3] = (b & (1 << 4)) != 0;
-			flag[4] = (b & (1 << 3)) != 0;
-			flag[5] = (b & (1 << 2)) != 0;
-			flag[6] = (b & (1 << 1)) != 0;
-			flag[7] = (b & (1 << 0)) != 0;
+            flag[0] = (b & (1 << 7)) != 0;
+            flag[1] = (b & (1 << 6)) != 0;
+            flag[2] = (b & (1 << 5)) != 0;
+            flag[3] = (b & (1 << 4)) != 0;
+            flag[4] = (b & (1 << 3)) != 0;
+            flag[5] = (b & (1 << 2)) != 0;
+            flag[6] = (b & (1 << 1)) != 0;
+            flag[7] = (b & (1 << 0)) != 0;
             srcPtr++;
             flagIdx = 0;
-		}
-		if (flag[flagIdx])
+        }
+        if (flag[flagIdx])
         {
             uint16 mark = *(uint16*)(input+srcPtr);
             integer offset = (integer)((mark >> 4) + 1);
@@ -150,26 +149,13 @@ uint Decompress(void* dst, void* src, uint len)
             mem_copy(output + dstPtr, output + start, length);
             srcPtr += 2;
             dstPtr += length;
-		} else {
+        } else {
             output[dstPtr] = input[srcPtr];
             srcPtr++;
             dstPtr++;
-		}
-		// update flag index
+        }
+        // update flag index
         flagIdx++;
     }
     return dstPtr;
-}
-
-integer find(byte* s, uint ns, byte* sep, uint nsep)
-{
-    for (integer i = 0; i < (integer)ns - (integer)nsep +1 ; i++)
-    {
-        if (mem_equal(s, sep, nsep))
-        {
-            return i;
-        }
-        s++;
-    }
-    return -1;
 }

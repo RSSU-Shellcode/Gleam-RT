@@ -118,7 +118,7 @@ typedef void (*Decrypt_t)(byte* buf, uint size, byte* key, byte* iv);
 // 
 // Please record the original size when compressing to 
 // facilitate decompression¡£
-typedef uint (*Compress_t)(void* dst, void* src, uint len);
+typedef uint (*Compress_t)(void* dst, void* src, uint len, uint window);
 typedef uint (*Decompress_t)(void* dst, void* src, uint len);
 
 // GetProcAddress, GetProcAddressByName and GetProcAddressByHash

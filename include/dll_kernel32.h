@@ -197,10 +197,10 @@ typedef struct __declspec(align(16)) {
 typedef struct {
     DWORD ControlWord;
     DWORD StatusWord;
-	DWORD TagWord;
-	DWORD ErrorOffset;
-	DWORD ErrorSelector;
-	DWORD DataOffset;
+    DWORD TagWord;
+    DWORD ErrorOffset;
+    DWORD ErrorSelector;
+    DWORD DataOffset;
     DWORD DataSelector;
     BYTE  RegisterArea[80];
     DWORD CR0NPXState;

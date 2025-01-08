@@ -2,7 +2,7 @@
 #include "lib_memory.h"
 #include "lib_match.h"
 
-integer burteForce(byte* s, integer ns, byte* sep, integer nsep);
+static integer burteForce(byte* s, integer ns, byte* sep, integer nsep);
 
 #pragma optimize("t", on)
 
@@ -69,7 +69,7 @@ integer MatchBytes(byte* s, integer ns, byte* sep, integer nsep)
             continue;
         }
         // compare the total data
-        if (mem_equal(s+(i+2), sep+2, nsep-2))
+        if (mem_equal(s + i, sep, nsep))
         {
             return i;
         }
@@ -78,7 +78,7 @@ integer MatchBytes(byte* s, integer ns, byte* sep, integer nsep)
     return -1;
 }
 
-integer burteForce(byte* s, integer ns, byte* sep, integer nsep)
+static integer burteForce(byte* s, integer ns, byte* sep, integer nsep)
 {
     for (integer i = 0; i < (ns - nsep + 1); i++)
     {

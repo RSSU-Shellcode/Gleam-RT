@@ -7,8 +7,14 @@
 #include "context.h"
 #include "errno.h"
 
+typedef struct {
+    uint NumModules;
+} LT_Status;
+
 typedef bool (*LibLockModule_t)(HMODULE hModule);
 typedef bool (*LibUnlockModule_t)(HMODULE hModule);
+typedef bool (*LibFreeAllMu_t)();
+typedef bool (*LibGetStatus_t)(LT_Status* buf);
 
 typedef bool  (*LibLock_t)();
 typedef bool  (*LibUnlock_t)();
@@ -27,6 +33,8 @@ typedef struct {
 
     LibLockModule_t   LockModule;
     LibUnlockModule_t UnlockModule;
+    LibFreeAllMu_t    FreeAllMu;
+    LibGetStatus_t    GetStatus;
 
     LibLock_t    Lock;
     LibUnlock_t  Unlock;

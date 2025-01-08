@@ -9,6 +9,15 @@
 #include "context.h"
 #include "errno.h"
 
+typedef struct {
+    int64 NumGlobals;
+    int64 NumLocals;
+    int64 NumBlocks;
+    int64 NumRegions;
+    int64 NumPages;
+    int64 NumHeaps;
+} MT_Status;
+
 typedef void* (*MemAlloc_t)(uint size);
 typedef void* (*MemCalloc_t)(uint num, uint size);
 typedef void* (*MemRealloc_t)(void* ptr, uint size);
@@ -18,6 +27,8 @@ typedef uint  (*MemCap_t)(void* ptr);
 
 typedef bool (*MemLockRegion_t)(LPVOID address);
 typedef bool (*MemUnlockRegion_t)(LPVOID address);
+typedef bool (*MemFreeAllMu_t)();
+typedef bool (*MemGetStatus_t)(MT_Status* buf);
 
 typedef bool  (*MemLock_t)();
 typedef bool  (*MemUnlock_t)();
@@ -65,6 +76,8 @@ typedef struct {
 
     MemLockRegion_t   LockRegion;
     MemUnlockRegion_t UnlockRegion;
+    MemFreeAllMu_t    FreeAllMu;
+    MemGetStatus_t    GetStatus;
 
     MemLock_t    Lock;
     MemUnlock_t  Unlock;

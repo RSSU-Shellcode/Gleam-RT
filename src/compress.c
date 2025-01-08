@@ -9,6 +9,8 @@
 #define DEFAULT_WINDOW_SIZE 512
 #define MAXIMUM_WINDOW_SIZE 4096
 
+#pragma optimize("t", on)
+
 uint Compress(void* dst, void* src, uint len, uint win)
 {
     if (win > MAXIMUM_WINDOW_SIZE)
@@ -159,3 +161,5 @@ uint Decompress(void* dst, void* src, uint len)
     }
     return dstPtr;
 }
+
+#pragma optimize("t", off)

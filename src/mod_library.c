@@ -55,6 +55,8 @@ void    LT_FreeLibraryAndExitThread(HMODULE hLibModule, DWORD dwExitCode);
 // methods for user
 bool LT_LockModule(HMODULE hModule);
 bool LT_UnlockModule(HMODULE hModule);
+bool LT_FreeAllMu();
+bool LT_GetStatus(LT_Status* buf);
 
 // methods for runtime
 bool  LT_Lock();
@@ -134,6 +136,8 @@ LibraryTracker_M* InitLibraryTracker(Context* context)
     // methods for user
     module->LockModule   = GetFuncAddr(&LT_LockModule);
     module->UnlockModule = GetFuncAddr(&LT_UnlockModule);
+    module->FreeAllMu    = GetFuncAddr(&LT_FreeAllMu);
+    module->GetStatus    = GetFuncAddr(&LT_GetStatus);
     // methods for runtime
     module->Lock    = GetFuncAddr(&LT_Lock);
     module->Unlock  = GetFuncAddr(&LT_Unlock);
@@ -640,6 +644,60 @@ static bool setModuleLocker(HMODULE hModule, bool lock)
         return false;
     }
     return success;
+}
+
+__declspec(noinline)
+bool LT_FreeAllMu()
+{
+    if (!LT_Lock())
+    {
+        return false;
+    }
+    errno errno = LT_FreeAll();
+    if (!LT_Unlock())
+    {
+        return false;
+    }
+    SetLastErrno(errno);
+    return errno == NO_ERROR;
+}
+
+__declspec(noinline)
+bool LT_GetStatus(LT_Status* buf)
+{
+    LibraryTracker* tracker = getTrackerPointer();
+
+    if (!LT_Lock())
+    {
+        return false;
+    }
+
+    List* modules = &tracker->Modules;
+    uint  numMods = 0;
+    // count the number of the tracked modules
+    uint len = modules->Len;
+    uint idx = 0;
+    for (uint num = 0; num < len; idx++)
+    {
+        module* module = List_Get(modules, idx);
+        if (module->hModule == NULL)
+        {
+            continue;
+        }
+        if (module->hModule != MODULE_UNLOADED)
+        {
+            numMods++;
+        }
+        num++;
+    }
+
+    if (!LT_Unlock())
+    {
+        return false;
+    }
+
+    buf->NumModules = numMods;
+    return true;
 }
 
 __declspec(noinline)

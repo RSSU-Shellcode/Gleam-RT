@@ -7,11 +7,19 @@
 #include "context.h"
 #include "errno.h"
 
+typedef struct {
+    int64 NumThreads;
+    int64 NumTLSIndex;
+    int64 NumSuspend;
+} TT_Status;
+
 typedef HANDLE (*ThdNew_t)(void* address, void* parameter, bool track);
 typedef void   (*ThdExit_t)(uint32 code);
 
 typedef bool (*ThdLockThread_t)(DWORD id);
 typedef bool (*ThdUnlockThread_t)(DWORD id);
+typedef bool (*ThdKillAllMu_t)();
+typedef bool (*ThdGetStatus_t)(TT_Status* status);
 
 typedef bool  (*ThdLock_t)();
 typedef bool  (*ThdUnlock_t)();
@@ -36,6 +44,8 @@ typedef struct {
 
     ThdLockThread_t   LockThread;
     ThdUnlockThread_t UnlockThread;
+    ThdKillAllMu_t    KillAllMu;
+    ThdGetStatus_t    GetStatus;
 
     ThdLock_t    Lock;
     ThdUnlock_t  Unlock;

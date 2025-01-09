@@ -8,13 +8,13 @@
 #include "errno.h"
 
 typedef struct {
-    uint NumModules;
+    int64 NumModules;
 } LT_Status;
 
 typedef bool (*LibLockModule_t)(HMODULE hModule);
 typedef bool (*LibUnlockModule_t)(HMODULE hModule);
+typedef bool (*LibGetStatus_t)(LT_Status* status);
 typedef bool (*LibFreeAllMu_t)();
-typedef bool (*LibGetStatus_t)(LT_Status* buf);
 
 typedef bool  (*LibLock_t)();
 typedef bool  (*LibUnlock_t)();
@@ -33,8 +33,8 @@ typedef struct {
 
     LibLockModule_t   LockModule;
     LibUnlockModule_t UnlockModule;
-    LibFreeAllMu_t    FreeAllMu;
     LibGetStatus_t    GetStatus;
+    LibFreeAllMu_t    FreeAllMu;
 
     LibLock_t    Lock;
     LibUnlock_t  Unlock;

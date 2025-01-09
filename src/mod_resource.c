@@ -130,6 +130,8 @@ int RT_WSACleanup();
 // methods for user
 bool RT_LockMutex(HANDLE hMutex);
 bool RT_UnlockMutex(HANDLE hMutex);
+bool RT_FreeAllMu();
+bool RT_GetStatus(RT_Status* status);
 
 // methods for runtime
 bool  RT_Lock();
@@ -218,6 +220,8 @@ ResourceTracker_M* InitResourceTracker(Context* context)
     // methods for user
     module->LockMutex   = GetFuncAddr(&RT_LockMutex);
     module->UnlockMutex = GetFuncAddr(&RT_UnlockMutex);
+    module->FreeAllMu   = GetFuncAddr(&RT_FreeAllMu);
+    module->GetStatus   = GetFuncAddr(&RT_GetStatus);
     // methods for runtime
     module->Lock    = GetFuncAddr(&RT_Lock);
     module->Unlock  = GetFuncAddr(&RT_Unlock);
@@ -1080,6 +1084,81 @@ static bool setHandleLocker(HANDLE hObject, uint32 func, bool lock)
         return false;
     }
     return success;
+}
+
+__declspec(noinline)
+bool RT_FreeAllMu()
+{
+    if (!RT_Lock())
+    {
+        return false;
+    }
+
+    errno errno = RT_FreeAll();
+    dbg_log("[resource]", "FreeAll has been called");
+
+    if (!RT_Unlock())
+    {
+        return false;
+    }
+
+    SetLastErrno(errno);
+    return errno == NO_ERROR;
+}
+
+__declspec(noinline)
+bool RT_GetStatus(RT_Status* status)
+{
+    ResourceTracker* tracker = getTrackerPointer();
+
+    if (!RT_Lock())
+    {
+        return false;
+    }
+
+    List* handles = &tracker->Handles;
+    int64 numMutexs = 0;
+    int64 numEvents = 0;
+    int64 numFiles  = 0;
+    int64 numDirs   = 0;
+
+    uint len = handles->Len;
+    uint idx = 0;
+    for (uint num = 0; num < len; idx++)
+    {
+        handle* handle = List_Get(handles, idx);
+        if (handle->source == 0)
+        {
+            continue;
+        }
+        switch (handle->source & FUNC_MASK)
+        {
+        case FUNC_CREATE_MUTEX:
+            numMutexs++;
+            break;
+        case FUNC_CREATE_EVENT:
+            numEvents++;
+            break;
+        case FUNC_CREATE_FILE:
+            numFiles++;
+            break;
+        case FUNC_FIND_FIRST_FILE:
+            numDirs++;
+            break;
+        }
+        num++;
+    }
+
+    if (!RT_Lock())
+    {
+        return false;
+    }
+
+    status->NumMutexs = numMutexs;
+    status->NumEvents = numEvents;
+    status->NumFiles  = numFiles;
+    status->NumDirs   = numDirs;
+    return true;
 }
 
 __declspec(noinline)

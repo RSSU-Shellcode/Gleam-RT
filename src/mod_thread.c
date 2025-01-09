@@ -50,7 +50,7 @@ typedef struct {
     HANDLE hMutex;
 
     // record the number of total SuspendThread
-    int64 numSuspend;
+    int64 NumSuspend;
 
     // store all threads information
     List Threads;
@@ -82,6 +82,8 @@ HANDLE TT_ThdNew(void* address, void* parameter, bool track);
 void   TT_ThdExit(uint32 code);
 bool   TT_LockThread(DWORD id);
 bool   TT_UnlockThread(DWORD id);
+bool   TT_KillAllMu();
+bool   TT_GetStatus(TT_Status* status);
 
 // methods for runtime
 bool  TT_Lock();
@@ -173,6 +175,8 @@ ThreadTracker_M* InitThreadTracker(Context* context)
     module->Exit = GetFuncAddr(&TT_ThdExit);
     module->LockThread   = GetFuncAddr(&TT_LockThread);
     module->UnlockThread = GetFuncAddr(&TT_UnlockThread);
+    module->KillAllMu    = GetFuncAddr(&TT_KillAllMu);
+    module->GetStatus    = GetFuncAddr(&TT_GetStatus);
     // methods for runtime
     module->Lock    = GetFuncAddr(&TT_Lock);
     module->Unlock  = GetFuncAddr(&TT_Unlock);
@@ -628,7 +632,7 @@ DWORD TT_SuspendThread(HANDLE hThread)
     DWORD count = tracker->SuspendThread(hThread);
     if (count != (DWORD)(-1))
     {
-        tracker->numSuspend++;
+        tracker->NumSuspend++;
     }
     dbg_log("[thread]", "SuspendThread: 0x%zX", hThread);
 
@@ -652,7 +656,7 @@ DWORD TT_ResumeThread(HANDLE hThread)
     DWORD count = tracker->ResumeThread(hThread);
     if (count != (DWORD)(-1))
     {
-        tracker->numSuspend--;
+        tracker->NumSuspend--;
     }
     dbg_log("[thread]", "ResumeThread: 0x%zX", hThread);
 
@@ -940,6 +944,49 @@ static bool setThreadLocker(DWORD id, bool lock)
         return false;
     }
     return success;
+}
+
+__declspec(noinline)
+bool TT_KillAllMu()
+{
+    ThreadTracker* tracker = getTrackerPointer();
+
+    if (tracker->RT_Lock() != NO_ERROR)
+    {
+        return false;
+    }
+
+    errno errno = TT_KillAll();
+    dbg_log("[thread]", "KillAll has been called");
+
+    if (tracker->RT_Unlock() != NO_ERROR)
+    {
+        return false;
+    }
+
+    SetLastErrno(errno);
+    return errno == NO_ERROR;
+}
+
+__declspec(noinline)
+bool TT_GetStatus(TT_Status* status)
+{
+    ThreadTracker* tracker = getTrackerPointer();
+
+    if (TT_Lock())
+    {
+        return false;
+    }
+
+    status->NumThreads  = (int64)(tracker->Threads.Len);
+    status->NumTLSIndex = (int64)(tracker->TLSIndex.Len);
+    status->NumSuspend  = (int64)(tracker->NumSuspend);
+
+    if (!TT_Unlock())
+    {
+        return false;
+    }
+    return true;
 }
 
 __declspec(noinline)

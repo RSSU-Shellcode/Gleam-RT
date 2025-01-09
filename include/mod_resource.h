@@ -8,8 +8,17 @@
 #include "context.h"
 #include "errno.h"
 
+typedef struct {
+    int64 NumMutexs;
+    int64 NumEvents;
+    int64 NumFiles;
+    int64 NumDirs;
+} RT_Status;
+
 typedef bool (*ResLockMutex_t)(HANDLE hMutex);
 typedef bool (*ResUnlockMutex_t)(HANDLE hMutex);
+typedef bool (*ResFreeAllMu_t)();
+typedef bool (*ResGetStatus_t)(RT_Status* status);
 
 typedef bool  (*ResLock_t)();
 typedef bool  (*ResUnlock_t)();
@@ -37,6 +46,8 @@ typedef struct {
 
     ResLockMutex_t   LockMutex;
     ResUnlockMutex_t UnlockMutex;
+    ResFreeAllMu_t   FreeAllMu;
+    ResGetStatus_t   GetStatus;
 
     ResLock_t    Lock;
     ResUnlock_t  Unlock;

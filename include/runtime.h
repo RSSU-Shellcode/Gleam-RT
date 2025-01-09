@@ -19,10 +19,29 @@
 // for generic shellcode development.
 
 // about library tracker
+#ifndef MOD_LIBRARY_H
+typedef struct {
+    int64 NumModules;
+} LT_Status;
+#endif // MOD_LIBRARY_H
+
 typedef bool (*LibLockModule_t)(HMODULE hModule);
 typedef bool (*LibUnlockModule_t)(HMODULE hModule);
+typedef bool (*LibGetStatus_t)(LT_Status* status);
+typedef bool (*LibFreeAllMu_t)();
 
 // about memory tracker
+#ifndef MOD_MEMORY_H
+typedef struct {
+    int64 NumGlobals;
+    int64 NumLocals;
+    int64 NumBlocks;
+    int64 NumRegions;
+    int64 NumPages;
+    int64 NumHeaps;
+} MT_Status;
+#endif // MOD_MEMORY_H
+
 typedef void* (*MemAlloc_t)(uint size);
 typedef void* (*MemCalloc_t)(uint num, uint size);
 typedef void* (*MemRealloc_t)(void* ptr, uint size);
@@ -31,16 +50,39 @@ typedef uint  (*MemSize_t)(void* ptr);
 typedef uint  (*MemCap_t)(void* ptr);
 typedef bool  (*MemLockRegion_t)(LPVOID address);
 typedef bool  (*MemUnlockRegion_t)(LPVOID address);
+typedef bool  (*MemGetStatus_t)(MT_Status* status);
+typedef bool  (*MemFreeAllMu_t)();
 
 // about thread tracker
+#ifndef MOD_THREAD_H
+typedef struct {
+    int64 NumThreads;
+    int64 NumTLSIndex;
+    int64 NumSuspend;
+} TT_Status;
+#endif // MOD_THREAD_H
+
 typedef HANDLE (*ThdNew_t)(void* address, void* parameter, bool track);
 typedef void   (*ThdExit_t)();
 typedef bool   (*ThdLockThread_t)(DWORD id);
 typedef bool   (*ThdUnlockThread_t)(DWORD id);
+typedef bool   (*ThdGetStatus_t)(TT_Status* status);
+typedef bool   (*ThdKillAllMu_t)();
 
 // about resource tracker
+#ifndef MOD_RESOURCE_H
+typedef struct {
+    int64 NumMutexs;
+    int64 NumEvents;
+    int64 NumFiles;
+    int64 NumDirs;
+} RT_Status;
+#endif // MOD_RESOURCE_H
+
 typedef bool (*ResLockMutex_t)(HANDLE hMutex);
 typedef bool (*ResUnlockMutex_t)(HANDLE hMutex);
+typedef bool (*ResGetStatus_t)(RT_Status* status);
+typedef bool (*ResFreeAllMu_t)();
 
 // about argument store
 typedef bool (*GetArgValue_t)(uint index, void* value, uint32* size);
@@ -130,35 +172,28 @@ typedef void* (*GetProcByName_t)(HMODULE hModule, LPCSTR lpProcName, bool hook);
 typedef void* (*GetProcByHash_t)(uint hash, uint key, bool hook);
 typedef void* (*GetProcOriginal_t)(HMODULE hModule, LPCSTR lpProcName);
 
-// runtime core methods
+// about runtime core methods
 //
-// it is NOT recommended use "Hide" and "Recover", these functions
+// It is NOT recommended use "Hide" and "Recover", these functions
 // are used to test and research, if use them, runtime will loss
 // the shield protect and structure data encrypt.
 //
 // SleepHR is used to call Hide, Sleep and Recover, usually it called by hook.
 // Cleanup is used to clean all tracked object except locked.
 // Exit is used to clean all tracked object and clean runtime self.
+typedef struct {
+    LT_Status Library;
+    MT_Status Memory;
+    TT_Status Thread;
+    RT_Status Resource;
+} Runtime_Metrics;
+
 typedef errno (*SleepHR_t)(uint32 milliseconds);
 typedef errno (*Hide_t)();
 typedef errno (*Recover_t)();
+typedef errno (*Metrics_t)(Runtime_Metrics* metrics);
 typedef errno (*Cleanup_t)();
 typedef errno (*Exit_t)();
-
-typedef struct {
-    // protect instructions like shellcode before Runtime,
-    // if it is NULL, Runtime will only protect self.
-    void* BootInstAddress;
-
-    // not erase runtime instructions after call Runtime_M.Exit
-    bool NotEraseInstruction;
-
-    // not adjust current memory page protect for erase runtime.
-    bool NotAdjustProtect;
-
-    // track current thread for test or debug mode.
-    bool TrackCurrentThread;
-} Runtime_Opts;
 
 // Runtime_M contains exported runtime methods.
 typedef struct {
@@ -178,6 +213,8 @@ typedef struct {
 
         LibLockModule_t   Lock;
         LibUnlockModule_t Unlock;
+        LibGetStatus_t    Status;
+        LibFreeAllMu_t    FreeAll;
     } Library;
 
     struct {
@@ -190,6 +227,8 @@ typedef struct {
 
         MemLockRegion_t   Lock;
         MemUnlockRegion_t Unlock;
+        MemGetStatus_t    Status;
+        MemFreeAllMu_t    FreeAll;
     } Memory;
 
     struct {
@@ -199,11 +238,15 @@ typedef struct {
 
         ThdLockThread_t   Lock;
         ThdUnlockThread_t Unlock;
+        ThdGetStatus_t    Status;
+        ThdKillAllMu_t    KillAll;
     } Thread;
 
     struct {
         ResLockMutex_t   LockMutex;
         ResUnlockMutex_t UnlockMutex;
+        ResGetStatus_t   Status;
+        ResFreeAllMu_t   FreeAll;
     } Resource;
 
     struct {
@@ -263,12 +306,28 @@ typedef struct {
         SleepHR_t Sleep;
         Hide_t    Hide;
         Recover_t Recover;
+        Metrics_t Metrics;
         Cleanup_t Cleanup;
         Exit_t    Exit;
     } Core;
 
     ExitProcess_t ExitProcess;
 } Runtime_M;
+
+typedef struct {
+    // protect instructions like shellcode before Runtime,
+    // if it is NULL, Runtime will only protect self.
+    void* BootInstAddress;
+
+    // not erase runtime instructions after call Runtime_M.Exit
+    bool NotEraseInstruction;
+
+    // not adjust current memory page protect for erase runtime.
+    bool NotAdjustProtect;
+
+    // track current thread for test or debug mode.
+    bool TrackCurrentThread;
+} Runtime_Opts;
 
 // InitRuntime is used to initialize runtime and return module methods.
 // If failed to initialize, use GetLastError to get error code.

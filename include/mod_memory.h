@@ -27,8 +27,8 @@ typedef uint  (*MemCap_t)(void* ptr);
 
 typedef bool (*MemLockRegion_t)(LPVOID address);
 typedef bool (*MemUnlockRegion_t)(LPVOID address);
+typedef bool (*MemGetStatus_t)(MT_Status* status);
 typedef bool (*MemFreeAllMu_t)();
-typedef bool (*MemGetStatus_t)(MT_Status* buf);
 
 typedef bool  (*MemLock_t)();
 typedef bool  (*MemUnlock_t)();
@@ -76,8 +76,8 @@ typedef struct {
 
     MemLockRegion_t   LockRegion;
     MemUnlockRegion_t UnlockRegion;
-    MemFreeAllMu_t    FreeAllMu;
     MemGetStatus_t    GetStatus;
+    MemFreeAllMu_t    FreeAllMu;
 
     MemLock_t    Lock;
     MemUnlock_t  Unlock;

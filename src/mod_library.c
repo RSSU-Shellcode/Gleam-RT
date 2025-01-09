@@ -55,8 +55,8 @@ void    LT_FreeLibraryAndExitThread(HMODULE hLibModule, DWORD dwExitCode);
 // methods for user
 bool LT_LockModule(HMODULE hModule);
 bool LT_UnlockModule(HMODULE hModule);
+bool LT_GetStatus(LT_Status* status);
 bool LT_FreeAllMu();
-bool LT_GetStatus(LT_Status* buf);
 
 // methods for runtime
 bool  LT_Lock();
@@ -136,8 +136,8 @@ LibraryTracker_M* InitLibraryTracker(Context* context)
     // methods for user
     module->LockModule   = GetFuncAddr(&LT_LockModule);
     module->UnlockModule = GetFuncAddr(&LT_UnlockModule);
-    module->FreeAllMu    = GetFuncAddr(&LT_FreeAllMu);
     module->GetStatus    = GetFuncAddr(&LT_GetStatus);
+    module->FreeAllMu    = GetFuncAddr(&LT_FreeAllMu);
     // methods for runtime
     module->Lock    = GetFuncAddr(&LT_Lock);
     module->Unlock  = GetFuncAddr(&LT_Unlock);
@@ -647,23 +647,7 @@ static bool setModuleLocker(HMODULE hModule, bool lock)
 }
 
 __declspec(noinline)
-bool LT_FreeAllMu()
-{
-    if (!LT_Lock())
-    {
-        return false;
-    }
-    errno errno = LT_FreeAll();
-    if (!LT_Unlock())
-    {
-        return false;
-    }
-    SetLastErrno(errno);
-    return errno == NO_ERROR;
-}
-
-__declspec(noinline)
-bool LT_GetStatus(LT_Status* buf)
+bool LT_GetStatus(LT_Status* status)
 {
     LibraryTracker* tracker = getTrackerPointer();
 
@@ -673,7 +657,7 @@ bool LT_GetStatus(LT_Status* buf)
     }
 
     List* modules = &tracker->Modules;
-    uint  numMods = 0;
+    int64 numMods = 0;
     // count the number of the tracked modules
     uint len = modules->Len;
     uint idx = 0;
@@ -696,8 +680,28 @@ bool LT_GetStatus(LT_Status* buf)
         return false;
     }
 
-    buf->NumModules = numMods;
+    status->NumModules = numMods;
     return true;
+}
+
+__declspec(noinline)
+bool LT_FreeAllMu()
+{
+    if (!LT_Lock())
+    {
+        return false;
+    }
+
+    errno errno = LT_FreeAll();
+    dbg_log("[library]", "FreeAll has been called");
+
+    if (!LT_Unlock())
+    {
+        return false;
+    }
+
+    SetLastErrno(errno);
+    return errno == NO_ERROR;
 }
 
 __declspec(noinline)

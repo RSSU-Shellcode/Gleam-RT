@@ -117,6 +117,7 @@ void  RT_ExitProcess(UINT uExitCode);
 errno RT_SleepHR(DWORD dwMilliseconds);
 errno RT_Hide();
 errno RT_Recover();
+errno RT_Metrics(Runtime_Metrics* metrics);
 errno RT_Cleanup();
 errno RT_Exit();
 
@@ -306,6 +307,8 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->Library.GetProc = GetFuncAddr(&RT_GetProcAddress);
     module->Library.Lock    = runtime->LibraryTracker->LockModule;
     module->Library.Unlock  = runtime->LibraryTracker->UnlockModule;
+    module->Library.Status  = runtime->LibraryTracker->GetStatus;
+    module->Library.FreeAll = runtime->LibraryTracker->FreeAllMu;
     // memory tracker
     module->Memory.Alloc   = runtime->MemoryTracker->Alloc;
     module->Memory.Calloc  = runtime->MemoryTracker->Calloc;
@@ -315,15 +318,21 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->Memory.Cap     = runtime->MemoryTracker->Cap;
     module->Memory.Lock    = runtime->MemoryTracker->LockRegion;
     module->Memory.Unlock  = runtime->MemoryTracker->UnlockRegion;
+    module->Memory.Status  = runtime->MemoryTracker->GetStatus;
+    module->Memory.FreeAll = runtime->MemoryTracker->FreeAllMu;
     // thread tracker
-    module->Thread.New    = runtime->ThreadTracker->New;
-    module->Thread.Exit   = runtime->ThreadTracker->Exit;
-    module->Thread.Sleep  = GetFuncAddr(&RT_Sleep);
-    module->Thread.Lock   = runtime->ThreadTracker->LockThread;
-    module->Thread.Unlock = runtime->ThreadTracker->UnlockThread;
+    module->Thread.New     = runtime->ThreadTracker->New;
+    module->Thread.Exit    = runtime->ThreadTracker->Exit;
+    module->Thread.Sleep   = GetFuncAddr(&RT_Sleep);
+    module->Thread.Lock    = runtime->ThreadTracker->LockThread;
+    module->Thread.Unlock  = runtime->ThreadTracker->UnlockThread;
+    module->Thread.Status  = runtime->ThreadTracker->GetStatus;
+    module->Thread.KillAll = runtime->ThreadTracker->KillAllMu;
     // resource tracker
     module->Resource.LockMutex   = runtime->ResourceTracker->LockMutex;
     module->Resource.UnlockMutex = runtime->ResourceTracker->UnlockMutex;
+    module->Resource.Status      = runtime->ResourceTracker->GetStatus;
+    module->Resource.FreeAll     = runtime->ResourceTracker->FreeAllMu;
     // argument store
     module->Argument.GetValue   = runtime->ArgumentStore->GetValue;
     module->Argument.GetPointer = runtime->ArgumentStore->GetPointer;
@@ -367,6 +376,7 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->Core.Sleep   = GetFuncAddr(&RT_SleepHR);
     module->Core.Hide    = GetFuncAddr(&RT_Hide);
     module->Core.Recover = GetFuncAddr(&RT_Recover);
+    module->Core.Metrics = GetFuncAddr(&RT_Metrics);
     module->Core.Cleanup = GetFuncAddr(&RT_Cleanup);
     module->Core.Exit    = GetFuncAddr(&RT_Exit);
     module->ExitProcess  = GetFuncAddr(&RT_ExitProcess);
@@ -1376,7 +1386,7 @@ void* RT_GetProcAddressByName(HMODULE hModule, LPCSTR lpProcName, bool hook)
     Runtime* runtime = getRuntimePointer();
 
     // process ordinal import
-    if (lpProcName <= (LPCSTR)(0xFFFF))
+    if (lpProcName < (LPCSTR)(0xFFFF))
     {
         return runtime->GetProcAddress(hModule, lpProcName);
     }
@@ -2066,26 +2076,24 @@ errno RT_Hide()
     {
         return ERR_RUNTIME_LOCK;
     }
-
-    errno err = RT_lock_mods();
-    if (err != NO_ERROR)
+    errno errlm = RT_lock_mods();
+    if (errlm != NO_ERROR)
     {
-        return err;
+        return errlm;
     }
 
-    errno errno = hide(runtime);
+    errno err = hide(runtime);
 
-    err = RT_unlock_mods();
-    if (err != NO_ERROR)
+    errno errum = RT_unlock_mods();
+    if (errum != NO_ERROR)
     {
-        return err;
+        return errum;
     }
-
     if (!rt_unlock())
     {
         return ERR_RUNTIME_UNLOCK;
     }
-    return errno;
+    return err;
 }
 
 __declspec(noinline)
@@ -2097,26 +2105,46 @@ errno RT_Recover()
     {
         return ERR_RUNTIME_LOCK;
     }
-
-    errno err = RT_lock_mods();
-    if (err != NO_ERROR)
+    errno errlm = RT_lock_mods();
+    if (errlm != NO_ERROR)
     {
-        return err;
+        return errlm;
     }
 
-    errno errno = recover(runtime);
+    errno err = recover(runtime);
 
-    err = RT_unlock_mods();
-    if (err != NO_ERROR)
+    errno errum = RT_unlock_mods();
+    if (errum != NO_ERROR)
     {
-        return err;
+        return errum;
     }
+    if (!rt_unlock())
+    {
+        return ERR_RUNTIME_UNLOCK;
+    }
+    return err;
+}
+
+__declspec(noinline)
+errno RT_Metrics(Runtime_Metrics* metrics)
+{
+    Runtime* runtime = getRuntimePointer();
+
+    if (!rt_lock())
+    {
+        return ERR_RUNTIME_LOCK;
+    }
+
+    runtime->LibraryTracker->GetStatus(&metrics->Library);
+    runtime->MemoryTracker->GetStatus(&metrics->Memory);
+    runtime->ThreadTracker->GetStatus(&metrics->Thread);
+    runtime->ResourceTracker->GetStatus(&metrics->Resource);
 
     if (!rt_unlock())
     {
         return ERR_RUNTIME_UNLOCK;
     }
-    return errno;
+    return NO_ERROR;
 }
 
 __declspec(noinline)
@@ -2164,10 +2192,10 @@ errno RT_Cleanup()
         }
     }
 
-    errlm = RT_unlock_mods();
-    if (errlm != NO_ERROR)
+    errno errum = RT_unlock_mods();
+    if (errum != NO_ERROR)
     {
-        return errlm;
+        return errum;
     }
     if (!rt_unlock())
     {

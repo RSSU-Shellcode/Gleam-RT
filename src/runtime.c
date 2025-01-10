@@ -10,8 +10,8 @@
 #include "crypto.h"
 #include "compress.h"
 #include "win_api.h"
-#include "context.h"
 #include "errno.h"
+#include "context.h"
 #include "mod_library.h"
 #include "mod_memory.h"
 #include "mod_thread.h"
@@ -355,6 +355,8 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->WinHTTP.Post = runtime->WinHTTP->Post;
     module->WinHTTP.Do   = runtime->WinHTTP->Do;
     module->WinHTTP.Free = runtime->WinHTTP->Free;
+    // WinCrypto
+
     // random module
     module->Random.Buffer  = GetFuncAddr(&RandBuffer);
     module->Random.Bool    = GetFuncAddr(&RandBool);
@@ -379,7 +381,10 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->Core.Metrics = GetFuncAddr(&RT_Metrics);
     module->Core.Cleanup = GetFuncAddr(&RT_Cleanup);
     module->Core.Exit    = GetFuncAddr(&RT_Exit);
-    module->ExitProcess  = GetFuncAddr(&RT_ExitProcess);
+    // runtime core data
+    module->Data.Mutex = runtime->hMutex;
+    // [THE END OF THE WORLD] :(
+    module->ExitProcess = GetFuncAddr(&RT_ExitProcess);
     return module;
 }
 

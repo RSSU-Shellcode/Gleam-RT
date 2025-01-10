@@ -17,8 +17,8 @@ typedef struct {
 
 typedef bool (*ResLockMutex_t)(HANDLE hMutex);
 typedef bool (*ResUnlockMutex_t)(HANDLE hMutex);
-typedef bool (*ResFreeAllMu_t)();
 typedef bool (*ResGetStatus_t)(RT_Status* status);
+typedef bool (*ResFreeAllMu_t)();
 
 typedef bool  (*ResLock_t)();
 typedef bool  (*ResUnlock_t)();
@@ -46,8 +46,8 @@ typedef struct {
 
     ResLockMutex_t   LockMutex;
     ResUnlockMutex_t UnlockMutex;
-    ResFreeAllMu_t   FreeAllMu;
     ResGetStatus_t   GetStatus;
+    ResFreeAllMu_t   FreeAllMu;
 
     ResLock_t    Lock;
     ResUnlock_t  Unlock;

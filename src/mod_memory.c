@@ -148,8 +148,8 @@ uint  MT_MemSize(void* ptr);
 uint  MT_MemCap(void* ptr);
 bool  MT_LockRegion(LPVOID address);
 bool  MT_UnlockRegion(LPVOID address);
+bool  MT_GetStatus(MT_Status* status);
 bool  MT_FreeAllMu();
-bool  MT_GetStatus(MT_Status* buf);
 
 // methods for runtime
 bool  MT_Lock();
@@ -281,8 +281,8 @@ MemoryTracker_M* InitMemoryTracker(Context* context)
     module->Cap     = GetFuncAddr(&MT_MemCap);
     module->LockRegion   = GetFuncAddr(&MT_LockRegion);
     module->UnlockRegion = GetFuncAddr(&MT_UnlockRegion);
-    module->FreeAllMu    = GetFuncAddr(&MT_FreeAllMu);
     module->GetStatus    = GetFuncAddr(&MT_GetStatus);
+    module->FreeAllMu    = GetFuncAddr(&MT_FreeAllMu);
     // methods for runtime
     module->Lock    = GetFuncAddr(&MT_Lock);
     module->Unlock  = GetFuncAddr(&MT_Unlock);
@@ -2347,6 +2347,30 @@ static bool setRegionLocker(uintptr address, bool lock)
 #pragma optimize("t", off)
 
 __declspec(noinline)
+bool MT_GetStatus(MT_Status* status)
+{
+    MemoryTracker* tracker = getTrackerPointer();
+
+    if (!MT_Lock())
+    {
+        return false;
+    }
+
+    status->NumGlobals = (int64)(tracker->NumGlobals);
+    status->NumLocals  = (int64)(tracker->NumLocals);
+    status->NumBlocks  = (int64)(tracker->NumBlocks);
+    status->NumRegions = (int64)(tracker->Regions.Len);
+    status->NumPages   = (int64)(tracker->Pages.Len);
+    status->NumHeaps   = (int64)(tracker->Heaps.Len);
+
+    if (!MT_Unlock())
+    {
+        return false;
+    }
+    return true;
+}
+
+__declspec(noinline)
 bool MT_FreeAllMu()
 {
     if (!MT_Lock())
@@ -2367,36 +2391,12 @@ bool MT_FreeAllMu()
 }
 
 __declspec(noinline)
-bool MT_GetStatus(MT_Status* buf)
-{
-    MemoryTracker* tracker = getTrackerPointer();
-
-    if (!MT_Lock())
-    {
-        return false;
-    }
-
-    buf->NumGlobals = tracker->NumGlobals;
-    buf->NumLocals  = tracker->NumLocals;
-    buf->NumBlocks  = tracker->NumBlocks;
-    buf->NumRegions = tracker->Regions.Len;
-    buf->NumPages   = tracker->Pages.Len;
-    buf->NumHeaps   = tracker->Heaps.Len;
-
-    if (!MT_Unlock())
-    {
-        return false;
-    }
-    return true;
-}
-
-__declspec(noinline)
 bool MT_Lock()
 {
     MemoryTracker* tracker = getTrackerPointer();
 
     uint32 event = tracker->WaitForSingleObject(tracker->hMutex, INFINITE);
-    return event == WAIT_OBJECT_0;
+    return (event == WAIT_OBJECT_0 || event == WAIT_ABANDONED);
 }
 
 __declspec(noinline)

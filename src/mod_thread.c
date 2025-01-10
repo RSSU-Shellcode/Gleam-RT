@@ -82,8 +82,8 @@ HANDLE TT_ThdNew(void* address, void* parameter, bool track);
 void   TT_ThdExit(uint32 code);
 bool   TT_LockThread(DWORD id);
 bool   TT_UnlockThread(DWORD id);
-bool   TT_KillAllMu();
 bool   TT_GetStatus(TT_Status* status);
+bool   TT_KillAllMu();
 
 // methods for runtime
 bool  TT_Lock();
@@ -110,7 +110,7 @@ static bool  initTrackerAPI(ThreadTracker* tracker, Context* context);
 static bool  updateTrackerPointer(ThreadTracker* tracker);
 static bool  recoverTrackerPointer(ThreadTracker* tracker);
 static bool  initTrackerEnvironment(ThreadTracker* tracker, Context* context);
-static void* camouflageStartAddress(uint seed);
+static void* camouflageStartAddress(void* address);
 static bool  addThread(ThreadTracker* tracker, DWORD threadID, HANDLE hThread);
 static void  delThread(ThreadTracker* tracker, DWORD threadID);
 static bool  addTLSIndex(ThreadTracker* tracker, DWORD index);
@@ -175,8 +175,8 @@ ThreadTracker_M* InitThreadTracker(Context* context)
     module->Exit = GetFuncAddr(&TT_ThdExit);
     module->LockThread   = GetFuncAddr(&TT_LockThread);
     module->UnlockThread = GetFuncAddr(&TT_UnlockThread);
-    module->KillAllMu    = GetFuncAddr(&TT_KillAllMu);
     module->GetStatus    = GetFuncAddr(&TT_GetStatus);
+    module->KillAllMu    = GetFuncAddr(&TT_KillAllMu);
     // methods for runtime
     module->Lock    = GetFuncAddr(&TT_Lock);
     module->Unlock  = GetFuncAddr(&TT_Unlock);
@@ -420,7 +420,7 @@ HANDLE tt_createThread(
     {
         // create thread from camouflaged start address and pause it
         bool  resume   = (dwCreationFlags & 0xF) != CREATE_SUSPENDED;
-        void* fakeAddr = camouflageStartAddress((uint)lpStartAddress);
+        void* fakeAddr = camouflageStartAddress(lpStartAddress);
         dwCreationFlags |= CREATE_SUSPENDED;
 
         hThread = tracker->CreateThread(
@@ -528,10 +528,10 @@ HANDLE tt_createThread(
     return hThread;
 }
 
-static void* camouflageStartAddress(uint seed)
+static void* camouflageStartAddress(void* address)
 {
 #ifdef NOT_CAMOUFLAGE
-    return (void*)seed;
+    return address;
 #endif // NOT_CAMOUFLAGE
 
     // get current process module from PEB
@@ -555,7 +555,7 @@ static void* camouflageStartAddress(uint seed)
     ParsePEImage((byte*)modAddr, &image);
     // select a random start address
     uintptr base  = modAddr + image.TextVirtualAddress;
-    uintptr begin = base + RandUintN(seed, image.TextSizeOfRawData);
+    uintptr begin = base + RandUintN((uint64)address, image.TextSizeOfRawData);
     uintptr end   = base + image.TextSizeOfRawData;
     for (uintptr addr = begin; addr < end; addr++)
     {
@@ -947,6 +947,27 @@ static bool setThreadLocker(DWORD id, bool lock)
 }
 
 __declspec(noinline)
+bool TT_GetStatus(TT_Status* status)
+{
+    ThreadTracker* tracker = getTrackerPointer();
+
+    if (TT_Lock())
+    {
+        return false;
+    }
+
+    status->NumThreads  = (int64)(tracker->Threads.Len);
+    status->NumTLSIndex = (int64)(tracker->TLSIndex.Len);
+    status->NumSuspend  = (int64)(tracker->NumSuspend);
+
+    if (!TT_Unlock())
+    {
+        return false;
+    }
+    return true;
+}
+
+__declspec(noinline)
 bool TT_KillAllMu()
 {
     ThreadTracker* tracker = getTrackerPointer();
@@ -969,33 +990,12 @@ bool TT_KillAllMu()
 }
 
 __declspec(noinline)
-bool TT_GetStatus(TT_Status* status)
-{
-    ThreadTracker* tracker = getTrackerPointer();
-
-    if (TT_Lock())
-    {
-        return false;
-    }
-
-    status->NumThreads  = (int64)(tracker->Threads.Len);
-    status->NumTLSIndex = (int64)(tracker->TLSIndex.Len);
-    status->NumSuspend  = (int64)(tracker->NumSuspend);
-
-    if (!TT_Unlock())
-    {
-        return false;
-    }
-    return true;
-}
-
-__declspec(noinline)
 bool TT_Lock()
 {
     ThreadTracker* tracker = getTrackerPointer();
 
     DWORD event = tracker->WaitForSingleObject(tracker->hMutex, INFINITE);
-    return event == WAIT_OBJECT_0;
+    return (event == WAIT_OBJECT_0 || event == WAIT_ABANDONED);
 }
 
 __declspec(noinline)

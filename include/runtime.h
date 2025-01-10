@@ -311,6 +311,10 @@ typedef struct {
         Exit_t    Exit;
     } Core;
 
+    struct {
+        HANDLE Mutex;
+    } Data;
+
     ExitProcess_t ExitProcess;
 } Runtime_M;
 

@@ -130,8 +130,8 @@ int RT_WSACleanup();
 // methods for user
 bool RT_LockMutex(HANDLE hMutex);
 bool RT_UnlockMutex(HANDLE hMutex);
-bool RT_FreeAllMu();
 bool RT_GetStatus(RT_Status* status);
+bool RT_FreeAllMu();
 
 // methods for runtime
 bool  RT_Lock();
@@ -220,8 +220,8 @@ ResourceTracker_M* InitResourceTracker(Context* context)
     // methods for user
     module->LockMutex   = GetFuncAddr(&RT_LockMutex);
     module->UnlockMutex = GetFuncAddr(&RT_UnlockMutex);
-    module->FreeAllMu   = GetFuncAddr(&RT_FreeAllMu);
     module->GetStatus   = GetFuncAddr(&RT_GetStatus);
+    module->FreeAllMu   = GetFuncAddr(&RT_FreeAllMu);
     // methods for runtime
     module->Lock    = GetFuncAddr(&RT_Lock);
     module->Unlock  = GetFuncAddr(&RT_Unlock);
@@ -1087,26 +1087,6 @@ static bool setHandleLocker(HANDLE hObject, uint32 func, bool lock)
 }
 
 __declspec(noinline)
-bool RT_FreeAllMu()
-{
-    if (!RT_Lock())
-    {
-        return false;
-    }
-
-    errno errno = RT_FreeAll();
-    dbg_log("[resource]", "FreeAll has been called");
-
-    if (!RT_Unlock())
-    {
-        return false;
-    }
-
-    SetLastErrno(errno);
-    return errno == NO_ERROR;
-}
-
-__declspec(noinline)
 bool RT_GetStatus(RT_Status* status)
 {
     ResourceTracker* tracker = getTrackerPointer();
@@ -1159,6 +1139,26 @@ bool RT_GetStatus(RT_Status* status)
     status->NumFiles  = numFiles;
     status->NumDirs   = numDirs;
     return true;
+}
+
+__declspec(noinline)
+bool RT_FreeAllMu()
+{
+    if (!RT_Lock())
+    {
+        return false;
+    }
+
+    errno errno = RT_FreeAll();
+    dbg_log("[resource]", "FreeAll has been called");
+
+    if (!RT_Unlock())
+    {
+        return false;
+    }
+
+    SetLastErrno(errno);
+    return errno == NO_ERROR;
 }
 
 __declspec(noinline)

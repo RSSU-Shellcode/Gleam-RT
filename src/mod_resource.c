@@ -1166,7 +1166,7 @@ bool RT_Lock()
 {
     ResourceTracker* tracker = getTrackerPointer();
 
-    uint32 event = tracker->WaitForSingleObject(tracker->hMutex, INFINITE);
+    DWORD event = tracker->WaitForSingleObject(tracker->hMutex, INFINITE);
     return event == WAIT_OBJECT_0 || event == WAIT_ABANDONED;
 }
 

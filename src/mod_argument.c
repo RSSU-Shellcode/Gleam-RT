@@ -450,8 +450,8 @@ bool AS_Lock()
 {
     ArgumentStore* store = getStorePointer();
 
-    uint32 event = store->WaitForSingleObject(store->hMutex, INFINITE);
-    return event == WAIT_OBJECT_0;
+    DWORD event = store->WaitForSingleObject(store->hMutex, INFINITE);
+    return event == WAIT_OBJECT_0 || event == WAIT_ABANDONED;
 }
 
 __declspec(noinline)

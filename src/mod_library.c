@@ -709,8 +709,8 @@ bool LT_Lock()
 {
     LibraryTracker* tracker = getTrackerPointer();
 
-    uint32 event = tracker->WaitForSingleObject(tracker->hMutex, INFINITE);
-    return event == WAIT_OBJECT_0;
+    DWORD event = tracker->WaitForSingleObject(tracker->hMutex, INFINITE);
+    return event == WAIT_OBJECT_0 || event == WAIT_ABANDONED;
 }
 
 __declspec(noinline)

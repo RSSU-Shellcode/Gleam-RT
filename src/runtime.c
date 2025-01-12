@@ -83,7 +83,7 @@ typedef struct {
     HANDLE hThreadEvent; // event handler thread
 
     // IAT hooks about GetProcAddress
-    Hook IATHooks[52];
+    Hook IATHooks[53];
 
     // runtime submodules
     LibraryTracker_M*  LibraryTracker;
@@ -831,6 +831,7 @@ static bool initIATHooks(Runtime* runtime)
         { 0x248E1CDD11AB444F, 0x195932EA70030929, threadTracker->TerminateThread },
         { 0xFA78B22F20F4A6AE, 0xBE9C88DB7A69D0FA, threadTracker->TlsAlloc },
         { 0x04ACE48652C6FABB, 0x19401007C082388D, threadTracker->TlsFree },
+        { 0xEE9B49D8A9AFB57E, 0xB241162E988541ED, threadTracker->ExitThread }, // ntdll.RtlExitUserThread
         { 0x58926BA5F71CBB5B, 0x1E1F604F6035248A, resourceTracker->CreateMutexA },
         { 0x95A1D6B96343624E, 0xA7C4DE10EA2DA12F, resourceTracker->CreateMutexW },
         { 0x7875DE52EC02CD8B, 0xB95F39E380958D5E, resourceTracker->CreateEventA },
@@ -886,6 +887,7 @@ static bool initIATHooks(Runtime* runtime)
         { 0x6EF0E2AA, 0xE014E29F, threadTracker->TerminateThread },
         { 0x52598AD3, 0xD7C6183F, threadTracker->TlsAlloc },
         { 0x218DD96E, 0x05FED0A2, threadTracker->TlsFree },
+        { 0x74B3E012, 0xA73A6B97, threadTracker->ExitThread }, // ntdll.RtlExitUserThread
         { 0xC6B5D6DD, 0x36010787, resourceTracker->CreateMutexA },
         { 0x144D7209, 0xB789D747, resourceTracker->CreateMutexW },
         { 0x5E43201A, 0xFE7C8A22, resourceTracker->CreateEventA },
@@ -1134,8 +1136,8 @@ static bool rt_lock()
 {
     Runtime* runtime = getRuntimePointer();
 
-    uint32 event = runtime->WaitForSingleObject(runtime->hMutex, INFINITE);
-    return event == WAIT_OBJECT_0;
+    DWORD event = runtime->WaitForSingleObject(runtime->hMutex, INFINITE);
+    return event == WAIT_OBJECT_0 || event == WAIT_ABANDONED;
 }
 
 __declspec(noinline)
@@ -1794,6 +1796,7 @@ static void eventHandler()
         uint32 waitEvent = runtime->WaitForSingleObject(runtime->hEventArrive, INFINITE);
         switch (waitEvent)
         {
+        case WAIT_ABANDONED:
         case WAIT_OBJECT_0:
             errno = processEvent(runtime, &exit);
             break;

@@ -2395,8 +2395,8 @@ bool MT_Lock()
 {
     MemoryTracker* tracker = getTrackerPointer();
 
-    uint32 event = tracker->WaitForSingleObject(tracker->hMutex, INFINITE);
-    return (event == WAIT_OBJECT_0 || event == WAIT_ABANDONED);
+    DWORD event = tracker->WaitForSingleObject(tracker->hMutex, INFINITE);
+    return event == WAIT_OBJECT_0 || event == WAIT_ABANDONED;
 }
 
 __declspec(noinline)

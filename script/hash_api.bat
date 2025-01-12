@@ -101,6 +101,7 @@ hash_api -fmt 64 -conc -func GetCurrentThreadId
 hash_api -fmt 64 -conc -func TerminateThread
 hash_api -fmt 64 -conc -func TlsAlloc
 hash_api -fmt 64 -conc -func TlsFree
+hash_api -fmt 64 -conc -mod "ntdll.dll" -func RtlExitUserThread
 echo.
 
 echo [Resource Tracker]
@@ -246,6 +247,7 @@ hash_api -fmt 32 -conc -func GetCurrentThreadId
 hash_api -fmt 32 -conc -func TerminateThread
 hash_api -fmt 32 -conc -func TlsAlloc
 hash_api -fmt 32 -conc -func TlsFree
+hash_api -fmt 32 -conc -mod "ntdll.dll" -func RtlExitUserThread
 echo.
 
 echo [Resource Tracker]

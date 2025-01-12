@@ -34,7 +34,8 @@ bool InitDebugger()
 __declspec(noinline)
 void dbg_log(char* mod, char* fmt, ...)
 {
-    if (dbg_WaitForSingleObject(dbg_hMutex, INFINITE) != WAIT_OBJECT_0)
+    DWORD event = dbg_WaitForSingleObject(dbg_hMutex, INFINITE);
+    if (event != WAIT_OBJECT_0 && event != WAIT_ABANDONED)
     {
         return;
     }

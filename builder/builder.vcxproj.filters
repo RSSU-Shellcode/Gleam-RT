@@ -86,6 +86,9 @@
     <ClCompile Include="..\src\lib_match.c">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\mod_storage.c">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\crypto.h">
@@ -185,6 +188,9 @@
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="..\include\lib_match.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\mod_storage.h">
       <Filter>Header</Filter>
     </ClInclude>
   </ItemGroup>

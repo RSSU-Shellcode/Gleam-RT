@@ -296,16 +296,6 @@ typedef SIZE_T (*VirtualQuery_t)
     LPCVOID lpAddress, POINTER lpBuffer, SIZE_T dwLength
 );
 
-typedef BOOL (*VirtualLock_t)
-(
-    LPVOID lpAddress, SIZE_T dwSize
-);
-
-typedef BOOL (*VirtualUnlock_t)
-(
-    LPVOID lpAddress, SIZE_T dwSize
-);
-
 typedef HANDLE (*GetProcessHeap_t)();
 
 typedef DWORD (*GetProcessHeaps_t)

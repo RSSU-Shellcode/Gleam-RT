@@ -271,7 +271,7 @@ static bool wh_lock()
     WinHTTP* module = getModulePointer();
 
     DWORD event = module->WaitForSingleObject(module->hMutex, INFINITE);
-    return (event == WAIT_OBJECT_0 || event == WAIT_ABANDONED);
+    return event == WAIT_OBJECT_0 || event == WAIT_ABANDONED;
 }
 
 __declspec(noinline)

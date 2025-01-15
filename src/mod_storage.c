@@ -124,3 +124,103 @@ InMemStorage_M* InitInMemStorage(Context* context)
     module->Clean   = GetFuncAddr(&IM_Clean);
     return module;
 }
+
+__declspec(noinline)
+static bool initStorageAPI(InMemStorage* storage, Context* context)
+{
+    storage->VirtualAlloc        = context->VirtualAlloc;
+    storage->VirtualFree         = context->VirtualFree;
+    storage->ReleaseMutex        = context->ReleaseMutex;
+    storage->WaitForSingleObject = context->WaitForSingleObject;
+    storage->CloseHandle         = context->CloseHandle;
+    return true;
+}
+
+// CANNOT merge updateStoragePointer and recoverStoragePointer
+// to one function with two arguments, otherwise the compiler
+// will generate the incorrect instructions.
+
+__declspec(noinline)
+static bool updateStoragePointer(InMemStorage* storage)
+{
+    bool success = false;
+    uintptr target = (uintptr)(GetFuncAddr(&getStoragePointer));
+    for (uintptr i = 0; i < 64; i++)
+    {
+        uintptr* pointer = (uintptr*)(target);
+        if (*pointer != STORAGE_POINTER)
+        {
+            target++;
+            continue;
+        }
+        *pointer = (uintptr)storage;
+        success = true;
+        break;
+    }
+    return success;
+}
+
+__declspec(noinline)
+static bool recoverStoragePointer(InMemStorage* storage)
+{
+    bool success = false;
+    uintptr target = (uintptr)(GetFuncAddr(&getStoragePointer));
+    for (uintptr i = 0; i < 64; i++)
+    {
+        uintptr* pointer = (uintptr*)(target);
+        if (*pointer != (uintptr)storage)
+        {
+            target++;
+            continue;
+        }
+        *pointer = STORAGE_POINTER;
+        success = true;
+        break;
+    }
+    return success;
+}
+
+static bool initStorageEnvironment(InMemStorage* storage, Context* context)
+{
+    // create mutex
+    HANDLE hMutex = context->CreateMutexA(NULL, false, NULL);
+    if (hMutex == NULL)
+    {
+        return false;
+    }
+    storage->hMutex = hMutex;
+    // initialize item list
+    List_Ctx ctx = {
+        .malloc  = context->malloc,
+        .realloc = context->realloc,
+        .free    = context->free,
+    };
+    List_Init(&storage->Items, &ctx, sizeof(imsItem));
+    // set crypto context data
+    RandBuffer(storage->ItemsKey, CRYPTO_KEY_SIZE);
+    RandBuffer(storage->ItemsIV, CRYPTO_IV_SIZE);
+    return true;
+}
+
+__declspec(noinline)
+static void eraseStorageMethods(Context* context)
+{
+    if (context->NotEraseInstruction)
+    {
+        return;
+    }
+    uintptr begin = (uintptr)(GetFuncAddr(&initStorageAPI));
+    uintptr end   = (uintptr)(GetFuncAddr(&eraseStorageMethods));
+    uintptr size  = end - begin;
+    RandBuffer((byte*)begin, (int64)size);
+}
+
+__declspec(noinline)
+static void cleanStorage(InMemStorage* storage)
+{
+    if (storage->CloseHandle != NULL && storage->hMutex != NULL)
+    {
+        storage->CloseHandle(storage->hMutex);
+    }
+    List_Free(&storage->Items);
+}

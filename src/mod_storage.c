@@ -38,7 +38,7 @@ typedef struct {
     List Items;
     byte ItemsKey[CRYPTO_KEY_SIZE];
     byte ItemsIV [CRYPTO_IV_SIZE];
-} InMemStorage;
+} InMemoryStorage;
 
 // methods for upper module
 bool IM_SetValue(uint index, void* value, uint32 size);
@@ -60,25 +60,24 @@ errno IM_Clean();
 #elif _WIN32
     #define STORAGE_POINTER 0x7FABCDC6
 #endif
-static InMemStorage* getStoragePointer();
+static InMemoryStorage* getStoragePointer();
 
-static bool initStorageAPI(InMemStorage* Storage, Context* context);
-static bool updateStoragePointer(InMemStorage* Storage);
-static bool recoverStoragePointer(InMemStorage* Storage);
-static bool initStorageEnvironment(InMemStorage* Storage, Context* context);
-
+static bool initStorageAPI(InMemoryStorage* Storage, Context* context);
+static bool updateStoragePointer(InMemoryStorage* Storage);
+static bool recoverStoragePointer(InMemoryStorage* Storage);
+static bool initStorageEnvironment(InMemoryStorage* Storage, Context* context);
 static void eraseStorageMethods(Context* context);
-static void cleanStorage(InMemStorage* storage);
+static void cleanStorage(InMemoryStorage* storage);
 
-InMemStorage_M* InitInMemStorage(Context* context)
+InMemoryStorage_M* InitInMemoryStorage(Context* context)
 {
     // set structure address
     uintptr address = context->MainMemPage;
     uintptr storageAddr = address + 12000 + RandUintN(address, 128);
     uintptr moduleAddr  = address + 13000 + RandUintN(address, 128);
     // initialize storage
-    InMemStorage* storage = (InMemStorage*)storageAddr;
-    mem_init(storage, sizeof(InMemStorage));
+    InMemoryStorage* storage = (InMemoryStorage*)storageAddr;
+    mem_init(storage, sizeof(InMemoryStorage));
     // store options
     storage->NotEraseInstruction = context->NotEraseInstruction;
     errno errno = NO_ERROR;
@@ -109,7 +108,7 @@ InMemStorage_M* InitInMemStorage(Context* context)
         return NULL;
     }
     // create methods for storage
-    InMemStorage_M* module = (InMemStorage_M*)moduleAddr;
+    InMemoryStorage_M* module = (InMemoryStorage_M*)moduleAddr;
     // methods for upper module
     module->SetValue   = GetFuncAddr(&IM_SetValue);
     module->GetValue   = GetFuncAddr(&IM_GetValue);
@@ -126,7 +125,7 @@ InMemStorage_M* InitInMemStorage(Context* context)
 }
 
 __declspec(noinline)
-static bool initStorageAPI(InMemStorage* storage, Context* context)
+static bool initStorageAPI(InMemoryStorage* storage, Context* context)
 {
     storage->VirtualAlloc        = context->VirtualAlloc;
     storage->VirtualFree         = context->VirtualFree;
@@ -141,7 +140,7 @@ static bool initStorageAPI(InMemStorage* storage, Context* context)
 // will generate the incorrect instructions.
 
 __declspec(noinline)
-static bool updateStoragePointer(InMemStorage* storage)
+static bool updateStoragePointer(InMemoryStorage* storage)
 {
     bool success = false;
     uintptr target = (uintptr)(GetFuncAddr(&getStoragePointer));
@@ -161,7 +160,7 @@ static bool updateStoragePointer(InMemStorage* storage)
 }
 
 __declspec(noinline)
-static bool recoverStoragePointer(InMemStorage* storage)
+static bool recoverStoragePointer(InMemoryStorage* storage)
 {
     bool success = false;
     uintptr target = (uintptr)(GetFuncAddr(&getStoragePointer));
@@ -180,7 +179,7 @@ static bool recoverStoragePointer(InMemStorage* storage)
     return success;
 }
 
-static bool initStorageEnvironment(InMemStorage* storage, Context* context)
+static bool initStorageEnvironment(InMemoryStorage* storage, Context* context)
 {
     // create mutex
     HANDLE hMutex = context->CreateMutexA(NULL, false, NULL);
@@ -216,11 +215,127 @@ static void eraseStorageMethods(Context* context)
 }
 
 __declspec(noinline)
-static void cleanStorage(InMemStorage* storage)
+static void cleanStorage(InMemoryStorage* storage)
 {
     if (storage->CloseHandle != NULL && storage->hMutex != NULL)
     {
         storage->CloseHandle(storage->hMutex);
     }
     List_Free(&storage->Items);
+}
+
+// updateStoragePointer will replace hard encode address to the actual address.
+// Must disable compiler optimize, otherwise updateStoragePointer will fail.
+#pragma optimize("", off)
+static InMemoryStorage* getStoragePointer()
+{
+    uintptr pointer = STORAGE_POINTER;
+    return (InMemoryStorage*)(pointer);
+}
+#pragma optimize("", on)
+
+// methods for upper module
+__declspec(noinline)
+bool IM_SetValue(uint index, void* value, uint32 size)
+{
+    InMemoryStorage* storage = getStoragePointer();
+
+    if (!IM_Lock())
+    {
+        return false;
+    }
+
+    errno lastErr = NO_ERROR;
+    for (;;)
+    {
+
+
+
+        break;
+    }
+
+    if (!IM_Unlock())
+    {
+        return false;
+    }
+    SetLastErrno(lastErr);
+    return lastErr == NO_ERROR;
+}
+
+__declspec(noinline)
+bool IM_GetValue(uint index, void* value, uint32* size)
+{
+    InMemoryStorage* storage = getStoragePointer();
+
+}
+
+__declspec(noinline)
+bool IM_GetPointer(uint index, void** pointer, uint32* size)
+{
+    InMemoryStorage* storage = getStoragePointer();
+
+}
+
+__declspec(noinline)
+bool IM_Delete(uint index)
+{
+    InMemoryStorage* storage = getStoragePointer();
+
+}
+
+__declspec(noinline)
+void IM_DeleteAll()
+{
+    InMemoryStorage* storage = getStoragePointer();
+
+}
+
+__declspec(noinline)
+bool IM_Lock()
+{
+    InMemoryStorage* storage = getStoragePointer();
+
+    return true;
+}
+
+__declspec(noinline)
+bool IM_Unlock()
+{
+    InMemoryStorage* storage = getStoragePointer();
+
+    return true;
+}
+
+__declspec(noinline)
+errno IM_Encrypt()
+{
+    InMemoryStorage* storage = getStoragePointer();
+
+    return NO_ERROR;
+}
+
+__declspec(noinline)
+errno IM_Decrypt()
+{
+    InMemoryStorage* storage = getStoragePointer();
+
+    return NO_ERROR;
+}
+
+__declspec(noinline)
+errno IM_Clean()
+{
+    InMemoryStorage* storage = getStoragePointer();
+
+    errno errno = NO_ERROR;
+
+    // recover instructions
+    if (storage->NotEraseInstruction)
+    {
+        if (!recoverStoragePointer(storage) && errno == NO_ERROR)
+        {
+            errno = ERR_STORAGE_RECOVER_INST;
+        }
+    }
+    return errno;
 }

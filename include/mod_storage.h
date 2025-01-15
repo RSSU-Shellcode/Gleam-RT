@@ -29,8 +29,8 @@ typedef struct {
     ImsEncrypt_t Encrypt;
     ImsDecrypt_t Decrypt;
     ImsClean_t   Clean;
-} InMemStorage_M;
+} InMemoryStorage_M;
 
-InMemStorage_M* InitInMemStorage(Context* context);
+InMemoryStorage_M* InitInMemoryStorage(Context* context);
 
 #endif // MOD_STORAGE_H

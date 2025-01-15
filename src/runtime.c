@@ -166,6 +166,8 @@ static errno initWinFile(Runtime* runtime, Context* context);
 static errno initWinHTTP(Runtime* runtime, Context* context);
 static bool  initIATHooks(Runtime* runtime);
 static bool  flushInstructionCache(Runtime* runtime);
+static void  eraseRuntimeMethods(Runtime* runtime);
+static errno cleanRuntime(Runtime* runtime);
 
 static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName);
 static void* getIATHook(Runtime* runtime, void* proc);
@@ -178,8 +180,6 @@ static errno sleep(Runtime* runtime, HANDLE hTimer);
 static errno hide(Runtime* runtime);
 static errno recover(Runtime* runtime);
 
-static void  eraseRuntimeMethods(Runtime* runtime);
-static errno cleanRuntime(Runtime* runtime);
 static errno exitEventHandler(Runtime* runtime);
 static errno closeHandles(Runtime* runtime);
 static void  eraseMemory(uintptr address, uintptr size);
@@ -1500,11 +1500,17 @@ void* RT_GetProcAddressOriginal(HMODULE hModule, LPCSTR lpProcName)
 }
 #pragma optimize("", on)
 
+// getRuntimeMethods is used to obtain runtime internal methods, 
+// such as GetProcAddress, ExitProcess and submodule methods.
+// 
+// HMODULE hModule = LoadLibraryA("GleamRT.dll");
+// void* proc = GetProcAddress(hModule, "RT_AS_GetValue");
 static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
 {
     Runtime* runtime = getRuntimePointer();
 
-    ArgumentStore_M* argumentStore = runtime->ArgumentStore;
+    ArgumentStore_M*   argumentStore   = runtime->ArgumentStore;
+    InMemoryStorage_M* inMemoryStorage = runtime->InMemoryStorage;
 
     typedef struct {
         uint hash; uint key; void* method;
@@ -1516,10 +1522,15 @@ static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
         { 0xABD1E8F0D28E9F46, 0xAF34F5979D300C70, GetFuncAddr(&RT_GetProcAddressByHash)   },
         { 0xC9C5D350BB118FAE, 0x061A602F681F2636, GetFuncAddr(&RT_GetProcAddressOriginal) },
         { 0xED817580D5E2DD81, 0x84025019004D432B, GetFuncAddr(&RT_ExitProcess)            },
-        { 0x6FC9E56C1F7B2D65, 0x13DA8BAC05E7183C, argumentStore->GetValue   }, // RT_GetArgValue
-        { 0xD4868056137A5E3F, 0x1648F372F2649601, argumentStore->GetPointer }, // RT_GetArgPointer
-        { 0x2FEB65B0CF6A233A, 0x24B8204DA5F3FA2F, argumentStore->Erase      }, // RT_EraseArgument
-        { 0x2AE3C13B09353949, 0x2FDD5041391C2A93, argumentStore->EraseAll   }, // RT_EraseAllArgs
+        { 0x6A02F558B3968168, 0x15BD021B51796FE2, argumentStore->GetValue     }, // RT_AS_GetValue
+        { 0x528C040816E3C7C4, 0xC2BEA0891841420F, argumentStore->GetPointer   }, // RT_AS_GetPointer
+        { 0x2C971D3A91D6819B, 0xCB6F3EF75315AB9E, argumentStore->Erase        }, // RT_AS_Erase
+        { 0x784C9D23ABAD9E10, 0x3C7CCF88406B3E64, argumentStore->EraseAll     }, // RT_AS_EraseAll
+        { 0xDB9EF088829FCEA9, 0x72EFB3A106842A53, inMemoryStorage->SetValue   }, // RT_IMS_SetValue 
+        { 0xF3377A26479EB3CB, 0xB9D6D8F56D02F264, inMemoryStorage->GetValue   }, // RT_IMS_GetValue 
+        { 0x448103F8E395E880, 0xDDE5F1CCCA965582, inMemoryStorage->GetPointer }, // RT_IMS_GetPointer 
+        { 0x18E68E8D0181C7D3, 0xC1533F69CFD86286, inMemoryStorage->Delete     }, // RT_IMS_Delete 
+        { 0xD4D85FA2D950D418, 0x8EF761B32DD5CF68, inMemoryStorage->DeleteAll  }, // RT_IMS_DeleteAll
     };
 #elif _WIN32
     {
@@ -1527,10 +1538,15 @@ static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
         { 0x40D5BD08, 0x302D5D2B, GetFuncAddr(&RT_GetProcAddressByHash)   },
         { 0x45556AA5, 0xB3BEF31D, GetFuncAddr(&RT_GetProcAddressOriginal) },
         { 0x39A658B0, 0x8C837EFD, GetFuncAddr(&RT_ExitProcess)            },
-        { 0x8443915E, 0x6C4AA230, argumentStore->GetValue   }, // RT_GetArgValue
-        { 0xB6403531, 0x011D36DB, argumentStore->GetPointer }, // RT_GetArgPointer
-        { 0xC33C2108, 0x8A90E020, argumentStore->Erase      }, // RT_EraseArgument
-        { 0x9BD86FED, 0xFEA640B8, argumentStore->EraseAll   }, // RT_EraseAllArgs
+        { 0x60684ACC, 0xB1F98016, argumentStore->GetValue     }, // RT_AS_GetValue
+        { 0x58A01B5B, 0x9E4D45AC, argumentStore->GetPointer   }, // RT_AS_GetPointer
+        { 0x29C58712, 0x88F20801, argumentStore->Erase        }, // RT_AS_Erase
+        { 0x6E0B3B88, 0x6A080B6B, argumentStore->EraseAll     }, // RT_AS_EraseAll
+        { 0x4B5EF362, 0x4238A631, inMemoryStorage->SetValue   }, // RT_IMS_SetValue 
+        { 0x835BFB13, 0xC7907B35, inMemoryStorage->GetValue   }, // RT_IMS_GetValue 
+        { 0xBC30677C, 0x6EF2BC17, inMemoryStorage->GetPointer }, // RT_IMS_GetPointer 
+        { 0x953387D5, 0x3EC82FF1, inMemoryStorage->Delete     }, // RT_IMS_Delete 
+        { 0x9E5771AF, 0x15EF57B3, inMemoryStorage->DeleteAll  }, // RT_IMS_DeleteAll
     };
 #endif
     for (int i = 0; i < arrlen(methods); i++)
@@ -1857,7 +1873,7 @@ static void eventHandler()
             return;
         }
         // check error for exit event handler
-        if (errno != NO_ERROR && (errno & ERR_FLAG_CAN_IGNORE) == 0)
+        if (errno != NO_ERROR && !(errno & ERR_FLAG_CAN_IGNORE))
         {
             dbg_log("[runtime]", "exit event handler with errno: 0x%X", errno);
             return;
@@ -1928,17 +1944,17 @@ static errno sleepHR(Runtime* runtime, uint32 milliseconds)
         }
 
         errno = hide(runtime);
-        if (errno != NO_ERROR && (errno & ERR_FLAG_CAN_IGNORE) == 0)
+        if (errno != NO_ERROR && !(errno & ERR_FLAG_CAN_IGNORE))
         {
             break;
         }
         errno = sleep(runtime, hTimer);
-        if (errno != NO_ERROR && (errno & ERR_FLAG_CAN_IGNORE) == 0)
+        if (errno != NO_ERROR && !(errno & ERR_FLAG_CAN_IGNORE))
         {
             break;
         }
         errno = recover(runtime);
-        if (errno != NO_ERROR && (errno & ERR_FLAG_CAN_IGNORE) == 0)
+        if (errno != NO_ERROR && !(errno & ERR_FLAG_CAN_IGNORE))
         {
             break;
         }
@@ -1970,88 +1986,48 @@ static errno sleepHR(Runtime* runtime, uint32 milliseconds)
 __declspec(noinline)
 static errno hide(Runtime* runtime)
 {
-    errno errno = NO_ERROR;
-    for (;;)
+    typedef errno (*submodule_t)();
+    submodule_t submodules[] = {
+        runtime->WinHTTP->Clean,
+        runtime->ThreadTracker->Suspend,
+        runtime->LibraryTracker->Encrypt,
+        runtime->MemoryTracker->Encrypt,
+        runtime->ResourceTracker->Encrypt,
+        runtime->ArgumentStore->Encrypt,
+        runtime->InMemoryStorage->Encrypt,
+    };
+    for (int i = 0; i < arrlen(submodules); i++)
     {
-        errno = runtime->WinHTTP->Clean();
-        if (errno != NO_ERROR && (errno & ERR_FLAG_CAN_IGNORE) == 0)
+        errno errno = submodules[i]();
+        if (errno != NO_ERROR && !(errno & ERR_FLAG_CAN_IGNORE))
         {
-            break;
+            return errno;
         }
-        errno = runtime->ThreadTracker->Suspend();
-        if (errno != NO_ERROR && (errno & ERR_FLAG_CAN_IGNORE) == 0)
-        {
-            break;
-        }
-        errno = runtime->LibraryTracker->Encrypt();
-        if (errno != NO_ERROR && (errno & ERR_FLAG_CAN_IGNORE) == 0)
-        {
-            break;
-        }
-        errno = runtime->MemoryTracker->Encrypt();
-        if (errno != NO_ERROR && (errno & ERR_FLAG_CAN_IGNORE) == 0)
-        {
-            break;
-        }
-        errno = runtime->ResourceTracker->Encrypt();
-        if (errno != NO_ERROR && (errno & ERR_FLAG_CAN_IGNORE) == 0)
-        {
-            break;
-        }
-        errno = runtime->ArgumentStore->Encrypt();
-        if (errno != NO_ERROR && (errno & ERR_FLAG_CAN_IGNORE) == 0)
-        {
-            break;
-        }
-        errno = runtime->InMemoryStorage->Encrypt();
-        if (errno != NO_ERROR && (errno & ERR_FLAG_CAN_IGNORE) == 0)
-        {
-            break;
-        }
-        break;
     }
-    return errno;
+    return NO_ERROR;
 }
 
 __declspec(noinline)
 static errno recover(Runtime* runtime)
 {
-    errno errno = NO_ERROR;
-    for (;;)
+    typedef errno (*submodule_t)();
+    submodule_t submodules[] = {
+        runtime->LibraryTracker->Decrypt,
+        runtime->MemoryTracker->Decrypt,
+        runtime->ResourceTracker->Decrypt,
+        runtime->ArgumentStore->Decrypt,
+        runtime->InMemoryStorage->Decrypt,
+        runtime->ThreadTracker->Resume,
+    };
+    for (int i = 0; i < arrlen(submodules); i++)
     {
-        errno = runtime->LibraryTracker->Decrypt();
-        if (errno != NO_ERROR && (errno & ERR_FLAG_CAN_IGNORE) == 0)
+        errno errno = submodules[i]();
+        if (errno != NO_ERROR && !(errno & ERR_FLAG_CAN_IGNORE))
         {
-            break;
+            return errno;
         }
-        errno = runtime->MemoryTracker->Decrypt();
-        if (errno != NO_ERROR && (errno & ERR_FLAG_CAN_IGNORE) == 0)
-        {
-            break;
-        }
-        errno = runtime->ResourceTracker->Decrypt();
-        if (errno != NO_ERROR && (errno & ERR_FLAG_CAN_IGNORE) == 0)
-        {
-            break;
-        }
-        errno = runtime->ArgumentStore->Decrypt();
-        if (errno != NO_ERROR && (errno & ERR_FLAG_CAN_IGNORE) == 0)
-        {
-            break;
-        }
-        errno = runtime->InMemoryStorage->Decrypt();
-        if (errno != NO_ERROR && (errno & ERR_FLAG_CAN_IGNORE) == 0)
-        {
-            break;
-        }
-        errno = runtime->ThreadTracker->Resume();
-        if (errno != NO_ERROR && (errno & ERR_FLAG_CAN_IGNORE) == 0)
-        {
-            break;
-        }
-        break;
     }
-    return errno;
+    return NO_ERROR;
 }
 
 __declspec(noinline)

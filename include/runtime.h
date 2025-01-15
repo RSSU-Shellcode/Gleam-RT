@@ -91,10 +91,10 @@ typedef bool (*ArgErase_t)(uint index);
 typedef void (*ArgEraseAll_t)();
 
 // about in-memory storage
-typedef bool (*ImsSetValue_t)(uint index, void* value, uint32 size);
-typedef bool (*ImsGetValue_t)(uint index, void* value, uint32* size);
-typedef bool (*ImsGetPointer_t)(uint index, void** pointer, uint32* size);
-typedef bool (*ImsDelete_t)(uint index);
+typedef bool (*ImsSetValue_t)(int id, void* value, uint size);
+typedef bool (*ImsGetValue_t)(int id, void* value, uint* size);
+typedef bool (*ImsGetPointer_t)(int id, void** pointer, uint* size);
+typedef bool (*ImsDelete_t)(int id);
 typedef void (*ImsDeleteAll_t)();
 
 // about WinBase

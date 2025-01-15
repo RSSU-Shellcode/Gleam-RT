@@ -17,6 +17,7 @@
 #include "mod_thread.h"
 #include "mod_resource.h"
 #include "mod_argument.h"
+#include "mod_storage.h"
 #include "win_base.h"
 #include "win_file.h"
 #include "win_http.h"
@@ -91,6 +92,7 @@ typedef struct {
     ThreadTracker_M*   ThreadTracker;
     ResourceTracker_M* ResourceTracker;
     ArgumentStore_M*   ArgumentStore;
+    InMemoryStorage_M* InMemoryStorage;
 
     // high-level modules
     WinBase_M* WinBase;
@@ -158,6 +160,7 @@ static errno initMemoryTracker(Runtime* runtime, Context* context);
 static errno initThreadTracker(Runtime* runtime, Context* context);
 static errno initResourceTracker(Runtime* runtime, Context* context);
 static errno initArgumentStore(Runtime* runtime, Context* context);
+static errno initInMemoryStorage(Runtime* runtime, Context* context);
 static errno initWinBase(Runtime* runtime, Context* context);
 static errno initWinFile(Runtime* runtime, Context* context);
 static errno initWinHTTP(Runtime* runtime, Context* context);
@@ -339,7 +342,11 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->Argument.Erase      = runtime->ArgumentStore->Erase;
     module->Argument.EraseAll   = runtime->ArgumentStore->EraseAll;
     // in-memory storage
-
+    module->Storage.SetValue   = runtime->InMemoryStorage->SetValue;
+    module->Storage.GetValue   = runtime->InMemoryStorage->GetValue;
+    module->Storage.GetPointer = runtime->InMemoryStorage->GetPointer;
+    module->Storage.Delete     = runtime->InMemoryStorage->Delete;
+    module->Storage.DeleteAll  = runtime->InMemoryStorage->DeleteAll;
     // WinBase
     module->WinBase.ANSIToUTF16  = runtime->WinBase->ANSIToUTF16;
     module->WinBase.UTF16ToANSI  = runtime->WinBase->UTF16ToANSI;
@@ -649,6 +656,7 @@ static errno initModules(Runtime* runtime)
         GetFuncAddr(&initThreadTracker),
         GetFuncAddr(&initResourceTracker),
         GetFuncAddr(&initArgumentStore),
+        GetFuncAddr(&initInMemoryStorage),
     };
     for (int i = 0; i < arrlen(submodules); i++)
     {
@@ -742,6 +750,17 @@ static errno initArgumentStore(Runtime* runtime, Context* context)
         return GetLastErrno();
     }
     runtime->ArgumentStore = store;
+    return NO_ERROR;
+}
+
+static errno initInMemoryStorage(Runtime* runtime, Context* context)
+{
+    InMemoryStorage_M* storage = InitInMemoryStorage(context);
+    if (storage == NULL)
+    {
+        return GetLastErrno();
+    }
+    runtime->InMemoryStorage = storage;
     return NO_ERROR;
 }
 
@@ -1292,29 +1311,33 @@ errno RT_lock_mods()
 {
     Runtime* runtime = getRuntimePointer();
 
-    if (!runtime->LibraryTracker->Lock())
+    typedef bool (*submodule_t)();
+    submodule_t submodules[] = 
     {
-        return ERR_RUNTIME_LOCK_LIBRARY;
-    }
-    if (!runtime->MemoryTracker->Lock())
+        runtime->WinHTTP->Lock,
+        runtime->LibraryTracker->Lock,
+        runtime->MemoryTracker->Lock,
+        runtime->ResourceTracker->Lock,
+        runtime->ArgumentStore->Lock,
+        runtime->InMemoryStorage->Lock,
+        runtime->ThreadTracker->Lock,
+    };
+    errno errnos[] = 
     {
-        return ERR_RUNTIME_LOCK_MEMORY;
-    }
-    if (!runtime->ResourceTracker->Lock())
+        ERR_RUNTIME_LOCK_WIN_HTTP,
+        ERR_RUNTIME_LOCK_LIBRARY,
+        ERR_RUNTIME_LOCK_MEMORY,
+        ERR_RUNTIME_LOCK_RESOURCE,
+        ERR_RUNTIME_LOCK_ARGUMENT,
+        ERR_RUNTIME_LOCK_STORAGE,
+        ERR_RUNTIME_LOCK_THREAD,
+    };
+    for (int i = 0; i < arrlen(submodules); i++)
     {
-        return ERR_RUNTIME_LOCK_RESOURCE;
-    }
-    if (!runtime->ArgumentStore->Lock())
-    {
-        return ERR_RUNTIME_LOCK_ARGUMENT;
-    }
-    if (!runtime->WinHTTP->Lock())
-    {
-        return ERR_RUNTIME_LOCK_WIN_HTTP;
-    }
-    if (!runtime->ThreadTracker->Lock())
-    {
-        return ERR_RUNTIME_LOCK_THREAD;
+        if (!submodules[i]())
+        {
+            return errnos[i];
+        }
     }
     return NO_ERROR;
 }
@@ -1324,29 +1347,33 @@ errno RT_unlock_mods()
 {
     Runtime* runtime = getRuntimePointer();
 
-    if (!runtime->ThreadTracker->Unlock())
+    typedef bool (*submodule_t)();
+    submodule_t submodules[] = 
     {
-        return ERR_RUNTIME_UNLOCK_THREAD;
-    }
-    if (!runtime->WinHTTP->Unlock())
+        runtime->ThreadTracker->Unlock,
+        runtime->LibraryTracker->Unlock,
+        runtime->MemoryTracker->Unlock,
+        runtime->ResourceTracker->Unlock,
+        runtime->ArgumentStore->Unlock,
+        runtime->InMemoryStorage->Unlock,
+        runtime->WinHTTP->Unlock,
+    };
+    errno errnos[] = 
     {
-        return ERR_RUNTIME_UNLOCK_WIN_HTTP;
-    }
-    if (!runtime->ArgumentStore->Unlock())
+        ERR_RUNTIME_UNLOCK_THREAD,
+        ERR_RUNTIME_UNLOCK_LIBRARY,
+        ERR_RUNTIME_UNLOCK_MEMORY,
+        ERR_RUNTIME_UNLOCK_RESOURCE,
+        ERR_RUNTIME_UNLOCK_ARGUMENT,
+        ERR_RUNTIME_UNLOCK_STORAGE,
+        ERR_RUNTIME_UNLOCK_WIN_HTTP,
+    };
+    for (int i = 0; i < arrlen(submodules); i++)
     {
-        return ERR_RUNTIME_UNLOCK_ARGUMENT;
-    }
-    if (!runtime->ResourceTracker->Unlock())
-    {
-        return ERR_RUNTIME_UNLOCK_RESOURCE;
-    }
-    if (!runtime->MemoryTracker->Unlock())
-    {
-        return ERR_RUNTIME_UNLOCK_MEMORY;
-    }
-    if (!runtime->LibraryTracker->Unlock())
-    {
-        return ERR_RUNTIME_UNLOCK_LIBRARY;
+        if (!submodules[i]())
+        {
+            return errnos[i];
+        }
     }
     return NO_ERROR;
 }
@@ -1946,22 +1973,17 @@ static errno hide(Runtime* runtime)
     errno errno = NO_ERROR;
     for (;;)
     {
-        errno = runtime->ThreadTracker->Suspend();
-        if (errno != NO_ERROR && (errno & ERR_FLAG_CAN_IGNORE) == 0)
-        {
-            break;
-        }
         errno = runtime->WinHTTP->Clean();
         if (errno != NO_ERROR && (errno & ERR_FLAG_CAN_IGNORE) == 0)
         {
             break;
         }
-        errno = runtime->ArgumentStore->Encrypt();
+        errno = runtime->ThreadTracker->Suspend();
         if (errno != NO_ERROR && (errno & ERR_FLAG_CAN_IGNORE) == 0)
         {
             break;
         }
-        errno = runtime->ResourceTracker->Encrypt();
+        errno = runtime->LibraryTracker->Encrypt();
         if (errno != NO_ERROR && (errno & ERR_FLAG_CAN_IGNORE) == 0)
         {
             break;
@@ -1971,7 +1993,17 @@ static errno hide(Runtime* runtime)
         {
             break;
         }
-        errno = runtime->LibraryTracker->Encrypt();
+        errno = runtime->ResourceTracker->Encrypt();
+        if (errno != NO_ERROR && (errno & ERR_FLAG_CAN_IGNORE) == 0)
+        {
+            break;
+        }
+        errno = runtime->ArgumentStore->Encrypt();
+        if (errno != NO_ERROR && (errno & ERR_FLAG_CAN_IGNORE) == 0)
+        {
+            break;
+        }
+        errno = runtime->InMemoryStorage->Encrypt();
         if (errno != NO_ERROR && (errno & ERR_FLAG_CAN_IGNORE) == 0)
         {
             break;
@@ -2003,6 +2035,11 @@ static errno recover(Runtime* runtime)
             break;
         }
         errno = runtime->ArgumentStore->Decrypt();
+        if (errno != NO_ERROR && (errno & ERR_FLAG_CAN_IGNORE) == 0)
+        {
+            break;
+        }
+        errno = runtime->InMemoryStorage->Decrypt();
         if (errno != NO_ERROR && (errno & ERR_FLAG_CAN_IGNORE) == 0)
         {
             break;
@@ -2170,7 +2207,9 @@ errno RT_Cleanup()
         return errlm;
     }
 
-    // clean runtime modules
+    // maybe some librarys will use the tracked
+    // memory page or heap, so free memory after
+    // free all library.
     errno err = NO_ERROR;
     typedef errno (*submodule_t)();
     submodule_t submodules[] = 
@@ -2180,10 +2219,6 @@ errno RT_Cleanup()
 
         // high-level modules
         runtime->WinHTTP->Clean,
-
-        // maybe some librarys will use the tracked
-        // memory page or heap, so free memory after
-        // free all library.
 
         // runtime submodules
         runtime->ResourceTracker->FreeAll,
@@ -2234,7 +2269,9 @@ errno RT_Exit()
         return ERR_RUNTIME_ADJUST_PROTECT;
     }
 
-    // clean runtime modules
+    // maybe some librarys will use the tracked
+    // memory page or heap, so free memory after
+    // free all library.
     typedef errno (*submodule_t)();
     submodule_t submodules[] = 
     {
@@ -2246,11 +2283,8 @@ errno RT_Exit()
         runtime->WinFile->Uninstall,
         runtime->WinBase->Uninstall,
 
-        // maybe some librarys will use the tracked
-        // memory page or heap, so free memory after
-        // free all library.
-
         // runtime submodules
+        runtime->InMemoryStorage->Clean,
         runtime->ArgumentStore->Clean,
         runtime->ResourceTracker->Clean,
         runtime->LibraryTracker->Clean,

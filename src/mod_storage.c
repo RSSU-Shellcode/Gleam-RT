@@ -47,7 +47,7 @@ bool IM_SetValue(int id, void* value, uint size);
 bool IM_GetValue(int id, void* value, uint* size);
 bool IM_GetPointer(int id, void** pointer, uint* size);
 bool IM_Delete(int id);
-void IM_DeleteAll();
+bool IM_DeleteAll();
 
 // methods for runtime
 bool  IM_Lock();
@@ -349,7 +349,17 @@ bool IM_GetPointer(int id, void** pointer, uint* size)
             lastErr = ERR_STORAGE_INVALID_ID;
             break;
         }
-
+        imsItem* item = getItem(id);
+        if (item == NULL)
+        {
+            lastErr = ERR_STORAGE_NOT_EXISTS;
+            break;
+        }
+        *pointer = item->data;
+        if (size != NULL)
+        {
+            *size = item->size;
+        }
         break;
     }
 
@@ -366,13 +376,77 @@ bool IM_Delete(int id)
 {
     InMemoryStorage* storage = getStoragePointer();
 
+    if (!IM_Lock())
+    {
+        return false;
+    }
+
+    errno lastErr = NO_ERROR;
+    for (;;)
+    {
+        id += NUM_RESERVED_ID;
+        if (id == 0)
+        {
+            lastErr = ERR_STORAGE_INVALID_ID;
+            break;
+        }
+        if (!delItem(id))
+        {
+            lastErr = ERR_STORAGE_DEL_ITEM;
+            break;
+        }
+        break;
+    }
+
+    if (!IM_Unlock())
+    {
+        return false;
+    }
+    SetLastErrno(lastErr);
+    return lastErr == NO_ERROR;
 }
 
 __declspec(noinline)
-void IM_DeleteAll()
+bool IM_DeleteAll()
 {
     InMemoryStorage* storage = getStoragePointer();
 
+    if (!IM_Lock())
+    {
+        return false;
+    }
+
+    List* items   = &storage->Items;
+    errno lastErr = NO_ERROR;
+
+    uint len = items->Len;
+    uint idx = 0;
+    for (uint num = 0; num < len; idx++)
+    {
+        imsItem* item = List_Get(items, idx);
+        if (item->id == 0)
+        {
+            continue;
+        }
+        // erase and free data before delete item
+        RandBuffer(item->data, item->size);
+        if (!storage->VirtualFree(item->data, 0, MEM_RELEASE))
+        {
+            lastErr = ERR_STORAGE_FREE_ITEM;
+        }
+        if (!List_Delete(items, idx))
+        {
+            lastErr = ERR_STORAGE_REMOVE_ITEM;
+        }
+        num++;
+    }
+
+    if (!IM_Unlock())
+    {
+        return false;
+    }
+    SetLastErrno(lastErr);
+    return lastErr == NO_ERROR;
 }
 
 __declspec(noinline)
@@ -474,7 +548,36 @@ static bool setItem(imsItem* item, void* data, uint size)
 __declspec(noinline)
 static bool delItem(int id)
 {
+    InMemoryStorage* storage = getStoragePointer();
 
+    imsItem* target = NULL;
+
+    List* items = &storage->Items;
+    uint len = items->Len;
+    uint idx = 0;
+    for (uint num = 0; num < len; idx++)
+    {
+        imsItem* item = List_Get(items, idx);
+        if (item->id == 0)
+        {
+            continue;
+        }
+        if (item->id == id)
+        {
+            target = item;
+            break;
+        }
+        num++;
+    }
+    if (target == NULL)
+    {
+        return false;
+    }
+
+    // erase and free data before delete item
+    RandBuffer(target->data, target->size);
+    storage->VirtualFree(target->data, 0, MEM_RELEASE);
+    return List_Delete(items, idx);
 }
 
 __declspec(noinline)

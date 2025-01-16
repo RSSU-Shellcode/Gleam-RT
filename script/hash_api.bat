@@ -121,6 +121,7 @@ hash_api -fmt 64 -conc -mod "GleamRT.dll" -func RT_AS_GetValue
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -func RT_AS_GetPointer
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -func RT_AS_Erase
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -func RT_AS_EraseAll
+echo.
 
 echo [In-Memory Storage]
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -func RT_IMS_SetValue
@@ -128,6 +129,7 @@ hash_api -fmt 64 -conc -mod "GleamRT.dll" -func RT_IMS_GetValue
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -func RT_IMS_GetPointer
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -func RT_IMS_Delete
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -func RT_IMS_DeleteAll
+echo.
 
 echo [WinBase Module]
 hash_api -fmt 64 -conc -func MultiByteToWideChar
@@ -276,6 +278,7 @@ hash_api -fmt 32 -conc -mod "GleamRT.dll" -func RT_AS_GetValue
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -func RT_AS_GetPointer
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -func RT_AS_Erase
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -func RT_AS_EraseAll
+echo.
 
 echo [In-Memory Storage]
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -func RT_IMS_SetValue
@@ -283,6 +286,7 @@ hash_api -fmt 32 -conc -mod "GleamRT.dll" -func RT_IMS_GetValue
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -func RT_IMS_GetPointer
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -func RT_IMS_Delete
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -func RT_IMS_DeleteAll
+echo.
 
 echo [WinBase Module]
 hash_api -fmt 32 -conc -func MultiByteToWideChar

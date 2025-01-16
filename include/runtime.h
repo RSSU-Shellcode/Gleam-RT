@@ -95,7 +95,7 @@ typedef bool (*ImsSetValue_t)(int id, void* value, uint size);
 typedef bool (*ImsGetValue_t)(int id, void* value, uint* size);
 typedef bool (*ImsGetPointer_t)(int id, void** pointer, uint* size);
 typedef bool (*ImsDelete_t)(int id);
-typedef void (*ImsDeleteAll_t)();
+typedef bool (*ImsDeleteAll_t)();
 
 // about WinBase
 // The buffer allocated from methods must call Runtime_M.Memory.Free().

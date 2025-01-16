@@ -134,6 +134,15 @@
     <ClCompile Include="..\src\mod_storage.c">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="src\mod_storage_test.c">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mod_library_test.c">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mod_resource_test.c">
+      <Filter>Test</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\crypto.h">

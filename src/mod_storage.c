@@ -73,6 +73,7 @@ static void cleanStorage(InMemoryStorage* storage);
 
 static imsItem* getItem(int id);
 static bool addItem(int id, void* data, uint size);
+static bool setItem(imsItem* item, void* data, uint size);
 static bool delItem(int id);
 
 InMemoryStorage_M* InitInMemoryStorage(Context* context)
@@ -269,10 +270,13 @@ bool IM_SetValue(int id, void* value, uint size)
         {
             if (!addItem(id, value, size))
             {
-
+                lastErr = ERR_STORAGE_ADD_ITEM;
             }
         } else {
-
+            if (!setItem(item, value, size))
+            {
+                lastErr = ERR_STORAGE_SET_ITEM;
+            }
         }
         break;
     }
@@ -304,7 +308,17 @@ bool IM_GetValue(int id, void* value, uint* size)
             lastErr = ERR_STORAGE_INVALID_ID;
             break;
         }
-
+        imsItem* item = getItem(id);
+        if (item == NULL)
+        {
+            lastErr = ERR_STORAGE_NOT_EXISTS;
+            break;
+        }
+        mem_copy(value, item->data, item->size);
+        if (size != NULL)
+        {
+            *size = item->size;
+        }
         break;
     }
 
@@ -321,6 +335,30 @@ bool IM_GetPointer(int id, void** pointer, uint* size)
 {
     InMemoryStorage* storage = getStoragePointer();
 
+    if (!IM_Lock())
+    {
+        return false;
+    }
+
+    errno lastErr = NO_ERROR;
+    for (;;)
+    {
+        id += NUM_RESERVED_ID;
+        if (id == 0)
+        {
+            lastErr = ERR_STORAGE_INVALID_ID;
+            break;
+        }
+
+        break;
+    }
+
+    if (!IM_Unlock())
+    {
+        return false;
+    }
+    SetLastErrno(lastErr);
+    return lastErr == NO_ERROR;
 }
 
 __declspec(noinline)
@@ -335,6 +373,31 @@ void IM_DeleteAll()
 {
     InMemoryStorage* storage = getStoragePointer();
 
+}
+
+__declspec(noinline)
+static imsItem* getItem(int id)
+{
+    InMemoryStorage* storage = getStoragePointer();
+
+    List* items = &storage->Items;
+
+    uint len = items->Len;
+    uint idx = 0;
+    for (uint num = 0; num < len; idx++)
+    {
+        imsItem* item = List_Get(items, idx);
+        if (item->id == 0)
+        {
+            continue;
+        }
+        if (item->id == id)
+        {
+            return item;
+        }
+        num++;
+    }
+    return NULL;
 }
 
 __declspec(noinline)
@@ -376,29 +439,42 @@ static bool addItem(int id, void* data, uint size)
     return success;
 }
 
-__declspec(noinline)
-static imsItem* getItem(int id)
+static bool setItem(imsItem* item, void* data, uint size)
 {
     InMemoryStorage* storage = getStoragePointer();
 
-    List* items = &storage->Items;
-
-    uint len = items->Len;
-    uint idx = 0;
-    for (uint num = 0; num < len; idx++)
+    void* memPage = NULL;
+    bool  success = false;
+    for (;;)
     {
-        imsItem* item = List_Get(items, idx);
-        if (item->id == 0)
+        // allocate memory for store data
+        memPage = storage->VirtualAlloc(NULL, size, MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
+        if (memPage == NULL)
         {
-            continue;
+            break;
         }
-        if (item->id == id)
-        {
-            return item;
-        }
-        num++;
+        mem_copy(memPage, data, size);
+        // erase and free data before update item
+        RandBuffer(item->data, item->size);
+        storage->VirtualFree(item->data, 0, MEM_RELEASE);
+        // update item
+        item->data = memPage;
+        item->size = size;
+        success = true;
+        break;
     }
-    return NULL;
+
+    if (!success && memPage != NULL)
+    {
+        storage->VirtualFree(memPage, 0, MEM_RELEASE);
+    }
+    return success;
+}
+
+__declspec(noinline)
+static bool delItem(int id)
+{
+
 }
 
 __declspec(noinline)

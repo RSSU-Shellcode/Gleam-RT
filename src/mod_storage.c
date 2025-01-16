@@ -249,8 +249,6 @@ static InMemoryStorage* getStoragePointer()
 __declspec(noinline)
 bool IM_SetValue(int id, void* value, uint size)
 {
-    InMemoryStorage* storage = getStoragePointer();
-
     if (!IM_Lock())
     {
         return false;
@@ -292,8 +290,6 @@ bool IM_SetValue(int id, void* value, uint size)
 __declspec(noinline)
 bool IM_GetValue(int id, void* value, uint* size)
 {
-    InMemoryStorage* storage = getStoragePointer();
-
     if (!IM_Lock())
     {
         return false;
@@ -333,8 +329,6 @@ bool IM_GetValue(int id, void* value, uint* size)
 __declspec(noinline)
 bool IM_GetPointer(int id, void** pointer, uint* size)
 {
-    InMemoryStorage* storage = getStoragePointer();
-
     if (!IM_Lock())
     {
         return false;
@@ -374,8 +368,6 @@ bool IM_GetPointer(int id, void** pointer, uint* size)
 __declspec(noinline)
 bool IM_Delete(int id)
 {
-    InMemoryStorage* storage = getStoragePointer();
-
     if (!IM_Lock())
     {
         return false;
@@ -602,6 +594,32 @@ errno IM_Encrypt()
 {
     InMemoryStorage* storage = getStoragePointer();
 
+    List* items = &storage->Items;
+
+    // encrypt items
+    uint len = items->Len;
+    uint idx = 0;
+    for (uint num = 0; num < len; idx++)
+    {
+        imsItem* item = List_Get(items, idx);
+        if (item->id == 0)
+        {
+            continue;
+        }
+        RandBuffer(item->key, CRYPTO_KEY_SIZE);
+        RandBuffer(item->iv, CRYPTO_IV_SIZE);
+        EncryptBuf(item->data, item->size, item->key, item->iv);
+        num++;
+    }
+
+    // encrypt list
+    byte* key = storage->ItemsKey;
+    byte* iv  = storage->ItemsIV;
+    RandBuffer(key, CRYPTO_KEY_SIZE);
+    RandBuffer(iv, CRYPTO_IV_SIZE);
+    EncryptBuf(items->Data, List_Size(items), key, iv);
+
+    dbg_log("[storage]", "items: %zu", items->Len);
     return NO_ERROR;
 }
 
@@ -610,6 +628,28 @@ errno IM_Decrypt()
 {
     InMemoryStorage* storage = getStoragePointer();
 
+    List* items = &storage->Items;
+
+    // decrypt list
+    byte* key = storage->ItemsKey;
+    byte* iv  = storage->ItemsIV;
+    DecryptBuf(items->Data, List_Size(items), key, iv);
+
+    // decrypt items
+    uint len = items->Len;
+    uint idx = 0;
+    for (uint num = 0; num < len; idx++)
+    {
+        imsItem* item = List_Get(items, idx);
+        if (item->id == 0)
+        {
+            continue;
+        }
+        DecryptBuf(item->data, item->size, item->key, item->iv);
+        num++;
+    }
+
+    dbg_log("[storage]", "items: %zu", items->Len);
     return NO_ERROR;
 }
 
@@ -618,7 +658,40 @@ errno IM_Clean()
 {
     InMemoryStorage* storage = getStoragePointer();
 
+    List* items = &storage->Items;
     errno errno = NO_ERROR;
+
+    // free items data
+    uint len = items->Len;
+    uint idx = 0;
+    for (uint num = 0; num < len; idx++)
+    {
+        imsItem* item = List_Get(items, idx);
+        if (item->id == 0)
+        {
+            continue;
+        }
+        // erase and free data before clean item list
+        RandBuffer(item->data, item->size);
+        if (!storage->VirtualFree(item->data, 0, MEM_RELEASE))
+        {
+            errno = ERR_STORAGE_FREE_ITEM;
+        }
+        num++;
+    }
+
+    // clean item list
+    RandBuffer(items->Data, List_Size(items));
+    if (!List_Free(items) && errno == NO_ERROR)
+    {
+        errno = ERR_STORAGE_FREE_MEM;
+    }
+
+    // close mutex
+    if (!storage->CloseHandle(storage->hMutex) && errno == NO_ERROR)
+    {
+        errno = ERR_STORAGE_CLOSE_MUTEX;
+    }
 
     // recover instructions
     if (storage->NotEraseInstruction)
@@ -628,5 +701,7 @@ errno IM_Clean()
             errno = ERR_STORAGE_RECOVER_INST;
         }
     }
+
+    dbg_log("[storage]", "items: %zu", items->Len);
     return errno;
 }

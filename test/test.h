@@ -20,6 +20,7 @@ bool TestCompress();
 bool TestInitRuntime();
 bool TestRuntime_Memory();
 bool TestRuntime_Argument();
+bool TestRuntime_Storage();
 bool TestRuntime_WinBase();
 bool TestRuntime_WinFile();
 bool TestRuntime_WinHTTP();
@@ -42,6 +43,7 @@ static unit tests[] =
 
     { "Runtime_Memory",   TestRuntime_Memory   },
     { "Runtime_Argument", TestRuntime_Argument },
+    { "Runtime_Storage",  TestRuntime_Storage  },
     { "Runtime_WinBase",  TestRuntime_WinBase  },
     { "Runtime_WinFile",  TestRuntime_WinFile  },
     { "Runtime_WinHTTP",  TestRuntime_WinHTTP  },

@@ -2144,10 +2144,10 @@ void* MT_MemAlloc(uint size)
     byte* address = (byte*)addr;
     RandBuffer(address, 16);
     // record user input size
-    mem_copy(address, &size, sizeof(uint));
+    mem_copy(address, &size, sizeof(size));
     // record buffer capacity
     uint cap = pageSize - 16;
-    mem_copy(address + sizeof(uint), &cap, sizeof(uint));
+    mem_copy(address + sizeof(size), &cap, sizeof(cap));
     dbg_log("[memory]", "malloc size: %zu", size);
     return (void*)(address + 16);
 }
@@ -2603,10 +2603,10 @@ static void deriveKey(MemoryTracker* tracker, memPage* page, byte* key)
     mem_copy(key, page->key, CRYPTO_KEY_SIZE);
     // cover some bytes
     uintptr addr = (uintptr)page;
-    addr += ((uintptr)tracker) << (sizeof(uintptr)/2);
+    addr += ((uintptr)tracker) << (sizeof(addr) / 2);
     addr += ((uintptr)tracker->VirtualAlloc) >> 4;
     addr += ((uintptr)tracker->VirtualFree)  >> 6;
-    mem_copy(key+4, &addr, sizeof(uintptr));
+    mem_copy(key + 4, &addr, sizeof(addr));
 }
 
 static bool encryptHeapBlocks(MemoryTracker* tracker, HANDLE hHeap)

@@ -1195,10 +1195,10 @@ void* RT_malloc(uint size)
     byte* address = (byte*)addr;
     RandBuffer(address, 16);
     // record user input size
-    mem_copy(address, &size, sizeof(uint));
+    mem_copy(address, &size, sizeof(size));
     // record buffer capacity
     uint cap = memSize - 16;
-    mem_copy(address + sizeof(uint), &cap, sizeof(uint));
+    mem_copy(address + sizeof(size), &cap, sizeof(cap));
     dbg_log("[runtime]", "malloc size: %zu", size);
     return (void*)(address + 16);
 }

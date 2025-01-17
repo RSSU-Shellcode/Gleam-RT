@@ -522,7 +522,10 @@ static bool setItem(imsItem* item, void* data, uint size)
         mem_copy(memPage, data, size);
         // erase and free data before update item
         RandBuffer(item->data, item->size);
-        storage->VirtualFree(item->data, 0, MEM_RELEASE);
+        if (!storage->VirtualFree(item->data, 0, MEM_RELEASE))
+        {
+            break;
+        }
         // update item
         item->data = memPage;
         item->size = size;
@@ -568,7 +571,10 @@ static bool delItem(int id)
 
     // erase and free data before delete item
     RandBuffer(target->data, target->size);
-    storage->VirtualFree(target->data, 0, MEM_RELEASE);
+    if (!storage->VirtualFree(target->data, 0, MEM_RELEASE))
+    {
+        return false;
+    }
     return List_Delete(items, idx);
 }
 

@@ -10,9 +10,18 @@ import (
 )
 
 func main() {
-	arg0 := []byte{0x78, 0x56, 0x34, 0x12}
-	arg1 := []byte("aaaabbbbccc\x00")
-	arg2 := make([]byte, 0)
+	arg0 := &argument.Arg{
+		ID:   0,
+		Data: []byte{0x78, 0x56, 0x34, 0x12},
+	}
+	arg1 := &argument.Arg{
+		ID:   1,
+		Data: []byte("aaaabbbbccc\x00"),
+	}
+	arg2 := &argument.Arg{
+		ID:   2,
+		Data: make([]byte, 0),
+	}
 	stub, err := argument.Encode(arg0, arg1, arg2)
 	checkError(err)
 

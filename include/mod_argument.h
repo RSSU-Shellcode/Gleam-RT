@@ -5,11 +5,11 @@
 #include "context.h"
 #include "errno.h"
 
-// +---------+----------+-----------+----------+-----------+-----------+
-// |   key   | num args | args size | checksum | arg1 size | arg1 data |
-// +---------+----------+-----------+----------+-----------+-----------+
-// | 32 byte |  uint32  |  uint32   |  uint32  |  uint32   |    var    |
-// +---------+----------+-----------+----------+-----------+-----------+
+// +---------+----------+-----------+----------+--------+----------+----------+
+// |   key   | num args | args size | checksum | arg id | arg size | arg data |
+// +---------+----------+-----------+----------+--------+----------+----------+
+// | 32 byte |  uint32  |  uint32   |  uint32  | uint32 |  uint32  |   var    |
+// +---------+----------+-----------+----------+--------+----------+----------+
 
 #define ARG_CRYPTO_KEY_SIZE (32)
 #define ARG_HEADER_SIZE     (32 + 4 + 4 + 4)
@@ -20,9 +20,9 @@
 #define ARG_OFFSET_CHECKSUM   (32 + 4 + 4)
 #define ARG_OFFSET_FIRST_ARG  (32 + 4 + 4 + 4)
 
-typedef bool (*ArgGetValue_t)(uint index, void* value, uint32* size);
-typedef bool (*ArgGetPointer_t)(uint index, void** pointer, uint32* size);
-typedef bool (*ArgErase_t)(uint index);
+typedef bool (*ArgGetValue_t)(uint32 id, void* value, uint32* size);
+typedef bool (*ArgGetPointer_t)(uint32 id, void** pointer, uint32* size);
+typedef bool (*ArgErase_t)(uint32 id);
 typedef void (*ArgEraseAll_t)();
 
 typedef bool  (*ArgLock_t)();

@@ -85,9 +85,9 @@ typedef bool (*ResGetStatus_t)(RT_Status* status);
 typedef bool (*ResFreeAllMu_t)();
 
 // about argument store
-typedef bool (*ArgGetValue_t)(uint index, void* value, uint32* size);
-typedef bool (*ArgGetPointer_t)(uint index, void** pointer, uint32* size);
-typedef bool (*ArgErase_t)(uint index);
+typedef bool (*ArgGetValue_t)(uint32 id, void* value, uint32* size);
+typedef bool (*ArgGetPointer_t)(uint32 id, void** pointer, uint32* size);
+typedef bool (*ArgErase_t)(uint32 id);
 typedef void (*ArgEraseAll_t)();
 
 // about in-memory storage

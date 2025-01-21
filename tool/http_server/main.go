@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 func main() {
@@ -51,11 +52,13 @@ func main() {
 
 	// for support old operating system
 	tlsConfig := tls.Config{
-		MinVersion: tls.VersionTLS10,
+		MinVersion: tls.VersionTLS10, // #nosec
 	}
 	server := http.Server{
-		Addr:      addr,
-		TLSConfig: &tlsConfig,
+		Addr:              addr,
+		TLSConfig:         &tlsConfig,
+		ReadHeaderTimeout: time.Minute,
+		IdleTimeout:       time.Minute,
 	}
 	fileServer := http.FileServer(http.Dir(dir))
 	handlerFn := func(w http.ResponseWriter, r *http.Request) {
@@ -114,7 +117,7 @@ func dumpRequest(r *http.Request) {
 }
 
 func isDir(path string) bool {
-	file, err := os.Open(path)
+	file, err := os.Open(path) // #nosec
 	if err != nil {
 		return false
 	}

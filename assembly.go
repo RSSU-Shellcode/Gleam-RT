@@ -13,11 +13,11 @@ func main() {
 }
 
 func dumpASMx64() {
-	bin, err := os.ReadFile("../dist/GleamRT_x64.bin")
+	bin, err := os.ReadFile("dist/GleamRT_x64.bin")
 	checkError(err)
 	mod := dumpBytesHex(bin)
 
-	err = os.WriteFile("../dist/GleamRT_x64.inst", mod, 0600)
+	err = os.WriteFile("dist/GleamRT_x64.inst", mod, 0600)
 	checkError(err)
 
 	builder := bytes.Buffer{}
@@ -30,16 +30,16 @@ func dumpASMx64() {
 	builder.WriteString("end\r\n")
 
 	mod = builder.Bytes()
-	err = os.WriteFile("../dist/GleamRT_x64.asm", mod, 0600)
+	err = os.WriteFile("dist/GleamRT_x64.asm", mod, 0600)
 	checkError(err)
 }
 
 func dumpASMx86() {
-	bin, err := os.ReadFile("../dist/GleamRT_x86.bin")
+	bin, err := os.ReadFile("dist/GleamRT_x86.bin")
 	checkError(err)
 	mod := dumpBytesHex(bin)
 
-	err = os.WriteFile("../dist/GleamRT_x86.inst", mod, 0600)
+	err = os.WriteFile("dist/GleamRT_x86.inst", mod, 0600)
 	checkError(err)
 
 	builder := bytes.Buffer{}
@@ -54,7 +54,7 @@ func dumpASMx86() {
 	builder.WriteString("end\r\n")
 
 	mod = builder.Bytes()
-	err = os.WriteFile("../dist/GleamRT_x86.asm", mod, 0600)
+	err = os.WriteFile("dist/GleamRT_x86.asm", mod, 0600)
 	checkError(err)
 }
 

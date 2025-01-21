@@ -33,9 +33,7 @@ rd /S /Q "Release"
 rd /S /Q "x64"
 
 echo ================ generate assembly module ================
-cd script
-call asm_mod.bat
-cd ..
+go run assembly.go
 
 echo ==========================================================
 echo                  build shellcode finish!

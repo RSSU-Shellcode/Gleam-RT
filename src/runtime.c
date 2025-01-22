@@ -47,6 +47,8 @@ typedef struct {
 
     // API addresses
     GetSystemInfo_t         GetSystemInfo;
+    LoadLibraryA_t          LoadLibraryA;
+    FreeLibrary_t           FreeLibrary;
     VirtualAlloc_t          VirtualAlloc;
     VirtualFree_t           VirtualFree;
     VirtualProtect_t        VirtualProtect;
@@ -154,7 +156,7 @@ static bool  recoverPageProtect(Runtime* runtime, DWORD protect);
 static bool  updateRuntimePointer(Runtime* runtime);
 static bool  recoverRuntimePointer(Runtime* runtime);
 static errno initRuntimeEnvironment(Runtime* runtime);
-static errno initModules(Runtime* runtime);
+static errno initSubmodules(Runtime* runtime);
 static errno initLibraryTracker(Runtime* runtime, Context* context);
 static errno initMemoryTracker(Runtime* runtime, Context* context);
 static errno initThreadTracker(Runtime* runtime, Context* context);
@@ -252,7 +254,7 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
         {
             break;
         }
-        errno = initModules(runtime);
+        errno = initSubmodules(runtime);
         if (errno != NO_ERROR)
         {
             break;
@@ -424,7 +426,7 @@ static void* allocRuntimeMemPage()
     {
         return NULL;
     }
-    SIZE_T size = MAIN_MEM_PAGE_SIZE + (1 + RandUintN(0, 32)) * 4096;
+    SIZE_T size = MAIN_MEM_PAGE_SIZE + (1 + RandUintN(0, 32)) * 1024;
     LPVOID addr = virtualAlloc(NULL, size, MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
     if (addr == NULL)
     {
@@ -452,6 +454,8 @@ static bool initRuntimeAPI(Runtime* runtime)
 #ifdef _WIN64
     {
         { 0x2A9C7D79595F39B2, 0x11FB7144E3CF94BD }, // GetSystemInfo
+        { 0x92CC6AD999858810, 0x4D23806992FC0259 }, // LoadLibraryA
+        { 0x18AF23D87980A16C, 0xE3380ADD44CA22C7 }, // FreeLibrary
         { 0x6AC498DF641A4FCB, 0xFF3BB21B9BA46CEA }, // VirtualAlloc
         { 0xAC150252A6CA3960, 0x12EFAEA421D60C3E }, // VirtualFree
         { 0xEA5B0C76C7946815, 0x8846C203C35DE586 }, // VirtualProtect
@@ -475,6 +479,8 @@ static bool initRuntimeAPI(Runtime* runtime)
 #elif _WIN32
     {
         { 0xD7792A53, 0x6DDE32BA }, // GetSystemInfo
+        { 0xC4B3F4F2, 0x71C983EF }, // LoadLibraryA
+        { 0xBB6DAE22, 0xADCBE537 }, // FreeLibrary
         { 0xB47741D5, 0x8034C451 }, // VirtualAlloc
         { 0xF76A2ADE, 0x4D8938BD }, // VirtualFree
         { 0xB2AC456D, 0x2A690F63 }, // VirtualProtect
@@ -507,25 +513,27 @@ static bool initRuntimeAPI(Runtime* runtime)
     }
 
     runtime->GetSystemInfo         = list[0x00].proc;
-    runtime->VirtualAlloc          = list[0x01].proc;
-    runtime->VirtualFree           = list[0x02].proc;
-    runtime->VirtualProtect        = list[0x03].proc;
-    runtime->FlushInstructionCache = list[0x04].proc;
-    runtime->ExitProcess           = list[0x05].proc;
-    runtime->SetCurrentDirectoryA  = list[0x06].proc;
-    runtime->SetCurrentDirectoryW  = list[0x07].proc;
-    runtime->CreateMutexA          = list[0x08].proc;
-    runtime->ReleaseMutex          = list[0x09].proc;
-    runtime->CreateEventA          = list[0x0A].proc;
-    runtime->SetEvent              = list[0x0B].proc;
-    runtime->ResetEvent            = list[0x0C].proc;
-    runtime->CreateWaitableTimerW  = list[0x0D].proc;
-    runtime->SetWaitableTimer      = list[0x0E].proc;
-    runtime->SleepEx               = list[0x0F].proc;
-    runtime->WaitForSingleObject   = list[0x10].proc;
-    runtime->DuplicateHandle       = list[0x11].proc;
-    runtime->CloseHandle           = list[0x12].proc;
-    runtime->GetProcAddress        = list[0x13].proc;
+    runtime->LoadLibraryA          = list[0x01].proc;
+    runtime->FreeLibrary           = list[0x02].proc;
+    runtime->VirtualAlloc          = list[0x03].proc;
+    runtime->VirtualFree           = list[0x04].proc;
+    runtime->VirtualProtect        = list[0x05].proc;
+    runtime->FlushInstructionCache = list[0x06].proc;
+    runtime->ExitProcess           = list[0x07].proc;
+    runtime->SetCurrentDirectoryA  = list[0x08].proc;
+    runtime->SetCurrentDirectoryW  = list[0x09].proc;
+    runtime->CreateMutexA          = list[0x0A].proc;
+    runtime->ReleaseMutex          = list[0x0B].proc;
+    runtime->CreateEventA          = list[0x0C].proc;
+    runtime->SetEvent              = list[0x0D].proc;
+    runtime->ResetEvent            = list[0x0E].proc;
+    runtime->CreateWaitableTimerW  = list[0x0F].proc;
+    runtime->SetWaitableTimer      = list[0x10].proc;
+    runtime->SleepEx               = list[0x11].proc;
+    runtime->WaitForSingleObject   = list[0x12].proc;
+    runtime->DuplicateHandle       = list[0x13].proc;
+    runtime->CloseHandle           = list[0x14].proc;
+    runtime->GetProcAddress        = list[0x15].proc;
     return true;
 }
 
@@ -614,7 +622,7 @@ static errno initRuntimeEnvironment(Runtime* runtime)
     return NO_ERROR;
 }
 
-static errno initModules(Runtime* runtime)
+static errno initSubmodules(Runtime* runtime)
 {
     // create context data for initialize other modules
     Context context = {
@@ -634,6 +642,8 @@ static errno initModules(Runtime* runtime)
         .lock   = GetFuncAddr(&RT_lock_mods),
         .unlock = GetFuncAddr(&RT_unlock_mods),
 
+        .LoadLibraryA          = runtime->LoadLibraryA,
+        .FreeLibrary           = runtime->FreeLibrary,
         .VirtualAlloc          = runtime->VirtualAlloc,
         .VirtualFree           = runtime->VirtualFree,
         .VirtualProtect        = runtime->VirtualProtect,

@@ -38,6 +38,8 @@ typedef struct {
     rt_unlock_t unlock;
 
     // for initialize runtime submodules
+    LoadLibraryA_t          LoadLibraryA;
+    FreeLibrary_t           FreeLibrary;
     VirtualAlloc_t          VirtualAlloc;
     VirtualFree_t           VirtualFree;
     VirtualProtect_t        VirtualProtect;

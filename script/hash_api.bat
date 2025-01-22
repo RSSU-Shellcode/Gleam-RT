@@ -9,6 +9,11 @@ echo ------------------------x64------------------------
 
 echo [Runtime Core]
 hash_api -fmt 64 -conc -func GetSystemInfo
+hash_api -fmt 64 -conc -func LoadLibraryA
+hash_api -fmt 64 -conc -func FreeLibrary
+hash_api -fmt 64 -conc -func VirtualAlloc
+hash_api -fmt 64 -conc -func VirtualFree
+hash_api -fmt 64 -conc -func VirtualProtect
 hash_api -fmt 64 -conc -func FlushInstructionCache
 hash_api -fmt 64 -conc -func ExitProcess
 hash_api -fmt 64 -conc -func SetCurrentDirectoryA
@@ -174,6 +179,11 @@ echo ------------------------x86------------------------
 
 echo [Runtime Core]
 hash_api -fmt 32 -conc -func GetSystemInfo
+hash_api -fmt 32 -conc -func LoadLibraryA
+hash_api -fmt 32 -conc -func FreeLibrary
+hash_api -fmt 32 -conc -func VirtualAlloc
+hash_api -fmt 32 -conc -func VirtualFree
+hash_api -fmt 32 -conc -func VirtualProtect
 hash_api -fmt 32 -conc -func FlushInstructionCache
 hash_api -fmt 32 -conc -func ExitProcess
 hash_api -fmt 32 -conc -func SetCurrentDirectoryA

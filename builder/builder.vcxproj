@@ -123,6 +123,7 @@
     <ClInclude Include="..\include\dll_ucrtbase.h" />
     <ClInclude Include="..\include\dll_ws2_32.h" />
     <ClInclude Include="..\include\dll_winhttp.h" />
+	<ClInclude Include="..\include\dll_advapi32.h" />
     <ClInclude Include="..\include\lib_memory.h" />
     <ClInclude Include="..\include\lib_string.h" />
     <ClInclude Include="..\include\lib_match.h" />
@@ -145,6 +146,7 @@
     <ClInclude Include="..\include\win_base.h" />
     <ClInclude Include="..\include\win_file.h" />
     <ClInclude Include="..\include\win_http.h" />
+	<ClInclude Include="..\include\win_crypto.h" />
     <ClInclude Include="..\include\runtime.h" />
     <ClInclude Include="..\include\shield.h" />
     <ClInclude Include="..\include\debug.h" />
@@ -169,10 +171,11 @@
     <ClCompile Include="..\src\mod_thread.c" />
     <ClCompile Include="..\src\mod_resource.c" />
     <ClCompile Include="..\src\mod_argument.c" />
-	<ClCompile Include="..\src\mod_storage.c" />
+    <ClCompile Include="..\src\mod_storage.c" />
     <ClCompile Include="..\src\win_base.c" />
     <ClCompile Include="..\src\win_file.c" />
     <ClCompile Include="..\src\win_http.c" />
+	<ClCompile Include="..\src\win_crypto.c" />
     <ClCompile Include="..\src\shield.c" />
   </ItemGroup>
   <ItemGroup>

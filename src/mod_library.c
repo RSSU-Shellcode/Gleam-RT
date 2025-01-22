@@ -157,20 +157,16 @@ static bool initTrackerAPI(LibraryTracker* tracker, Context* context)
     winapi list[] =
 #ifdef _WIN64
     {
-        { 0xFF631CDB135AB431, 0xF2D25F476CA15E97 }, // LoadLibraryA
         { 0x214DF62A80434DBF, 0xEB0FDC717FC827A5 }, // LoadLibraryW
         { 0x2F6B12D80C0B77BC, 0xDB036D7FA710BE44 }, // LoadLibraryExA
         { 0xC9297DE7F8C97F1C, 0x580EBCC7C3411C35 }, // LoadLibraryExW
-        { 0xD0E21A35D744228B, 0x8283AFE6F719D579 }, // FreeLibrary
         { 0x0708BC7E2C7DA370, 0x39B9AC22BC408886 }, // FreeLibraryAndExitThread
     };
 #elif _WIN32
     {
-        { 0x434519BD, 0x621ABBD9 }, // LoadLibraryA
         { 0xCE3D1172, 0x0FB89CC3 }, // LoadLibraryW
         { 0x46B4638A, 0x213466F9 }, // LoadLibraryExA
         { 0xDBB0F0FE, 0x516334AA }, // LoadLibraryExW
-        { 0xE44CF885, 0xF6D45D9F }, // FreeLibrary
         { 0x7730C1E2, 0xF5551C66 }, // FreeLibraryAndExitThread
     };
 #endif
@@ -183,13 +179,13 @@ static bool initTrackerAPI(LibraryTracker* tracker, Context* context)
         }
         list[i].proc = proc;
     }
-    tracker->LoadLibraryA             = list[0].proc;
-    tracker->LoadLibraryW             = list[1].proc;
-    tracker->LoadLibraryExA           = list[2].proc;
-    tracker->LoadLibraryExW           = list[3].proc;
-    tracker->FreeLibrary              = list[4].proc;
-    tracker->FreeLibraryAndExitThread = list[5].proc;
+    tracker->LoadLibraryW             = list[0].proc;
+    tracker->LoadLibraryExA           = list[1].proc;
+    tracker->LoadLibraryExW           = list[2].proc;
+    tracker->FreeLibraryAndExitThread = list[3].proc;
 
+    tracker->LoadLibraryA        = context->LoadLibraryA;
+    tracker->FreeLibrary         = context->FreeLibrary;
     tracker->ReleaseMutex        = context->ReleaseMutex;
     tracker->WaitForSingleObject = context->WaitForSingleObject;
     tracker->CloseHandle         = context->CloseHandle;

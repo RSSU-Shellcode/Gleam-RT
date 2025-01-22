@@ -149,33 +149,8 @@ WinHTTP_M* InitWinHTTP(Context* context)
 
 static bool initModuleAPI(WinHTTP* module, Context* context)
 {
-    typedef struct { 
-        uint hash; uint key; void* proc;
-    } winapi;
-    winapi list[] =
-#ifdef _WIN64
-    {
-        { 0x92CC6AD999858810, 0x4D23806992FC0259 }, // LoadLibraryA
-        { 0x18AF23D87980A16C, 0xE3380ADD44CA22C7 }, // FreeLibrary
-    };
-#elif _WIN32
-    {
-        { 0xC4B3F4F2, 0x71C983EF }, // LoadLibraryA
-        { 0xBB6DAE22, 0xADCBE537 }, // FreeLibrary
-    };
-#endif
-    for (int i = 0; i < arrlen(list); i++)
-    {
-        void* proc = FindAPI(list[i].hash, list[i].key);
-        if (proc == NULL)
-        {
-            return false;
-        }
-        list[i].proc = proc;
-    }
-    module->LoadLibraryA = list[0].proc;
-    module->FreeLibrary  = list[1].proc;
-
+    module->LoadLibraryA        = context->LoadLibraryA;
+    module->FreeLibrary         = context->FreeLibrary;
     module->ReleaseMutex        = context->ReleaseMutex;
     module->WaitForSingleObject = context->WaitForSingleObject;
     module->CloseHandle         = context->CloseHandle;

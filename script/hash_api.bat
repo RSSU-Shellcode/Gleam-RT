@@ -145,8 +145,6 @@ hash_api -fmt 64 -conc -func WriteFile
 echo.
 
 echo [WinHTTP Module]
-hash_api -fmt 64 -conc -func LoadLibraryA
-hash_api -fmt 64 -conc -func FreeLibrary
 hash_api -fmt 64 -conc -mod "winhttp.dll" -func WinHttpCrackUrl
 hash_api -fmt 64 -conc -mod "winhttp.dll" -func WinHttpOpen
 hash_api -fmt 64 -conc -mod "winhttp.dll" -func WinHttpConnect
@@ -160,6 +158,16 @@ hash_api -fmt 64 -conc -mod "winhttp.dll" -func WinHttpQueryHeaders
 hash_api -fmt 64 -conc -mod "winhttp.dll" -func WinHttpQueryDataAvailable
 hash_api -fmt 64 -conc -mod "winhttp.dll" -func WinHttpReadData
 hash_api -fmt 64 -conc -mod "winhttp.dll" -func WinHttpCloseHandle
+echo.
+
+echo [WinCrypto Module]
+hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptAcquireContextA
+hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptReleaseContext
+hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptGenRandom
+hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptCreateHash
+hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptHashData
+hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptGetHashParam
+hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptDestroyHash
 echo.
 
 echo ------------------------x86------------------------
@@ -302,8 +310,6 @@ hash_api -fmt 32 -conc -func WriteFile
 echo.
 
 echo [WinHTTP Module]
-hash_api -fmt 32 -conc -func LoadLibraryA
-hash_api -fmt 32 -conc -func FreeLibrary
 hash_api -fmt 32 -conc -mod "winhttp.dll" -func WinHttpCrackUrl
 hash_api -fmt 32 -conc -mod "winhttp.dll" -func WinHttpOpen
 hash_api -fmt 32 -conc -mod "winhttp.dll" -func WinHttpConnect
@@ -317,6 +323,16 @@ hash_api -fmt 32 -conc -mod "winhttp.dll" -func WinHttpQueryHeaders
 hash_api -fmt 32 -conc -mod "winhttp.dll" -func WinHttpQueryDataAvailable
 hash_api -fmt 32 -conc -mod "winhttp.dll" -func WinHttpReadData
 hash_api -fmt 32 -conc -mod "winhttp.dll" -func WinHttpCloseHandle
+echo.
+
+echo [WinCrypto Module]
+hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptAcquireContextA
+hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptReleaseContext
+hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptGenRandom
+hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptCreateHash
+hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptHashData
+hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptGetHashParam
+hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptDestroyHash
 echo.
 
 pause

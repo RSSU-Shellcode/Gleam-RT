@@ -56,6 +56,9 @@ errno WC_Uninstall();
 #endif
 static WinCrypto* getModulePointer();
 
+static bool wc_lock();
+static bool wc_unlock();
+
 static bool initModuleAPI(WinCrypto* module, Context* context);
 static bool updateModulePointer(WinCrypto* module);
 static bool recoverModulePointer(WinCrypto* module);
@@ -199,3 +202,67 @@ static WinCrypto* getModulePointer()
     return (WinCrypto*)(pointer);
 }
 #pragma optimize("", on)
+
+__declspec(noinline)
+static bool wc_lock()
+{
+    WinCrypto* module = getModulePointer();
+
+    DWORD event = module->WaitForSingleObject(module->hMutex, INFINITE);
+    return event == WAIT_OBJECT_0 || event == WAIT_ABANDONED;
+}
+
+__declspec(noinline)
+static bool wc_unlock()
+{
+    WinCrypto* module = getModulePointer();
+
+    return module->ReleaseMutex(module->hMutex);
+}
+
+__declspec(noinline)
+void WC_RandBuffer(byte* data, uint len)
+{
+    WinCrypto* module = getModulePointer();
+
+}
+
+__declspec(noinline)
+void WC_SHA1(byte* data, uint len, byte* hash)
+{
+    WinCrypto* module = getModulePointer();
+
+}
+
+__declspec(noinline)
+errno WC_Uninstall()
+{
+    WinCrypto* module = getModulePointer();
+
+    errno errno = NO_ERROR;
+
+    // free advapi32.dll
+    if (module->hModule != NULL)
+    {
+        if (!module->FreeLibrary(module->hModule) && errno == NO_ERROR)
+        {
+            errno = ERR_WIN_CRYPTO_FREE_LIBRARY;
+        }
+    }
+
+    // close mutex
+    if (!module->CloseHandle(module->hMutex) && errno == NO_ERROR)
+    {
+        errno = ERR_WIN_CRYPTO_CLOSE_MUTEX;
+    }
+
+    // recover instructions
+    if (module->NotEraseInstruction)
+    {
+        if (!recoverModulePointer(module) && errno == NO_ERROR)
+        {
+            errno = ERR_WIN_CRYPTO_RECOVER_INST;
+        }
+    }
+    return errno;
+}

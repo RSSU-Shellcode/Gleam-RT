@@ -35,6 +35,10 @@ typedef struct {
     mt_realloc_t realloc;
     mt_free_t    free;
     mt_msize_t   msize;
+
+    // protect data
+    HMODULE hModule; // advapi32.dll
+    HANDLE  hMutex;  // global mutex
 } WinCrypto;
 
 // methods for user
@@ -103,3 +107,95 @@ WinCrypto_M* InitWinCrypto(Context* context)
     method->Uninstall = GetFuncAddr(&WC_Uninstall);
     return method;
 }
+
+static bool initModuleAPI(WinCrypto* module, Context* context)
+{
+    module->LoadLibraryA        = context->LoadLibraryA;
+    module->FreeLibrary         = context->FreeLibrary;
+    module->ReleaseMutex        = context->ReleaseMutex;
+    module->WaitForSingleObject = context->WaitForSingleObject;
+    module->CloseHandle         = context->CloseHandle;
+    return true;
+}
+
+// CANNOT merge updateModulePointer and recoverModulePointer
+// to one function with two arguments, otherwise the compiler
+// will generate the incorrect instructions.
+
+static bool updateModulePointer(WinCrypto* module)
+{
+    bool success = false;
+    uintptr target = (uintptr)(GetFuncAddr(&getModulePointer));
+    for (uintptr i = 0; i < 64; i++)
+    {
+        uintptr* pointer = (uintptr*)(target);
+        if (*pointer != MODULE_POINTER)
+        {
+            target++;
+            continue;
+        }
+        *pointer = (uintptr)module;
+        success = true;
+        break;
+    }
+    return success;
+}
+
+static bool recoverModulePointer(WinCrypto* module)
+{
+    bool success = false;
+    uintptr target = (uintptr)(GetFuncAddr(&getModulePointer));
+    for (uintptr i = 0; i < 64; i++)
+    {
+        uintptr* pointer = (uintptr*)(target);
+        if (*pointer != (uintptr)module)
+        {
+            target++;
+            continue;
+        }
+        *pointer = MODULE_POINTER;
+        success = true;
+        break;
+    }
+    return success;
+}
+
+static bool initModuleEnvironment(WinCrypto* module, Context* context)
+{
+    // create global mutex
+    HANDLE hMutex = context->CreateMutexA(NULL, false, NULL);
+    if (hMutex == NULL)
+    {
+        return false;
+    }
+    module->hMutex = hMutex;
+    // copy submodule methods
+    module->malloc  = context->mt_malloc;
+    module->calloc  = context->mt_calloc;
+    module->realloc = context->mt_realloc;
+    module->free    = context->mt_free;
+    module->msize   = context->mt_msize;
+    return true;
+}
+
+static void eraseModuleMethods(Context* context)
+{
+    if (context->NotEraseInstruction)
+    {
+        return;
+    }
+    uintptr begin = (uintptr)(GetFuncAddr(&initModuleAPI));
+    uintptr end   = (uintptr)(GetFuncAddr(&eraseModuleMethods));
+    uintptr size  = end - begin;
+    RandBuffer((byte*)begin, (int64)size);
+}
+
+// updateModulePointer will replace hard encode address to the actual address.
+// Must disable compiler optimize, otherwise updateModulePointer will fail.
+#pragma optimize("", off)
+static WinCrypto* getModulePointer()
+{
+    uintptr pointer = MODULE_POINTER;
+    return (WinCrypto*)(pointer);
+}
+#pragma optimize("", on)

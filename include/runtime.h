@@ -145,6 +145,9 @@ typedef errno (*HTTPDo_t)(UTF16 url, UTF16 method, HTTP_Opts* opts, HTTP_Resp* r
 typedef errno (*HTTPFree_t)();
 
 // about WinCrypto
+// The buffer allocated from methods must call Runtime_M.Memory.Free().
+typedef void (*CryptoRandBuffer_t)(byte* data, uint len);
+typedef void (*CryptoSHA1_t)(byte* data, uint len, byte* hash);
 
 // about random module
 typedef void   (*RandBuffer_t)(byte* buf, int64 size);
@@ -293,6 +296,11 @@ typedef struct {
         HTTPDo_t   Do;
         HTTPFree_t Free;
     } WinHTTP;
+
+    struct {
+        CryptoRandBuffer_t RandBuffer;
+        CryptoSHA1_t       SHA1;
+    } WinCrypto;
 
     struct {
         RandBuffer_t  Buffer;

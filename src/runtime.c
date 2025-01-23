@@ -21,6 +21,7 @@
 #include "win_base.h"
 #include "win_file.h"
 #include "win_http.h"
+#include "win_crypto.h"
 #include "shield.h"
 #include "runtime.h"
 #include "debug.h"
@@ -97,9 +98,10 @@ typedef struct {
     InMemoryStorage_M* InMemoryStorage;
 
     // high-level modules
-    WinBase_M* WinBase;
-    WinFile_M* WinFile;
-    WinHTTP_M* WinHTTP;
+    WinBase_M*   WinBase;
+    WinFile_M*   WinFile;
+    WinHTTP_M*   WinHTTP;
+    WinCrypto_M* WinCrypto;
 } Runtime;
 
 // export methods and IAT hooks about Runtime
@@ -166,6 +168,7 @@ static errno initInMemoryStorage(Runtime* runtime, Context* context);
 static errno initWinBase(Runtime* runtime, Context* context);
 static errno initWinFile(Runtime* runtime, Context* context);
 static errno initWinHTTP(Runtime* runtime, Context* context);
+static errno initWinCrypto(Runtime* runtime, Context* context);
 static bool  initIATHooks(Runtime* runtime);
 static bool  flushInstructionCache(Runtime* runtime);
 static void  eraseRuntimeMethods(Runtime* runtime);
@@ -365,7 +368,8 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->WinHTTP.Do   = runtime->WinHTTP->Do;
     module->WinHTTP.Free = runtime->WinHTTP->Free;
     // WinCrypto
-
+    module->WinCrypto.RandBuffer = runtime->WinCrypto->RandBuffer;
+    module->WinCrypto.SHA1       = runtime->WinCrypto->SHA1;
     // random module
     module->Random.Buffer  = GetFuncAddr(&RandBuffer);
     module->Random.Bool    = GetFuncAddr(&RandBool);
@@ -691,6 +695,7 @@ static errno initSubmodules(Runtime* runtime)
         GetFuncAddr(&initWinBase),
         GetFuncAddr(&initWinFile),
         GetFuncAddr(&initWinHTTP),
+        GetFuncAddr(&initWinCrypto),
     };
     for (int i = 0; i < arrlen(hl_modules); i++)
     {
@@ -776,34 +781,45 @@ static errno initInMemoryStorage(Runtime* runtime, Context* context)
 
 static errno initWinBase(Runtime* runtime, Context* context)
 {
-    WinBase_M* winBase = InitWinBase(context);
-    if (winBase == NULL)
+    WinBase_M* WinBase = InitWinBase(context);
+    if (WinBase == NULL)
     {
         return GetLastErrno();
     }
-    runtime->WinBase = winBase;
+    runtime->WinBase = WinBase;
     return NO_ERROR;
 }
 
 static errno initWinFile(Runtime* runtime, Context* context)
 {
-    WinFile_M* winFile = InitWinFile(context);
-    if (winFile == NULL)
+    WinFile_M* WinFile = InitWinFile(context);
+    if (WinFile == NULL)
     {
         return GetLastErrno();
     }
-    runtime->WinFile = winFile;
+    runtime->WinFile = WinFile;
     return NO_ERROR;
 }
 
 static errno initWinHTTP(Runtime* runtime, Context* context)
 {
-    WinHTTP_M* winHTTP = InitWinHTTP(context);
-    if (winHTTP == NULL)
+    WinHTTP_M* WinHTTP = InitWinHTTP(context);
+    if (WinHTTP == NULL)
     {
         return GetLastErrno();
     }
-    runtime->WinHTTP = winHTTP;
+    runtime->WinHTTP = WinHTTP;
+    return NO_ERROR;
+}
+
+static errno initWinCrypto(Runtime* runtime, Context* context)
+{
+    WinCrypto_M* WinCrypto = InitWinCrypto(context);
+    if (WinCrypto == NULL)
+    {
+        return GetLastErrno();
+    }
+    runtime->WinCrypto = WinCrypto;
     return NO_ERROR;
 }
 
@@ -2265,6 +2281,7 @@ errno RT_Exit()
         runtime->ThreadTracker->Clean,
 
         // high-level modules
+        runtime->WinCrypto->Uninstall,
         runtime->WinHTTP->Uninstall,
         runtime->WinFile->Uninstall,
         runtime->WinBase->Uninstall,

@@ -47,17 +47,17 @@ typedef struct {
     CloseHandle_t         CloseHandle;
     Sleep_t               Sleep;
 
-    // protect data
-    HMODULE hModule;
-    int32   counter;
-    HANDLE  hMutex;
-
     // submodules method
     mt_malloc_t  malloc;
     mt_calloc_t  calloc;
     mt_realloc_t realloc;
     mt_free_t    free;
     mt_msize_t   msize;
+
+    // protect data
+    HMODULE hModule; // winhttp.dll
+    int32   counter; // call counter
+    HANDLE  hMutex;  // global mutex
 } WinHTTP;
 
 // methods for user

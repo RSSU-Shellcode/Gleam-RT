@@ -143,6 +143,9 @@
     <ClCompile Include="src\mod_resource_test.c">
       <Filter>Test</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\win_crypto.c">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\crypto.h">
@@ -248,6 +251,12 @@
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="..\include\mod_storage.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\dll_advapi32.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\win_crypto.h">
       <Filter>Header</Filter>
     </ClInclude>
   </ItemGroup>

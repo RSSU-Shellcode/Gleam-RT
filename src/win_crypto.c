@@ -4,9 +4,11 @@
 #include "dll_advapi32.h"
 #include "lib_memory.h"
 #include "rel_addr.h"
-#include "context.h"
+#include "hash_api.h"
 #include "random.h"
+#include "crypto.h"
 #include "errno.h"
+#include "context.h"
 #include "win_crypto.h"
 #include "debug.h"
 
@@ -64,6 +66,9 @@ static bool updateModulePointer(WinCrypto* module);
 static bool recoverModulePointer(WinCrypto* module);
 static bool initModuleEnvironment(WinCrypto* module, Context* context);
 static void eraseModuleMethods(Context* context);
+
+static bool initWinCryptoEnv();
+static bool findWinCryptoAPI();
 
 WinCrypto_M* InitWinCrypto(Context* context)
 {
@@ -218,6 +223,105 @@ static bool wc_unlock()
     WinCrypto* module = getModulePointer();
 
     return module->ReleaseMutex(module->hMutex);
+}
+
+__declspec(noinline)
+static bool initWinCryptoEnv()
+{
+    WinCrypto* module = getModulePointer();
+
+    if (!wc_lock())
+    {
+        return false;
+    }
+
+    bool success = false;
+    for (;;)
+    {
+        if (module->hModule != NULL)
+        {
+            success = true;
+            break;
+        }
+        // decrypt to "advapi32.dll"
+        byte dllName[] = {
+            'a'^0xC4, 'd'^0x79, 'v'^0xF2, 'a'^0x2A, 
+            'p'^0xC4, 'i'^0x79, '3'^0xF2, '2'^0x2A, 
+            '.'^0xC4, 'd'^0x79, 'l'^0xF2, 'l'^0x2A,
+        };
+        byte key[] = {0xC4, 0x79, 0xF2, 0x2A};
+        XORBuf(dllName, sizeof(dllName), key, sizeof(key));
+        // load advapi32.dll
+        HMODULE hModule = module->LoadLibraryA(dllName);
+        if (hModule == NULL)
+        {
+            break;
+        }
+        // prepare API address
+        if (!findWinCryptoAPI())
+        {
+            SetLastErrno(ERR_WIN_CRYPTO_API_NOT_FOUND);
+            module->FreeLibrary(hModule);
+            break;
+        }
+        module->hModule = hModule;
+        success = true;
+        break;
+    }
+
+    if (!wc_unlock())
+    {
+        return false;
+    }
+    return success;
+}
+
+static bool findWinCryptoAPI()
+{
+    WinCrypto* module = getModulePointer();
+
+    typedef struct { 
+        uint hash; uint key; void* proc;
+    } winapi;
+    winapi list[] =
+#ifdef _WIN64
+    {
+        { 0x229A36DB5A153884, 0x5C8D8943760A0AD5 }, // CryptAcquireContextA
+        { 0xC8A4ABEFC4A15414, 0xDCD358FAAA9AD697 }, // CryptReleaseContext
+        { 0x052D13759C233989, 0xD129B99F2DE11CE1 }, // CryptGenRandom
+        { 0xCA46DCB36C8EF17A, 0xEDEA67BFCC8F2970 }, // CryptCreateHash
+        { 0x08F3ADAD64028885, 0xFF7C7DF5E4A9283F }, // CryptHashData
+        { 0x76F8459880F8ACF9, 0x252C1D935020E9D4 }, // CryptGetHashParam
+        { 0x2003C9A7DB794999, 0x0E51E1688FD1869E }, // CryptDestroyHash
+    };
+#elif _WIN32
+    {
+        { 0x8999214A, 0x46521BDF }, // CryptAcquireContextA
+        { 0x201C2004, 0x435A9F1B }, // CryptReleaseContext
+        { 0x608C5DA1, 0xE9C08140 }, // CryptGenRandom
+        { 0xAC10214C, 0x745E27FB }, // CryptCreateHash
+        { 0x34BF08ED, 0x2C655EC2 }, // CryptHashData
+        { 0x5D3903BA, 0x461539AA }, // CryptGetHashParam
+        { 0x599DEAEE, 0xB4B75228 }, // CryptDestroyHash
+    };
+#endif
+    for (int i = 0; i < arrlen(list); i++)
+    {
+        void* proc = FindAPI(list[i].hash, list[i].key);
+        if (proc == NULL)
+        {
+            return false;
+        }
+        list[i].proc = proc;
+    }
+    module->CryptAcquireContextA = list[0x00].proc;
+    module->CryptReleaseContext  = list[0x01].proc;
+    module->CryptGenRandom       = list[0x02].proc;
+    module->CryptCreateHash      = list[0x03].proc;
+    module->CryptHashData        = list[0x04].proc;
+    module->CryptGetHashParam    = list[0x05].proc;
+    module->CryptDestroyHash     = list[0x06].proc; 
+    return true;
 }
 
 __declspec(noinline)

@@ -135,8 +135,8 @@
     <ClInclude Include="..\include\compress.h" />
     <ClInclude Include="..\include\pe_image.h" />
     <ClInclude Include="..\include\win_api.h" />
-    <ClInclude Include="..\include\context.h" />
     <ClInclude Include="..\include\errno.h" />
+	<ClInclude Include="..\include\context.h" />
     <ClInclude Include="..\include\mod_library.h" />
     <ClInclude Include="..\include\mod_memory.h" />
     <ClInclude Include="..\include\mod_thread.h" />

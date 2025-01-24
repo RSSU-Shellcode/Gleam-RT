@@ -10,6 +10,31 @@ typedef HANDLE HCRYPTHASH;
 
 typedef uint ALG_ID;
 
+#define PROV_RSA_FULL      1
+#define PROV_RSA_SIG       2
+#define PROV_DSS           3
+#define PROV_FORTEZZA      4
+#define PROV_MS_EXCHANGE   5
+#define PROV_SSL           6
+#define PROV_RSA_SCHANNEL  12
+#define PROV_DSS_DH        13
+#define PROV_EC_ECDSA_SIG  14
+#define PROV_EC_ECNRA_SIG  15
+#define PROV_EC_ECDSA_FULL 16
+#define PROV_EC_ECNRA_FULL 17
+#define PROV_DH_SCHANNEL   18
+#define PROV_SPYRUS_LYNKS  20
+#define PROV_RNG           21
+#define PROV_INTEL_SEC     22
+#define PROV_REPLACE_OWF   23
+#define PROV_RSA_AES       24
+
+#define CRYPT_VERIFYCONTEXT  0xF0000000
+#define CRYPT_NEWKEYSET      0x00000008
+#define CRYPT_DELETEKEYSET   0x00000010
+#define CRYPT_MACHINE_KEYSET 0x00000020
+#define CRYPT_SILENT         0x00000040
+
 // CALG_SHA_256 is not supported until Windows XP SP3
 #define CALG_SHA1     0x00008004
 #define CALG_AES_256  0x00006610
@@ -29,25 +54,25 @@ typedef BOOL(*CryptReleaseContext_t)
 
 typedef BOOL (*CryptGenRandom_t)
 (
-    HCRYPTPROV hProv, DWORD dwLen, BYTE *pbBuffer
+    HCRYPTPROV hProv, DWORD dwLen, BYTE* pbBuffer
 );
 
 typedef BOOL (*CryptCreateHash_t)
 (
     HCRYPTPROV hProv, ALG_ID Algid, HCRYPTKEY hKey,
-    DWORD dwFlags, HCRYPTHASH *phHash
+    DWORD dwFlags, HCRYPTHASH* phHash
 );
 
 typedef BOOL (*CryptHashData_t)
 (
-    HCRYPTHASH hHash, BYTE *pbData, DWORD dwDataLen,
+    HCRYPTHASH hHash, BYTE* pbData, DWORD dwDataLen,
     DWORD dwFlags
 );
 
 typedef BOOL (*CryptGetHashParam_t)
 (
-    HCRYPTHASH hHash, DWORD dwParam, BYTE *pbData,
-    DWORD *pdwDataLen, DWORD dwFlags
+    HCRYPTHASH hHash, DWORD dwParam, BYTE* pbData,
+    DWORD* pdwDataLen, DWORD dwFlags
 );
 
 typedef BOOL (*CryptDestroyHash_t)

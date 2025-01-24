@@ -44,8 +44,8 @@ typedef struct {
 } WinCrypto;
 
 // methods for user
-void WC_RandBuffer(byte* data, uint len);
-void WC_SHA1(byte* data, uint len, byte* hash);
+errno WC_RandBuffer(byte* data, uint len);
+errno WC_SHA1(byte* data, uint len, byte* hash);
 
 // methods for runtime
 errno WC_Uninstall();
@@ -325,17 +325,90 @@ static bool findWinCryptoAPI()
 }
 
 __declspec(noinline)
-void WC_RandBuffer(byte* data, uint len)
+errno WC_RandBuffer(byte* data, uint len)
 {
     WinCrypto* module = getModulePointer();
 
+    dbg_log("[WinCrypto]", "RandBuffer: 0x%zX, %zu", data, len);
+
+    if (!initWinCryptoEnv())
+    {
+        return GetLastErrno();
+    }
+
+    HCRYPTPROV hProv = NULL;
+    bool success = false;
+    for (;;)
+    {
+        bool ok = module->CryptAcquireContextA(
+            &hProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT
+        );
+        if (!ok)
+        {
+            break;
+        }
+        if (!module->CryptGenRandom(hProv, (DWORD)len, data))
+        {
+            break;
+        }
+        success = true;
+        break;
+    }
+    errno lastErr = GetLastErrno();
+
+    if (hProv != NULL)
+    {
+        module->CryptReleaseContext(hProv, 0);
+    }
+
+    if (!success)
+    {
+        return lastErr;
+    }
+    return NO_ERROR;
 }
 
 __declspec(noinline)
-void WC_SHA1(byte* data, uint len, byte* hash)
+errno WC_SHA1(byte* data, uint len, byte* hash)
 {
     WinCrypto* module = getModulePointer();
 
+    dbg_log("[WinCrypto]", "SHA1: 0x%zX, %zu", data, len);
+
+    if (!initWinCryptoEnv())
+    {
+        return GetLastErrno();
+    }
+
+    HCRYPTPROV hProv = NULL;
+    bool success = false;
+    for (;;)
+    {
+        bool ok = module->CryptAcquireContextA(
+            &hProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT
+        );
+        if (!ok)
+        {
+            break;
+        }
+
+
+
+        success = true;
+        break;
+    }
+    errno lastErr = GetLastErrno();
+
+    if (hProv != NULL)
+    {
+        module->CryptReleaseContext(hProv, 0);
+    }
+
+    if (!success)
+    {
+        return lastErr;
+    }
+    return NO_ERROR;
 }
 
 __declspec(noinline)

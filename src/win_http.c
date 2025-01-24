@@ -6,10 +6,10 @@
 #include "lib_string.h"
 #include "rel_addr.h"
 #include "hash_api.h"
-#include "crypto.h"
-#include "context.h"
 #include "random.h"
+#include "crypto.h"
 #include "errno.h"
+#include "context.h"
 #include "win_http.h"
 #include "debug.h"
 
@@ -257,6 +257,7 @@ static bool wh_unlock()
     return module->ReleaseMutex(module->hMutex);
 }
 
+__declspec(noinline)
 static bool initWinHTTPEnv()
 {
     WinHTTP* module = getModulePointer();
@@ -373,6 +374,7 @@ static bool findWinHTTPAPI()
     return true;
 }
 
+__declspec(noinline)
 static bool tryToFreeLibrary()
 {
     WinHTTP* module = getModulePointer();
@@ -401,6 +403,7 @@ static bool tryToFreeLibrary()
     return success;
 }
 
+__declspec(noinline)
 static bool increaseCounter()
 {
     WinHTTP* module = getModulePointer();
@@ -422,6 +425,7 @@ static bool increaseCounter()
     return true;
 }
 
+__declspec(noinline)
 static bool decreaseCounter()
 {
     WinHTTP* module = getModulePointer();

@@ -146,8 +146,8 @@ typedef errno (*HTTPFree_t)();
 
 // about WinCrypto
 // The buffer allocated from methods must call Runtime_M.Memory.Free().
-typedef void (*CryptoRandBuffer_t)(byte* data, uint len);
-typedef void (*CryptoSHA1_t)(byte* data, uint len, byte* hash);
+typedef errno (*CryptoRandBuffer_t)(byte* data, uint len);
+typedef errno (*CryptoSHA1_t)(byte* data, uint len, byte* hash);
 
 // about random module
 typedef void   (*RandBuffer_t)(byte* buf, int64 size);

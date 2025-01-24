@@ -248,6 +248,7 @@ static bool initWinCryptoEnv()
             'a'^0xC4, 'd'^0x79, 'v'^0xF2, 'a'^0x2A, 
             'p'^0xC4, 'i'^0x79, '3'^0xF2, '2'^0x2A, 
             '.'^0xC4, 'd'^0x79, 'l'^0xF2, 'l'^0x2A,
+            000^0xC4,
         };
         byte key[] = {0xC4, 0x79, 0xF2, 0x2A};
         XORBuf(dllName, sizeof(dllName), key, sizeof(key));
@@ -337,6 +338,7 @@ errno WC_RandBuffer(byte* data, uint len)
     }
 
     HCRYPTPROV hProv = NULL;
+
     bool success = false;
     for (;;)
     {
@@ -381,24 +383,40 @@ errno WC_SHA1(byte* data, uint len, byte* hash)
     }
 
     HCRYPTPROV hProv = NULL;
+    HCRYPTHASH hHash = NULL;
+
     bool success = false;
     for (;;)
     {
         bool ok = module->CryptAcquireContextA(
-            &hProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT
+            &hProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT
         );
         if (!ok)
         {
             break;
         }
-
-
-
+        if (!module->CryptCreateHash(hProv, CALG_SHA1, NULL, 0, &hHash))
+        {
+            break;
+        }
+        if (!module->CryptHashData(hHash, data, (DWORD)len, 0))
+        {
+            break;
+        }
+        DWORD hashLen;
+        if (!module->CryptGetHashParam(hHash, HP_HASHVAL, hash, &hashLen, 0))
+        {
+            break;
+        }
         success = true;
         break;
     }
     errno lastErr = GetLastErrno();
 
+    if (hHash != NULL)
+    {
+        module->CryptDestroyHash(hHash);
+    }
     if (hProv != NULL)
     {
         module->CryptReleaseContext(hProv, 0);

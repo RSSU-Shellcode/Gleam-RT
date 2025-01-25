@@ -41,6 +41,10 @@ typedef uint ALG_ID;
 #define CALG_RSA_SIGN 0x00002400
 #define CALG_RSA_KEYX 0x0000A400
 
+#define HP_ALGID    0x0001
+#define HP_HASHVAL  0x0002
+#define HP_HASHSIZE 0x0004
+
 typedef BOOL (*CryptAcquireContextA_t)
 (
     HCRYPTPROV* phProv, LPCSTR szContainer, LPCSTR szProvider,

@@ -24,6 +24,7 @@ bool TestRuntime_Storage();
 bool TestRuntime_WinBase();
 bool TestRuntime_WinFile();
 bool TestRuntime_WinHTTP();
+bool TestRuntime_WinCrypto();
 bool TestRuntime_Exit();
 #pragma warning(pop)
 
@@ -41,13 +42,14 @@ static unit tests[] =
     { "Crypto",     TestCrypto    },
     { "Compress",   TestCompress  },
 
-    { "Runtime_Memory",   TestRuntime_Memory   },
-    { "Runtime_Argument", TestRuntime_Argument },
-    { "Runtime_Storage",  TestRuntime_Storage  },
-    { "Runtime_WinBase",  TestRuntime_WinBase  },
-    { "Runtime_WinFile",  TestRuntime_WinFile  },
-    { "Runtime_WinHTTP",  TestRuntime_WinHTTP  },
-    { "Runtime_Exit",     TestRuntime_Exit     },
+    { "Runtime_Memory",    TestRuntime_Memory    },
+    { "Runtime_Argument",  TestRuntime_Argument  },
+    { "Runtime_Storage",   TestRuntime_Storage   },
+    { "Runtime_WinBase",   TestRuntime_WinBase   },
+    { "Runtime_WinFile",   TestRuntime_WinFile   },
+    { "Runtime_WinHTTP",   TestRuntime_WinHTTP   },
+    { "Runtime_WinCrypto", TestRuntime_WinCrypto },
+    { "Runtime_Exit",      TestRuntime_Exit      },
 };
 
 #endif // TEST_H

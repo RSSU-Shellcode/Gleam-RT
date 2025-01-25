@@ -146,6 +146,9 @@
     <ClCompile Include="..\src\win_crypto.c">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="src\win_crypto_test.c">
+      <Filter>Test</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\crypto.h">

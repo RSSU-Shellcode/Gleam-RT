@@ -84,4 +84,27 @@ typedef BOOL (*CryptDestroyHash_t)
     HCRYPTHASH hHash
 );
 
+typedef BOOL (*CryptImportKey_t)
+(
+    HCRYPTPROV hProv, BYTE* pbData, DWORD dwDataLen,
+    HCRYPTKEY hPubKey, DWORD dwFlags, HCRYPTKEY* phKey
+);
+
+typedef BOOL (*CryptSetKeyParam_t)
+(
+    HCRYPTKEY hKey, DWORD dwParam, BYTE *pbData, DWORD dwFlags
+);
+
+typedef BOOL (*CryptEncrypt_t)
+(
+    HCRYPTKEY hKey, HCRYPTHASH hHash, BOOL Final, DWORD dwFlags,
+    BYTE *pbData, DWORD *pdwDataLen, DWORD dwBufLen
+);
+
+typedef BOOL (*CryptDecrypt_t)
+(
+    HCRYPTKEY hKey, HCRYPTHASH hHash, BOOL Final, DWORD dwFlags,
+    BYTE *pbData, DWORD *pdwDataLen
+);
+
 #endif // DLL_ADVAPI32_H

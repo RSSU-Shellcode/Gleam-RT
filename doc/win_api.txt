@@ -87,6 +87,7 @@ https://learn.microsoft.com/en-us/windows/win32/api/winhttp/nf-winhttp-winhttpqu
 https://learn.microsoft.com/en-us/windows/win32/api/winhttp/nf-winhttp-winhttpreaddata
 https://learn.microsoft.com/en-us/windows/win32/api/winhttp/nf-winhttp-winhttpclosehandle
 https://learn.microsoft.com/en-us/windows/win32/seccrypto/alg-id
+https://learn.microsoft.com/en-us/windows/win32/seccrypto/cryptographic-provider-types
 https://learn.microsoft.com/en-us/windows/win32/api/wincrypt/nf-wincrypt-cryptacquirecontexta
 https://learn.microsoft.com/en-us/windows/win32/api/wincrypt/nf-wincrypt-cryptreleasecontext
 https://learn.microsoft.com/en-us/windows/win32/api/wincrypt/nf-wincrypt-cryptgenrandom

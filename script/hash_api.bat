@@ -173,6 +173,10 @@ hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptCreateHash
 hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptHashData
 hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptGetHashParam
 hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptDestroyHash
+hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptImportKey
+hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptSetKeyParam
+hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptEncrypt
+hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptDecrypt
 echo.
 
 echo ------------------------x86------------------------
@@ -343,6 +347,10 @@ hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptCreateHash
 hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptHashData
 hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptGetHashParam
 hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptDestroyHash
+hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptImportKey
+hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptSetKeyParam
+hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptEncrypt
+hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptDecrypt
 echo.
 
 pause

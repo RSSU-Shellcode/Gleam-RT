@@ -46,6 +46,8 @@ typedef struct {
 // methods for user
 errno WC_RandBuffer(byte* data, uint len);
 errno WC_SHA1(byte* data, uint len, byte* hash);
+errno WC_AESEncrypt(byte* data, uint len, byte* key, byte** output);
+errno WC_AESDecrypt(byte* data, uint len, byte* key, byte** output);
 
 // methods for runtime
 errno WC_Uninstall();
@@ -111,6 +113,8 @@ WinCrypto_M* InitWinCrypto(Context* context)
     WinCrypto_M* method = (WinCrypto_M*)methodAddr;
     method->RandBuffer = GetFuncAddr(&WC_RandBuffer);
     method->SHA1       = GetFuncAddr(&WC_SHA1);
+    method->AESEncrypt = GetFuncAddr(&WC_AESEncrypt);
+    method->AESDecrypt = GetFuncAddr(&WC_AESDecrypt);
     // methods for runtime
     method->Uninstall = GetFuncAddr(&WC_Uninstall);
     return method;
@@ -243,7 +247,7 @@ static bool initWinCryptoEnv()
             success = true;
             break;
         }
-        // decrypt to "advapi32.dll"
+        // decrypt to "advapi32.dll\0"
         byte dllName[] = {
             'a'^0xC4, 'd'^0x79, 'v'^0xF2, 'a'^0x2A, 
             'p'^0xC4, 'i'^0x79, '3'^0xF2, '2'^0x2A, 
@@ -417,6 +421,94 @@ errno WC_SHA1(byte* data, uint len, byte* hash)
     {
         module->CryptDestroyHash(hHash);
     }
+    if (hProv != NULL)
+    {
+        module->CryptReleaseContext(hProv, 0);
+    }
+
+    if (!success)
+    {
+        return lastErr;
+    }
+    return NO_ERROR;
+}
+
+__declspec(noinline)
+errno WC_AESEncrypt(byte* data, uint len, byte* key, byte** output)
+{
+    WinCrypto* module = getModulePointer();
+
+    dbg_log("[WinCrypto]", "AESEncrypt: 0x%zX, %zu, 0x%zX", data, len, key);
+
+    if (!initWinCryptoEnv())
+    {
+        return GetLastErrno();
+    }
+
+    HCRYPTPROV hProv = NULL;
+
+    bool success = false;
+    for (;;)
+    {
+        bool ok = module->CryptAcquireContextA(
+            &hProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT
+        );
+        if (!ok)
+        {
+            break;
+        }
+
+
+
+        success = true;
+        break;
+    }
+    errno lastErr = GetLastErrno();
+
+    if (hProv != NULL)
+    {
+        module->CryptReleaseContext(hProv, 0);
+    }
+
+    if (!success)
+    {
+        return lastErr;
+    }
+    return NO_ERROR;
+}
+
+__declspec(noinline)
+errno WC_AESDecrypt(byte* data, uint len, byte* key, byte** output)
+{
+    WinCrypto* module = getModulePointer();
+
+    dbg_log("[WinCrypto]", "AESDecrypt: 0x%zX, %zu, 0x%zX", data, len, key);
+
+    if (!initWinCryptoEnv())
+    {
+        return GetLastErrno();
+    }
+
+    HCRYPTPROV hProv = NULL;
+
+    bool success = false;
+    for (;;)
+    {
+        bool ok = module->CryptAcquireContextA(
+            &hProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT
+        );
+        if (!ok)
+        {
+            break;
+        }
+
+
+
+        success = true;
+        break;
+    }
+    errno lastErr = GetLastErrno();
+
     if (hProv != NULL)
     {
         module->CryptReleaseContext(hProv, 0);

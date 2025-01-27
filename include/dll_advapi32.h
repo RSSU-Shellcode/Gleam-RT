@@ -35,6 +35,15 @@ typedef uint ALG_ID;
 #define CRYPT_MACHINE_KEYSET 0x00000020
 #define CRYPT_SILENT         0x00000040
 
+#define CRYPT_EXPORTABLE     0x00000001
+#define CRYPT_USER_PROTECTED 0x00000002
+#define CRYPT_CREATE_SALT    0x00000004
+#define CRYPT_UPDATE_KEY     0x00000008
+#define CRYPT_NO_SALT        0x00000010
+#define CRYPT_PREGEN         0x00000040
+#define CRYPT_SERVER         0x00000400
+#define CRYPT_ARCHIVABLE     0x00004000
+
 // CALG_SHA_256 is not supported until Windows XP SP3
 #define CALG_SHA1     0x00008004
 #define CALG_AES_256  0x00006610
@@ -44,6 +53,23 @@ typedef uint ALG_ID;
 #define HP_ALGID    0x0001
 #define HP_HASHVAL  0x0002
 #define HP_HASHSIZE 0x0004
+
+#define SIMPLEBLOB           0x1
+#define PUBLICKEYBLOB        0x6
+#define PRIVATEKEYBLOB       0x7
+#define PLAINTEXTKEYBLOB     0x8
+#define OPAQUEKEYBLOB        0x9
+#define PUBLICKEYBLOBEX      0xA
+#define SYMMETRICWRAPKEYBLOB 0xB
+
+#define CUR_BLOB_VERSION 2
+
+typedef struct {
+    BYTE   bType;
+    BYTE   bVersion;
+    WORD   reserved;
+    ALG_ID aiKeyAlg;
+} BLOBHEADER, PUBLICKEYSTRUC;
 
 typedef BOOL (*CryptAcquireContextA_t)
 (
@@ -92,19 +118,24 @@ typedef BOOL (*CryptImportKey_t)
 
 typedef BOOL (*CryptSetKeyParam_t)
 (
-    HCRYPTKEY hKey, DWORD dwParam, BYTE *pbData, DWORD dwFlags
+    HCRYPTKEY hKey, DWORD dwParam, BYTE* pbData, DWORD dwFlags
 );
 
 typedef BOOL (*CryptEncrypt_t)
 (
     HCRYPTKEY hKey, HCRYPTHASH hHash, BOOL Final, DWORD dwFlags,
-    BYTE *pbData, DWORD *pdwDataLen, DWORD dwBufLen
+    BYTE* pbData, DWORD* pdwDataLen, DWORD dwBufLen
 );
 
 typedef BOOL (*CryptDecrypt_t)
 (
     HCRYPTKEY hKey, HCRYPTHASH hHash, BOOL Final, DWORD dwFlags,
-    BYTE *pbData, DWORD *pdwDataLen
+    BYTE* pbData, DWORD* pdwDataLen
+);
+
+typedef BOOL (*CryptDestroyKey_t)
+(
+    HCRYPTKEY hKey
 );
 
 #endif // DLL_ADVAPI32_H

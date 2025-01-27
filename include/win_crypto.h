@@ -8,10 +8,12 @@
 // The allocated buffer must call Runtime_M.Memory.Free().
 // The AES is use GCM mode with 256 bit key.
 
+#define WC_AES_KEY_SIZE 32
+
 typedef errno (*WCRandBuffer_t)(byte* data, uint len);
 typedef errno (*WCSHA1_t)(byte* data, uint len, byte* hash);
-typedef errno (*WCAESEncrypt_t)(byte* data, uint len, byte* key);
-typedef errno (*WCAESDecrypt_t)(byte* data, uint len, byte* key);
+typedef errno (*WCAESEncrypt_t)(byte* data, uint len, byte* key, byte** out, uint* outLen);
+typedef errno (*WCAESDecrypt_t)(byte* data, uint len, byte* key, byte** out, uint* outLen);
 
 typedef errno (*WCUninstall_t)();
 

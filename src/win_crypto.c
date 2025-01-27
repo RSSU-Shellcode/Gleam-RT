@@ -24,6 +24,11 @@ typedef struct {
     CryptHashData_t        CryptHashData;
     CryptGetHashParam_t    CryptGetHashParam;
     CryptDestroyHash_t     CryptDestroyHash;
+    CryptImportKey_t       CryptImportKey;
+    CryptSetKeyParam_t     CryptSetKeyParam;
+    CryptEncrypt_t         CryptEncrypt;
+    CryptDecrypt_t         CryptDecrypt;
+    CryptDestroyKey_t      CryptDestroyKey;
 
     LoadLibraryA_t        LoadLibraryA;
     FreeLibrary_t         FreeLibrary;
@@ -46,8 +51,8 @@ typedef struct {
 // methods for user
 errno WC_RandBuffer(byte* data, uint len);
 errno WC_SHA1(byte* data, uint len, byte* hash);
-errno WC_AESEncrypt(byte* data, uint len, byte* key, byte** output);
-errno WC_AESDecrypt(byte* data, uint len, byte* key, byte** output);
+errno WC_AESEncrypt(byte* data, uint len, byte* key, byte** out, uint* outLen);
+errno WC_AESDecrypt(byte* data, uint len, byte* key, byte** out, uint* outLen);
 
 // methods for runtime
 errno WC_Uninstall();
@@ -298,6 +303,11 @@ static bool findWinCryptoAPI()
         { 0x08F3ADAD64028885, 0xFF7C7DF5E4A9283F }, // CryptHashData
         { 0x76F8459880F8ACF9, 0x252C1D935020E9D4 }, // CryptGetHashParam
         { 0x2003C9A7DB794999, 0x0E51E1688FD1869E }, // CryptDestroyHash
+        { 0x8D1E49656BB1E55E, 0x7EF987CE7272029B }, // CryptImportKey
+        { 0x3D31DE5787EA688F, 0xB851328C0A45FBD2 }, // CryptSetKeyParam
+        { 0x56C8B4615CEA5713, 0x3ACD65C055BEF2C6 }, // CryptEncrypt
+        { 0x9AEECF188C0A6B15, 0xEFCD0584199F194B }, // CryptDecrypt
+        { 0x5C0D6B76D2524A1F, 0x6B665445585C1AB4 }, // CryptDestroyKey
     };
 #elif _WIN32
     {
@@ -308,6 +318,11 @@ static bool findWinCryptoAPI()
         { 0x34BF08ED, 0x2C655EC2 }, // CryptHashData
         { 0x5D3903BA, 0x461539AA }, // CryptGetHashParam
         { 0x599DEAEE, 0xB4B75228 }, // CryptDestroyHash
+        { 0xF6111932, 0x31A2ABE4 }, // CryptImportKey
+        { 0x847508E7, 0xBAA59832 }, // CryptSetKeyParam
+        { 0x8D308D6A, 0x5F981D82 }, // CryptEncrypt
+        { 0xC3B016FD, 0x2645198B }, // CryptDecrypt
+        { 0x140AED46, 0xD877FFE7 }, // CryptDestroyKey
     };
 #endif
     for (int i = 0; i < arrlen(list); i++)
@@ -325,7 +340,12 @@ static bool findWinCryptoAPI()
     module->CryptCreateHash      = list[0x03].proc;
     module->CryptHashData        = list[0x04].proc;
     module->CryptGetHashParam    = list[0x05].proc;
-    module->CryptDestroyHash     = list[0x06].proc; 
+    module->CryptDestroyHash     = list[0x06].proc;
+    module->CryptImportKey       = list[0x07].proc;
+    module->CryptSetKeyParam     = list[0x08].proc;
+    module->CryptEncrypt         = list[0x09].proc;
+    module->CryptDecrypt         = list[0x0A].proc;
+    module->CryptDestroyKey      = list[0x0B].proc;
     return true;
 }
 
@@ -434,7 +454,7 @@ errno WC_SHA1(byte* data, uint len, byte* hash)
 }
 
 __declspec(noinline)
-errno WC_AESEncrypt(byte* data, uint len, byte* key, byte** output)
+errno WC_AESEncrypt(byte* data, uint len, byte* key, byte** out, uint* outLen)
 {
     WinCrypto* module = getModulePointer();
 
@@ -446,6 +466,7 @@ errno WC_AESEncrypt(byte* data, uint len, byte* key, byte** output)
     }
 
     HCRYPTPROV hProv = NULL;
+    HCRYPTKEY  hKey  = NULL;
 
     bool success = false;
     for (;;)
@@ -457,14 +478,29 @@ errno WC_AESEncrypt(byte* data, uint len, byte* key, byte** output)
         {
             break;
         }
-
-
+        // build exported public key struct
+        byte buf[sizeof(BLOBHEADER) + WC_AES_KEY_SIZE];
+        mem_init(buf, sizeof(buf));
+        BLOBHEADER* header = buf;
+        header->bType    = SYMMETRICWRAPKEYBLOB;
+        header->bVersion = CUR_BLOB_VERSION;
+        header->reserved = 0;
+        header->aiKeyAlg = CALG_AES_256;
+        mem_copy(buf + sizeof(BLOBHEADER), key, WC_AES_KEY_SIZE);
+        if (!module->CryptImportKey(hProv, buf, sizeof(buf), NULL, CRYPT_EXPORTABLE, &hKey))
+        {
+            break;
+        }
 
         success = true;
         break;
     }
     errno lastErr = GetLastErrno();
 
+    if (hKey != NULL)
+    {
+        module->CryptDestroyKey(hKey);
+    }
     if (hProv != NULL)
     {
         module->CryptReleaseContext(hProv, 0);
@@ -478,7 +514,7 @@ errno WC_AESEncrypt(byte* data, uint len, byte* key, byte** output)
 }
 
 __declspec(noinline)
-errno WC_AESDecrypt(byte* data, uint len, byte* key, byte** output)
+errno WC_AESDecrypt(byte* data, uint len, byte* key, byte** out, uint* outLen)
 {
     WinCrypto* module = getModulePointer();
 

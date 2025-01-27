@@ -479,14 +479,15 @@ errno WC_AESEncrypt(byte* data, uint len, byte* key, byte** out, uint* outLen)
             break;
         }
         // build exported public key struct
-        byte buf[sizeof(BLOBHEADER) + WC_AES_KEY_SIZE];
+        byte buf[sizeof(PLAINTEXTKEYHEADER) + WC_AES_KEY_SIZE];
         mem_init(buf, sizeof(buf));
-        BLOBHEADER* header = buf;
-        header->bType    = SYMMETRICWRAPKEYBLOB;
-        header->bVersion = CUR_BLOB_VERSION;
-        header->reserved = 0;
-        header->aiKeyAlg = CALG_AES_256;
-        mem_copy(buf + sizeof(BLOBHEADER), key, WC_AES_KEY_SIZE);
+        PLAINTEXTKEYHEADER* header = (PLAINTEXTKEYHEADER*)buf;
+        header->hdr.bType    = PLAINTEXTKEYBLOB;
+        header->hdr.bVersion = CUR_BLOB_VERSION;
+        header->hdr.reserved = 0;
+        header->hdr.aiKeyAlg = CALG_AES_256;
+        header->dwKeySize    = WC_AES_KEY_SIZE;
+        mem_copy(buf + sizeof(PLAINTEXTKEYHEADER), key, WC_AES_KEY_SIZE);
         if (!module->CryptImportKey(hProv, buf, sizeof(buf), NULL, CRYPT_EXPORTABLE, &hKey))
         {
             break;

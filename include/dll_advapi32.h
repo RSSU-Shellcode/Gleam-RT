@@ -8,7 +8,7 @@ typedef HANDLE HCRYPTPROV;
 typedef HANDLE HCRYPTKEY;
 typedef HANDLE HCRYPTHASH;
 
-typedef uint ALG_ID;
+typedef DWORD ALG_ID;
 
 #define PROV_RSA_FULL      1
 #define PROV_RSA_SIG       2
@@ -70,6 +70,11 @@ typedef struct {
     WORD   reserved;
     ALG_ID aiKeyAlg;
 } BLOBHEADER, PUBLICKEYSTRUC;
+
+typedef struct {
+    BLOBHEADER header;
+    DWORD      dwKeySize;
+} PLAINTEXTKEYHEADER;
 
 typedef BOOL (*CryptAcquireContextA_t)
 (

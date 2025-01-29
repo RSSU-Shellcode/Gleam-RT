@@ -64,6 +64,25 @@ typedef DWORD ALG_ID;
 
 #define CUR_BLOB_VERSION 2
 
+#define KP_IV          1
+#define KP_SALT        2
+#define KP_PADDING     3
+#define KP_MODE        4
+#define KP_MODE_BITS   5
+#define KP_PERMISSIONS 6
+#define KP_ALGID       7
+#define KP_BLOCKLEN    8
+#define KP_KEYLEN      9
+
+#define CRYPT_MODE_CBC 1
+#define CRYPT_MODE_ECB 2
+#define CRYPT_MODE_OFB 3
+#define CRYPT_MODE_CFB 4
+
+#define PKCS5_PADDING  1
+#define RANDOM_PADDING 2
+#define ZERO_PADDING   3
+
 typedef struct {
     BYTE   bType;
     BYTE   bVersion;

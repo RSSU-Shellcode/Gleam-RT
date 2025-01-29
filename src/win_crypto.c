@@ -465,8 +465,8 @@ errno WC_AESEncrypt(byte* data, uint len, byte* key, byte** out, uint* outLen)
         return GetLastErrno();
     }
 
-    HCRYPTPROV hProv  = NULL;
-    HCRYPTKEY  hKey   = NULL;
+    HCRYPTPROV hProv = NULL;
+    HCRYPTKEY  hKey  = NULL;
     byte* output = NULL;
     uint  length = 0;
 
@@ -518,6 +518,7 @@ errno WC_AESEncrypt(byte* data, uint len, byte* key, byte** out, uint* outLen)
         {
             break;
         }
+        // encrypt data
         DWORD inputLen = (DWORD)len;
         DWORD dataLen  = (DWORD)length - 16;
         if (!module->CryptEncrypt(hKey, NULL, true, 0, output + 16, &inputLen, dataLen))
@@ -540,10 +541,7 @@ errno WC_AESEncrypt(byte* data, uint len, byte* key, byte** out, uint* outLen)
 
     if (!success)
     {
-        if (output != NULL)
-        {
-            module->free(output);
-        }
+        module->free(output);
         return lastErr;
     }
     *out    = output;
@@ -564,6 +562,9 @@ errno WC_AESDecrypt(byte* data, uint len, byte* key, byte** out, uint* outLen)
     }
 
     HCRYPTPROV hProv = NULL;
+    HCRYPTKEY  hKey  = NULL;
+    byte* output = NULL;
+    uint  length = 0;
 
     bool success = false;
     for (;;)
@@ -575,14 +576,54 @@ errno WC_AESDecrypt(byte* data, uint len, byte* key, byte** out, uint* outLen)
         {
             break;
         }
-
-
-
+        // build exportable AES key with PLAINTEXTKEY
+        byte buf[sizeof(PLAINTEXTKEYHEADER) + WC_AES_KEY_SIZE];
+        mem_init(buf, sizeof(buf));
+        PLAINTEXTKEYHEADER* header = (PLAINTEXTKEYHEADER*)buf;
+        header->header.bType    = PLAINTEXTKEYBLOB;
+        header->header.bVersion = CUR_BLOB_VERSION;
+        header->header.reserved = 0;
+        header->header.aiKeyAlg = CALG_AES_256;
+        header->dwKeySize = WC_AES_KEY_SIZE;
+        mem_copy(buf + sizeof(PLAINTEXTKEYHEADER), key, WC_AES_KEY_SIZE);
+        if (!module->CryptImportKey(hProv, buf, sizeof(buf), NULL, CRYPT_EXPORTABLE, &hKey))
+        {
+            break;
+        }
+        // set mode and padding method
+        DWORD dwParam = CRYPT_MODE_CBC;
+        if (!module->CryptSetKeyParam(hKey, KP_MODE, (BYTE*)(&dwParam), 0))
+        {
+            break;
+        }
+        dwParam = PKCS5_PADDING;
+        if (!module->CryptSetKeyParam(hKey, KP_PADDING, (BYTE*)(&dwParam), 0))
+        {
+            break;
+        }
+        // set IV from the prefix of data
+        if (!module->CryptSetKeyParam(hKey, KP_IV, data, 0))
+        {
+            break;
+        }
+        // copy cipher data and decrypt it
+        output = module->malloc(len - 16);
+        mem_copy(output, data + 16, len - 16);
+        DWORD plainLen;
+        if (!module->CryptDecrypt(hKey, NULL, true, 0, output, &plainLen))
+        {
+            break;
+        }
+        length = plainLen;
         success = true;
         break;
     }
     errno lastErr = GetLastErrno();
 
+    if (hKey != NULL)
+    {
+        module->CryptDestroyKey(hKey);
+    }
     if (hProv != NULL)
     {
         module->CryptReleaseContext(hProv, 0);
@@ -590,8 +631,11 @@ errno WC_AESDecrypt(byte* data, uint len, byte* key, byte** out, uint* outLen)
 
     if (!success)
     {
+        module->free(output);
         return lastErr;
     }
+    *out    = output;
+    *outLen = length;
     return NO_ERROR;
 }
 

@@ -6,9 +6,16 @@
 #include "context.h"
 
 // The allocated buffer must call Runtime_M.Memory.Free().
-// The AES is use GCM mode with 256 bit key.
+// The AES is use CBC mode with 256 bit key and PKCS5.
+// 
+// +---------+-------------+
+// |   IV    | cipher data |
+// +---------+-------------+
+// | 16 byte |     var     |
+// +---------+-------------+
 
 #define WC_AES_KEY_SIZE 32
+#define WC_AES_IV_SIZE  16
 
 typedef errno (*WCRandBuffer_t)(byte* data, uint len);
 typedef errno (*WCSHA1_t)(byte* data, uint len, byte* hash);

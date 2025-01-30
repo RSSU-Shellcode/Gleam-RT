@@ -275,7 +275,7 @@ static bool initWinHTTPEnv()
             success = true;
             break;
         }
-        // decrypt to "winhttp.dll"
+        // decrypt to "winhttp.dll\0"
         byte dllName[] = {
             'w'^0xAC, 'i'^0x1F, 'n'^0x49, 'h'^0xC6, 
             't'^0xAC, 't'^0x1F, 'p'^0x49, '.'^0xC6, 

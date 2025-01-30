@@ -111,7 +111,7 @@ typedef errno (*ReadFileW_t)(LPWSTR path, byte** buf, uint* size);
 typedef errno (*WriteFileA_t)(LPSTR path, byte* buf, uint size);
 typedef errno (*WriteFileW_t)(LPWSTR path, byte* buf, uint size);
 
-// about WinHTTP
+// =================================WinHTTP=================================
 #ifndef WIN_HTTP_H
 // The HTTP_Body.Buf allocated from WinHTTP must call Runtime_M.Memory.Free().
 typedef struct {
@@ -144,10 +144,23 @@ typedef errno (*HTTPPost_t)(UTF16 url, HTTP_Body* body, HTTP_Opts* opts, HTTP_Re
 typedef errno (*HTTPDo_t)(UTF16 url, UTF16 method, HTTP_Opts* opts, HTTP_Resp* resp);
 typedef errno (*HTTPFree_t)();
 
-// about WinCrypto
-// The buffer allocated from methods must call Runtime_M.Memory.Free().
+// ================================WinCrypto================================
+// 
+// The allocated buffer must call Runtime_M.Memory.Free().
+// The AES is use CBC mode with 256 bit key and PKCS5.
+//
+// +---------+-------------+
+// |   IV    | cipher data |
+// +---------+-------------+
+// | 16 byte |     var     |
+// +---------+-------------+
+
 typedef errno (*CryptoRandBuffer_t)(byte* data, uint len);
 typedef errno (*CryptoSHA1_t)(byte* data, uint len, byte* hash);
+typedef errno (*CryptoAESEncrypt_t)(byte* data, uint len, byte* key, byte** out, uint* outLen);
+typedef errno (*CryptoAESDecrypt_t)(byte* data, uint len, byte* key, byte** out, uint* outLen);
+
+// =================================Runtime=================================
 
 // about random module
 typedef void   (*RandBuffer_t)(byte* buf, int64 size);
@@ -300,6 +313,8 @@ typedef struct {
     struct {
         CryptoRandBuffer_t RandBuffer;
         CryptoSHA1_t       SHA1;
+        CryptoAESEncrypt_t AESEncrypt;
+        CryptoAESDecrypt_t AESDecrypt;
     } WinCrypto;
 
     struct {

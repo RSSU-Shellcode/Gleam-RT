@@ -7,6 +7,8 @@
 
 static bool TestWinCrypto_RandBuffer();
 static bool TestWinCrypto_SHA1();
+static bool TestWinCrypto_AESEncrypt();
+static bool TestWinCrypto_AESDecrypt();
 
 static void printHexBytes(byte* buf, uint size);
 
@@ -15,6 +17,8 @@ bool TestRuntime_WinCrypto()
     test_t tests[] = {
         { TestWinCrypto_RandBuffer },
         { TestWinCrypto_SHA1       },
+        { TestWinCrypto_AESEncrypt },
+        { TestWinCrypto_AESDecrypt },
     };
     for (int i = 0; i < arrlen(tests); i++)
     {
@@ -38,7 +42,7 @@ static bool TestWinCrypto_RandBuffer()
     errno err = runtime->WinCrypto.RandBuffer(buf, sizeof(buf));
     if (err != NO_ERROR)
     {
-        printf_s("failed to test RandBuffer: %X\n", err);
+        printf_s("failed to test RandBuffer: 0x%X\n", err);
         return false;
     }
 
@@ -61,7 +65,7 @@ static bool TestWinCrypto_SHA1()
     errno err = runtime->WinCrypto.SHA1(buf, sizeof(buf), hash);
     if (err != NO_ERROR)
     {
-        printf_s("failed to test SHA1: %X\n", err);
+        printf_s("failed to test SHA1: 0x%X\n", err);
         return false;
     }
 
@@ -80,6 +84,83 @@ static bool TestWinCrypto_SHA1()
     printf_s("test SHA1 passed\n");
     return true;
 }
+
+static bool TestWinCrypto_AESEncrypt()
+{
+    byte data[4] = { 1, 2, 3, 4 };
+    byte key[32] = {
+        0x00, 0x01, 0x02, 0x03, 0x00, 0x01, 0x02, 0x03, 
+        0x00, 0x01, 0x02, 0x03, 0x00, 0x01, 0x02, 0x03, 
+        0x00, 0x01, 0x02, 0x03, 0x00, 0x01, 0x02, 0x03, 
+        0x00, 0x01, 0x02, 0x03, 0x00, 0x01, 0x02, 0x03, 
+    };
+
+    byte* out; uint outLen;
+    errno err = runtime->WinCrypto.AESEncrypt(data, sizeof(data), key, &out, &outLen);
+    if (err != NO_ERROR)
+    {
+        printf_s("failed to encrypt data: 0x%X\n", err);
+        return false;
+    }
+
+    printHexBytes(out, outLen);
+    if (outLen != 32)
+    {
+        printf_s("invalid cipher data length\n");
+        return false;
+    }
+
+    runtime->Memory.Free(out);
+
+    printf_s("test AESEncrypt passed\n");
+    return true;
+};
+
+static bool TestWinCrypto_AESDecrypt()
+{
+    byte data[4] = { 1, 2, 3, 4 };
+    byte key[32] = {
+        0x00, 0x01, 0x02, 0x03, 0x00, 0x01, 0x02, 0x03, 
+        0x00, 0x01, 0x02, 0x03, 0x00, 0x01, 0x02, 0x03, 
+        0x00, 0x01, 0x02, 0x03, 0x00, 0x01, 0x02, 0x03, 
+        0x00, 0x01, 0x02, 0x03, 0x00, 0x01, 0x02, 0x03, 
+    };
+
+    byte* cipher; uint cipherLen;
+    errno err = runtime->WinCrypto.AESEncrypt(data, sizeof(data), key, &cipher, &cipherLen);
+    if (err != NO_ERROR)
+    {
+        printf_s("failed to encrypt data: 0x%X\n", err);
+        return false;
+    }
+
+    byte* plain; uint plainLen;
+    err = runtime->WinCrypto.AESDecrypt(cipher, cipherLen, key, &plain, &plainLen);
+    if (err != NO_ERROR)
+    {
+        printf_s("failed to decrypt data: 0x%X\n", err);
+        return false;
+    }
+
+    printHexBytes(plain, plainLen);
+    if (plainLen != 4)
+    {
+        printf_s("invalid plain data length\n");
+        return false;
+    }
+    byte expected[4] = { 0x01, 0x02, 0x03, 0x04 };
+    if (!mem_equal(plain, expected, 4))
+    {
+        printf_s("get incorrect SHA1 hash\n");
+        return false;
+    }
+
+    runtime->Memory.Free(cipher);
+    runtime->Memory.Free(plain);
+
+    printf_s("test AESDecrypt passed\n");
+    return true;
+};
 
 static void printHexBytes(byte* buf, uint size)
 {

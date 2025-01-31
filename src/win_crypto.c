@@ -17,18 +17,20 @@ typedef struct {
     bool NotEraseInstruction;
 
     // API addresses
-    CryptAcquireContextA_t CryptAcquireContextA;
-    CryptReleaseContext_t  CryptReleaseContext;
-    CryptGenRandom_t       CryptGenRandom;
-    CryptCreateHash_t      CryptCreateHash;
-    CryptHashData_t        CryptHashData;
-    CryptGetHashParam_t    CryptGetHashParam;
-    CryptDestroyHash_t     CryptDestroyHash;
-    CryptImportKey_t       CryptImportKey;
-    CryptSetKeyParam_t     CryptSetKeyParam;
-    CryptEncrypt_t         CryptEncrypt;
-    CryptDecrypt_t         CryptDecrypt;
-    CryptDestroyKey_t      CryptDestroyKey;
+    CryptAcquireContextA_t  CryptAcquireContextA;
+    CryptReleaseContext_t   CryptReleaseContext;
+    CryptGenRandom_t        CryptGenRandom;
+    CryptCreateHash_t       CryptCreateHash;
+    CryptHashData_t         CryptHashData;
+    CryptGetHashParam_t     CryptGetHashParam;
+    CryptDestroyHash_t      CryptDestroyHash;
+    CryptImportKey_t        CryptImportKey;
+    CryptSetKeyParam_t      CryptSetKeyParam;
+    CryptEncrypt_t          CryptEncrypt;
+    CryptDecrypt_t          CryptDecrypt;
+    CryptDestroyKey_t       CryptDestroyKey;
+    CryptSignHashA_t        CryptSignHashA;
+    CryptVerifySignatureA_t CryptVerifySignatureA;
 
     LoadLibraryA_t        LoadLibraryA;
     FreeLibrary_t         FreeLibrary;
@@ -53,6 +55,8 @@ errno WC_RandBuffer(byte* data, uint len);
 errno WC_SHA1(byte* data, uint len, byte* hash);
 errno WC_AESEncrypt(byte* data, uint len, byte* key, byte** out, uint* outLen);
 errno WC_AESDecrypt(byte* data, uint len, byte* key, byte** out, uint* outLen);
+errno WC_RSASign(byte* data, uint len, byte* key, byte** sign, uint* signLen);
+errno WC_RSAVerify(byte* data, uint len, byte* sign, uint signLen, byte* key);
 
 // methods for runtime
 errno WC_Uninstall();
@@ -120,6 +124,8 @@ WinCrypto_M* InitWinCrypto(Context* context)
     method->SHA1       = GetFuncAddr(&WC_SHA1);
     method->AESEncrypt = GetFuncAddr(&WC_AESEncrypt);
     method->AESDecrypt = GetFuncAddr(&WC_AESDecrypt);
+    method->RSASign    = GetFuncAddr(&WC_RSASign);
+    method->RSAVerify  = GetFuncAddr(&WC_RSAVerify);
     // methods for runtime
     method->Uninstall = GetFuncAddr(&WC_Uninstall);
     return method;
@@ -308,6 +314,8 @@ static bool findWinCryptoAPI()
         { 0x56C8B4615CEA5713, 0x3ACD65C055BEF2C6 }, // CryptEncrypt
         { 0x9AEECF188C0A6B15, 0xEFCD0584199F194B }, // CryptDecrypt
         { 0x5C0D6B76D2524A1F, 0x6B665445585C1AB4 }, // CryptDestroyKey
+        { 0xAFF4E2EFE83F7659, 0xD46F801C7B1A139A }, // CryptSignHashA
+        { 0xBCB00320DFAF3AD3, 0xEF345CBEAAB6E545 }, // CryptVerifySignatureA
     };
 #elif _WIN32
     {
@@ -323,6 +331,8 @@ static bool findWinCryptoAPI()
         { 0x8D308D6A, 0x5F981D82 }, // CryptEncrypt
         { 0xC3B016FD, 0x2645198B }, // CryptDecrypt
         { 0x140AED46, 0xD877FFE7 }, // CryptDestroyKey
+        { 0xBF957CE6, 0xD014705B }, // CryptSignHashA
+        { 0x03911C87, 0x1DEA20BD }, // CryptVerifySignatureA
     };
 #endif
     for (int i = 0; i < arrlen(list); i++)
@@ -334,18 +344,20 @@ static bool findWinCryptoAPI()
         }
         list[i].proc = proc;
     }
-    module->CryptAcquireContextA = list[0x00].proc;
-    module->CryptReleaseContext  = list[0x01].proc;
-    module->CryptGenRandom       = list[0x02].proc;
-    module->CryptCreateHash      = list[0x03].proc;
-    module->CryptHashData        = list[0x04].proc;
-    module->CryptGetHashParam    = list[0x05].proc;
-    module->CryptDestroyHash     = list[0x06].proc;
-    module->CryptImportKey       = list[0x07].proc;
-    module->CryptSetKeyParam     = list[0x08].proc;
-    module->CryptEncrypt         = list[0x09].proc;
-    module->CryptDecrypt         = list[0x0A].proc;
-    module->CryptDestroyKey      = list[0x0B].proc;
+    module->CryptAcquireContextA  = list[0x00].proc;
+    module->CryptReleaseContext   = list[0x01].proc;
+    module->CryptGenRandom        = list[0x02].proc;
+    module->CryptCreateHash       = list[0x03].proc;
+    module->CryptHashData         = list[0x04].proc;
+    module->CryptGetHashParam     = list[0x05].proc;
+    module->CryptDestroyHash      = list[0x06].proc;
+    module->CryptImportKey        = list[0x07].proc;
+    module->CryptSetKeyParam      = list[0x08].proc;
+    module->CryptEncrypt          = list[0x09].proc;
+    module->CryptDecrypt          = list[0x0A].proc;
+    module->CryptDestroyKey       = list[0x0B].proc;
+    module->CryptSignHashA        = list[0x0C].proc;
+    module->CryptVerifySignatureA = list[0x0D].proc;
     return true;
 }
 
@@ -413,7 +425,7 @@ errno WC_SHA1(byte* data, uint len, byte* hash)
     for (;;)
     {
         bool ok = module->CryptAcquireContextA(
-            &hProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT
+            &hProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT
         );
         if (!ok)
         {
@@ -481,15 +493,15 @@ errno WC_AESEncrypt(byte* data, uint len, byte* key, byte** out, uint* outLen)
             break;
         }
         // build exportable AES key with PLAINTEXTKEY
-        byte buf[sizeof(PLAINTEXTKEYHEADER) + WC_AES_KEY_SIZE];
+        byte buf[sizeof(AESKEYHEADER) + WC_AES_KEY_SIZE];
         mem_init(buf, sizeof(buf));
-        PLAINTEXTKEYHEADER* header = (PLAINTEXTKEYHEADER*)buf;
+        AESKEYHEADER* header = (AESKEYHEADER*)buf;
         header->header.bType    = PLAINTEXTKEYBLOB;
         header->header.bVersion = CUR_BLOB_VERSION;
         header->header.reserved = 0;
         header->header.aiKeyAlg = CALG_AES_256;
         header->dwKeySize = WC_AES_KEY_SIZE;
-        mem_copy(buf + sizeof(PLAINTEXTKEYHEADER), key, WC_AES_KEY_SIZE);
+        mem_copy(buf + sizeof(AESKEYHEADER), key, WC_AES_KEY_SIZE);
         if (!module->CryptImportKey(hProv, buf, sizeof(buf), NULL, CRYPT_EXPORTABLE, &hKey))
         {
             break;
@@ -577,15 +589,15 @@ errno WC_AESDecrypt(byte* data, uint len, byte* key, byte** out, uint* outLen)
             break;
         }
         // build exportable AES key with PLAINTEXTKEY
-        byte buf[sizeof(PLAINTEXTKEYHEADER) + WC_AES_KEY_SIZE];
+        byte buf[sizeof(AESKEYHEADER) + WC_AES_KEY_SIZE];
         mem_init(buf, sizeof(buf));
-        PLAINTEXTKEYHEADER* header = (PLAINTEXTKEYHEADER*)buf;
+        AESKEYHEADER* header = (AESKEYHEADER*)buf;
         header->header.bType    = PLAINTEXTKEYBLOB;
         header->header.bVersion = CUR_BLOB_VERSION;
         header->header.reserved = 0;
         header->header.aiKeyAlg = CALG_AES_256;
         header->dwKeySize = WC_AES_KEY_SIZE;
-        mem_copy(buf + sizeof(PLAINTEXTKEYHEADER), key, WC_AES_KEY_SIZE);
+        mem_copy(buf + sizeof(AESKEYHEADER), key, WC_AES_KEY_SIZE);
         if (!module->CryptImportKey(hProv, buf, sizeof(buf), NULL, CRYPT_EXPORTABLE, &hKey))
         {
             break;
@@ -636,6 +648,63 @@ errno WC_AESDecrypt(byte* data, uint len, byte* key, byte** out, uint* outLen)
     }
     *out    = output;
     *outLen = length;
+    return NO_ERROR;
+}
+
+__declspec(noinline)
+errno WC_RSASign(byte* data, uint len, byte* key, byte** sign, uint* signLen)
+{
+    WinCrypto* module = getModulePointer();
+
+    dbg_log("[WinCrypto]", "RSASign: 0x%zX, %zu, 0x%zX", data, len, key);
+
+    if (!initWinCryptoEnv())
+    {
+        return GetLastErrno();
+    }
+
+    HCRYPTPROV hProv = NULL;
+    HCRYPTKEY  hKey  = NULL;
+    byte* output = NULL;
+    uint  length = 0;
+
+    bool success = false;
+    for (;;)
+    {
+        bool ok = module->CryptAcquireContextA(
+            &hProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT
+        );
+        if (!ok)
+        {
+            break;
+        }
+        success = true;
+        break;
+    }
+    errno lastErr = GetLastErrno();
+
+    if (hKey != NULL)
+    {
+        module->CryptDestroyKey(hKey);
+    }
+    if (hProv != NULL)
+    {
+        module->CryptReleaseContext(hProv, 0);
+    }
+
+    if (!success)
+    {
+        module->free(output);
+        return lastErr;
+    }
+    *sign    = output;
+    *signLen = length;
+    return NO_ERROR;
+}
+
+__declspec(noinline)
+errno WC_RSAVerify(byte* data, uint len, byte* sign, uint signLen, byte* key)
+{
     return NO_ERROR;
 }
 

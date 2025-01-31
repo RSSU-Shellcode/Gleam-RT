@@ -178,6 +178,8 @@ hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptSetKeyParam
 hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptEncrypt
 hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptDecrypt
 hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptDestroyKey
+hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptSignHashA
+hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptVerifySignatureA
 echo.
 
 echo ------------------------x86------------------------
@@ -353,6 +355,8 @@ hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptSetKeyParam
 hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptEncrypt
 hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptDecrypt
 hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptDestroyKey
+hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptSignHashA
+hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptVerifySignatureA
 echo.
 
 pause

@@ -665,8 +665,80 @@ errno WC_RSASign(byte* data, uint len, byte* key, byte** sign, uint* signLen)
 
     HCRYPTPROV hProv = NULL;
     HCRYPTKEY  hKey  = NULL;
+    HCRYPTHASH hHash = NULL;
     byte* output = NULL;
     uint  length = 0;
+
+    bool success = false;
+    for (;;)
+    {
+        bool ok = module->CryptAcquireContextA(
+            &hProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT
+        );
+        if (!ok)
+        {
+            break;
+        }
+        // import private key
+
+        // calculate hash of data
+        if (!module->CryptCreateHash(hProv, CALG_SHA1, NULL, 0, &hHash))
+        {
+            break;
+        }
+        if (!module->CryptHashData(hHash, data, (DWORD)len, 0))
+        {
+            break;
+        }
+        byte  hash[WC_SHA1_SIZE];
+        DWORD hashLen;
+        if (!module->CryptGetHashParam(hHash, HP_HASHVAL, hash, &hashLen, 0))
+        {
+            break;
+        }
+        // module->CryptSignHashA(hHash, AT_SIGNATURE, NULL, 0, output, &length);
+        success = true;
+        break;
+    }
+    errno lastErr = GetLastErrno();
+
+    if (hHash != NULL)
+    {
+        module->CryptDestroyHash(hHash);
+    }
+    if (hKey != NULL)
+    {
+        module->CryptDestroyKey(hKey);
+    }
+    if (hProv != NULL)
+    {
+        module->CryptReleaseContext(hProv, 0);
+    }
+
+    if (!success)
+    {
+        module->free(output);
+        return lastErr;
+    }
+    *sign    = output;
+    *signLen = length;
+    return NO_ERROR;
+}
+
+__declspec(noinline)
+errno WC_RSAVerify(byte* data, uint len, byte* sign, uint signLen, byte* key)
+{
+    WinCrypto* module = getModulePointer();
+
+    dbg_log("[WinCrypto]", "RSAVerify: 0x%zX, %zu, 0x%zX", data, len, key);
+
+    if (!initWinCryptoEnv())
+    {
+        return GetLastErrno();
+    }
+
+    HCRYPTPROV hProv = NULL;
+    HCRYPTKEY  hKey  = NULL;
 
     bool success = false;
     for (;;)
@@ -694,17 +766,8 @@ errno WC_RSASign(byte* data, uint len, byte* key, byte** sign, uint* signLen)
 
     if (!success)
     {
-        module->free(output);
         return lastErr;
     }
-    *sign    = output;
-    *signLen = length;
-    return NO_ERROR;
-}
-
-__declspec(noinline)
-errno WC_RSAVerify(byte* data, uint len, byte* sign, uint signLen, byte* key)
-{
     return NO_ERROR;
 }
 

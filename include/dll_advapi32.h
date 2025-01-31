@@ -83,6 +83,9 @@ typedef DWORD ALG_ID;
 #define RANDOM_PADDING 2
 #define ZERO_PADDING   3
 
+#define MAGIC_RSA1 0x31415352
+#define MAGIC_RSA2 0x32415352
+
 typedef struct {
     BYTE   bType;
     BYTE   bVersion;
@@ -93,7 +96,18 @@ typedef struct {
 typedef struct {
     BLOBHEADER header;
     DWORD      dwKeySize;
-} PLAINTEXTKEYHEADER;
+} AESKEYHEADER;
+
+typedef struct {
+    DWORD magic;
+    DWORD bitlen;
+    DWORD pubexp;
+} RSAPUBKEY;
+
+typedef struct {
+    BLOBHEADER header;
+    RSAPUBKEY  rsaPubKey;
+} RSAPUBKEYHEADER;
 
 typedef BOOL (*CryptAcquireContextA_t)
 (
@@ -160,6 +174,18 @@ typedef BOOL (*CryptDecrypt_t)
 typedef BOOL (*CryptDestroyKey_t)
 (
     HCRYPTKEY hKey
+);
+
+typedef BOOL (*CryptSignHashA_t)
+(
+    HCRYPTHASH hHash, DWORD dwKeySpec, LPCSTR szDescription,
+    DWORD dwFlags, BYTE* pbSignature, DWORD* pdwSigLen
+);
+
+typedef BOOL (*CryptVerifySignatureA_t)
+(
+    HCRYPTHASH hHash, BYTE* pbSignature, DWORD dwSigLen,
+    HCRYPTKEY hPubKey, LPCSTR szDescription, DWORD dwFlags
 );
 
 #endif // DLL_ADVAPI32_H

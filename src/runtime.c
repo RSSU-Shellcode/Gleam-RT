@@ -369,9 +369,12 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->WinHTTP.Free = runtime->WinHTTP->Free;
     // WinCrypto
     module->WinCrypto.RandBuffer = runtime->WinCrypto->RandBuffer;
+    module->WinCrypto.GenRSAKey  = runtime->WinCrypto->GenRSAKey;
     module->WinCrypto.SHA1       = runtime->WinCrypto->SHA1;
     module->WinCrypto.AESEncrypt = runtime->WinCrypto->AESEncrypt;
     module->WinCrypto.AESDecrypt = runtime->WinCrypto->AESDecrypt;
+    module->WinCrypto.RSASign    = runtime->WinCrypto->RSASign;
+    module->WinCrypto.RSAVerify  = runtime->WinCrypto->RSAVerify;
     // random module
     module->Random.Buffer  = GetFuncAddr(&RandBuffer);
     module->Random.Bool    = GetFuncAddr(&RandBool);

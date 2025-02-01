@@ -3,12 +3,16 @@
 #include "lib_memory.h"
 #include "errno.h"
 #include "runtime.h"
+#include "win_crypto.h"
 #include "test.h"
 
 static bool TestWinCrypto_RandBuffer();
+static bool TestWinCrypto_GenRSAKey();
 static bool TestWinCrypto_SHA1();
 static bool TestWinCrypto_AESEncrypt();
 static bool TestWinCrypto_AESDecrypt();
+static bool TestWinCrypto_RSASign();
+static bool TestWinCrypto_RSAVerify();
 
 static void printHexBytes(byte* buf, uint size);
 
@@ -16,9 +20,12 @@ bool TestRuntime_WinCrypto()
 {
     test_t tests[] = {
         { TestWinCrypto_RandBuffer },
+        { TestWinCrypto_GenRSAKey  },
         { TestWinCrypto_SHA1       },
         { TestWinCrypto_AESEncrypt },
         { TestWinCrypto_AESDecrypt },
+        { TestWinCrypto_RSASign    },
+        { TestWinCrypto_RSAVerify  },
     };
     for (int i = 0; i < arrlen(tests); i++)
     {
@@ -54,6 +61,36 @@ static bool TestWinCrypto_RandBuffer()
     }
 
     printf_s("test RandBuffer passed\n");
+    return true;
+}
+
+static bool TestWinCrypto_GenRSAKey()
+{
+    byte* key; uint len;
+    errno err = runtime->WinCrypto.GenRSAKey(4096, &key, &len, WC_RSA_KEY_USAGE_SIGN);
+    if (err != NO_ERROR)
+    {
+        printf_s("failed to test GenRSAKey: 0x%X\n", err);
+        return false;
+    }
+
+    printHexBytes(key, len);
+    if (len != 2324)
+    {
+        printf_s("incorrect output data length: %zu\n", len);
+        return false;
+    }
+    byte header[16] = { 
+        0x07, 0x02, 0x00, 0x00, 0x00, 0x24, 0x00, 0x00,
+        0x52, 0x53, 0x41, 0x32, 0x00, 0x10, 0x00, 0x00, 
+    };
+    if (!mem_equal(header, key, sizeof(header)))
+    {
+        printf_s("invalid output data\n");
+        return false;
+    }
+
+    printf_s("test GenRSAKey passed\n");
     return true;
 }
 
@@ -216,6 +253,16 @@ static bool TestWinCrypto_AESDecrypt()
     printf_s("test AESDecrypt passed\n");
     return true;
 };
+
+static bool TestWinCrypto_RSASign()
+{
+    return true;
+}
+
+static bool TestWinCrypto_RSAVerify()
+{
+    return true;
+}
 
 static void printHexBytes(byte* buf, uint size)
 {

@@ -83,6 +83,9 @@ typedef DWORD ALG_ID;
 #define RANDOM_PADDING 2
 #define ZERO_PADDING   3
 
+#define AT_KEYEXCHANGE 1
+#define AT_SIGNATURE   2
+
 #define MAGIC_RSA1 0x31415352
 #define MAGIC_RSA2 0x32415352
 
@@ -123,6 +126,23 @@ typedef BOOL(*CryptReleaseContext_t)
 typedef BOOL (*CryptGenRandom_t)
 (
     HCRYPTPROV hProv, DWORD dwLen, BYTE* pbBuffer
+);
+
+typedef BOOL (*CryptGenKey_t)
+(
+    HCRYPTPROV hProv, ALG_ID Algid, DWORD dwFlags, HCRYPTKEY* phKey
+);
+
+typedef BOOL (*CryptDeriveKey_t)
+(
+    HCRYPTPROV hProv, ALG_ID Algid, HCRYPTHASH hBaseData,
+    DWORD dwFlags, HCRYPTKEY* phKey
+);
+
+typedef BOOL (*CryptExportKey_t)
+(
+    HCRYPTKEY hKey, HCRYPTKEY hExpKey, DWORD dwBlobType,
+    DWORD dwFlags, BYTE* pbData, DWORD* pdwDataLen
 );
 
 typedef BOOL (*CryptCreateHash_t)

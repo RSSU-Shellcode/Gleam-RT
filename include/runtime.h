@@ -147,7 +147,7 @@ typedef errno (*HTTPFree_t)();
 // ================================WinCrypto================================
 // 
 // The allocated buffer must call Runtime_M.Memory.Free().
-// The AES is use CBC mode with 256 bit key and PKCS5.
+// The AES is use CBC mode with 256 bit key and PKCS#5.
 //
 // +---------+-------------+
 // |   IV    | cipher data |
@@ -156,9 +156,12 @@ typedef errno (*HTTPFree_t)();
 // +---------+-------------+
 
 typedef errno (*CryptoRandBuffer_t)(byte* data, uint len);
+typedef errno (*CryptoGenRSAKey_t)(uint bits, byte** data, uint* len, uint usage);
 typedef errno (*CryptoSHA1_t)(byte* data, uint len, byte* hash);
 typedef errno (*CryptoAESEncrypt_t)(byte* data, uint len, byte* key, byte** out, uint* outLen);
 typedef errno (*CryptoAESDecrypt_t)(byte* data, uint len, byte* key, byte** out, uint* outLen);
+typedef errno (*CryptoRSASign_t)(byte* data, uint len, byte* key, byte** sign, uint* signLen);
+typedef errno (*CryptoRSAVerify_t)(byte* data, uint len, byte* sign, uint signLen, byte* key);
 
 // =================================Runtime=================================
 
@@ -312,9 +315,12 @@ typedef struct {
 
     struct {
         CryptoRandBuffer_t RandBuffer;
+        CryptoGenRSAKey_t  GenRSAKey;
         CryptoSHA1_t       SHA1;
         CryptoAESEncrypt_t AESEncrypt;
         CryptoAESDecrypt_t AESDecrypt;
+        CryptoRSASign_t    RSASign;
+        CryptoRSAVerify_t  RSAVerify;
     } WinCrypto;
 
     struct {

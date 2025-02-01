@@ -169,6 +169,9 @@ echo [WinCrypto Module]
 hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptAcquireContextA
 hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptReleaseContext
 hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptGenRandom
+hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptGenKey
+hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptDeriveKey
+hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptExportKey
 hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptCreateHash
 hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptHashData
 hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptGetHashParam
@@ -346,6 +349,9 @@ echo [WinCrypto Module]
 hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptAcquireContextA
 hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptReleaseContext
 hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptGenRandom
+hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptGenKey
+hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptDeriveKey
+hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptExportKey
 hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptCreateHash
 hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptHashData
 hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptGetHashParam

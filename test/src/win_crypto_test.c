@@ -73,22 +73,45 @@ static bool TestWinCrypto_GenRSAKey()
         printf_s("failed to test GenRSAKey: 0x%X\n", err);
         return false;
     }
-
     printHexBytes(key, len);
     if (len != 2324)
     {
         printf_s("incorrect output data length: %zu\n", len);
         return false;
     }
-    byte header[16] = { 
+    byte header1[16] = { 
         0x07, 0x02, 0x00, 0x00, 0x00, 0x24, 0x00, 0x00,
-        0x52, 0x53, 0x41, 0x32, 0x00, 0x10, 0x00, 0x00, 
+        0x52, 0x53, 0x41, 0x32, 0x00, 0x10, 0x00, 0x00,
     };
-    if (!mem_equal(header, key, sizeof(header)))
+    if (!mem_equal(header1, key, sizeof(header1)))
     {
         printf_s("invalid output data\n");
         return false;
     }
+    runtime->Memory.Free(key);
+
+    err = runtime->WinCrypto.GenRSAKey(2048, &key, &len, WC_RSA_KEY_USAGE_KEYX);
+    if (err != NO_ERROR)
+    {
+        printf_s("failed to test GenRSAKey: 0x%X\n", err);
+        return false;
+    }
+    printHexBytes(key, len);
+    if (len != 1172)
+    {
+        printf_s("incorrect output data length: %zu\n", len);
+        return false;
+    }
+    byte header2[16] = {
+        0x07, 0x02, 0x00, 0x00, 0x00, 0xA4, 0x00, 0x00,
+        0x52, 0x53, 0x41, 0x32, 0x00, 0x08, 0x00, 0x00,
+    };
+    if (!mem_equal(header2, key, sizeof(header2)))
+    {
+        printf_s("invalid output data\n");
+        return false;
+    }
+    runtime->Memory.Free(key);
 
     printf_s("test GenRSAKey passed\n");
     return true;

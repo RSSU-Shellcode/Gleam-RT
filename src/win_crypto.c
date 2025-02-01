@@ -20,6 +20,9 @@ typedef struct {
     CryptAcquireContextA_t  CryptAcquireContextA;
     CryptReleaseContext_t   CryptReleaseContext;
     CryptGenRandom_t        CryptGenRandom;
+    CryptGenKey_t           CryptGenKey;
+    CryptDeriveKey_t        CryptDeriveKey;
+    CryptExportKey_t        CryptExportKey;
     CryptCreateHash_t       CryptCreateHash;
     CryptHashData_t         CryptHashData;
     CryptGetHashParam_t     CryptGetHashParam;
@@ -52,6 +55,7 @@ typedef struct {
 
 // methods for user
 errno WC_RandBuffer(byte* data, uint len);
+errno WC_GenRSAKey(uint bits, byte** out, uint* len, uint usage);
 errno WC_SHA1(byte* data, uint len, byte* hash);
 errno WC_AESEncrypt(byte* data, uint len, byte* key, byte** out, uint* outLen);
 errno WC_AESDecrypt(byte* data, uint len, byte* key, byte** out, uint* outLen);
@@ -121,6 +125,7 @@ WinCrypto_M* InitWinCrypto(Context* context)
     // methods for user
     WinCrypto_M* method = (WinCrypto_M*)methodAddr;
     method->RandBuffer = GetFuncAddr(&WC_RandBuffer);
+    method->GenRSAKey  = GetFuncAddr(&WC_GenRSAKey);
     method->SHA1       = GetFuncAddr(&WC_SHA1);
     method->AESEncrypt = GetFuncAddr(&WC_AESEncrypt);
     method->AESDecrypt = GetFuncAddr(&WC_AESDecrypt);
@@ -305,6 +310,9 @@ static bool findWinCryptoAPI()
         { 0x229A36DB5A153884, 0x5C8D8943760A0AD5 }, // CryptAcquireContextA
         { 0xC8A4ABEFC4A15414, 0xDCD358FAAA9AD697 }, // CryptReleaseContext
         { 0x052D13759C233989, 0xD129B99F2DE11CE1 }, // CryptGenRandom
+        { 0x7139781045860379, 0xD9B823C41B31892D }, // CryptGenKey
+        { 0x75F125EA08848F34, 0x8F77BCC6829BD0A4 }, // CryptDeriveKey
+        { 0xFBD14E610ABC19B0, 0x427A278C5526F497 }, // CryptExportKey
         { 0xCA46DCB36C8EF17A, 0xEDEA67BFCC8F2970 }, // CryptCreateHash
         { 0x08F3ADAD64028885, 0xFF7C7DF5E4A9283F }, // CryptHashData
         { 0x76F8459880F8ACF9, 0x252C1D935020E9D4 }, // CryptGetHashParam
@@ -322,6 +330,9 @@ static bool findWinCryptoAPI()
         { 0x8999214A, 0x46521BDF }, // CryptAcquireContextA
         { 0x201C2004, 0x435A9F1B }, // CryptReleaseContext
         { 0x608C5DA1, 0xE9C08140 }, // CryptGenRandom
+        { 0x9EDA4CE2, 0x1D81FE5F }, // CryptGenKey
+        { 0x630E8D56, 0xAE61AFD0 }, // CryptDeriveKey
+        { 0x1F7F51F7, 0x38675FE9 }, // CryptExportKey
         { 0xAC10214C, 0x745E27FB }, // CryptCreateHash
         { 0x34BF08ED, 0x2C655EC2 }, // CryptHashData
         { 0x5D3903BA, 0x461539AA }, // CryptGetHashParam
@@ -347,17 +358,20 @@ static bool findWinCryptoAPI()
     module->CryptAcquireContextA  = list[0x00].proc;
     module->CryptReleaseContext   = list[0x01].proc;
     module->CryptGenRandom        = list[0x02].proc;
-    module->CryptCreateHash       = list[0x03].proc;
-    module->CryptHashData         = list[0x04].proc;
-    module->CryptGetHashParam     = list[0x05].proc;
-    module->CryptDestroyHash      = list[0x06].proc;
-    module->CryptImportKey        = list[0x07].proc;
-    module->CryptSetKeyParam      = list[0x08].proc;
-    module->CryptEncrypt          = list[0x09].proc;
-    module->CryptDecrypt          = list[0x0A].proc;
-    module->CryptDestroyKey       = list[0x0B].proc;
-    module->CryptSignHashA        = list[0x0C].proc;
-    module->CryptVerifySignatureA = list[0x0D].proc;
+    module->CryptGenKey           = list[0x03].proc;
+    module->CryptDeriveKey        = list[0x04].proc;
+    module->CryptExportKey        = list[0x05].proc;
+    module->CryptCreateHash       = list[0x06].proc;
+    module->CryptHashData         = list[0x07].proc;
+    module->CryptGetHashParam     = list[0x08].proc;
+    module->CryptDestroyHash      = list[0x09].proc;
+    module->CryptImportKey        = list[0x0A].proc;
+    module->CryptSetKeyParam      = list[0x0B].proc;
+    module->CryptEncrypt          = list[0x0C].proc;
+    module->CryptDecrypt          = list[0x0D].proc;
+    module->CryptDestroyKey       = list[0x0E].proc;
+    module->CryptSignHashA        = list[0x0F].proc;
+    module->CryptVerifySignatureA = list[0x10].proc;
     return true;
 }
 
@@ -403,6 +417,86 @@ errno WC_RandBuffer(byte* data, uint len)
     {
         return lastErr;
     }
+    return NO_ERROR;
+}
+
+__declspec(noinline)
+errno WC_GenRSAKey(uint bits, byte** out, uint* len, uint usage)
+{
+    WinCrypto* module = getModulePointer();
+
+    dbg_log("[WinCrypto]", "GenRSAKey: %zu", bits);
+
+    if (!initWinCryptoEnv())
+    {
+        return GetLastErrno();
+    }
+
+    HCRYPTPROV hProv = NULL;
+    HCRYPTKEY  hKey  = NULL;
+    byte* output = NULL;
+    uint  length = 0;
+
+    bool success = false;
+    for (;;)
+    {
+        bool ok = module->CryptAcquireContextA(
+            &hProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT
+        );
+        if (!ok)
+        {
+            break;
+        }
+        ALG_ID algID = 0;
+        switch (usage)
+        {
+        case WC_RSA_KEY_USAGE_SIGN:
+            algID = CALG_RSA_SIGN;
+            break;
+        case WC_RSA_KEY_USAGE_KEYX:
+            algID = CALG_RSA_KEYX;
+            break;
+        default:
+            SetLastErrno(ERR_WIN_CRYPTO_INVALID_KEY_USAGE);
+            break;
+        }
+        DWORD flags = (DWORD)bits << 16 | CRYPT_EXPORTABLE;
+        if (!module->CryptGenKey(hProv, algID, flags, &hKey))
+        {
+            break;
+        }
+        DWORD outLen;
+        if (!module->CryptExportKey(hKey, 0, PRIVATEKEYBLOB, 0, NULL, &outLen))
+        {
+            break;
+        }
+        output = module->malloc(outLen);
+        if (!module->CryptExportKey(hKey, 0, PRIVATEKEYBLOB, 0, output, &outLen))
+        {
+            break;
+        }
+        length = outLen;
+        success = true;
+        break;
+    }
+    errno lastErr = GetLastErrno();
+
+    if (hKey != NULL)
+    {
+        module->CryptDestroyKey(hKey);
+    }
+    if (hProv != NULL)
+    {
+        module->CryptReleaseContext(hProv, 0);
+    }
+
+    if (!success)
+    {
+        module->free(output);
+        return lastErr;
+    }
+    *out = output;
+    *len = length;
     return NO_ERROR;
 }
 

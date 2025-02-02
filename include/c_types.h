@@ -41,6 +41,12 @@ typedef uint8 byte;
 typedef int32 rune;
 
 typedef _Bool bool;
+
+typedef struct {
+    void* buf;
+    uint  len;
+} databuf;
+
 #define true  1
 #define false 0
 

@@ -15,7 +15,6 @@
 // | 16 byte |     var     |
 // +---------+-------------+
 //
-// The RSA private key length is 4096 bit.
 
 #define WC_SHA1_SIZE    20
 #define WC_AES_KEY_SIZE 32
@@ -29,8 +28,8 @@ typedef errno (*WCGenRSAKey_t)(uint bits, byte** data, uint* len, uint usage);
 typedef errno (*WCSHA1_t)(byte* data, uint len, byte* hash);
 typedef errno (*WCAESEncrypt_t)(byte* data, uint len, byte* key, byte** out, uint* outLen);
 typedef errno (*WCAESDecrypt_t)(byte* data, uint len, byte* key, byte** out, uint* outLen);
-typedef errno (*WCRSASign_t)(byte* data, uint len, byte* key, byte** sign, uint* signLen);
-typedef errno (*WCRSAVerify_t)(byte* data, uint len, byte* sign, uint signLen, byte* key);
+typedef errno (*WCRSASign_t)(databuf* data, databuf* key, databuf* sign);
+typedef errno (*WCRSAVerify_t)(databuf* data, databuf* key, databuf* sign);
 
 typedef errno (*WCUninstall_t)();
 

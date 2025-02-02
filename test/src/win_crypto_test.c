@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include "c_types.h"
+#include "win_types.h"
+#include "dll_advapi32.h"
 #include "lib_memory.h"
 #include "errno.h"
 #include "runtime.h"
@@ -313,6 +315,7 @@ static bool TestWinCrypto_RSASign()
         return false;
     }
 
+    runtime->Memory.Free(key.buf);
     runtime->Memory.Free(sign.buf);
 
     printf_s("test RSASign passed\n");
@@ -321,6 +324,66 @@ static bool TestWinCrypto_RSASign()
 
 static bool TestWinCrypto_RSAVerify()
 {
+    byte testdata[] = { 
+        1, 2, 3, 4, 5, 6, 7, 8, 
+        1, 2, 3, 4, 5, 6, 7, 8,
+    };
+    databuf data = {
+        .buf = &testdata[0],
+        .len = sizeof(testdata),
+    };
+    databuf priKey = {
+        .buf = NULL,
+        .len = 0,
+    };
+    errno err = runtime->WinCrypto.GenRSAKey(2048, &priKey.buf, &priKey.len, WC_RSA_KEY_USAGE_SIGN);
+    if (err != NO_ERROR)
+    {
+        printf_s("failed to GenRSAKey: 0x%X\n", err);
+        return false;
+    }
+    databuf sign;
+    err = runtime->WinCrypto.RSASign(&data, &priKey, &sign);
+    if (err != NO_ERROR)
+    {
+        printf_s("failed to RSASign: 0x%X\n", err);
+        return false;
+    }
+
+    // build public key from private key
+    RSAPUBKEYHEADER* pubBuf = (RSAPUBKEYHEADER*)(priKey.buf);
+    pubBuf->header.bType = PUBLICKEYBLOB;
+    pubBuf->rsaPubKey.magic = MAGIC_RSA1;
+    // erase other data about private key
+    byte* buf = priKey.buf;
+    buf += sizeof(RSAPUBKEYHEADER);
+    buf += 2048 / 8; // skip modulus
+    uint len = sizeof(RSAPUBKEYHEADER) + 2048 / 8;
+    mem_init(buf, priKey.len - len);
+    databuf pubKey = {
+        .buf = pubBuf,
+        .len = len,
+    };
+    err = runtime->WinCrypto.RSAVerify(&data, &pubKey, &sign);
+    if (err != NO_ERROR)
+    {
+        printf_s("failed to RSAVerify: 0x%X\n", err);
+        return false;
+    }
+
+    // destroy signature
+    *(byte*)(sign.buf) += 1;
+    err = runtime->WinCrypto.RSAVerify(&data, &pubKey, &sign);
+    if (err == NO_ERROR)
+    {
+        printf_s("failed to RSAVerify\n");
+        return false;
+    }
+
+    runtime->Memory.Free(priKey.buf);
+    runtime->Memory.Free(sign.buf);
+
+    printf_s("test RSAVerify passed\n");
     return true;
 }
 

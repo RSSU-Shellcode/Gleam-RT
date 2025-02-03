@@ -16,9 +16,10 @@
 // +---------+-------------+
 //
 
-#define WC_SHA1_SIZE    20
-#define WC_AES_KEY_SIZE 32
-#define WC_AES_IV_SIZE  16
+#define WC_SHA1_HASH_SIZE 20
+#define WC_AES_BLOCK_SIZE 16
+#define WC_AES_KEY_SIZE   32
+#define WC_AES_IV_SIZE    16
 
 #define WC_RSA_KEY_USAGE_SIGN 1
 #define WC_RSA_KEY_USAGE_KEYX 2

@@ -527,7 +527,7 @@ errno WC_SHA1(byte* data, uint len, byte* hash)
         {
             break;
         }
-        DWORD hashLen = WC_SHA1_SIZE;
+        DWORD hashLen = WC_SHA1_HASH_SIZE;
         if (!module->CryptGetHashParam(hHash, HP_HASHVAL, hash, &hashLen, 0))
         {
             break;
@@ -605,10 +605,10 @@ errno WC_AESEncrypt(byte* data, uint len, byte* key, byte** out, uint* outLen)
             break;
         }
         // allocate buffer and copy plain data
-        length = WC_AES_IV_SIZE + (len / 16 + 1) * 16;
+        length = WC_AES_IV_SIZE + (len / WC_AES_BLOCK_SIZE + 1) * WC_AES_BLOCK_SIZE;
         output = module->malloc(length);
-        mem_copy(output + 16, data, len);
-        // generate and set random IV
+        mem_copy(output + WC_AES_IV_SIZE, data, len);
+        // generate random IV and set it
         if (!module->CryptGenRandom(hProv, WC_AES_IV_SIZE, output))
         {
             break;
@@ -619,9 +619,10 @@ errno WC_AESEncrypt(byte* data, uint len, byte* key, byte** out, uint* outLen)
         }
         // encrypt data
         DWORD inputLen = (DWORD)len;
-        DWORD dataLen  = (DWORD)length - 16;
-        if (!module->CryptEncrypt(hKey, NULL, true, 0, output + 16, &inputLen, dataLen))
-        {
+        DWORD dataLen = (DWORD)length - WC_AES_IV_SIZE;
+        if (!module->CryptEncrypt(
+            hKey, NULL, true, 0, output + WC_AES_IV_SIZE, &inputLen, dataLen
+        )){
             break;
         }
         success = true;
@@ -704,8 +705,8 @@ errno WC_AESDecrypt(byte* data, uint len, byte* key, byte** out, uint* outLen)
             break;
         }
         // copy cipher data and decrypt it
-        output = module->malloc(len - 16);
-        mem_copy(output, data + 16, len - 16);
+        output = module->malloc(len - WC_AES_IV_SIZE);
+        mem_copy(output, data + WC_AES_IV_SIZE, len - WC_AES_IV_SIZE);
         DWORD plainLen;
         if (!module->CryptDecrypt(hKey, NULL, true, 0, output, &plainLen))
         {
@@ -777,7 +778,7 @@ errno WC_RSASign(databuf* data, databuf* key, databuf* sign)
         {
             break;
         }
-        byte  hash[WC_SHA1_SIZE];
+        byte  hash[WC_SHA1_HASH_SIZE];
         DWORD hashLen = sizeof(hash);
         if (!module->CryptGetHashParam(hHash, HP_HASHVAL, hash, &hashLen, 0))
         {
@@ -861,7 +862,7 @@ errno WC_RSAVerify(databuf* data, databuf* key, databuf* sign)
         {
             break;
         }
-        byte  hash[WC_SHA1_SIZE];
+        byte  hash[WC_SHA1_HASH_SIZE];
         DWORD hashLen = sizeof(hash);
         if (!module->CryptGetHashParam(hHash, HP_HASHVAL, hash, &hashLen, 0))
         {

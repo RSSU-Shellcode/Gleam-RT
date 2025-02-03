@@ -25,7 +25,7 @@ bool TestRuntime_WinCrypto()
         { TestWinCrypto_SHA1       },
         { TestWinCrypto_AESEncrypt },
         { TestWinCrypto_AESDecrypt },
-        { TestWinCrypto_RSAGenKey },
+        { TestWinCrypto_RSAGenKey  },
         { TestWinCrypto_RSASign    },
         { TestWinCrypto_RSAVerify  },
     };
@@ -96,30 +96,35 @@ static bool TestWinCrypto_SHA1()
 
 static bool TestWinCrypto_AESEncrypt()
 {
-    byte data[] = { 1, 2, 3, 4 };
-    byte key[] = {
-        0x00, 0x01, 0x02, 0x03, 0x00, 0x01, 0x02, 0x03, 
-        0x00, 0x01, 0x02, 0x03, 0x00, 0x01, 0x02, 0x03, 
-        0x00, 0x01, 0x02, 0x03, 0x00, 0x01, 0x02, 0x03, 
-        0x00, 0x01, 0x02, 0x03, 0x00, 0x01, 0x02, 0x03, 
+    byte testdata[] = { 1, 2, 3, 4 };
+    databuf data = {
+        .buf = testdata,
+        .len = sizeof(testdata),
     };
-
-    byte* out; uint outLen;
-    errno err = runtime->WinCrypto.AESEncrypt(data, sizeof(data), key, &out, &outLen);
+    byte testkey[] = {
+        0x00, 0x01, 0x02, 0x03, 0x00, 0x01, 0x02, 0x03,
+        0x00, 0x01, 0x02, 0x03, 0x00, 0x01, 0x02, 0x03,
+    };
+    databuf key = {
+        .buf = testkey,
+        .len = sizeof(testkey),
+    };
+    databuf out;
+    errno err = runtime->WinCrypto.AESEncrypt(&data, &key, &out);
     if (err != NO_ERROR)
     {
         printf_s("failed to encrypt data: 0x%X\n", err);
         return false;
     }
 
-    printHexBytes(out, outLen);
-    if (outLen != WC_AES_IV_SIZE + WC_AES_BLOCK_SIZE)
+    printHexBytes(out.buf, out.len);
+    if (out.len != WC_AES_IV_SIZE + WC_AES_BLOCK_SIZE)
     {
         printf_s("invalid cipher data length\n");
         return false;
     }
 
-    runtime->Memory.Free(out);
+    runtime->Memory.Free(out.buf);
 
     printf_s("test AESEncrypt passed\n");
     return true;
@@ -127,100 +132,113 @@ static bool TestWinCrypto_AESEncrypt()
 
 static bool TestWinCrypto_AESDecrypt()
 {
-    byte data1[] = { 1, 2, 3, 4 };
-    byte key[] = {
-        0x00, 0x01, 0x02, 0x03, 0x00, 0x01, 0x02, 0x03, 
-        0x00, 0x01, 0x02, 0x03, 0x00, 0x01, 0x02, 0x03, 
-        0x00, 0x01, 0x02, 0x03, 0x00, 0x01, 0x02, 0x03, 
-        0x00, 0x01, 0x02, 0x03, 0x00, 0x01, 0x02, 0x03, 
+    byte testdata1[] = {
+        1, 2, 3, 4 
     };
-
-    byte* cipher; uint cipherLen;
-    errno err = runtime->WinCrypto.AESEncrypt(data1, sizeof(data1), key, &cipher, &cipherLen);
+    databuf data1 = {
+        .buf = testdata1,
+        .len = sizeof(testdata1),
+    };
+    byte testkey[] = {
+        0x00, 0x01, 0x02, 0x03, 0x00, 0x01, 0x02, 0x03,
+        0x00, 0x01, 0x02, 0x03, 0x00, 0x01, 0x02, 0x03,
+        0x00, 0x01, 0x02, 0x03, 0x00, 0x01, 0x02, 0x03,
+        0x00, 0x01, 0x02, 0x03, 0x00, 0x01, 0x02, 0x03,
+    };
+    databuf key = {
+        .buf = testkey,
+        .len = sizeof(testkey),
+    };
+    databuf cipher;
+    errno err = runtime->WinCrypto.AESEncrypt(&data1, &key, &cipher);
     if (err != NO_ERROR)
     {
         printf_s("failed to encrypt data: 0x%X\n", err);
         return false;
     }
-    if (cipherLen != 32)
+    if (cipher.len != WC_AES_IV_SIZE + WC_AES_BLOCK_SIZE)
     {
         printf_s("invalid cipher data length\n");
         return false;
     }
-    byte* plain; uint plainLen;
-    err = runtime->WinCrypto.AESDecrypt(cipher, cipherLen, key, &plain, &plainLen);
+    databuf plain;
+    err = runtime->WinCrypto.AESDecrypt(&cipher, &key, &plain);
     if (err != NO_ERROR)
     {
         printf_s("failed to decrypt data: 0x%X\n", err);
         return false;
     }
 
-    printHexBytes(plain, plainLen);
-    if (plainLen != 4)
+    printHexBytes(plain.buf, plain.len);
+    if (plain.len != sizeof(testdata1))
     {
         printf_s("invalid plain data length\n");
         return false;
     }
     byte expected1[] = { 1, 2, 3, 4 };
-    if (!mem_equal(expected1, plain, sizeof(expected1)))
+    if (!mem_equal(expected1, plain.buf, sizeof(expected1)))
     {
         printf_s("get incorrect plain data\n");
         return false;
     }
-    if (!mem_equal(expected1, data1, sizeof(expected1)))
+    if (!mem_equal(expected1, testdata1, sizeof(expected1)))
     {
         printf_s("original data is changed\n");
         return false;
     }
 
-    runtime->Memory.Free(cipher);
-    runtime->Memory.Free(plain);
+    runtime->Memory.Free(cipher.buf);
+    runtime->Memory.Free(plain.buf);
 
-    byte data2[] = { 
-        1, 2, 3, 4, 5, 6, 7, 8, 
+    byte testdata2[] = { 
+        1, 2, 3, 4, 5, 6, 7, 8,
         1, 2, 3, 4, 5, 6, 7, 8,
     };
-    err = runtime->WinCrypto.AESEncrypt(data2, sizeof(data2), key, &cipher, &cipherLen);
+    databuf data2 = {
+        .buf = testdata2,
+        .len = sizeof(testdata2),
+    };
+    err = runtime->WinCrypto.AESEncrypt(&data2, &key, &cipher);
     if (err != NO_ERROR)
     {
         printf_s("failed to encrypt data: 0x%X\n", err);
         return false;
     }
-    if (cipherLen != 48)
+    if (cipher.len != WC_AES_IV_SIZE + WC_AES_BLOCK_SIZE * 2)
     {
         printf_s("invalid cipher data length\n");
         return false;
     }
-    err = runtime->WinCrypto.AESDecrypt(cipher, cipherLen, key, &plain, &plainLen);
+    err = runtime->WinCrypto.AESDecrypt(&cipher, &key, &plain);
     if (err != NO_ERROR)
     {
         printf_s("failed to decrypt data: 0x%X\n", err);
         return false;
     }
 
-    printHexBytes(plain, plainLen);
-    if (plainLen != 16)
+    printHexBytes(plain.buf, plain.len);
+    if (plain.len != sizeof(testdata2))
     {
         printf_s("invalid plain data length\n");
         return false;
     }
     byte expected2[] = { 
-        1, 2, 3, 4, 5, 6, 7, 8, 
+        1, 2, 3, 4, 5, 6, 7, 8,
         1, 2, 3, 4, 5, 6, 7, 8,
     };
-    if (!mem_equal(expected2, plain, sizeof(expected2)))
+    if (!mem_equal(expected2, plain.buf, sizeof(expected2)))
     {
         printf_s("get incorrect plain data\n");
         return false;
     }
-    if (!mem_equal(expected2, data2, sizeof(expected2)))
+    if (!mem_equal(expected2, testdata2, sizeof(expected2)))
     {
         printf_s("original data is changed\n");
         return false;
     }
 
-    runtime->Memory.Free(cipher);
-    runtime->Memory.Free(plain);
+    runtime->Memory.Free(cipher.buf);
+    runtime->Memory.Free(plain.buf);
 
     printf_s("test AESDecrypt passed\n");
     return true;

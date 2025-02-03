@@ -55,10 +55,10 @@ typedef struct {
 
 // methods for user
 errno WC_RandBuffer(byte* data, uint len);
-errno WC_GenRSAKey(uint bits, byte** out, uint* len, uint usage);
 errno WC_SHA1(byte* data, uint len, byte* hash);
 errno WC_AESEncrypt(byte* data, uint len, byte* key, byte** out, uint* outLen);
 errno WC_AESDecrypt(byte* data, uint len, byte* key, byte** out, uint* outLen);
+errno WC_RSAGenKey(uint usage, uint bits, databuf* key);
 errno WC_RSASign(databuf* data, databuf* key, databuf* sign);
 errno WC_RSAVerify(databuf* data, databuf* key, databuf* sign);
 
@@ -125,10 +125,10 @@ WinCrypto_M* InitWinCrypto(Context* context)
     // methods for user
     WinCrypto_M* method = (WinCrypto_M*)methodAddr;
     method->RandBuffer = GetFuncAddr(&WC_RandBuffer);
-    method->GenRSAKey  = GetFuncAddr(&WC_GenRSAKey);
     method->SHA1       = GetFuncAddr(&WC_SHA1);
     method->AESEncrypt = GetFuncAddr(&WC_AESEncrypt);
     method->AESDecrypt = GetFuncAddr(&WC_AESDecrypt);
+    method->RSAGenKey  = GetFuncAddr(&WC_RSAGenKey);
     method->RSASign    = GetFuncAddr(&WC_RSASign);
     method->RSAVerify  = GetFuncAddr(&WC_RSAVerify);
     // methods for runtime
@@ -419,84 +419,6 @@ errno WC_RandBuffer(byte* data, uint len)
 }
 
 __declspec(noinline)
-errno WC_GenRSAKey(uint bits, byte** out, uint* len, uint usage)
-{
-    WinCrypto* module = getModulePointer();
-
-    dbg_log("[WinCrypto]", "GenRSAKey: %zu", bits);
-
-    if (!initWinCryptoEnv())
-    {
-        return GetLastErrno();
-    }
-
-    HCRYPTPROV hProv = NULL;
-    HCRYPTKEY  hKey  = NULL;
-    byte* output = NULL;
-    uint  length = 0;
-
-    bool success = false;
-    for (;;)
-    {
-        if (!module->CryptAcquireContextA(
-            &hProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT
-        )){
-            break;
-        }
-        ALG_ID algID = 0;
-        switch (usage)
-        {
-        case WC_RSA_KEY_USAGE_SIGN:
-            algID = CALG_RSA_SIGN;
-            break;
-        case WC_RSA_KEY_USAGE_KEYX:
-            algID = CALG_RSA_KEYX;
-            break;
-        default:
-            SetLastErrno(ERR_WIN_CRYPTO_INVALID_KEY_USAGE);
-            break;
-        }
-        DWORD flags = (DWORD)bits << 16 | CRYPT_EXPORTABLE;
-        if (!module->CryptGenKey(hProv, algID, flags, &hKey))
-        {
-            break;
-        }
-        DWORD outLen;
-        if (!module->CryptExportKey(hKey, 0, PRIVATEKEYBLOB, 0, NULL, &outLen))
-        {
-            break;
-        }
-        output = module->malloc(outLen);
-        if (!module->CryptExportKey(hKey, 0, PRIVATEKEYBLOB, 0, output, &outLen))
-        {
-            break;
-        }
-        length = outLen;
-        success = true;
-        break;
-    }
-    errno lastErr = GetLastErrno();
-
-    if (hKey != NULL)
-    {
-        module->CryptDestroyKey(hKey);
-    }
-    if (hProv != NULL)
-    {
-        module->CryptReleaseContext(hProv, 0);
-    }
-
-    if (!success)
-    {
-        module->free(output);
-        return lastErr;
-    }
-    *out = output;
-    *len = length;
-    return NO_ERROR;
-}
-
-__declspec(noinline)
 errno WC_SHA1(byte* data, uint len, byte* hash)
 {
     WinCrypto* module = getModulePointer();
@@ -734,6 +656,84 @@ errno WC_AESDecrypt(byte* data, uint len, byte* key, byte** out, uint* outLen)
     }
     *out    = output;
     *outLen = length;
+    return NO_ERROR;
+}
+
+__declspec(noinline)
+errno WC_RSAGenKey(uint usage, uint bits, databuf* key)
+{
+    WinCrypto* module = getModulePointer();
+
+    dbg_log("[WinCrypto]", "RSAGenKey: %d, %zu", usage, bits);
+
+    if (!initWinCryptoEnv())
+    {
+        return GetLastErrno();
+    }
+
+    HCRYPTPROV hProv = NULL;
+    HCRYPTKEY  hKey  = NULL;
+    byte* output = NULL;
+    uint  length = 0;
+
+    bool success = false;
+    for (;;)
+    {
+        if (!module->CryptAcquireContextA(
+            &hProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT
+        )){
+            break;
+        }
+        ALG_ID algID = 0;
+        switch (usage)
+        {
+        case WC_RSA_KEY_USAGE_SIGN:
+            algID = CALG_RSA_SIGN;
+            break;
+        case WC_RSA_KEY_USAGE_KEYX:
+            algID = CALG_RSA_KEYX;
+            break;
+        default:
+            SetLastErrno(ERR_WIN_CRYPTO_INVALID_KEY_USAGE);
+            break;
+        }
+        DWORD flags = (DWORD)bits << 16 | CRYPT_EXPORTABLE;
+        if (!module->CryptGenKey(hProv, algID, flags, &hKey))
+        {
+            break;
+        }
+        DWORD outLen;
+        if (!module->CryptExportKey(hKey, 0, PRIVATEKEYBLOB, 0, NULL, &outLen))
+        {
+            break;
+        }
+        output = module->malloc(outLen);
+        if (!module->CryptExportKey(hKey, 0, PRIVATEKEYBLOB, 0, output, &outLen))
+        {
+            break;
+        }
+        length = outLen;
+        success = true;
+        break;
+    }
+    errno lastErr = GetLastErrno();
+
+    if (hKey != NULL)
+    {
+        module->CryptDestroyKey(hKey);
+    }
+    if (hProv != NULL)
+    {
+        module->CryptReleaseContext(hProv, 0);
+    }
+
+    if (!success)
+    {
+        module->free(output);
+        return lastErr;
+    }
+    key->buf = output;
+    key->len = length;
     return NO_ERROR;
 }
 

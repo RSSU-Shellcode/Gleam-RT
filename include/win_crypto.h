@@ -15,10 +15,10 @@
 // | 16 byte |     var     |
 // +---------+-------------+
 //
+// The valid AES key length are 16, 24, 32 bytes.
 
 #define WC_SHA1_HASH_SIZE 20
 #define WC_AES_BLOCK_SIZE 16
-#define WC_AES_KEY_SIZE   32
 #define WC_AES_IV_SIZE    16
 
 #define WC_RSA_KEY_USAGE_SIGN 1
@@ -26,8 +26,8 @@
 
 typedef errno (*WCRandBuffer_t)(byte* data, uint len);
 typedef errno (*WCSHA1_t)(byte* data, uint len, byte* hash);
-typedef errno (*WCAESEncrypt_t)(byte* data, uint len, byte* key, byte** out, uint* outLen);
-typedef errno (*WCAESDecrypt_t)(byte* data, uint len, byte* key, byte** out, uint* outLen);
+typedef errno (*WCAESEncrypt_t)(databuf* data, databuf* key, databuf* out);
+typedef errno (*WCAESDecrypt_t)(databuf* data, databuf* key, databuf* out);
 typedef errno (*WCRSAGenKey_t)(uint usage, uint bits, databuf* key);
 typedef errno (*WCRSASign_t)(databuf* data, databuf* key, databuf* sign);
 typedef errno (*WCRSAVerify_t)(databuf* data, databuf* key, databuf* sign);

@@ -25,10 +25,10 @@
 #define WC_RSA_KEY_USAGE_KEYX 2
 
 typedef errno (*WCRandBuffer_t)(byte* data, uint len);
-typedef errno (*WCGenRSAKey_t)(uint bits, byte** data, uint* len, uint usage);
 typedef errno (*WCSHA1_t)(byte* data, uint len, byte* hash);
 typedef errno (*WCAESEncrypt_t)(byte* data, uint len, byte* key, byte** out, uint* outLen);
 typedef errno (*WCAESDecrypt_t)(byte* data, uint len, byte* key, byte** out, uint* outLen);
+typedef errno (*WCRSAGenKey_t)(uint usage, uint bits, databuf* key);
 typedef errno (*WCRSASign_t)(databuf* data, databuf* key, databuf* sign);
 typedef errno (*WCRSAVerify_t)(databuf* data, databuf* key, databuf* sign);
 
@@ -36,14 +36,14 @@ typedef errno (*WCUninstall_t)();
 
 typedef struct {
     WCRandBuffer_t RandBuffer;
-    WCGenRSAKey_t  GenRSAKey;
     WCSHA1_t       SHA1;
     WCAESEncrypt_t AESEncrypt;
     WCAESDecrypt_t AESDecrypt;
+    WCRSAGenKey_t  RSAGenKey;
     WCRSASign_t    RSASign;
     WCRSAVerify_t  RSAVerify;
 
-    WCUninstall_t  Uninstall;
+    WCUninstall_t Uninstall;
 } WinCrypto_M;
 
 WinCrypto_M* InitWinCrypto(Context* context);

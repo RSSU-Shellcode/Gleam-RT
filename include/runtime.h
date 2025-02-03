@@ -147,7 +147,7 @@ typedef errno (*HTTPFree_t)();
 // ================================WinCrypto================================
 // 
 // The allocated buffer must call Runtime_M.Memory.Free().
-// The AES is use CBC mode with 256 bit key and PKCS#5.
+// The AES is use CBC mode with PKCS#5 padding method.
 //
 // +---------+-------------+
 // |   IV    | cipher data |
@@ -155,13 +155,24 @@ typedef errno (*HTTPFree_t)();
 // | 16 byte |     var     |
 // +---------+-------------+
 
+#ifndef WIN_CRYPTO_H
+
+#define CRYPTO_SHA1_HASH_SIZE 20
+#define CRYPTO_AES_BLOCK_SIZE 16
+#define CRYPTO_AES_IV_SIZE    16
+
+#define CRYPTO_RSA_KEY_USAGE_SIGN 1
+#define CRYPTO_RSA_KEY_USAGE_KEYX 2
+
+#endif // WIN_CRYPTO_H
+
 typedef errno (*CryptoRandBuffer_t)(byte* data, uint len);
-typedef errno (*CryptoGenRSAKey_t)(uint bits, byte** data, uint* len, uint usage);
 typedef errno (*CryptoSHA1_t)(byte* data, uint len, byte* hash);
-typedef errno (*CryptoAESEncrypt_t)(byte* data, uint len, byte* key, byte** out, uint* outLen);
-typedef errno (*CryptoAESDecrypt_t)(byte* data, uint len, byte* key, byte** out, uint* outLen);
-typedef errno (*CryptoRSASign_t)(byte* data, uint len, byte* key, byte** sign, uint* signLen);
-typedef errno (*CryptoRSAVerify_t)(byte* data, uint len, byte* sign, uint signLen, byte* key);
+typedef errno (*CryptoAESEncrypt_t)(databuf* data, databuf* key, databuf* out);
+typedef errno (*CryptoAESDecrypt_t)(databuf* data, databuf* key, databuf* out);
+typedef errno (*CryptoRSAGenKey_t)(uint usage, uint bits, databuf* key);
+typedef errno (*CryptoRSASign_t)(databuf* data, databuf* key, databuf* sign);
+typedef errno (*CryptoRSAVerify_t)(databuf* data, databuf* key, databuf* sign);
 
 // =================================Runtime=================================
 
@@ -315,10 +326,10 @@ typedef struct {
 
     struct {
         CryptoRandBuffer_t RandBuffer;
-        CryptoGenRSAKey_t  GenRSAKey;
         CryptoSHA1_t       SHA1;
         CryptoAESEncrypt_t AESEncrypt;
         CryptoAESDecrypt_t AESDecrypt;
+        CryptoRSAGenKey_t  RSAGenKey;
         CryptoRSASign_t    RSASign;
         CryptoRSAVerify_t  RSAVerify;
     } WinCrypto;

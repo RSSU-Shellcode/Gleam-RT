@@ -56,8 +56,8 @@ typedef struct {
 // methods for user
 errno WC_RandBuffer(byte* data, uint len);
 errno WC_SHA1(byte* data, uint len, byte* hash);
-errno WC_AESEncrypt(byte* data, uint len, byte* key, byte** out, uint* outLen);
-errno WC_AESDecrypt(byte* data, uint len, byte* key, byte** out, uint* outLen);
+errno WC_AESEncrypt(databuf* data, databuf* key, databuf* out);
+errno WC_AESDecrypt(databuf* data, databuf* key, databuf* out);
 errno WC_RSAGenKey(uint usage, uint bits, databuf* key);
 errno WC_RSASign(databuf* data, databuf* key, databuf* sign);
 errno WC_RSAVerify(databuf* data, databuf* key, databuf* sign);
@@ -476,11 +476,11 @@ errno WC_SHA1(byte* data, uint len, byte* hash)
 }
 
 __declspec(noinline)
-errno WC_AESEncrypt(byte* data, uint len, byte* key, byte** out, uint* outLen)
+errno WC_AESEncrypt(databuf* data, databuf* key, databuf* out)
 {
     WinCrypto* module = getModulePointer();
 
-    dbg_log("[WinCrypto]", "AESEncrypt: 0x%zX, %zu, 0x%zX", data, len, key);
+    dbg_log("[WinCrypto]", "AESEncrypt: 0x%zX, 0x%zX, 0x%zX", data, key, out);
 
     if (!initWinCryptoEnv())
     {
@@ -501,15 +501,15 @@ errno WC_AESEncrypt(byte* data, uint len, byte* key, byte** out, uint* outLen)
             break;
         }
         // build exportable AES key with PLAINTEXTKEY
-        byte buf[sizeof(AESKEYHEADER) + WC_AES_KEY_SIZE];
+        byte buf[sizeof(AESKEYHEADER) + 32];
         mem_init(buf, sizeof(buf));
         AESKEYHEADER* header = (AESKEYHEADER*)buf;
         header->header.bType    = PLAINTEXTKEYBLOB;
         header->header.bVersion = CUR_BLOB_VERSION;
         header->header.reserved = 0;
         header->header.aiKeyAlg = CALG_AES_256;
-        header->dwKeySize = WC_AES_KEY_SIZE;
-        mem_copy(buf + sizeof(AESKEYHEADER), key, WC_AES_KEY_SIZE);
+        header->dwKeySize = (DWORD)(key->len);
+        mem_copy(buf + sizeof(AESKEYHEADER), key->buf, key->len);
         // import AES key to context
         if (!module->CryptImportKey(hProv, buf, sizeof(buf), NULL, CRYPT_EXPORTABLE, &hKey))
         {
@@ -527,9 +527,9 @@ errno WC_AESEncrypt(byte* data, uint len, byte* key, byte** out, uint* outLen)
             break;
         }
         // allocate buffer and copy plain data
-        length = WC_AES_IV_SIZE + (len / WC_AES_BLOCK_SIZE + 1) * WC_AES_BLOCK_SIZE;
+        length = WC_AES_IV_SIZE + (data->len / WC_AES_BLOCK_SIZE + 1) * WC_AES_BLOCK_SIZE;
         output = module->malloc(length);
-        mem_copy(output + WC_AES_IV_SIZE, data, len);
+        mem_copy(output + WC_AES_IV_SIZE, data->buf, data->len);
         // generate random IV and set it
         if (!module->CryptGenRandom(hProv, WC_AES_IV_SIZE, output))
         {
@@ -540,7 +540,7 @@ errno WC_AESEncrypt(byte* data, uint len, byte* key, byte** out, uint* outLen)
             break;
         }
         // encrypt data
-        DWORD inputLen = (DWORD)len;
+        DWORD inputLen = (DWORD)(data->len);
         DWORD dataLen = (DWORD)length - WC_AES_IV_SIZE;
         if (!module->CryptEncrypt(
             hKey, NULL, true, 0, output + WC_AES_IV_SIZE, &inputLen, dataLen
@@ -566,17 +566,17 @@ errno WC_AESEncrypt(byte* data, uint len, byte* key, byte** out, uint* outLen)
         module->free(output);
         return lastErr;
     }
-    *out    = output;
-    *outLen = length;
+    out->buf = output;
+    out->len = length;
     return NO_ERROR;
 }
 
 __declspec(noinline)
-errno WC_AESDecrypt(byte* data, uint len, byte* key, byte** out, uint* outLen)
+errno WC_AESDecrypt(databuf* data, databuf* key, databuf* out)
 {
     WinCrypto* module = getModulePointer();
 
-    dbg_log("[WinCrypto]", "AESDecrypt: 0x%zX, %zu, 0x%zX", data, len, key);
+    dbg_log("[WinCrypto]", "AESDecrypt: 0x%zX, 0x%zX, 0x%zX", data, key, out);
 
     if (!initWinCryptoEnv())
     {
@@ -585,6 +585,7 @@ errno WC_AESDecrypt(byte* data, uint len, byte* key, byte** out, uint* outLen)
 
     HCRYPTPROV hProv = NULL;
     HCRYPTKEY  hKey  = NULL;
+    byte* keyBuf = NULL;
     byte* output = NULL;
     uint  length = 0;
 
@@ -597,17 +598,17 @@ errno WC_AESDecrypt(byte* data, uint len, byte* key, byte** out, uint* outLen)
             break;
         }
         // build exportable AES key with PLAINTEXTKEY
-        byte buf[sizeof(AESKEYHEADER) + WC_AES_KEY_SIZE];
-        mem_init(buf, sizeof(buf));
-        AESKEYHEADER* header = (AESKEYHEADER*)buf;
+        keyBuf = module->malloc(sizeof(AESKEYHEADER) + key->len);
+        AESKEYHEADER* header = (AESKEYHEADER*)keyBuf;
         header->header.bType    = PLAINTEXTKEYBLOB;
         header->header.bVersion = CUR_BLOB_VERSION;
         header->header.reserved = 0;
         header->header.aiKeyAlg = CALG_AES_256;
-        header->dwKeySize = WC_AES_KEY_SIZE;
-        mem_copy(buf + sizeof(AESKEYHEADER), key, WC_AES_KEY_SIZE);
-        if (!module->CryptImportKey(hProv, buf, sizeof(buf), NULL, CRYPT_EXPORTABLE, &hKey))
-        {
+        header->dwKeySize = (DWORD)(key->len);
+        mem_copy(keyBuf + sizeof(AESKEYHEADER), key->buf, key->len);
+        if (!module->CryptImportKey(
+            hProv, keyBuf, (DWORD)(module->msize(keyBuf)), NULL, CRYPT_EXPORTABLE, &hKey
+        )){
             break;
         }
         // set mode and padding method
@@ -622,13 +623,14 @@ errno WC_AESDecrypt(byte* data, uint len, byte* key, byte** out, uint* outLen)
             break;
         }
         // set IV from the prefix of data
-        if (!module->CryptSetKeyParam(hKey, KP_IV, data, 0))
+        if (!module->CryptSetKeyParam(hKey, KP_IV, data->buf, 0))
         {
             break;
         }
         // copy cipher data and decrypt it
-        output = module->malloc(len - WC_AES_IV_SIZE);
-        mem_copy(output, data + WC_AES_IV_SIZE, len - WC_AES_IV_SIZE);
+        output = module->malloc(data->len - WC_AES_IV_SIZE);
+        byte* src = (byte*)(data->buf) + WC_AES_IV_SIZE;
+        mem_copy(output, src, data->len - WC_AES_IV_SIZE);
         DWORD plainLen;
         if (!module->CryptDecrypt(hKey, NULL, true, 0, output, &plainLen))
         {
@@ -654,8 +656,8 @@ errno WC_AESDecrypt(byte* data, uint len, byte* key, byte** out, uint* outLen)
         module->free(output);
         return lastErr;
     }
-    *out    = output;
-    *outLen = length;
+    out->buf = output;
+    out->len = length;
     return NO_ERROR;
 }
 

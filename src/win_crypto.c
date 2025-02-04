@@ -507,7 +507,18 @@ errno WC_AESEncrypt(databuf* data, databuf* key, databuf* out)
         header->header.bType    = PLAINTEXTKEYBLOB;
         header->header.bVersion = CUR_BLOB_VERSION;
         header->header.reserved = 0;
-        header->header.aiKeyAlg = CALG_AES_256;
+        switch (key->len)
+        {
+        case 16:
+            header->header.aiKeyAlg = CALG_AES_128;
+            break;
+        case 24:
+            header->header.aiKeyAlg = CALG_AES_192;
+            break;
+        case 32:
+            header->header.aiKeyAlg = CALG_AES_256;
+            break;
+        }
         header->dwKeySize = (DWORD)(key->len);
         mem_copy(buf + sizeof(AESKEYHEADER), key->buf, key->len);
         // import AES key to context
@@ -585,7 +596,6 @@ errno WC_AESDecrypt(databuf* data, databuf* key, databuf* out)
 
     HCRYPTPROV hProv = NULL;
     HCRYPTKEY  hKey  = NULL;
-    byte* keyBuf = NULL;
     byte* output = NULL;
     uint  length = 0;
 
@@ -598,17 +608,29 @@ errno WC_AESDecrypt(databuf* data, databuf* key, databuf* out)
             break;
         }
         // build exportable AES key with PLAINTEXTKEY
-        keyBuf = module->malloc(sizeof(AESKEYHEADER) + key->len);
-        AESKEYHEADER* header = (AESKEYHEADER*)keyBuf;
+        byte buf[sizeof(AESKEYHEADER) + 32];
+        mem_init(buf, sizeof(buf));
+        AESKEYHEADER* header = (AESKEYHEADER*)buf;
         header->header.bType    = PLAINTEXTKEYBLOB;
         header->header.bVersion = CUR_BLOB_VERSION;
         header->header.reserved = 0;
-        header->header.aiKeyAlg = CALG_AES_256;
+        switch (key->len)
+        {
+        case 16:
+            header->header.aiKeyAlg = CALG_AES_128;
+            break;
+        case 24:
+            header->header.aiKeyAlg = CALG_AES_192;
+            break;
+        case 32:
+            header->header.aiKeyAlg = CALG_AES_256;
+            break;
+        }
         header->dwKeySize = (DWORD)(key->len);
-        mem_copy(keyBuf + sizeof(AESKEYHEADER), key->buf, key->len);
-        if (!module->CryptImportKey(
-            hProv, keyBuf, (DWORD)(module->msize(keyBuf)), NULL, CRYPT_EXPORTABLE, &hKey
-        )){
+        mem_copy(buf + sizeof(AESKEYHEADER), key->buf, key->len);
+        // import AES key to context
+        if (!module->CryptImportKey(hProv, buf, sizeof(buf), NULL, CRYPT_EXPORTABLE, &hKey))
+        {
             break;
         }
         // set mode and padding method
@@ -628,10 +650,11 @@ errno WC_AESDecrypt(databuf* data, databuf* key, databuf* out)
             break;
         }
         // copy cipher data and decrypt it
-        output = module->malloc(data->len - WC_AES_IV_SIZE);
         byte* src = (byte*)(data->buf) + WC_AES_IV_SIZE;
-        mem_copy(output, src, data->len - WC_AES_IV_SIZE);
-        DWORD plainLen;
+        uint  len = data->len - WC_AES_IV_SIZE;
+        output = module->malloc(len);
+        mem_copy(output, src, len);
+        DWORD plainLen = (DWORD)len;
         if (!module->CryptDecrypt(hKey, NULL, true, 0, output, &plainLen))
         {
             break;

@@ -46,6 +46,8 @@ typedef DWORD ALG_ID;
 
 // CALG_SHA_256 is not supported until Windows XP SP3
 #define CALG_SHA1     0x00008004
+#define CALG_AES_128  0x0000660E
+#define CALG_AES_192  0x0000660F
 #define CALG_AES_256  0x00006610
 #define CALG_RSA_SIGN 0x00002400
 #define CALG_RSA_KEYX 0x0000A400

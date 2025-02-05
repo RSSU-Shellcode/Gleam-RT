@@ -445,6 +445,59 @@ static bool TestWinCrypto_RSAEncrypt()
 
 static bool TestWinCrypto_RSADecrypt()
 {
+    byte testdata[] = { 
+        1, 2, 3, 4 
+    };
+    databuf data = {
+        .buf = testdata,
+        .len = sizeof(testdata),
+    };
+    databuf key;
+    errno err = runtime->WinCrypto.RSAGenKey(WC_RSA_KEY_USAGE_KEYX, 2048, &key);
+    if (err != NO_ERROR)
+    {
+        printf_s("failed to RSAGenKey: 0x%X\n", err);
+        return false;
+    }
+    databuf cipherData;
+    err = runtime->WinCrypto.RSAEncrypt(&data, &key, &cipherData);
+    if (err != NO_ERROR)
+    {
+        printf_s("failed to encrypt data: 0x%X\n", err);
+        return false;
+    }
+
+    databuf plainData;
+    err = runtime->WinCrypto.RSADecrypt(&cipherData, &key, &plainData);
+    if (err != NO_ERROR)
+    {
+        printf_s("failed to decrypt data: 0x%X\n", err);
+        return false;
+    }
+
+    printHexBytes(plainData.buf, plainData.len);
+    if (plainData.len != sizeof(testdata))
+    {
+        printf_s("invalid plain data length\n");
+        return false;
+    }
+    byte expected1[] = { 1, 2, 3, 4 };
+    if (!mem_equal(expected1, plainData.buf, sizeof(expected1)))
+    {
+        printf_s("get incorrect plain data\n");
+        return false;
+    }
+    if (!mem_equal(expected1, testdata, sizeof(expected1)))
+    {
+        printf_s("original data is changed\n");
+        return false;
+    }
+
+    runtime->Memory.Free(key.buf);
+    runtime->Memory.Free(cipherData.buf);
+    runtime->Memory.Free(plainData.buf);
+
+    printf_s("test RSADecrypt passed\n");
     return true;
 }
 

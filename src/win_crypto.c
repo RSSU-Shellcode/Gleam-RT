@@ -953,7 +953,7 @@ errno WC_RSAEncrypt(databuf* data, databuf* key, databuf* out)
         )){
             break;
         }
-        // import RSA key to context
+        // import RSA public key to context
         if (!module->CryptImportKey(
             hProv, key->buf, (DWORD)(key->len), NULL, CRYPT_EXPORTABLE, &hKey
         )){
@@ -1002,7 +1002,65 @@ errno WC_RSAEncrypt(databuf* data, databuf* key, databuf* out)
 __declspec(noinline)
 errno WC_RSADecrypt(databuf* data, databuf* key, databuf* out)
 {
+    WinCrypto* module = getModulePointer();
 
+    dbg_log("[WinCrypto]", "RSADecrypt: 0x%zX, 0x%zX, 0x%zX", data, key, out);
+
+    if (!initWinCryptoEnv())
+    {
+        return GetLastErrno();
+    }
+
+    HCRYPTPROV hProv = NULL;
+    HCRYPTKEY  hKey  = NULL;
+    byte* output = NULL;
+    uint  length = 0;
+
+    bool success = false;
+    for (;;)
+    {
+        if (!module->CryptAcquireContextA(
+            &hProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT
+        )){
+            break;
+        }
+        // import RSA private key to context
+        if (!module->CryptImportKey(
+            hProv, key->buf, (DWORD)(key->len), NULL, CRYPT_EXPORTABLE, &hKey
+        )){
+            break;
+        }
+        // copy cipher data and decrypt it
+        output = module->malloc(data->len);
+        mem_copy(output, data->buf, data->len);
+        DWORD plainLen = (DWORD)(data->len);
+        if (!module->CryptDecrypt(hKey, NULL, true, 0, output, &plainLen))
+        {
+            break;
+        }
+        length = plainLen;
+        success = true;
+        break;
+    }
+    errno lastErr = GetLastErrno();
+
+    if (hKey != NULL)
+    {
+        module->CryptDestroyKey(hKey);
+    }
+    if (hProv != NULL)
+    {
+        module->CryptReleaseContext(hProv, 0);
+    }
+
+    if (!success)
+    {
+        module->free(output);
+        return lastErr;
+    }
+    out->buf = output;
+    out->len = length;
+    return NO_ERROR;
 }
 
 __declspec(noinline)

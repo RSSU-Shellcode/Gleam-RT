@@ -145,15 +145,19 @@ typedef errno (*HTTPDo_t)(UTF16 url, UTF16 method, HTTP_Opts* opts, HTTP_Resp* r
 typedef errno (*HTTPFree_t)();
 
 // ================================WinCrypto================================
-// 
+
 // The allocated buffer must call Runtime_M.Memory.Free().
-// The AES is use CBC mode with PKCS#5 padding method.
 //
 // +---------+-------------+
 // |   IV    | cipher data |
 // +---------+-------------+
 // | 16 byte |     var     |
 // +---------+-------------+
+//
+// The AES is use CBC mode with PKCS#5 padding method.
+// The valid AES key length are 16, 24, 32 bytes.
+//
+// The RSA is use PKCS#1 v1.5 padding method.
 
 #ifndef WIN_CRYPTO_H
 
@@ -173,6 +177,8 @@ typedef errno (*CryptoAESDecrypt_t)(databuf* data, databuf* key, databuf* out);
 typedef errno (*CryptoRSAGenKey_t)(uint usage, uint bits, databuf* key);
 typedef errno (*CryptoRSASign_t)(databuf* data, databuf* key, databuf* sign);
 typedef errno (*CryptoRSAVerify_t)(databuf* data, databuf* key, databuf* sign);
+typedef errno (*CryptoRSAEncrypt_t)(databuf* data, databuf* key, databuf* out);
+typedef errno (*CryptoRSADecrypt_t)(databuf* data, databuf* key, databuf* out);
 
 // =================================Runtime=================================
 
@@ -332,6 +338,8 @@ typedef struct {
         CryptoRSAGenKey_t  RSAGenKey;
         CryptoRSASign_t    RSASign;
         CryptoRSAVerify_t  RSAVerify;
+        CryptoRSAEncrypt_t RSAEncrypt;
+        CryptoRSADecrypt_t RSADecrypt;
     } WinCrypto;
 
     struct {

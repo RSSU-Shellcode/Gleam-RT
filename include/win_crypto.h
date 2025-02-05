@@ -7,15 +7,16 @@
 
 // The allocated buffer must call Runtime_M.Memory.Free().
 // 
-// The AES is use CBC mode with 256 bit key and PKCS#5.
-// 
 // +---------+-------------+
 // |   IV    | cipher data |
 // +---------+-------------+
 // | 16 byte |     var     |
 // +---------+-------------+
 //
+// The AES is use CBC mode with PKCS#5 padding method.
 // The valid AES key length are 16, 24, 32 bytes.
+//
+// The RSA is use PKCS#1 v1.5 padding method.
 
 #define WC_SHA1_HASH_SIZE 20
 #define WC_AES_BLOCK_SIZE 16
@@ -31,6 +32,8 @@ typedef errno (*WCAESDecrypt_t)(databuf* data, databuf* key, databuf* out);
 typedef errno (*WCRSAGenKey_t)(uint usage, uint bits, databuf* key);
 typedef errno (*WCRSASign_t)(databuf* data, databuf* key, databuf* sign);
 typedef errno (*WCRSAVerify_t)(databuf* data, databuf* key, databuf* sign);
+typedef errno (*WCRSAEncrypt_t)(databuf* data, databuf* key, databuf* out);
+typedef errno (*WCRSADecrypt_t)(databuf* data, databuf* key, databuf* out);
 
 typedef errno (*WCUninstall_t)();
 
@@ -42,6 +45,8 @@ typedef struct {
     WCRSAGenKey_t  RSAGenKey;
     WCRSASign_t    RSASign;
     WCRSAVerify_t  RSAVerify;
+    WCRSAEncrypt_t RSAEncrypt;
+    WCRSADecrypt_t RSADecrypt;
 
     WCUninstall_t Uninstall;
 } WinCrypto_M;

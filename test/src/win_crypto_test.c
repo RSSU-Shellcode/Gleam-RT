@@ -15,6 +15,8 @@ static bool TestWinCrypto_AESDecrypt();
 static bool TestWinCrypto_RSAGenKey();
 static bool TestWinCrypto_RSASign();
 static bool TestWinCrypto_RSAVerify();
+static bool TestWinCrypto_RSAEncrypt();
+static bool TestWinCrypto_RSADecrypt();
 
 static void printHexBytes(byte* buf, uint size);
 
@@ -28,6 +30,8 @@ bool TestRuntime_WinCrypto()
         { TestWinCrypto_RSAGenKey  },
         { TestWinCrypto_RSASign    },
         { TestWinCrypto_RSAVerify  },
+        { TestWinCrypto_RSAEncrypt },
+        { TestWinCrypto_RSADecrypt },
     };
     for (int i = 0; i < arrlen(tests); i++)
     {
@@ -96,7 +100,9 @@ static bool TestWinCrypto_SHA1()
 
 static bool TestWinCrypto_AESEncrypt()
 {
-    byte testdata[] = { 1, 2, 3, 4 };
+    byte testdata[] = { 
+        1, 2, 3, 4 
+    };
     databuf data = {
         .buf = testdata,
         .len = sizeof(testdata),
@@ -396,6 +402,49 @@ static bool TestWinCrypto_RSAVerify()
     runtime->Memory.Free(sign.buf);
 
     printf_s("test RSAVerify passed\n");
+    return true;
+}
+
+static bool TestWinCrypto_RSAEncrypt()
+{
+    byte testdata[] = { 
+        1, 2, 3, 4 
+    };
+    databuf data = {
+        .buf = testdata,
+        .len = sizeof(testdata),
+    };
+    databuf key;
+    errno err = runtime->WinCrypto.RSAGenKey(WC_RSA_KEY_USAGE_KEYX, 2048, &key);
+    if (err != NO_ERROR)
+    {
+        printf_s("failed to RSAGenKey: 0x%X\n", err);
+        return false;
+    }
+    databuf out;
+    err = runtime->WinCrypto.RSAEncrypt(&data, &key, &out);
+    if (err != NO_ERROR)
+    {
+        printf_s("failed to encrypt data: 0x%X\n", err);
+        return false;
+    }
+
+    printHexBytes(out.buf, out.len);
+    if (out.len != 256)
+    {
+        printf_s("invalid cipher data length\n");
+        return false;
+    }
+
+    runtime->Memory.Free(key.buf);
+    runtime->Memory.Free(out.buf);
+
+    printf_s("test RSAEncrypt passed\n");
+    return true;
+}
+
+static bool TestWinCrypto_RSADecrypt()
+{
     return true;
 }
 

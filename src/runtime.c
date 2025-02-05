@@ -375,6 +375,8 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->WinCrypto.RSAGenKey  = runtime->WinCrypto->RSAGenKey;
     module->WinCrypto.RSASign    = runtime->WinCrypto->RSASign;
     module->WinCrypto.RSAVerify  = runtime->WinCrypto->RSAVerify;
+    module->WinCrypto.RSAEncrypt = runtime->WinCrypto->RSAEncrypt;
+    module->WinCrypto.RSADecrypt = runtime->WinCrypto->RSADecrypt;
     // random module
     module->Random.Buffer  = GetFuncAddr(&RandBuffer);
     module->Random.Bool    = GetFuncAddr(&RandBool);

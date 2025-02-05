@@ -61,6 +61,8 @@ errno WC_AESDecrypt(databuf* data, databuf* key, databuf* out);
 errno WC_RSAGenKey(uint usage, uint bits, databuf* key);
 errno WC_RSASign(databuf* data, databuf* key, databuf* sign);
 errno WC_RSAVerify(databuf* data, databuf* key, databuf* sign);
+errno WC_RSAEncrypt(databuf* data, databuf* key, databuf* out);
+errno WC_RSADecrypt(databuf* data, databuf* key, databuf* out);
 
 // methods for runtime
 errno WC_Uninstall();
@@ -131,6 +133,8 @@ WinCrypto_M* InitWinCrypto(Context* context)
     method->RSAGenKey  = GetFuncAddr(&WC_RSAGenKey);
     method->RSASign    = GetFuncAddr(&WC_RSASign);
     method->RSAVerify  = GetFuncAddr(&WC_RSAVerify);
+    method->RSAEncrypt = GetFuncAddr(&WC_RSAEncrypt);
+    method->RSADecrypt = GetFuncAddr(&WC_RSADecrypt);
     // methods for runtime
     method->Uninstall = GetFuncAddr(&WC_Uninstall);
     return method;
@@ -552,7 +556,7 @@ errno WC_AESEncrypt(databuf* data, databuf* key, databuf* out)
         }
         // encrypt data
         DWORD inputLen = (DWORD)(data->len);
-        DWORD dataLen = (DWORD)length - WC_AES_IV_SIZE;
+        DWORD dataLen  = (DWORD)length - WC_AES_IV_SIZE;
         if (!module->CryptEncrypt(
             hKey, NULL, true, 0, output + WC_AES_IV_SIZE, &inputLen, dataLen
         )){
@@ -727,17 +731,17 @@ errno WC_RSAGenKey(uint usage, uint bits, databuf* key)
         {
             break;
         }
-        DWORD outLen;
-        if (!module->CryptExportKey(hKey, 0, PRIVATEKEYBLOB, 0, NULL, &outLen))
+        DWORD outputLen;
+        if (!module->CryptExportKey(hKey, 0, PRIVATEKEYBLOB, 0, NULL, &outputLen))
         {
             break;
         }
-        output = module->malloc(outLen);
-        if (!module->CryptExportKey(hKey, 0, PRIVATEKEYBLOB, 0, output, &outLen))
+        output = module->malloc(outputLen);
+        if (!module->CryptExportKey(hKey, 0, PRIVATEKEYBLOB, 0, output, &outputLen))
         {
             break;
         }
-        length = outLen;
+        length = outputLen;
         success = true;
         break;
     }
@@ -922,6 +926,83 @@ errno WC_RSAVerify(databuf* data, databuf* key, databuf* sign)
         return lastErr;
     }
     return NO_ERROR;
+}
+
+__declspec(noinline)
+errno WC_RSAEncrypt(databuf* data, databuf* key, databuf* out)
+{
+    WinCrypto* module = getModulePointer();
+
+    dbg_log("[WinCrypto]", "RSAEncrypt: 0x%zX, 0x%zX, 0x%zX", data, key, out);
+
+    if (!initWinCryptoEnv())
+    {
+        return GetLastErrno();
+    }
+
+    HCRYPTPROV hProv = NULL;
+    HCRYPTKEY  hKey  = NULL;
+    byte* output = NULL;
+    uint  length = 0;
+
+    bool success = false;
+    for (;;)
+    {
+        if (!module->CryptAcquireContextA(
+            &hProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT
+        )){
+            break;
+        }
+        // import RSA key to context
+        if (!module->CryptImportKey(
+            hProv, key->buf, (DWORD)(key->len), NULL, CRYPT_EXPORTABLE, &hKey
+        )){
+            break;
+        }
+        // calculate the cipher data size
+        DWORD outputLen = (DWORD)(data->len);
+        if (!module->CryptEncrypt(hKey, NULL, true, 0, NULL, &outputLen, 0))
+        {
+            break;
+        }
+        // allocate buffer and copy plain data
+        output = module->malloc(outputLen);
+        mem_copy(output, data->buf, data->len);
+        // encrypt data
+        DWORD inputLen = (DWORD)(data->len);
+        if (!module->CryptEncrypt(hKey, NULL, true, 0, output, &inputLen, outputLen))
+        {
+            break;
+        }
+        length = outputLen;
+        success = true;
+        break;
+    }
+    errno lastErr = GetLastErrno();
+
+    if (hKey != NULL)
+    {
+        module->CryptDestroyKey(hKey);
+    }
+    if (hProv != NULL)
+    {
+        module->CryptReleaseContext(hProv, 0);
+    }
+
+    if (!success)
+    {
+        module->free(output);
+        return lastErr;
+    }
+    out->buf = output;
+    out->len = length;
+    return NO_ERROR;
+}
+
+__declspec(noinline)
+errno WC_RSADecrypt(databuf* data, databuf* key, databuf* out)
+{
+
 }
 
 __declspec(noinline)

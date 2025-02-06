@@ -172,13 +172,14 @@ typedef errno (*HTTPFree_t)();
 
 typedef errno (*CryptoRandBuffer_t)(byte* data, uint len);
 typedef errno (*CryptoSHA1_t)(byte* data, uint len, byte* hash);
-typedef errno (*CryptoAESEncrypt_t)(databuf* data, databuf* key, databuf* out);
-typedef errno (*CryptoAESDecrypt_t)(databuf* data, databuf* key, databuf* out);
+typedef errno (*CryptoAESEncrypt_t)(databuf* data, databuf* key, databuf* output);
+typedef errno (*CryptoAESDecrypt_t)(databuf* data, databuf* key, databuf* output);
 typedef errno (*CryptoRSAGenKey_t)(uint usage, uint bits, databuf* key);
+typedef errno (*CryptoRSAPubKey_t)(databuf* key, databuf* output);
 typedef errno (*CryptoRSASign_t)(databuf* data, databuf* key, databuf* sign);
 typedef errno (*CryptoRSAVerify_t)(databuf* data, databuf* key, databuf* sign);
-typedef errno (*CryptoRSAEncrypt_t)(databuf* data, databuf* key, databuf* out);
-typedef errno (*CryptoRSADecrypt_t)(databuf* data, databuf* key, databuf* out);
+typedef errno (*CryptoRSAEncrypt_t)(databuf* data, databuf* key, databuf* output);
+typedef errno (*CryptoRSADecrypt_t)(databuf* data, databuf* key, databuf* output);
 
 // =================================Runtime=================================
 
@@ -336,6 +337,7 @@ typedef struct {
         CryptoAESEncrypt_t AESEncrypt;
         CryptoAESDecrypt_t AESDecrypt;
         CryptoRSAGenKey_t  RSAGenKey;
+        CryptoRSAPubKey_t  RSAPubKey;
         CryptoRSASign_t    RSASign;
         CryptoRSAVerify_t  RSAVerify;
         CryptoRSAEncrypt_t RSAEncrypt;

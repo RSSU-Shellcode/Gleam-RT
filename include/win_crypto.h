@@ -27,13 +27,13 @@
 
 typedef errno (*WCRandBuffer_t)(byte* data, uint len);
 typedef errno (*WCSHA1_t)(byte* data, uint len, byte* hash);
-typedef errno (*WCAESEncrypt_t)(databuf* data, databuf* key, databuf* out);
-typedef errno (*WCAESDecrypt_t)(databuf* data, databuf* key, databuf* out);
+typedef errno (*WCAESEncrypt_t)(databuf* data, databuf* key, databuf* output);
+typedef errno (*WCAESDecrypt_t)(databuf* data, databuf* key, databuf* output);
 typedef errno (*WCRSAGenKey_t)(uint usage, uint bits, databuf* key);
 typedef errno (*WCRSASign_t)(databuf* data, databuf* key, databuf* sign);
 typedef errno (*WCRSAVerify_t)(databuf* data, databuf* key, databuf* sign);
-typedef errno (*WCRSAEncrypt_t)(databuf* data, databuf* key, databuf* out);
-typedef errno (*WCRSADecrypt_t)(databuf* data, databuf* key, databuf* out);
+typedef errno (*WCRSAEncrypt_t)(databuf* data, databuf* key, databuf* output);
+typedef errno (*WCRSADecrypt_t)(databuf* data, databuf* key, databuf* output);
 
 typedef errno (*WCUninstall_t)();
 

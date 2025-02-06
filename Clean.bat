@@ -12,6 +12,11 @@ rd /S /Q "builder\Release"
 rd /S /Q "builder\x64"
 rd /S /Q "builder\x86"
 
+rd /S /Q "pe_loader\Debug"
+rd /S /Q "pe_loader\Release"
+rd /S /Q "pe_loader\x64"
+rd /S /Q "pe_loader\x86"
+
 rd /S /Q "test\Debug"
 rd /S /Q "test\Release"
 rd /S /Q "test\x64"

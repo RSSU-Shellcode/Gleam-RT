@@ -373,6 +373,7 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->WinCrypto.AESEncrypt = runtime->WinCrypto->AESEncrypt;
     module->WinCrypto.AESDecrypt = runtime->WinCrypto->AESDecrypt;
     module->WinCrypto.RSAGenKey  = runtime->WinCrypto->RSAGenKey;
+    module->WinCrypto.RSAPubKey  = runtime->WinCrypto->RSAPubKey;
     module->WinCrypto.RSASign    = runtime->WinCrypto->RSASign;
     module->WinCrypto.RSAVerify  = runtime->WinCrypto->RSAVerify;
     module->WinCrypto.RSAEncrypt = runtime->WinCrypto->RSAEncrypt;

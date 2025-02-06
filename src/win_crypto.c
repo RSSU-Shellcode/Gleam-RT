@@ -56,13 +56,13 @@ typedef struct {
 // methods for user
 errno WC_RandBuffer(byte* data, uint len);
 errno WC_SHA1(byte* data, uint len, byte* hash);
-errno WC_AESEncrypt(databuf* data, databuf* key, databuf* out);
-errno WC_AESDecrypt(databuf* data, databuf* key, databuf* out);
+errno WC_AESEncrypt(databuf* data, databuf* key, databuf* output);
+errno WC_AESDecrypt(databuf* data, databuf* key, databuf* output);
 errno WC_RSAGenKey(uint usage, uint bits, databuf* key);
 errno WC_RSASign(databuf* data, databuf* key, databuf* sign);
 errno WC_RSAVerify(databuf* data, databuf* key, databuf* sign);
-errno WC_RSAEncrypt(databuf* data, databuf* key, databuf* out);
-errno WC_RSADecrypt(databuf* data, databuf* key, databuf* out);
+errno WC_RSAEncrypt(databuf* data, databuf* key, databuf* output);
+errno WC_RSADecrypt(databuf* data, databuf* key, databuf* output);
 
 // methods for runtime
 errno WC_Uninstall();
@@ -480,11 +480,11 @@ errno WC_SHA1(byte* data, uint len, byte* hash)
 }
 
 __declspec(noinline)
-errno WC_AESEncrypt(databuf* data, databuf* key, databuf* out)
+errno WC_AESEncrypt(databuf* data, databuf* key, databuf* output)
 {
     WinCrypto* module = getModulePointer();
 
-    dbg_log("[WinCrypto]", "AESEncrypt: 0x%zX, 0x%zX, 0x%zX", data, key, out);
+    dbg_log("[WinCrypto]", "AESEncrypt: 0x%zX, 0x%zX, 0x%zX", data, key, output);
 
     if (!initWinCryptoEnv())
     {
@@ -493,7 +493,7 @@ errno WC_AESEncrypt(databuf* data, databuf* key, databuf* out)
 
     HCRYPTPROV hProv = NULL;
     HCRYPTKEY  hKey  = NULL;
-    byte* output = NULL;
+    byte* buffer = NULL;
     uint  length = 0;
 
     bool success = false;
@@ -543,14 +543,14 @@ errno WC_AESEncrypt(databuf* data, databuf* key, databuf* out)
         }
         // allocate buffer and copy plain data
         length = WC_AES_IV_SIZE + (data->len / WC_AES_BLOCK_SIZE + 1) * WC_AES_BLOCK_SIZE;
-        output = module->malloc(length);
-        mem_copy(output + WC_AES_IV_SIZE, data->buf, data->len);
+        buffer = module->malloc(length);
+        mem_copy(buffer + WC_AES_IV_SIZE, data->buf, data->len);
         // generate random IV and set it
-        if (!module->CryptGenRandom(hProv, WC_AES_IV_SIZE, output))
+        if (!module->CryptGenRandom(hProv, WC_AES_IV_SIZE, buffer))
         {
             break;
         }
-        if (!module->CryptSetKeyParam(hKey, KP_IV, output, 0))
+        if (!module->CryptSetKeyParam(hKey, KP_IV, buffer, 0))
         {
             break;
         }
@@ -558,7 +558,7 @@ errno WC_AESEncrypt(databuf* data, databuf* key, databuf* out)
         DWORD inputLen = (DWORD)(data->len);
         DWORD dataLen  = (DWORD)length - WC_AES_IV_SIZE;
         if (!module->CryptEncrypt(
-            hKey, NULL, true, 0, output + WC_AES_IV_SIZE, &inputLen, dataLen
+            hKey, NULL, true, 0, buffer + WC_AES_IV_SIZE, &inputLen, dataLen
         )){
             break;
         }
@@ -578,20 +578,20 @@ errno WC_AESEncrypt(databuf* data, databuf* key, databuf* out)
 
     if (!success)
     {
-        module->free(output);
+        module->free(buffer);
         return lastErr;
     }
-    out->buf = output;
-    out->len = length;
+    output->buf = buffer;
+    output->len = length;
     return NO_ERROR;
 }
 
 __declspec(noinline)
-errno WC_AESDecrypt(databuf* data, databuf* key, databuf* out)
+errno WC_AESDecrypt(databuf* data, databuf* key, databuf* output)
 {
     WinCrypto* module = getModulePointer();
 
-    dbg_log("[WinCrypto]", "AESDecrypt: 0x%zX, 0x%zX, 0x%zX", data, key, out);
+    dbg_log("[WinCrypto]", "AESDecrypt: 0x%zX, 0x%zX, 0x%zX", data, key, output);
 
     if (!initWinCryptoEnv())
     {
@@ -600,7 +600,7 @@ errno WC_AESDecrypt(databuf* data, databuf* key, databuf* out)
 
     HCRYPTPROV hProv = NULL;
     HCRYPTKEY  hKey  = NULL;
-    byte* output = NULL;
+    byte* buffer = NULL;
     uint  length = 0;
 
     bool success = false;
@@ -656,10 +656,10 @@ errno WC_AESDecrypt(databuf* data, databuf* key, databuf* out)
         // copy cipher data and decrypt it
         byte* src = (byte*)(data->buf) + WC_AES_IV_SIZE;
         uint  len = data->len - WC_AES_IV_SIZE;
-        output = module->malloc(len);
-        mem_copy(output, src, len);
+        buffer = module->malloc(len);
+        mem_copy(buffer, src, len);
         DWORD plainLen = (DWORD)len;
-        if (!module->CryptDecrypt(hKey, NULL, true, 0, output, &plainLen))
+        if (!module->CryptDecrypt(hKey, NULL, true, 0, buffer, &plainLen))
         {
             break;
         }
@@ -680,11 +680,11 @@ errno WC_AESDecrypt(databuf* data, databuf* key, databuf* out)
 
     if (!success)
     {
-        module->free(output);
+        module->free(buffer);
         return lastErr;
     }
-    out->buf = output;
-    out->len = length;
+    output->buf = buffer;
+    output->len = length;
     return NO_ERROR;
 }
 
@@ -702,7 +702,7 @@ errno WC_RSAGenKey(uint usage, uint bits, databuf* key)
 
     HCRYPTPROV hProv = NULL;
     HCRYPTKEY  hKey  = NULL;
-    byte* output = NULL;
+    byte* buffer = NULL;
     uint  length = 0;
 
     bool success = false;
@@ -736,8 +736,8 @@ errno WC_RSAGenKey(uint usage, uint bits, databuf* key)
         {
             break;
         }
-        output = module->malloc(outputLen);
-        if (!module->CryptExportKey(hKey, 0, PRIVATEKEYBLOB, 0, output, &outputLen))
+        buffer = module->malloc(outputLen);
+        if (!module->CryptExportKey(hKey, 0, PRIVATEKEYBLOB, 0, buffer, &outputLen))
         {
             break;
         }
@@ -758,10 +758,10 @@ errno WC_RSAGenKey(uint usage, uint bits, databuf* key)
 
     if (!success)
     {
-        module->free(output);
+        module->free(buffer);
         return lastErr;
     }
-    key->buf = output;
+    key->buf = buffer;
     key->len = length;
     return NO_ERROR;
 }
@@ -781,7 +781,7 @@ errno WC_RSASign(databuf* data, databuf* key, databuf* sign)
     HCRYPTPROV hProv = NULL;
     HCRYPTKEY  hKey  = NULL;
     HCRYPTHASH hHash = NULL;
-    byte* output = NULL;
+    byte* buffer = NULL;
     DWORD length = 0;
 
     bool success = false;
@@ -818,9 +818,9 @@ errno WC_RSASign(databuf* data, databuf* key, databuf* sign)
         {
             break;
         }
-        // sign message
-        output = module->malloc(length);
-        if (!module->CryptSignHashA(hHash, AT_SIGNATURE, NULL, 0, output, &length))
+        // sign the hash of message
+        buffer = module->malloc(length);
+        if (!module->CryptSignHashA(hHash, AT_SIGNATURE, NULL, 0, buffer, &length))
         {
             break;
         }
@@ -844,10 +844,10 @@ errno WC_RSASign(databuf* data, databuf* key, databuf* sign)
 
     if (!success)
     {
-        module->free(output);
+        module->free(buffer);
         return lastErr;
     }
-    sign->buf = output;
+    sign->buf = buffer;
     sign->len = length;
     return NO_ERROR;
 }
@@ -929,11 +929,11 @@ errno WC_RSAVerify(databuf* data, databuf* key, databuf* sign)
 }
 
 __declspec(noinline)
-errno WC_RSAEncrypt(databuf* data, databuf* key, databuf* out)
+errno WC_RSAEncrypt(databuf* data, databuf* key, databuf* output)
 {
     WinCrypto* module = getModulePointer();
 
-    dbg_log("[WinCrypto]", "RSAEncrypt: 0x%zX, 0x%zX, 0x%zX", data, key, out);
+    dbg_log("[WinCrypto]", "RSAEncrypt: 0x%zX, 0x%zX, 0x%zX", data, key, output);
 
     if (!initWinCryptoEnv())
     {
@@ -942,7 +942,7 @@ errno WC_RSAEncrypt(databuf* data, databuf* key, databuf* out)
 
     HCRYPTPROV hProv = NULL;
     HCRYPTKEY  hKey  = NULL;
-    byte* output = NULL;
+    byte* buffer = NULL;
     uint  length = 0;
 
     bool success = false;
@@ -966,11 +966,11 @@ errno WC_RSAEncrypt(databuf* data, databuf* key, databuf* out)
             break;
         }
         // allocate buffer and copy plain data
-        output = module->malloc(outputLen);
-        mem_copy(output, data->buf, data->len);
+        buffer = module->malloc(outputLen);
+        mem_copy(buffer, data->buf, data->len);
         // encrypt data
         DWORD inputLen = (DWORD)(data->len);
-        if (!module->CryptEncrypt(hKey, NULL, true, 0, output, &inputLen, outputLen))
+        if (!module->CryptEncrypt(hKey, NULL, true, 0, buffer, &inputLen, outputLen))
         {
             break;
         }
@@ -991,20 +991,20 @@ errno WC_RSAEncrypt(databuf* data, databuf* key, databuf* out)
 
     if (!success)
     {
-        module->free(output);
+        module->free(buffer);
         return lastErr;
     }
-    out->buf = output;
-    out->len = length;
+    output->buf = buffer;
+    output->len = length;
     return NO_ERROR;
 }
 
 __declspec(noinline)
-errno WC_RSADecrypt(databuf* data, databuf* key, databuf* out)
+errno WC_RSADecrypt(databuf* data, databuf* key, databuf* output)
 {
     WinCrypto* module = getModulePointer();
 
-    dbg_log("[WinCrypto]", "RSADecrypt: 0x%zX, 0x%zX, 0x%zX", data, key, out);
+    dbg_log("[WinCrypto]", "RSADecrypt: 0x%zX, 0x%zX, 0x%zX", data, key, output);
 
     if (!initWinCryptoEnv())
     {
@@ -1013,7 +1013,7 @@ errno WC_RSADecrypt(databuf* data, databuf* key, databuf* out)
 
     HCRYPTPROV hProv = NULL;
     HCRYPTKEY  hKey  = NULL;
-    byte* output = NULL;
+    byte* buffer = NULL;
     uint  length = 0;
 
     bool success = false;
@@ -1031,10 +1031,10 @@ errno WC_RSADecrypt(databuf* data, databuf* key, databuf* out)
             break;
         }
         // copy cipher data and decrypt it
-        output = module->malloc(data->len);
-        mem_copy(output, data->buf, data->len);
+        buffer = module->malloc(data->len);
+        mem_copy(buffer, data->buf, data->len);
         DWORD plainLen = (DWORD)(data->len);
-        if (!module->CryptDecrypt(hKey, NULL, true, 0, output, &plainLen))
+        if (!module->CryptDecrypt(hKey, NULL, true, 0, buffer, &plainLen))
         {
             break;
         }
@@ -1055,11 +1055,11 @@ errno WC_RSADecrypt(databuf* data, databuf* key, databuf* out)
 
     if (!success)
     {
-        module->free(output);
+        module->free(buffer);
         return lastErr;
     }
-    out->buf = output;
-    out->len = length;
+    output->buf = buffer;
+    output->len = length;
     return NO_ERROR;
 }
 

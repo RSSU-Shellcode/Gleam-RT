@@ -5,7 +5,7 @@
 #include "errno.h"
 #include "context.h"
 
-// The allocated buffer must call Runtime_M.Memory.Free().
+// The allocated databuf must call Runtime_M.Memory.Free().
 // 
 // +---------+-------------+
 // |   IV    | cipher data |
@@ -15,8 +15,10 @@
 //
 // The AES is use CBC mode with PKCS#5 padding method.
 // The valid AES key length are 16, 24, 32 bytes.
-//
 // The RSA is use PKCS#1 v1.5 padding method.
+//
+// The AES Key only contain the key data, not contain header.
+// The RSA Private/Public Key contain the header RSAPUBKEYHEADER.
 
 #define WC_SHA1_HASH_SIZE 20
 #define WC_AES_BLOCK_SIZE 16
@@ -30,6 +32,7 @@ typedef errno (*WCSHA1_t)(byte* data, uint len, byte* hash);
 typedef errno (*WCAESEncrypt_t)(databuf* data, databuf* key, databuf* output);
 typedef errno (*WCAESDecrypt_t)(databuf* data, databuf* key, databuf* output);
 typedef errno (*WCRSAGenKey_t)(uint usage, uint bits, databuf* key);
+typedef errno (*WCRSAPubKey_t)(databuf* key, databuf* output);
 typedef errno (*WCRSASign_t)(databuf* data, databuf* key, databuf* sign);
 typedef errno (*WCRSAVerify_t)(databuf* data, databuf* key, databuf* sign);
 typedef errno (*WCRSAEncrypt_t)(databuf* data, databuf* key, databuf* output);
@@ -43,6 +46,7 @@ typedef struct {
     WCAESEncrypt_t AESEncrypt;
     WCAESDecrypt_t AESDecrypt;
     WCRSAGenKey_t  RSAGenKey;
+    WCRSAPubKey_t  RSAPubKey;
     WCRSASign_t    RSASign;
     WCRSAVerify_t  RSAVerify;
     WCRSAEncrypt_t RSAEncrypt;

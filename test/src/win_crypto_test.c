@@ -13,6 +13,7 @@ static bool TestWinCrypto_SHA1();
 static bool TestWinCrypto_AESEncrypt();
 static bool TestWinCrypto_AESDecrypt();
 static bool TestWinCrypto_RSAGenKey();
+static bool TestWinCrypto_RSAPubKey();
 static bool TestWinCrypto_RSASign();
 static bool TestWinCrypto_RSAVerify();
 static bool TestWinCrypto_RSAEncrypt();
@@ -28,6 +29,7 @@ bool TestRuntime_WinCrypto()
         { TestWinCrypto_AESEncrypt },
         { TestWinCrypto_AESDecrypt },
         { TestWinCrypto_RSAGenKey  },
+        { TestWinCrypto_RSAPubKey  },
         { TestWinCrypto_RSASign    },
         { TestWinCrypto_RSAVerify  },
         { TestWinCrypto_RSAEncrypt },
@@ -300,6 +302,38 @@ static bool TestWinCrypto_RSAGenKey()
     runtime->Memory.Free(key.buf);
 
     printf_s("test RSAGenKey passed\n");
+    return true;
+}
+
+static bool TestWinCrypto_RSAPubKey()
+{
+    databuf priKey;
+    errno err = runtime->WinCrypto.RSAGenKey(WC_RSA_KEY_USAGE_SIGN, 2048, &priKey);
+    if (err != NO_ERROR)
+    {
+        printf_s("failed to generate rsa private key: 0x%X\n", err);
+        return false;
+    }
+
+    databuf pubKey;
+    err = runtime->WinCrypto.RSAPubKey(&priKey, &pubKey);
+    if (err != NO_ERROR)
+    {
+        printf_s("failed to export rsa public key: 0x%X\n", err);
+        return false;
+    }
+
+    printHexBytes(pubKey.buf, pubKey.len);
+    if (pubKey.len != sizeof(RSAPUBKEYHEADER) + 256)
+    {
+        printf_s("incorrect public key length: %zu\n", pubKey.len);
+        return false;
+    }
+
+    runtime->Memory.Free(priKey.buf);
+    runtime->Memory.Free(pubKey.buf);
+
+    printf_s("test RSAPubKey passed\n");
     return true;
 }
 

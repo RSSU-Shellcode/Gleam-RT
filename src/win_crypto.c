@@ -132,6 +132,7 @@ WinCrypto_M* InitWinCrypto(Context* context)
     method->AESEncrypt = GetFuncAddr(&WC_AESEncrypt);
     method->AESDecrypt = GetFuncAddr(&WC_AESDecrypt);
     method->RSAGenKey  = GetFuncAddr(&WC_RSAGenKey);
+    method->RSAPubKey  = GetFuncAddr(&WC_RSAPubKey);
     method->RSASign    = GetFuncAddr(&WC_RSASign);
     method->RSAVerify  = GetFuncAddr(&WC_RSAVerify);
     method->RSAEncrypt = GetFuncAddr(&WC_RSAEncrypt);

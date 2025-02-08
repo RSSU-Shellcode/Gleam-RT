@@ -488,6 +488,20 @@ errno WC_AESEncrypt(databuf* data, databuf* key, databuf* output)
 
     dbg_log("[WinCrypto]", "AESEncrypt: 0x%zX, 0x%zX, 0x%zX", data, key, output);
 
+    // check the data length is valid
+    if (data->len < 1)
+    {
+        return ERR_WIN_CRYPTO_EMPTY_PLAIN_DATA;
+    }
+    // check the key length is valid
+    switch (key->len)
+    {
+    case 16: case 24: case 32:
+        break;
+    default:
+        return ERR_WIN_CRYPTO_INVALID_KEY_LENGTH;
+    }
+
     if (!initWinCryptoEnv())
     {
         return GetLastErrno();
@@ -594,6 +608,20 @@ errno WC_AESDecrypt(databuf* data, databuf* key, databuf* output)
     WinCrypto* module = getModulePointer();
 
     dbg_log("[WinCrypto]", "AESDecrypt: 0x%zX, 0x%zX, 0x%zX", data, key, output);
+
+    // check the cipher data length is valid
+    if (data->len % 16 != 0)
+    {
+        return ERR_WIN_CRYPTO_INVALID_CIPHER_DATA;
+    }
+    // check the key length is valid
+    switch (key->len)
+    {
+    case 16: case 24: case 32:
+        break;
+    default:
+        return ERR_WIN_CRYPTO_INVALID_KEY_LENGTH;
+    }
 
     if (!initWinCryptoEnv())
     {

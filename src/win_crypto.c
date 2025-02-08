@@ -891,6 +891,22 @@ errno WC_RSASign(databuf* data, databuf* key, databuf* sign)
 
     dbg_log("[WinCrypto]", "RSASign: 0x%zX, 0x%zX, 0x%zX", data, key, sign);
 
+    if (data->len < 1)
+    {
+        return ERR_WIN_CRYPTO_EMPTY_MESSAGE;
+    }
+
+    errno err = isValidRSAPrivateKey(key);
+    if (err != NO_ERROR)
+    {
+        return err;
+    }
+    RSAPUBKEYHEADER* hdr = key->buf;
+    if (hdr->header.aiKeyAlg != CALG_RSA_SIGN)
+    {
+        return ERR_WIN_CRYPTO_INVALID_KEY_ALG_ID;
+    }
+
     if (!initWinCryptoEnv())
     {
         return GetLastErrno();
@@ -977,6 +993,26 @@ errno WC_RSAVerify(databuf* data, databuf* key, databuf* sign)
 
     dbg_log("[WinCrypto]", "RSAVerify: 0x%zX, 0x%zX, 0x%zX", data, key, sign);
 
+    if (data->len < 1)
+    {
+        return ERR_WIN_CRYPTO_EMPTY_MESSAGE;
+    }
+    if (sign->len < 1)
+    {
+        return ERR_WIN_CRYPTO_EMPTY_SIGNATURE;
+    }
+
+    errno err = isValidRSAPublicKey(key);
+    if (err != NO_ERROR)
+    {
+        return err;
+    }
+    RSAPUBKEYHEADER* hdr = key->buf;
+    if (hdr->header.aiKeyAlg != CALG_RSA_SIGN)
+    {
+        return ERR_WIN_CRYPTO_INVALID_KEY_ALG_ID;
+    }
+
     if (!initWinCryptoEnv())
     {
         return GetLastErrno();
@@ -1053,6 +1089,22 @@ errno WC_RSAEncrypt(databuf* data, databuf* key, databuf* output)
 
     dbg_log("[WinCrypto]", "RSAEncrypt: 0x%zX, 0x%zX, 0x%zX", data, key, output);
 
+    if (data->len < 1)
+    {
+        return ERR_WIN_CRYPTO_EMPTY_PLAIN_DATA;
+    }
+
+    errno err = isValidRSAPublicKey(key);
+    if (err != NO_ERROR)
+    {
+        return err;
+    }
+    RSAPUBKEYHEADER* hdr = key->buf;
+    if (hdr->header.aiKeyAlg != CALG_RSA_KEYX)
+    {
+        return ERR_WIN_CRYPTO_INVALID_KEY_ALG_ID;
+    }
+
     if (!initWinCryptoEnv())
     {
         return GetLastErrno();
@@ -1123,6 +1175,22 @@ errno WC_RSADecrypt(databuf* data, databuf* key, databuf* output)
     WinCrypto* module = getModulePointer();
 
     dbg_log("[WinCrypto]", "RSADecrypt: 0x%zX, 0x%zX, 0x%zX", data, key, output);
+
+    if (data->len < 1)
+    {
+        return ERR_WIN_CRYPTO_INVALID_CIPHER_DATA;
+    }
+
+    errno err = isValidRSAPrivateKey(key);
+    if (err != NO_ERROR)
+    {
+        return err;
+    }
+    RSAPUBKEYHEADER* hdr = key->buf;
+    if (hdr->header.aiKeyAlg != CALG_RSA_KEYX)
+    {
+        return ERR_WIN_CRYPTO_INVALID_KEY_ALG_ID;
+    }
 
     if (!initWinCryptoEnv())
     {

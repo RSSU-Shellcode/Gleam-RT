@@ -355,23 +355,23 @@ static bool TestWinCrypto_RSASign()
         return false;
     }
 
-    databuf sign;
-    err = runtime->WinCrypto.RSASign(&data, &key, &sign);
+    databuf signature;
+    err = runtime->WinCrypto.RSASign(&data, &key, &signature);
     if (err != NO_ERROR)
     {
         printf_s("failed to sign data with RSA: 0x%X\n", err);
         return false;
     }
 
-    printHexBytes(sign.buf, sign.len);
-    if (sign.len != 256)
+    printHexBytes(signature.buf, signature.len);
+    if (signature.len != 256)
     {
         printf_s("invalid RSA signature length\n");
         return false;
     }
 
     runtime->Memory.Free(key.buf);
-    runtime->Memory.Free(sign.buf);
+    runtime->Memory.Free(signature.buf);
 
     printf_s("test RSASign passed\n");
     return true;
@@ -394,29 +394,22 @@ static bool TestWinCrypto_RSAVerify()
         printf_s("failed to generate RSA key pair: 0x%X\n", err);
         return false;
     }
-    databuf sign;
-    err = runtime->WinCrypto.RSASign(&data, &priKey, &sign);
+    databuf signature;
+    err = runtime->WinCrypto.RSASign(&data, &priKey, &signature);
     if (err != NO_ERROR)
     {
         printf_s("failed to sign data with RSA: 0x%X\n", err);
         return false;
     }
 
-    // build public key from private key
-    RSAPUBKEYHEADER* pubBuf = (RSAPUBKEYHEADER*)(priKey.buf);
-    pubBuf->header.bType = PUBLICKEYBLOB;
-    pubBuf->rsaPubKey.magic = MAGIC_RSA1;
-    // erase other data about private key
-    byte* buf = priKey.buf;
-    buf += sizeof(RSAPUBKEYHEADER);
-    buf += 2048 / 8; // skip modulus
-    uint len = sizeof(RSAPUBKEYHEADER) + 2048 / 8;
-    mem_init(buf, priKey.len - len);
-    databuf pubKey = {
-        .buf = pubBuf,
-        .len = len,
-    };
-    err = runtime->WinCrypto.RSAVerify(&data, &pubKey, &sign);
+    databuf pubKey;
+    err = runtime->WinCrypto.RSAPubKey(&priKey, &pubKey);
+    if (err != NO_ERROR)
+    {
+        printf_s("failed to export RSA public key: 0x%X\n", err);
+        return false;
+    }
+    err = runtime->WinCrypto.RSAVerify(&data, &pubKey, &signature);
     if (err != NO_ERROR)
     {
         printf_s("failed to verify data with RSA: 0x%X\n", err);
@@ -424,8 +417,8 @@ static bool TestWinCrypto_RSAVerify()
     }
 
     // destroy signature
-    *(byte*)(sign.buf) += 1;
-    err = runtime->WinCrypto.RSAVerify(&data, &pubKey, &sign);
+    *(byte*)(signature.buf) += 1;
+    err = runtime->WinCrypto.RSAVerify(&data, &pubKey, &signature);
     if (err == NO_ERROR)
     {
         printf_s("unexpected RSA verify data result\n");
@@ -433,7 +426,8 @@ static bool TestWinCrypto_RSAVerify()
     }
 
     runtime->Memory.Free(priKey.buf);
-    runtime->Memory.Free(sign.buf);
+    runtime->Memory.Free(pubKey.buf);
+    runtime->Memory.Free(signature.buf);
 
     printf_s("test RSAVerify passed\n");
     return true;

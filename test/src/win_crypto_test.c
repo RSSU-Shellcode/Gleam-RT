@@ -121,7 +121,7 @@ static bool TestWinCrypto_AESEncrypt()
     errno err = runtime->WinCrypto.AESEncrypt(&data, &key, &output);
     if (err != NO_ERROR)
     {
-        printf_s("failed to encrypt data: 0x%X\n", err);
+        printf_s("failed to encrypt data with AES: 0x%X\n", err);
         return false;
     }
 
@@ -161,7 +161,7 @@ static bool TestWinCrypto_AESDecrypt()
     errno err = runtime->WinCrypto.AESEncrypt(&data1, &key, &cipherData);
     if (err != NO_ERROR)
     {
-        printf_s("failed to encrypt data: 0x%X\n", err);
+        printf_s("failed to encrypt data with AES: 0x%X\n", err);
         return false;
     }
     if (cipherData.len != WC_AES_IV_SIZE + WC_AES_BLOCK_SIZE)
@@ -209,7 +209,7 @@ static bool TestWinCrypto_AESDecrypt()
     err = runtime->WinCrypto.AESEncrypt(&data2, &key, &cipherData);
     if (err != NO_ERROR)
     {
-        printf_s("failed to encrypt data: 0x%X\n", err);
+        printf_s("failed to encrypt data with AES: 0x%X\n", err);
         return false;
     }
     if (cipherData.len != WC_AES_IV_SIZE + WC_AES_BLOCK_SIZE * 2)
@@ -448,30 +448,39 @@ static bool TestWinCrypto_RSAEncrypt()
         .buf = testdata,
         .len = sizeof(testdata),
     };
-    databuf key;
-    errno err = runtime->WinCrypto.RSAGenKey(WC_RSA_KEY_USAGE_KEYX, 2048, &key);
+    databuf priKey;
+    errno err = runtime->WinCrypto.RSAGenKey(WC_RSA_KEY_USAGE_KEYX, 2048, &priKey);
     if (err != NO_ERROR)
     {
-        printf_s("failed to RSAGenKey: 0x%X\n", err);
+        printf_s("failed to gnererate RSA key pair: 0x%X\n", err);
         return false;
     }
-    databuf out;
-    err = runtime->WinCrypto.RSAEncrypt(&data, &key, &out);
+    databuf pubKey;
+    err = runtime->WinCrypto.RSAPubKey(&priKey, &pubKey);
     if (err != NO_ERROR)
     {
-        printf_s("failed to encrypt data: 0x%X\n", err);
+        printf_s("failed to export RSA public key: 0x%X\n", err);
         return false;
     }
 
-    printHexBytes(out.buf, out.len);
-    if (out.len != 256)
+    databuf output;
+    err = runtime->WinCrypto.RSAEncrypt(&data, &pubKey, &output);
+    if (err != NO_ERROR)
+    {
+        printf_s("failed to encrypt data with RSA: 0x%X\n", err);
+        return false;
+    }
+
+    printHexBytes(output.buf, output.len);
+    if (output.len != 256)
     {
         printf_s("invalid cipher data length\n");
         return false;
     }
 
-    runtime->Memory.Free(key.buf);
-    runtime->Memory.Free(out.buf);
+    runtime->Memory.Free(priKey.buf);
+    runtime->Memory.Free(pubKey.buf);
+    runtime->Memory.Free(output.buf);
 
     printf_s("test RSAEncrypt passed\n");
     return true;
@@ -486,26 +495,33 @@ static bool TestWinCrypto_RSADecrypt()
         .buf = testdata,
         .len = sizeof(testdata),
     };
-    databuf key;
-    errno err = runtime->WinCrypto.RSAGenKey(WC_RSA_KEY_USAGE_KEYX, 2048, &key);
+    databuf priKey;
+    errno err = runtime->WinCrypto.RSAGenKey(WC_RSA_KEY_USAGE_KEYX, 2048, &priKey);
     if (err != NO_ERROR)
     {
-        printf_s("failed to RSAGenKey: 0x%X\n", err);
+        printf_s("failed to gnererate RSA key pair: 0x%X\n", err);
         return false;
     }
-    databuf cipherData;
-    err = runtime->WinCrypto.RSAEncrypt(&data, &key, &cipherData);
+    databuf pubKey;
+    err = runtime->WinCrypto.RSAPubKey(&priKey, &pubKey);
     if (err != NO_ERROR)
     {
-        printf_s("failed to encrypt data: 0x%X\n", err);
+        printf_s("failed to export RSA public key: 0x%X\n", err);
         return false;
     }
 
-    databuf plainData;
-    err = runtime->WinCrypto.RSADecrypt(&cipherData, &key, &plainData);
+    databuf cipherData;
+    err = runtime->WinCrypto.RSAEncrypt(&data, &pubKey, &cipherData);
     if (err != NO_ERROR)
     {
-        printf_s("failed to decrypt data: 0x%X\n", err);
+        printf_s("failed to encrypt data with RSA: 0x%X\n", err);
+        return false;
+    }
+    databuf plainData;
+    err = runtime->WinCrypto.RSADecrypt(&cipherData, &priKey, &plainData);
+    if (err != NO_ERROR)
+    {
+        printf_s("failed to decrypt data with RSA: 0x%X\n", err);
         return false;
     }
 
@@ -527,7 +543,8 @@ static bool TestWinCrypto_RSADecrypt()
         return false;
     }
 
-    runtime->Memory.Free(key.buf);
+    runtime->Memory.Free(priKey.buf);
+    runtime->Memory.Free(pubKey.buf);
     runtime->Memory.Free(cipherData.buf);
     runtime->Memory.Free(plainData.buf);
 

@@ -146,8 +146,8 @@ typedef errno (*HTTPFree_t)();
 
 // ================================WinCrypto================================
 
-// The allocated buffer must call Runtime_M.Memory.Free().
-//
+// The allocated databuf must call Runtime_M.Memory.Free().
+// 
 // +---------+-------------+
 // |   IV    | cipher data |
 // +---------+-------------+
@@ -156,8 +156,10 @@ typedef errno (*HTTPFree_t)();
 //
 // The AES is use CBC mode with PKCS#5 padding method.
 // The valid AES key length are 16, 24, 32 bytes.
-//
 // The RSA is use PKCS#1 v1.5 padding method.
+//
+// The AES Key only contain the key data, not contain header.
+// The RSA Private/Public Key contain the header RSAPUBKEYHEADER.
 
 #ifndef WIN_CRYPTO_H
 

@@ -88,6 +88,9 @@ static void eraseModuleMethods(Context* context);
 static bool initWinCryptoEnv();
 static bool findWinCryptoAPI();
 
+static errno isValidRSAPrivateKey(databuf* key);
+static errno isValidRSAPublicKey(databuf* key);
+
 WinCrypto_M* InitWinCrypto(Context* context)
 {
     // set structure address
@@ -379,6 +382,62 @@ static bool findWinCryptoAPI()
     module->CryptSignHashA        = list[0x0F].proc;
     module->CryptVerifySignatureA = list[0x10].proc;
     return true;
+}
+
+__declspec(noinline)
+static errno isValidRSAPrivateKey(databuf* key)
+{
+    if (key->len < sizeof(RSAPUBKEYHEADER))
+    {
+        return ERR_WIN_CRYPTO_INVALID_KEY_LENGTH;
+    }
+    RSAPUBKEYHEADER* hdr = key->buf;
+    if (hdr->header.bType != PRIVATEKEYBLOB)
+    {
+        return ERR_WIN_CRYPTO_INVALID_KEY_TYPE;
+    }
+    if (hdr->header.bVersion != CUR_BLOB_VERSION)
+    {
+        return ERR_WIN_CRYPTO_INVALID_KEY_VERSION;
+    }
+    ALG_ID aid = hdr->header.aiKeyAlg;
+    if (aid != CALG_RSA_SIGN && aid != CALG_RSA_KEYX)
+    {
+        return ERR_WIN_CRYPTO_INVALID_KEY_ALG_ID;
+    }
+    if (hdr->rsaPubKey.magic != MAGIC_RSA2)
+    {
+        return ERR_WIN_CRYPTO_INVALID_KEY_MAGIC;
+    }
+    return NO_ERROR;
+}
+
+__declspec(noinline)
+static errno isValidRSAPublicKey(databuf* key)
+{
+    if (key->len < sizeof(RSAPUBKEYHEADER))
+    {
+        return ERR_WIN_CRYPTO_INVALID_KEY_LENGTH;
+    }
+    RSAPUBKEYHEADER* hdr = key->buf;
+    if (hdr->header.bType != PUBLICKEYBLOB)
+    {
+        return ERR_WIN_CRYPTO_INVALID_KEY_TYPE;
+    }
+    if (hdr->header.bVersion != CUR_BLOB_VERSION)
+    {
+        return ERR_WIN_CRYPTO_INVALID_KEY_VERSION;
+    }
+    ALG_ID aid = hdr->header.aiKeyAlg;
+    if (aid != CALG_RSA_SIGN && aid != CALG_RSA_KEYX)
+    {
+        return ERR_WIN_CRYPTO_INVALID_KEY_ALG_ID;
+    }
+    if (hdr->rsaPubKey.magic != MAGIC_RSA1)
+    {
+        return ERR_WIN_CRYPTO_INVALID_KEY_MAGIC;
+    }
+    return NO_ERROR;
 }
 
 __declspec(noinline)
@@ -803,35 +862,20 @@ errno WC_RSAPubKey(databuf* key, databuf* output)
 
     dbg_log("[WinCrypto]", "RSAPubKey: 0x%zX, 0x%zX", key, output);
 
-    // check the private key blob is valid
-    if (key->len < sizeof(RSAPUBKEYHEADER))
+    errno err = isValidRSAPrivateKey(key);
+    if (err != NO_ERROR)
     {
-        return ERR_WIN_CRYPTO_INVALID_KEY_LENGTH;
-    }
-    RSAPUBKEYHEADER* priKey = (RSAPUBKEYHEADER*)(key->buf);
-    if (priKey->header.bType != PRIVATEKEYBLOB)
-    {
-        return ERR_WIN_CRYPTO_INVALID_KEY_TYPE;
-    }
-    if (priKey->header.bVersion != CUR_BLOB_VERSION)
-    {
-        return ERR_WIN_CRYPTO_INVALID_KEY_VERSION;
-    }
-    ALG_ID aid = priKey->header.aiKeyAlg;
-    if (aid != CALG_RSA_SIGN && aid != CALG_RSA_KEYX)
-    {
-        return ERR_WIN_CRYPTO_INVALID_KEY_ALG_ID;
-    }
-    if (priKey->rsaPubKey.magic != MAGIC_RSA2)
-    {
-        return ERR_WIN_CRYPTO_INVALID_KEY_MAGIC;
+        return err;
     }
 
     // export public key from private key
+    RSAPUBKEYHEADER* priKey = key->buf;
     uint  length = sizeof(RSAPUBKEYHEADER) + priKey->rsaPubKey.bitlen / 8;
-    byte* buffer = module->malloc(length);
+    void* buffer = module->malloc(length);
     mem_copy(buffer, key->buf, length);
-    RSAPUBKEYHEADER* pubKey = (RSAPUBKEYHEADER*)(buffer);
+
+    // reset type and magic
+    RSAPUBKEYHEADER* pubKey = buffer;
     pubKey->header.bType = PUBLICKEYBLOB;
     pubKey->rsaPubKey.magic = MAGIC_RSA1;
 

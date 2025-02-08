@@ -57,7 +57,7 @@ static bool TestWinCrypto_RandBuffer()
     errno err = runtime->WinCrypto.RandBuffer(buf, sizeof(buf));
     if (err != NO_ERROR)
     {
-        printf_s("failed to test RandBuffer: 0x%X\n", err);
+        printf_s("failed to generate random data: 0x%X\n", err);
         return false;
     }
 
@@ -80,7 +80,7 @@ static bool TestWinCrypto_SHA1()
     errno err = runtime->WinCrypto.SHA1(buf, sizeof(buf), hash);
     if (err != NO_ERROR)
     {
-        printf_s("failed to test SHA1: 0x%X\n", err);
+        printf_s("failed to caclulate SHA1 hash: 0x%X\n", err);
         return false;
     }
 
@@ -117,22 +117,22 @@ static bool TestWinCrypto_AESEncrypt()
         .buf = testkey,
         .len = sizeof(testkey),
     };
-    databuf out;
-    errno err = runtime->WinCrypto.AESEncrypt(&data, &key, &out);
+    databuf output;
+    errno err = runtime->WinCrypto.AESEncrypt(&data, &key, &output);
     if (err != NO_ERROR)
     {
         printf_s("failed to encrypt data: 0x%X\n", err);
         return false;
     }
 
-    printHexBytes(out.buf, out.len);
-    if (out.len != WC_AES_IV_SIZE + WC_AES_BLOCK_SIZE)
+    printHexBytes(output.buf, output.len);
+    if (output.len != WC_AES_IV_SIZE + WC_AES_BLOCK_SIZE)
     {
         printf_s("invalid cipher data length\n");
         return false;
     }
 
-    runtime->Memory.Free(out.buf);
+    runtime->Memory.Free(output.buf);
 
     printf_s("test AESEncrypt passed\n");
     return true;
@@ -157,46 +157,46 @@ static bool TestWinCrypto_AESDecrypt()
         .buf = testkey,
         .len = sizeof(testkey),
     };
-    databuf cipher;
-    errno err = runtime->WinCrypto.AESEncrypt(&data1, &key, &cipher);
+    databuf cipherData;
+    errno err = runtime->WinCrypto.AESEncrypt(&data1, &key, &cipherData);
     if (err != NO_ERROR)
     {
         printf_s("failed to encrypt data: 0x%X\n", err);
         return false;
     }
-    if (cipher.len != WC_AES_IV_SIZE + WC_AES_BLOCK_SIZE)
+    if (cipherData.len != WC_AES_IV_SIZE + WC_AES_BLOCK_SIZE)
     {
         printf_s("invalid cipher data length\n");
         return false;
     }
-    databuf plain;
-    err = runtime->WinCrypto.AESDecrypt(&cipher, &key, &plain);
+    databuf plainData;
+    err = runtime->WinCrypto.AESDecrypt(&cipherData, &key, &plainData);
     if (err != NO_ERROR)
     {
         printf_s("failed to decrypt data: 0x%X\n", err);
         return false;
     }
 
-    printHexBytes(plain.buf, plain.len);
-    if (plain.len != sizeof(testdata1))
+    printHexBytes(plainData.buf, plainData.len);
+    if (plainData.len != sizeof(testdata1))
     {
         printf_s("invalid plain data length\n");
         return false;
     }
     byte expected1[] = { 1, 2, 3, 4 };
-    if (!mem_equal(expected1, plain.buf, sizeof(expected1)))
+    if (!mem_equal(expected1, plainData.buf, sizeof(expected1)))
     {
         printf_s("get incorrect plain data\n");
         return false;
     }
     if (!mem_equal(expected1, testdata1, sizeof(expected1)))
     {
-        printf_s("original data is changed\n");
+        printf_s("the original data is changed\n");
         return false;
     }
 
-    runtime->Memory.Free(cipher.buf);
-    runtime->Memory.Free(plain.buf);
+    runtime->Memory.Free(cipherData.buf);
+    runtime->Memory.Free(plainData.buf);
 
     byte testdata2[] = { 
         1, 2, 3, 4, 5, 6, 7, 8,
@@ -206,26 +206,26 @@ static bool TestWinCrypto_AESDecrypt()
         .buf = testdata2,
         .len = sizeof(testdata2),
     };
-    err = runtime->WinCrypto.AESEncrypt(&data2, &key, &cipher);
+    err = runtime->WinCrypto.AESEncrypt(&data2, &key, &cipherData);
     if (err != NO_ERROR)
     {
         printf_s("failed to encrypt data: 0x%X\n", err);
         return false;
     }
-    if (cipher.len != WC_AES_IV_SIZE + WC_AES_BLOCK_SIZE * 2)
+    if (cipherData.len != WC_AES_IV_SIZE + WC_AES_BLOCK_SIZE * 2)
     {
         printf_s("invalid cipher data length\n");
         return false;
     }
-    err = runtime->WinCrypto.AESDecrypt(&cipher, &key, &plain);
+    err = runtime->WinCrypto.AESDecrypt(&cipherData, &key, &plainData);
     if (err != NO_ERROR)
     {
         printf_s("failed to decrypt data: 0x%X\n", err);
         return false;
     }
 
-    printHexBytes(plain.buf, plain.len);
-    if (plain.len != sizeof(testdata2))
+    printHexBytes(plainData.buf, plainData.len);
+    if (plainData.len != sizeof(testdata2))
     {
         printf_s("invalid plain data length\n");
         return false;
@@ -234,7 +234,7 @@ static bool TestWinCrypto_AESDecrypt()
         1, 2, 3, 4, 5, 6, 7, 8,
         1, 2, 3, 4, 5, 6, 7, 8,
     };
-    if (!mem_equal(expected2, plain.buf, sizeof(expected2)))
+    if (!mem_equal(expected2, plainData.buf, sizeof(expected2)))
     {
         printf_s("get incorrect plain data\n");
         return false;
@@ -245,8 +245,8 @@ static bool TestWinCrypto_AESDecrypt()
         return false;
     }
 
-    runtime->Memory.Free(cipher.buf);
-    runtime->Memory.Free(plain.buf);
+    runtime->Memory.Free(cipherData.buf);
+    runtime->Memory.Free(plainData.buf);
 
     printf_s("test AESDecrypt passed\n");
     return true;
@@ -258,13 +258,13 @@ static bool TestWinCrypto_RSAGenKey()
     errno err = runtime->WinCrypto.RSAGenKey(WC_RSA_KEY_USAGE_SIGN, 4096, &key);
     if (err != NO_ERROR)
     {
-        printf_s("failed to test RSAGenKey: 0x%X\n", err);
+        printf_s("failed to test generate RSA key pair: 0x%X\n", err);
         return false;
     }
     printHexBytes(key.buf, key.len);
     if (key.len != 2324)
     {
-        printf_s("incorrect output data length: %zu\n", key.len);
+        printf_s("incorrect RSA key pair data length: %zu\n", key.len);
         return false;
     }
     byte header1[] = { 
@@ -273,7 +273,7 @@ static bool TestWinCrypto_RSAGenKey()
     };
     if (!mem_equal(header1, key.buf, sizeof(header1)))
     {
-        printf_s("invalid output data\n");
+        printf_s("invalid RSA key pair data\n");
         return false;
     }
     runtime->Memory.Free(key.buf);
@@ -281,13 +281,13 @@ static bool TestWinCrypto_RSAGenKey()
     err = runtime->WinCrypto.RSAGenKey(WC_RSA_KEY_USAGE_KEYX, 2048, &key);
     if (err != NO_ERROR)
     {
-        printf_s("failed to test RSAGenKey: 0x%X\n", err);
+        printf_s("failed to test generate RSA key pair: 0x%X\n", err);
         return false;
     }
     printHexBytes(key.buf, key.len);
     if (key.len != 1172)
     {
-        printf_s("incorrect output data length: %zu\n", key.len);
+        printf_s("incorrect RSA key pair data length: %zu\n", key.len);
         return false;
     }
     byte header2[] = {
@@ -296,7 +296,7 @@ static bool TestWinCrypto_RSAGenKey()
     };
     if (!mem_equal(header2, key.buf, sizeof(header2)))
     {
-        printf_s("invalid output data\n");
+        printf_s("invalid RSA key pair data\n");
         return false;
     }
     runtime->Memory.Free(key.buf);
@@ -311,7 +311,7 @@ static bool TestWinCrypto_RSAPubKey()
     errno err = runtime->WinCrypto.RSAGenKey(WC_RSA_KEY_USAGE_SIGN, 2048, &priKey);
     if (err != NO_ERROR)
     {
-        printf_s("failed to generate rsa private key: 0x%X\n", err);
+        printf_s("failed to generate RSA private key: 0x%X\n", err);
         return false;
     }
 
@@ -319,14 +319,14 @@ static bool TestWinCrypto_RSAPubKey()
     err = runtime->WinCrypto.RSAPubKey(&priKey, &pubKey);
     if (err != NO_ERROR)
     {
-        printf_s("failed to export rsa public key: 0x%X\n", err);
+        printf_s("failed to export RSA public key: 0x%X\n", err);
         return false;
     }
 
     printHexBytes(pubKey.buf, pubKey.len);
     if (pubKey.len != sizeof(RSAPUBKEYHEADER) + 256)
     {
-        printf_s("incorrect public key length: %zu\n", pubKey.len);
+        printf_s("incorrect RSA public key length: %zu\n", pubKey.len);
         return false;
     }
 
@@ -351,7 +351,7 @@ static bool TestWinCrypto_RSASign()
     errno err = runtime->WinCrypto.RSAGenKey(WC_RSA_KEY_USAGE_SIGN, 2048, &key);
     if (err != NO_ERROR)
     {
-        printf_s("failed to RSAGenKey: 0x%X\n", err);
+        printf_s("failed to generate RSA key pair: 0x%X\n", err);
         return false;
     }
 
@@ -359,14 +359,14 @@ static bool TestWinCrypto_RSASign()
     err = runtime->WinCrypto.RSASign(&data, &key, &sign);
     if (err != NO_ERROR)
     {
-        printf_s("failed to RSASign: 0x%X\n", err);
+        printf_s("failed to sign data with RSA: 0x%X\n", err);
         return false;
     }
 
     printHexBytes(sign.buf, sign.len);
     if (sign.len != 256)
     {
-        printf_s("invalid signature length\n");
+        printf_s("invalid RSA signature length\n");
         return false;
     }
 
@@ -391,14 +391,14 @@ static bool TestWinCrypto_RSAVerify()
     errno err = runtime->WinCrypto.RSAGenKey(WC_RSA_KEY_USAGE_SIGN, 2048, &priKey);
     if (err != NO_ERROR)
     {
-        printf_s("failed to RSAGenKey: 0x%X\n", err);
+        printf_s("failed to generate RSA key pair: 0x%X\n", err);
         return false;
     }
     databuf sign;
     err = runtime->WinCrypto.RSASign(&data, &priKey, &sign);
     if (err != NO_ERROR)
     {
-        printf_s("failed to RSASign: 0x%X\n", err);
+        printf_s("failed to sign data with RSA: 0x%X\n", err);
         return false;
     }
 
@@ -419,7 +419,7 @@ static bool TestWinCrypto_RSAVerify()
     err = runtime->WinCrypto.RSAVerify(&data, &pubKey, &sign);
     if (err != NO_ERROR)
     {
-        printf_s("failed to RSAVerify: 0x%X\n", err);
+        printf_s("failed to verify data with RSA: 0x%X\n", err);
         return false;
     }
 
@@ -428,7 +428,7 @@ static bool TestWinCrypto_RSAVerify()
     err = runtime->WinCrypto.RSAVerify(&data, &pubKey, &sign);
     if (err == NO_ERROR)
     {
-        printf_s("failed to RSAVerify\n");
+        printf_s("unexpected RSA verify data result\n");
         return false;
     }
 

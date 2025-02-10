@@ -21,7 +21,6 @@ typedef struct {
     CryptReleaseContext_t   CryptReleaseContext;
     CryptGenRandom_t        CryptGenRandom;
     CryptGenKey_t           CryptGenKey;
-    CryptDeriveKey_t        CryptDeriveKey;
     CryptExportKey_t        CryptExportKey;
     CryptCreateHash_t       CryptCreateHash;
     CryptHashData_t         CryptHashData;
@@ -60,8 +59,8 @@ errno WC_AESEncrypt(databuf* data, databuf* key, databuf* output);
 errno WC_AESDecrypt(databuf* data, databuf* key, databuf* output);
 errno WC_RSAGenKey(uint usage, uint bits, databuf* key);
 errno WC_RSAPubKey(databuf* key, databuf* output);
-errno WC_RSASign(databuf* data, databuf* key, databuf* sign);
-errno WC_RSAVerify(databuf* data, databuf* key, databuf* sign);
+errno WC_RSASign(databuf* data, databuf* key, databuf* signature);
+errno WC_RSAVerify(databuf* data, databuf* key, databuf* signature);
 errno WC_RSAEncrypt(databuf* data, databuf* key, databuf* output);
 errno WC_RSADecrypt(databuf* data, databuf* key, databuf* output);
 
@@ -320,7 +319,6 @@ static bool findWinCryptoAPI()
         { 0xC8A4ABEFC4A15414, 0xDCD358FAAA9AD697 }, // CryptReleaseContext
         { 0x052D13759C233989, 0xD129B99F2DE11CE1 }, // CryptGenRandom
         { 0x7139781045860379, 0xD9B823C41B31892D }, // CryptGenKey
-        { 0x75F125EA08848F34, 0x8F77BCC6829BD0A4 }, // CryptDeriveKey
         { 0xFBD14E610ABC19B0, 0x427A278C5526F497 }, // CryptExportKey
         { 0xCA46DCB36C8EF17A, 0xEDEA67BFCC8F2970 }, // CryptCreateHash
         { 0x08F3ADAD64028885, 0xFF7C7DF5E4A9283F }, // CryptHashData
@@ -340,7 +338,6 @@ static bool findWinCryptoAPI()
         { 0x201C2004, 0x435A9F1B }, // CryptReleaseContext
         { 0x608C5DA1, 0xE9C08140 }, // CryptGenRandom
         { 0x9EDA4CE2, 0x1D81FE5F }, // CryptGenKey
-        { 0x630E8D56, 0xAE61AFD0 }, // CryptDeriveKey
         { 0x1F7F51F7, 0x38675FE9 }, // CryptExportKey
         { 0xAC10214C, 0x745E27FB }, // CryptCreateHash
         { 0x34BF08ED, 0x2C655EC2 }, // CryptHashData
@@ -368,19 +365,18 @@ static bool findWinCryptoAPI()
     module->CryptReleaseContext   = list[0x01].proc;
     module->CryptGenRandom        = list[0x02].proc;
     module->CryptGenKey           = list[0x03].proc;
-    module->CryptDeriveKey        = list[0x04].proc;
-    module->CryptExportKey        = list[0x05].proc;
-    module->CryptCreateHash       = list[0x06].proc;
-    module->CryptHashData         = list[0x07].proc;
-    module->CryptGetHashParam     = list[0x08].proc;
-    module->CryptDestroyHash      = list[0x09].proc;
-    module->CryptImportKey        = list[0x0A].proc;
-    module->CryptSetKeyParam      = list[0x0B].proc;
-    module->CryptEncrypt          = list[0x0C].proc;
-    module->CryptDecrypt          = list[0x0D].proc;
-    module->CryptDestroyKey       = list[0x0E].proc;
-    module->CryptSignHashA        = list[0x0F].proc;
-    module->CryptVerifySignatureA = list[0x10].proc;
+    module->CryptExportKey        = list[0x04].proc;
+    module->CryptCreateHash       = list[0x05].proc;
+    module->CryptHashData         = list[0x06].proc;
+    module->CryptGetHashParam     = list[0x07].proc;
+    module->CryptDestroyHash      = list[0x08].proc;
+    module->CryptImportKey        = list[0x09].proc;
+    module->CryptSetKeyParam      = list[0x0A].proc;
+    module->CryptEncrypt          = list[0x0B].proc;
+    module->CryptDecrypt          = list[0x0C].proc;
+    module->CryptDestroyKey       = list[0x0D].proc;
+    module->CryptSignHashA        = list[0x0E].proc;
+    module->CryptVerifySignatureA = list[0x0F].proc;
     return true;
 }
 
@@ -885,11 +881,11 @@ errno WC_RSAPubKey(databuf* key, databuf* output)
 }
 
 __declspec(noinline)
-errno WC_RSASign(databuf* data, databuf* key, databuf* sign)
+errno WC_RSASign(databuf* data, databuf* key, databuf* signature)
 {
     WinCrypto* module = getModulePointer();
 
-    dbg_log("[WinCrypto]", "RSASign: 0x%zX, 0x%zX, 0x%zX", data, key, sign);
+    dbg_log("[WinCrypto]", "RSASign: 0x%zX, 0x%zX, 0x%zX", data, key, signature);
 
     if (data->len < 1)
     {
@@ -981,23 +977,23 @@ errno WC_RSASign(databuf* data, databuf* key, databuf* sign)
         module->free(buffer);
         return lastErr;
     }
-    sign->buf = buffer;
-    sign->len = length;
+    signature->buf = buffer;
+    signature->len = length;
     return NO_ERROR;
 }
 
 __declspec(noinline)
-errno WC_RSAVerify(databuf* data, databuf* key, databuf* sign)
+errno WC_RSAVerify(databuf* data, databuf* key, databuf* signature)
 {
     WinCrypto* module = getModulePointer();
 
-    dbg_log("[WinCrypto]", "RSAVerify: 0x%zX, 0x%zX, 0x%zX", data, key, sign);
+    dbg_log("[WinCrypto]", "RSAVerify: 0x%zX, 0x%zX, 0x%zX", data, key, signature);
 
     if (data->len < 1)
     {
         return ERR_WIN_CRYPTO_EMPTY_MESSAGE;
     }
-    if (sign->len < 1)
+    if (signature->len < 1)
     {
         return ERR_WIN_CRYPTO_EMPTY_SIGNATURE;
     }
@@ -1053,7 +1049,7 @@ errno WC_RSAVerify(databuf* data, databuf* key, databuf* sign)
         }
         // verify signature about data hash
         if (!module->CryptVerifySignatureA(
-            hHash, sign->buf, (DWORD)(sign->len), hKey, NULL, 0
+            hHash, signature->buf, (DWORD)(signature->len), hKey, NULL, 0
         )){
             break;
         }

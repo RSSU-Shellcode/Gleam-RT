@@ -178,8 +178,8 @@ typedef errno (*CryptoAESEncrypt_t)(databuf* data, databuf* key, databuf* output
 typedef errno (*CryptoAESDecrypt_t)(databuf* data, databuf* key, databuf* output);
 typedef errno (*CryptoRSAGenKey_t)(uint usage, uint bits, databuf* key);
 typedef errno (*CryptoRSAPubKey_t)(databuf* key, databuf* output);
-typedef errno (*CryptoRSASign_t)(databuf* data, databuf* key, databuf* sign);
-typedef errno (*CryptoRSAVerify_t)(databuf* data, databuf* key, databuf* sign);
+typedef errno (*CryptoRSASign_t)(databuf* data, databuf* key, databuf* signature);
+typedef errno (*CryptoRSAVerify_t)(databuf* data, databuf* key, databuf* signature);
 typedef errno (*CryptoRSAEncrypt_t)(databuf* data, databuf* key, databuf* output);
 typedef errno (*CryptoRSADecrypt_t)(databuf* data, databuf* key, databuf* output);
 

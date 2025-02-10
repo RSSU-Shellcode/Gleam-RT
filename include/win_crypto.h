@@ -33,8 +33,8 @@ typedef errno (*WCAESEncrypt_t)(databuf* data, databuf* key, databuf* output);
 typedef errno (*WCAESDecrypt_t)(databuf* data, databuf* key, databuf* output);
 typedef errno (*WCRSAGenKey_t)(uint usage, uint bits, databuf* key);
 typedef errno (*WCRSAPubKey_t)(databuf* key, databuf* output);
-typedef errno (*WCRSASign_t)(databuf* data, databuf* key, databuf* sign);
-typedef errno (*WCRSAVerify_t)(databuf* data, databuf* key, databuf* sign);
+typedef errno (*WCRSASign_t)(databuf* data, databuf* key, databuf* signature);
+typedef errno (*WCRSAVerify_t)(databuf* data, databuf* key, databuf* signature);
 typedef errno (*WCRSAEncrypt_t)(databuf* data, databuf* key, databuf* output);
 typedef errno (*WCRSADecrypt_t)(databuf* data, databuf* key, databuf* output);
 

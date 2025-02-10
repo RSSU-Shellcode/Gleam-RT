@@ -135,12 +135,6 @@ typedef BOOL (*CryptGenKey_t)
     HCRYPTPROV hProv, ALG_ID Algid, DWORD dwFlags, HCRYPTKEY* phKey
 );
 
-typedef BOOL (*CryptDeriveKey_t)
-(
-    HCRYPTPROV hProv, ALG_ID Algid, HCRYPTHASH hBaseData,
-    DWORD dwFlags, HCRYPTKEY* phKey
-);
-
 typedef BOOL (*CryptExportKey_t)
 (
     HCRYPTKEY hKey, HCRYPTKEY hExpKey, DWORD dwBlobType,

@@ -12,6 +12,9 @@
 #include "mod_library.h"
 #include "debug.h"
 
+// since the essence of HMODULE is the memory address where
+// the module is located, an address that cannot be assigned
+// is used as a special placeholder.
 #define MODULE_UNLOADED ((HMODULE)(0xFE))
 
 typedef struct {
@@ -78,13 +81,13 @@ static bool initTrackerAPI(LibraryTracker* tracker, Context* context);
 static bool updateTrackerPointer(LibraryTracker* tracker);
 static bool recoverTrackerPointer(LibraryTracker* tracker);
 static bool initTrackerEnvironment(LibraryTracker* tracker, Context* context);
+static void eraseTrackerMethods(Context* context);
+static void cleanTracker(LibraryTracker* tracker);
+
 static bool addModule(LibraryTracker* tracker, HMODULE hModule);
 static bool delModule(LibraryTracker* tracker, HMODULE hModule);
 static bool setModuleLocker(HMODULE hModule, bool lock);
 static bool cleanModule(LibraryTracker* tracker, module* module);
-
-static void eraseTrackerMethods(Context* context);
-static void cleanTracker(LibraryTracker* tracker);
 
 LibraryTracker_M* InitLibraryTracker(Context* context)
 {

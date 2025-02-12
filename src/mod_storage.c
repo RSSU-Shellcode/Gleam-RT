@@ -11,6 +11,8 @@
 #include "mod_storage.h"
 #include "debug.h"
 
+// some IDs are reserved for runtime and some upper-level
+// modules, and the rest are left to users.
 #define NUM_RESERVED_ID 1024
 
 typedef struct {

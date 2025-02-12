@@ -153,12 +153,12 @@ static bool initTrackerAPI(ResourceTracker* tracker, Context* context);
 static bool updateTrackerPointer(ResourceTracker* tracker);
 static bool recoverTrackerPointer(ResourceTracker* tracker);
 static bool initTrackerEnvironment(ResourceTracker* tracker, Context* context);
+static void eraseTrackerMethods(Context* context);
+static void cleanTracker(ResourceTracker* tracker);
+
 static bool addHandle(ResourceTracker* tracker, void* hObject, uint32 source);
 static void delHandle(ResourceTracker* tracker, void* hObject, uint32 type);
 static bool setHandleLocker(HANDLE hObject, uint32 func, bool lock);
-
-static void eraseTrackerMethods(Context* context);
-static void cleanTracker(ResourceTracker* tracker);
 
 static errno doWSACleanup(ResourceTracker* tracker);
 

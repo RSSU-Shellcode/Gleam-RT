@@ -171,14 +171,17 @@ static bool initTrackerAPI(MemoryTracker* tracker, Context* context);
 static bool updateTrackerPointer(MemoryTracker* tracker);
 static bool recoverTrackerPointer(MemoryTracker* tracker);
 static bool initTrackerEnvironment(MemoryTracker* tracker, Context* context);
-static bool allocPage(MemoryTracker* tracker, uintptr address, uint size, uint32 type, uint32 protect);
+static void eraseTrackerMethods(Context* context);
+static void cleanTracker(MemoryTracker* tracker);
+
+static bool allocPage(uintptr address, uint size, uint32 type, uint32 protect);
 static bool reserveRegion(MemoryTracker* tracker, uintptr address, uint size);
 static bool commitPage(MemoryTracker* tracker, uintptr address, uint size, uint32 protect);
-static bool freePage(MemoryTracker* tracker, uintptr address, uint size, uint32 type);
+static bool freePage(uintptr address, uint size, uint32 type);
 static bool decommitPage(MemoryTracker* tracker, uintptr address, uint size);
 static bool releasePage(MemoryTracker* tracker, uintptr address, uint size);
 static bool deletePages(MemoryTracker* tracker, uintptr address, uint size);
-static void protectPage(MemoryTracker* tracker, uintptr address, uint size, uint32 protect);
+static void protectPage(uintptr address, uint size, uint32 protect);
 static bool addHeapObject(MemoryTracker* tracker, HANDLE hHeap, uint32 options);
 static bool delHeapObject(MemoryTracker* tracker, HANDLE hHeap);
 static uint calcHeapMark(uint mark, uintptr addr, uint size);
@@ -194,14 +197,11 @@ static bool encryptPage(MemoryTracker* tracker, memPage* page);
 static bool decryptPage(MemoryTracker* tracker, memPage* page);
 static bool isEmptyPage(MemoryTracker* tracker, memPage* page);
 static void deriveKey(MemoryTracker* tracker, memPage* page, byte* key);
-static bool encryptHeapBlocks(MemoryTracker* tracker, HANDLE hHeap);
-static bool decryptHeapBlocks(MemoryTracker* tracker, HANDLE hHeap);
-static bool eraseHeapBlocks(MemoryTracker* tracker, HANDLE hHeap);
-static bool walkHeapBlocks(MemoryTracker* tracker, HANDLE hHeap, int operation);
+static bool encryptHeapBlocks(HANDLE hHeap);
+static bool decryptHeapBlocks(HANDLE hHeap);
+static bool eraseHeapBlocks(HANDLE hHeap);
+static bool walkHeapBlocks(HANDLE hHeap, int operation);
 static bool cleanPage(MemoryTracker* tracker, memPage* page);
-
-static void eraseTrackerMethods(Context* context);
-static void cleanTracker(MemoryTracker* tracker);
 
 MemoryTracker_M* InitMemoryTracker(Context* context)
 {
@@ -528,7 +528,7 @@ LPVOID MT_VirtualAlloc(LPVOID address, SIZE_T size, DWORD type, DWORD protect)
             success = false;
             break;
         }
-        if (!allocPage(tracker, (uintptr)page, size, type, protect))
+        if (!allocPage((uintptr)page, size, type, protect))
         {
             success = false;
             break;
@@ -555,8 +555,10 @@ LPVOID MT_VirtualAlloc(LPVOID address, SIZE_T size, DWORD type, DWORD protect)
     return page;
 }
 
-static bool allocPage(MemoryTracker* tracker, uintptr address, uint size, uint32 type, uint32 protect)
+static bool allocPage(uintptr address, uint size, uint32 type, uint32 protect)
 {
+    MemoryTracker* tracker = getTrackerPointer();
+
     if (!isPageTypeTrackable(type))
     {
         return true;
@@ -638,7 +640,7 @@ BOOL MT_VirtualFree(LPVOID address, SIZE_T size, DWORD type)
             success = false;
             break;
         }
-        if (!freePage(tracker, (uintptr)address, size, type))
+        if (!freePage((uintptr)address, size, type))
         {
             success = false;
             break;
@@ -653,8 +655,10 @@ BOOL MT_VirtualFree(LPVOID address, SIZE_T size, DWORD type)
     return success;
 }
 
-static bool freePage(MemoryTracker* tracker, uintptr address, uint size, uint32 type)
+static bool freePage(uintptr address, uint size, uint32 type)
 {
+    MemoryTracker* tracker = getTrackerPointer();
+
     switch (type&0xF000)
     {
     case MEM_DECOMMIT:
@@ -786,7 +790,7 @@ BOOL MT_VirtualProtect(LPVOID address, SIZE_T size, DWORD new, DWORD* old)
             success = false;
             break;
         }
-        protectPage(tracker, (uintptr)address, size, new);
+        protectPage((uintptr)address, size, new);
         break;
     }
 
@@ -797,8 +801,10 @@ BOOL MT_VirtualProtect(LPVOID address, SIZE_T size, DWORD new, DWORD* old)
     return success;
 }
 
-static void protectPage(MemoryTracker* tracker, uintptr address, uint size, uint32 protect)
+static void protectPage(uintptr address, uint size, uint32 protect)
 {
+    MemoryTracker* tracker = getTrackerPointer();
+
     register uint pageSize = tracker->PageSize;
 
     register List* pages = &tracker->Pages;
@@ -2443,7 +2449,7 @@ errno MT_Encrypt()
             // walk and encrypt heap blocks
             for (uint32 i = 0; i < numHeaps; i++)
             {
-                if (!encryptHeapBlocks(tracker, *hHeap))
+                if (!encryptHeapBlocks(*hHeap))
                 {
                     return ERR_MEMORY_ENCRYPT_BLOCK;
                 }
@@ -2531,7 +2537,7 @@ errno MT_Decrypt()
             // walk and decrypt heap blocks
             for (uint32 i = 0; i < numHeaps; i++)
             {
-                if (!decryptHeapBlocks(tracker, *hHeap))
+                if (!decryptHeapBlocks(*hHeap))
                 {
                     return ERR_MEMORY_DECRYPT_BLOCK;
                 }
@@ -2609,23 +2615,25 @@ static void deriveKey(MemoryTracker* tracker, memPage* page, byte* key)
     mem_copy(key + 4, &addr, sizeof(addr));
 }
 
-static bool encryptHeapBlocks(MemoryTracker* tracker, HANDLE hHeap)
+static bool encryptHeapBlocks(HANDLE hHeap)
 {
-    return walkHeapBlocks(tracker, hHeap, OP_WALK_HEAP_ENCRYPT);
+    return walkHeapBlocks(hHeap, OP_WALK_HEAP_ENCRYPT);
 }
 
-static bool decryptHeapBlocks(MemoryTracker* tracker, HANDLE hHeap)
+static bool decryptHeapBlocks(HANDLE hHeap)
 {
-    return walkHeapBlocks(tracker, hHeap, OP_WALK_HEAP_DECRYPT);
+    return walkHeapBlocks(hHeap, OP_WALK_HEAP_DECRYPT);
 }
 
-static bool eraseHeapBlocks(MemoryTracker* tracker, HANDLE hHeap)
+static bool eraseHeapBlocks(HANDLE hHeap)
 {
-    return walkHeapBlocks(tracker, hHeap, OP_WALK_HEAP_ERASE);
+    return walkHeapBlocks(hHeap, OP_WALK_HEAP_ERASE);
 }
 
-static bool walkHeapBlocks(MemoryTracker* tracker, HANDLE hHeap, int operation)
+static bool walkHeapBlocks(HANDLE hHeap, int operation)
 {
+    MemoryTracker* tracker = getTrackerPointer();
+
     if (!tracker->HeapLock(hHeap))
     {
         return false;
@@ -2829,7 +2837,7 @@ errno MT_FreeAll()
             // walk and encrypt heap blocks
             for (uint32 i = 0; i < numHeaps; i++)
             {
-                if (!eraseHeapBlocks(tracker, *hHeap))
+                if (!eraseHeapBlocks(*hHeap))
                 {
                     errno = ERR_MEMORY_ERASE_BLOCK;
                 }
@@ -2953,7 +2961,7 @@ errno MT_Clean()
             // walk and encrypt heap blocks
             for (uint32 i = 0; i < numHeaps; i++)
             {
-                if (!eraseHeapBlocks(tracker, *hHeap))
+                if (!eraseHeapBlocks(*hHeap))
                 {
                     if (errno == NO_ERROR)
                     {

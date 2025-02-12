@@ -106,19 +106,19 @@ HANDLE tt_createThread(
 #endif
 static ThreadTracker* getTrackerPointer();
 
-static bool  initTrackerAPI(ThreadTracker* tracker, Context* context);
-static bool  updateTrackerPointer(ThreadTracker* tracker);
-static bool  recoverTrackerPointer(ThreadTracker* tracker);
-static bool  initTrackerEnvironment(ThreadTracker* tracker, Context* context);
+static bool initTrackerAPI(ThreadTracker* tracker, Context* context);
+static bool updateTrackerPointer(ThreadTracker* tracker);
+static bool recoverTrackerPointer(ThreadTracker* tracker);
+static bool initTrackerEnvironment(ThreadTracker* tracker, Context* context);
+static void eraseTrackerMethods(Context* context);
+static void cleanTracker(ThreadTracker* tracker);
+
 static void* camouflageStartAddress(void* address);
 static bool  addThread(ThreadTracker* tracker, DWORD threadID, HANDLE hThread);
 static void  delThread(ThreadTracker* tracker, DWORD threadID);
 static bool  addTLSIndex(ThreadTracker* tracker, DWORD index);
 static void  delTLSIndex(ThreadTracker* tracker, DWORD index);
 static bool  setThreadLocker(DWORD threadID, bool lock);
-
-static void eraseTrackerMethods(Context* context);
-static void cleanTracker(ThreadTracker* tracker);
 
 ThreadTracker_M* InitThreadTracker(Context* context)
 {

@@ -52,16 +52,16 @@ errno AS_Clean();
 #endif
 static ArgumentStore* getStorePointer();
 
-static bool  initStoreAPI(ArgumentStore* store, Context* context);
-static bool  updateStorePointer(ArgumentStore* store);
-static bool  recoverStorePointer(ArgumentStore* store);
-static bool  initStoreEnvironment(ArgumentStore* store, Context* context);
+static bool initStoreAPI(ArgumentStore* store, Context* context);
+static bool updateStorePointer(ArgumentStore* store);
+static bool recoverStorePointer(ArgumentStore* store);
+static bool initStoreEnvironment(ArgumentStore* store, Context* context);
+static void eraseStoreMethods(Context* context);
+static void cleanStore(ArgumentStore* store);
+
 static errno loadArguments(ArgumentStore* store, Context* context);
 static byte  ror(byte value, uint8 bits);
 static byte  rol(byte value, uint8 bits);
-
-static void eraseStoreMethods(Context* context);
-static void cleanStore(ArgumentStore* store);
 
 ArgumentStore_M* InitArgumentStore(Context* context)
 {

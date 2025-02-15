@@ -30,8 +30,12 @@ typedef errno (*ResClean_t)();
 typedef struct {
     CreateMutexA_t     CreateMutexA;
     CreateMutexW_t     CreateMutexW;
+    CreateMutexExA_t   CreateMutexExA;
+    CreateMutexExW_t   CreateMutexExW;
     CreateEventA_t     CreateEventA;
     CreateEventW_t     CreateEventW;
+    CreateEventExA_t   CreateEventExA;
+    CreateEventExW_t   CreateEventExW;
     CreateFileA_t      CreateFileA;
     CreateFileW_t      CreateFileW;
     FindFirstFileA_t   FindFirstFileA;

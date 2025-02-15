@@ -57,9 +57,13 @@ https://learn.microsoft.com/en-us/windows/win32/api/winsock/nf-winsock-wsacleanu
 https://learn.microsoft.com/en-us/windows/win32/winsock/windows-sockets-error-codes-2
 https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createmutexa
 https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createmutexw
+https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createmutexexa
+https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createmutexexw
 https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-releasemutex
 https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createeventa
 https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createeventw
+https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createeventexa
+https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createeventexw
 https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-setevent
 https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-resetevent
 https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createwaitabletimerw

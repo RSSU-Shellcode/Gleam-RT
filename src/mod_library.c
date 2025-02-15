@@ -307,20 +307,19 @@ HMODULE LT_LoadLibraryA(LPCSTR lpLibFileName)
 
     HMODULE hModule;
 
-    bool success = true;
+    bool success = false;
     for (;;)
     {
         hModule = tracker->LoadLibraryA(lpLibFileName);
         if (hModule == NULL)
         {
-            success = false;
             break;
         }
         if (!addModule(tracker, hModule))
         {
-            success = false;
             break;
         }
+        success = true;
         break;
     }
 
@@ -353,20 +352,19 @@ HMODULE LT_LoadLibraryW(LPCWSTR lpLibFileName)
 
     HMODULE hModule;
 
-    bool success = true;
+    bool success = false;
     for (;;)
     {
         hModule = tracker->LoadLibraryW(lpLibFileName);
         if (hModule == NULL)
         {
-            success = false;
             break;
         }
         if (!addModule(tracker, hModule))
         {
-            success = false;
             break;
         }
+        success = true;
         break;
     }
 
@@ -399,20 +397,19 @@ HMODULE LT_LoadLibraryExA(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 
     HMODULE hModule;
 
-    bool success = true;
+    bool success = false;
     for (;;)
     {
         hModule = tracker->LoadLibraryExA(lpLibFileName, hFile, dwFlags);
         if (hModule == NULL)
         {
-            success = false;
             break;
         }
         if (!addModule(tracker, hModule))
         {
-            success = false;
             break;
         }
+        success = true;
         break;
     }
 
@@ -445,20 +442,19 @@ HMODULE LT_LoadLibraryExW(LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 
     HMODULE hModule;
 
-    bool success = true;
+    bool success = false;
     for (;;)
     {
         hModule = tracker->LoadLibraryExW(lpLibFileName, hFile, dwFlags);
         if (hModule == NULL)
         {
-            success = false;
             break;
         }
         if (!addModule(tracker, hModule))
         {
-            success = false;
             break;
         }
+        success = true;
         break;
     }
 
@@ -489,19 +485,18 @@ BOOL LT_FreeLibrary(HMODULE hLibModule)
         return false;
     }
 
-    bool success = true;
+    bool success = false;
     for (;;)
     {
         if (!tracker->FreeLibrary(hLibModule))
         {
-            success = false;
             break;
         }
         if (!delModule(tracker, hLibModule))
         {
-            success = false;
             break;
         }
+        success = true;
         break;
     }
 

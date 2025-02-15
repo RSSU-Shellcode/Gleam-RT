@@ -176,6 +176,8 @@ static void cleanTracker(ResourceTracker* tracker);
 
 static bool addHandle(ResourceTracker* tracker, void* hObject, uint32 source);
 static void delHandle(ResourceTracker* tracker, void* hObject, uint32 type);
+static bool addHandleMu(ResourceTracker* tracker, void* hObject, uint32 source);
+static void delHandleMu(ResourceTracker* tracker, void* hObject, uint32 type);
 static bool setHandleLocker(HANDLE hObject, uint32 func, bool lock);
 
 static errno doWSACleanup(ResourceTracker* tracker);
@@ -461,18 +463,9 @@ HANDLE RT_CreateMutexA(POINTER lpMutexAttributes, BOOL bInitialOwner, LPCSTR lpN
         {
             break;
         }
-        if (!RT_Lock())
+        if (!addHandleMu(tracker, hMutex, SRC_CREATE_MUTEX_A))
         {
-            break;
-        }
-        if (!addHandle(tracker, hMutex, SRC_CREATE_MUTEX_A))
-        {
-            tracker->CloseHandle(hMutex);
             lastErr = ERR_RESOURCE_ADD_MUTEX;
-            break;
-        }
-        if (!RT_Unlock())
-        {
             break;
         }
         break;
@@ -500,18 +493,9 @@ HANDLE RT_CreateMutexW(POINTER lpMutexAttributes, BOOL bInitialOwner, LPCWSTR lp
         {
             break;
         }
-        if (!RT_Lock())
+        if (!addHandleMu(tracker, hMutex, SRC_CREATE_MUTEX_W))
         {
-            break;
-        }
-        if (!addHandle(tracker, hMutex, SRC_CREATE_MUTEX_W))
-        {
-            tracker->CloseHandle(hMutex);
             lastErr = ERR_RESOURCE_ADD_MUTEX;
-            break;
-        }
-        if (!RT_Unlock())
-        {
             break;
         }
         break;
@@ -540,18 +524,9 @@ HANDLE RT_CreateMutexExA(
         {
             break;
         }
-        if (!RT_Lock())
+        if (!addHandleMu(tracker, hMutex, SRC_CREATE_MUTEX_EX_A))
         {
-            break;
-        }
-        if (!addHandle(tracker, hMutex, SRC_CREATE_MUTEX_EX_A))
-        {
-            tracker->CloseHandle(hMutex);
             lastErr = ERR_RESOURCE_ADD_MUTEX;
-            break;
-        }
-        if (!RT_Unlock())
-        {
             break;
         }
         break;
@@ -580,18 +555,9 @@ HANDLE RT_CreateMutexExW(
         {
             break;
         }
-        if (!RT_Lock())
+        if (!addHandleMu(tracker, hMutex, SRC_CREATE_MUTEX_EX_W))
         {
-            break;
-        }
-        if (!addHandle(tracker, hMutex, SRC_CREATE_MUTEX_EX_W))
-        {
-            tracker->CloseHandle(hMutex);
             lastErr = ERR_RESOURCE_ADD_MUTEX;
-            break;
-        }
-        if (!RT_Unlock())
-        {
             break;
         }
         break;
@@ -620,17 +586,9 @@ HANDLE RT_CreateEventA(
         {
             break;
         }
-        if (!RT_Lock())
-        {
-            break;
-        }
-        if (!addHandle(tracker, hEvent, SRC_CREATE_EVENT_A))
+        if (!addHandleMu(tracker, hEvent, SRC_CREATE_EVENT_A))
         {
             lastErr = ERR_RESOURCE_ADD_EVENT;
-            break;
-        }
-        if (!RT_Unlock())
-        {
             break;
         }
         break;
@@ -659,17 +617,9 @@ HANDLE RT_CreateEventW(
         {
             break;
         }
-        if (!RT_Lock())
-        {
-            break;
-        }
-        if (!addHandle(tracker, hEvent, SRC_CREATE_EVENT_W))
+        if (!addHandleMu(tracker, hEvent, SRC_CREATE_EVENT_W))
         {
             lastErr = ERR_RESOURCE_ADD_EVENT;
-            break;
-        }
-        if (!RT_Unlock())
-        {
             break;
         }
         break;
@@ -698,17 +648,9 @@ HANDLE RT_CreateEventExA(
         {
             break;
         }
-        if (!RT_Lock())
-        {
-            break;
-        }
-        if (!addHandle(tracker, hEvent, SRC_CREATE_EVENT_EX_A))
+        if (!addHandleMu(tracker, hEvent, SRC_CREATE_EVENT_EX_A))
         {
             lastErr = ERR_RESOURCE_ADD_EVENT;
-            break;
-        }
-        if (!RT_Unlock())
-        {
             break;
         }
         break;
@@ -737,17 +679,9 @@ HANDLE RT_CreateEventExW(
         {
             break;
         }
-        if (!RT_Lock())
-        {
-            break;
-        }
-        if (!addHandle(tracker, hEvent, SRC_CREATE_EVENT_EX_W))
+        if (!addHandleMu(tracker, hEvent, SRC_CREATE_EVENT_EX_W))
         {
             lastErr = ERR_RESOURCE_ADD_EVENT;
-            break;
-        }
-        if (!RT_Unlock())
-        {
             break;
         }
         break;
@@ -773,7 +707,7 @@ HANDLE RT_CreateFileA(
 
     HANDLE hFile;
 
-    bool success = true;
+    bool success = false;
     for (;;)
     {
         hFile = tracker->CreateFileA(
@@ -782,14 +716,13 @@ HANDLE RT_CreateFileA(
         );
         if (hFile == INVALID_HANDLE_VALUE)
         {
-            success = false;
             break;
         }
         if (!addHandle(tracker, hFile, SRC_CREATE_FILE_A))
         {
-            success = false;
             break;
         }
+        success = true;
         break;
     }
 
@@ -821,7 +754,7 @@ HANDLE RT_CreateFileW(
 
     HANDLE hFile;
 
-    bool success = true;
+    bool success = false;
     for (;;)
     {
         hFile = tracker->CreateFileW(
@@ -830,14 +763,13 @@ HANDLE RT_CreateFileW(
         );
         if (hFile == INVALID_HANDLE_VALUE)
         {
-            success = false;
             break;
         }
         if (!addHandle(tracker, hFile, SRC_CREATE_FILE_W))
         {
-            success = false;
             break;
         }
+        success = true;
         break;
     }
 
@@ -866,20 +798,19 @@ HANDLE RT_FindFirstFileA(LPCSTR lpFileName, POINTER lpFindFileData)
 
     HANDLE hFindFile;
 
-    bool success = true;
+    bool success = false;
     for (;;)
     {
         hFindFile = tracker->FindFirstFileA(lpFileName, lpFindFileData);
         if (hFindFile == INVALID_HANDLE_VALUE)
         {
-            success = false;
             break;
         }
         if (!addHandle(tracker, hFindFile, SRC_FIND_FIRST_FILE_A))
         {
-            success = false;
             break;
         }
+        success = true;
         break;
     }
 
@@ -908,20 +839,19 @@ HANDLE RT_FindFirstFileW(LPCWSTR lpFileName, POINTER lpFindFileData)
 
     HANDLE hFindFile;
 
-    bool success = true;
+    bool success = false;
     for (;;)
     {
         hFindFile = tracker->FindFirstFileW(lpFileName, lpFindFileData);
         if (hFindFile == INVALID_HANDLE_VALUE)
         {
-            success = false;
             break;
         }
         if (!addHandle(tracker, hFindFile, SRC_FIND_FIRST_FILE_W))
         {
-            success = false;
             break;
         }
+        success = true;
         break;
     }
 
@@ -951,7 +881,7 @@ HANDLE RT_FindFirstFileExA(
 
     HANDLE hFindFile;
 
-    bool success = true;
+    bool success = false;
     for (;;)
     {
         hFindFile = tracker->FindFirstFileExA(
@@ -960,14 +890,13 @@ HANDLE RT_FindFirstFileExA(
         );
         if (hFindFile == INVALID_HANDLE_VALUE)
         {
-            success = false;
             break;
         }
         if (!addHandle(tracker, hFindFile, SRC_FIND_FIRST_FILE_EX_A))
         {
-            success = false;
             break;
         }
+        success = true;
         break;
     }
 
@@ -997,7 +926,7 @@ HANDLE RT_FindFirstFileExW(
 
     HANDLE hFindFile;
 
-    bool success = true;
+    bool success = false;
     for (;;)
     {
         hFindFile = tracker->FindFirstFileExW(
@@ -1006,14 +935,13 @@ HANDLE RT_FindFirstFileExW(
         );
         if (hFindFile == INVALID_HANDLE_VALUE)
         {
-            success = false;
             break;
         }
         if (!addHandle(tracker, hFindFile, SRC_FIND_FIRST_FILE_EX_W))
         {
-            success = false;
             break;
         }
+        success = true;
         break;
     }
 
@@ -1042,15 +970,7 @@ BOOL RT_CloseHandle(HANDLE hObject)
         {
             break;
         }
-        if (!RT_Lock())
-        {
-            break;
-        }
-        delHandle(tracker, hObject, TYPE_CLOSE_HANDLE);
-        if (!RT_Unlock())
-        {
-            break;
-        }
+        delHandleMu(tracker, hObject, TYPE_CLOSE_HANDLE);
         success = true;
         break;
     }    
@@ -1071,15 +991,7 @@ BOOL RT_FindClose(HANDLE hFindFile)
         {
             break;
         }
-        if (!RT_Lock())
-        {
-            break;
-        }
-        delHandle(tracker, hFindFile, TYPE_FIND_CLOSE);
-        if (!RT_Unlock())
-        {
-            break;
-        }
+        delHandleMu(tracker, hFindFile, TYPE_FIND_CLOSE);
         success = true;
         break;
     }
@@ -1127,6 +1039,58 @@ static void delHandle(ResourceTracker* tracker, void* hObject, uint32 type)
         return;
     }
 };
+
+__declspec(noinline)
+static bool addHandleMu(ResourceTracker* tracker, void* hObject, uint32 source)
+{
+    bool success = false;
+    for (;;)
+    {
+        if (!RT_Lock())
+        {
+            break;
+        }
+        bool ok = addHandle(tracker, hObject, source);
+        if (!RT_Unlock())
+        {
+            break;
+        }
+        success = ok;
+        break;
+    }
+    if (success)
+    {
+        return true;
+    }
+    switch (source & TYPE_MASK)
+    {
+    case TYPE_CLOSE_HANDLE:
+        tracker->CloseHandle(hObject);
+        break;
+    case TYPE_FIND_CLOSE:
+        tracker->FindClose(hObject);
+        break;
+    }
+    return false;
+};
+
+__declspec(noinline)
+static void delHandleMu(ResourceTracker* tracker, void* hObject, uint32 type)
+{
+    for (;;)
+    {
+        if (!RT_Lock())
+        {
+            break;
+        }
+        delHandle(tracker, hObject, type);
+        if (!RT_Unlock())
+        {
+            break;
+        }
+        break;
+    }
+}
 
 __declspec(noinline)
 int RT_WSAStartup(WORD wVersionRequired, POINTER lpWSAData)

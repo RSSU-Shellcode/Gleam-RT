@@ -223,8 +223,12 @@ ResourceTracker_M* InitResourceTracker(Context* context)
     // Windows API hooks
     module->CreateMutexA     = GetFuncAddr(&RT_CreateMutexA);
     module->CreateMutexW     = GetFuncAddr(&RT_CreateMutexW);
+    module->CreateMutexExA   = GetFuncAddr(&RT_CreateMutexExA);
+    module->CreateMutexExW   = GetFuncAddr(&RT_CreateMutexExW);
     module->CreateEventA     = GetFuncAddr(&RT_CreateEventA);
     module->CreateEventW     = GetFuncAddr(&RT_CreateEventW);
+    module->CreateEventExA   = GetFuncAddr(&RT_CreateEventExA);
+    module->CreateEventExW   = GetFuncAddr(&RT_CreateEventExW);
     module->CreateFileA      = GetFuncAddr(&RT_CreateFileA);
     module->CreateFileW      = GetFuncAddr(&RT_CreateFileW);
     module->FindFirstFileA   = GetFuncAddr(&RT_FindFirstFileA);
@@ -672,6 +676,84 @@ HANDLE RT_CreateEventW(
     }
 
     dbg_log("[resource]", "CreateEventW: 0x%zu", hEvent);
+    SetLastErrno(lastErr);
+    return hEvent;
+}
+
+__declspec(noinline)
+HANDLE RT_CreateEventExA(
+    POINTER lpEventAttributes, LPCSTR lpName, DWORD dwFlags, DWORD dwDesiredAccess
+){
+    ResourceTracker* tracker = getTrackerPointer();
+
+    HANDLE hEvent  = NULL;
+    errno  lastErr = NO_ERROR;
+    for (;;)
+    {
+        hEvent = tracker->CreateEventExA(
+            lpEventAttributes, lpName, dwFlags, dwDesiredAccess
+        );
+        lastErr = GetLastErrno();
+        if (hEvent == NULL)
+        {
+            break;
+        }
+        if (!RT_Lock())
+        {
+            break;
+        }
+        if (!addHandle(tracker, hEvent, SRC_CREATE_EVENT_EX_A))
+        {
+            lastErr = ERR_RESOURCE_ADD_EVENT;
+            break;
+        }
+        if (!RT_Unlock())
+        {
+            break;
+        }
+        break;
+    }
+
+    dbg_log("[resource]", "CreateEventExA: 0x%zu", hEvent);
+    SetLastErrno(lastErr);
+    return hEvent;
+}
+
+__declspec(noinline)
+HANDLE RT_CreateEventExW(
+    POINTER lpEventAttributes, LPCWSTR lpName, DWORD dwFlags, DWORD dwDesiredAccess
+){
+    ResourceTracker* tracker = getTrackerPointer();
+
+    HANDLE hEvent  = NULL;
+    errno  lastErr = NO_ERROR;
+    for (;;)
+    {
+        hEvent = tracker->CreateEventExW(
+            lpEventAttributes, lpName, dwFlags, dwDesiredAccess
+        );
+        lastErr = GetLastErrno();
+        if (hEvent == NULL)
+        {
+            break;
+        }
+        if (!RT_Lock())
+        {
+            break;
+        }
+        if (!addHandle(tracker, hEvent, SRC_CREATE_EVENT_EX_W))
+        {
+            lastErr = ERR_RESOURCE_ADD_EVENT;
+            break;
+        }
+        if (!RT_Unlock())
+        {
+            break;
+        }
+        break;
+    }
+
+    dbg_log("[resource]", "CreateEventExW: 0x%zu", hEvent);
     SetLastErrno(lastErr);
     return hEvent;
 }

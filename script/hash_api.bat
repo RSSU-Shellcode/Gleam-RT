@@ -108,8 +108,12 @@ echo.
 echo [Resource Tracker]
 hash_api -fmt 64 -conc -func CreateMutexA
 hash_api -fmt 64 -conc -func CreateMutexW
+hash_api -fmt 64 -conc -func CreateMutexExA
+hash_api -fmt 64 -conc -func CreateMutexExW
 hash_api -fmt 64 -conc -func CreateEventA
 hash_api -fmt 64 -conc -func CreateEventW
+hash_api -fmt 64 -conc -func CreateEventExA
+hash_api -fmt 64 -conc -func CreateEventExW
 hash_api -fmt 64 -conc -func CreateFileA
 hash_api -fmt 64 -conc -func CreateFileW
 hash_api -fmt 64 -conc -func FindFirstFileA
@@ -287,8 +291,12 @@ echo.
 echo [Resource Tracker]
 hash_api -fmt 32 -conc -func CreateMutexA
 hash_api -fmt 32 -conc -func CreateMutexW
+hash_api -fmt 32 -conc -func CreateMutexExA
+hash_api -fmt 32 -conc -func CreateMutexExW
 hash_api -fmt 32 -conc -func CreateEventA
 hash_api -fmt 32 -conc -func CreateEventW
+hash_api -fmt 32 -conc -func CreateEventExA
+hash_api -fmt 32 -conc -func CreateEventExW
 hash_api -fmt 32 -conc -func CreateFileA
 hash_api -fmt 32 -conc -func CreateFileW
 hash_api -fmt 32 -conc -func FindFirstFileA

@@ -87,7 +87,7 @@ typedef struct {
     HANDLE hThreadEvent; // event handler thread
 
     // IAT hooks about GetProcAddress
-    Hook IATHooks[53];
+    Hook IATHooks[57];
 
     // runtime submodules
     LibraryTracker_M*  LibraryTracker;
@@ -887,8 +887,12 @@ static bool initIATHooks(Runtime* runtime)
         { 0xEE9B49D8A9AFB57E, 0xB241162E988541ED, threadTracker->ExitThread }, // ntdll.RtlExitUserThread
         { 0x58926BA5F71CBB5B, 0x1E1F604F6035248A, resourceTracker->CreateMutexA },
         { 0x95A1D6B96343624E, 0xA7C4DE10EA2DA12F, resourceTracker->CreateMutexW },
+        { 0x9DE77A6C34487772, 0xBAB00DB945A579C8, resourceTracker->CreateMutexExA },
+        { 0x5984322FB6D59F14, 0xB66A181C81DBE8E2, resourceTracker->CreateMutexExW },
         { 0x7875DE52EC02CD8B, 0xB95F39E380958D5E, resourceTracker->CreateEventA },
         { 0xE116F3576A0D31F5, 0x3E535616ED1E31A4, resourceTracker->CreateEventW },
+        { 0xF2062F1867E52EA2, 0xC2946E76369763EA, resourceTracker->CreateEventExA },
+        { 0x3F8CC6B0D515045B, 0x94113899E7D963C8, resourceTracker->CreateEventExW },
         { 0x94DAFAE03484102D, 0x300F881516DC2FF5, resourceTracker->CreateFileA },
         { 0xC3D28B35396A90DA, 0x8BA6316E5F5DC86E, resourceTracker->CreateFileW },
         { 0x4015A18370E27D65, 0xA5B47007B7B8DD26, resourceTracker->FindFirstFileA },
@@ -943,8 +947,12 @@ static bool initIATHooks(Runtime* runtime)
         { 0x74B3E012, 0xA73A6B97, threadTracker->ExitThread }, // ntdll.RtlExitUserThread
         { 0xC6B5D6DD, 0x36010787, resourceTracker->CreateMutexA },
         { 0x144D7209, 0xB789D747, resourceTracker->CreateMutexW },
+        { 0xC0EC3C8F, 0x39CECE0C, resourceTracker->CreateMutexExA },
+        { 0xBE884DDB, 0xD002896D, resourceTracker->CreateMutexExW },
         { 0x5E43201A, 0xFE7C8A22, resourceTracker->CreateEventA },
         { 0x15746F79, 0x83C4C211, resourceTracker->CreateEventW },
+        { 0x440B71AB, 0x3DE3CFE1, resourceTracker->CreateEventExA },
+        { 0x36A42610, 0x9E0E88E9, resourceTracker->CreateEventExW },
         { 0x79796D6E, 0x6DBBA55C, resourceTracker->CreateFileA },
         { 0x0370C4B8, 0x76254EF3, resourceTracker->CreateFileW },
         { 0x629ADDFA, 0x749D1CC9, resourceTracker->FindFirstFileA },

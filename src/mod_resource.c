@@ -66,8 +66,12 @@ typedef struct {
     // API addresses
     CreateMutexA_t        CreateMutexA;
     CreateMutexW_t        CreateMutexW;
+    CreateMutexExA_t      CreateMutexExA;
+    CreateMutexExW_t      CreateMutexExW;
     CreateEventA_t        CreateEventA;
     CreateEventW_t        CreateEventW;
+    CreateEventExA_t      CreateEventExA;
+    CreateEventExW_t      CreateEventExW;
     CreateFileA_t         CreateFileA;
     CreateFileW_t         CreateFileW;
     FindFirstFileA_t      FindFirstFileA;
@@ -94,12 +98,26 @@ typedef struct {
 // methods for IAT hooks
 HANDLE RT_CreateMutexA(POINTER lpMutexAttributes, BOOL bInitialOwner, LPCSTR lpName);
 HANDLE RT_CreateMutexW(POINTER lpMutexAttributes, BOOL bInitialOwner, LPCWSTR lpName);
+HANDLE RT_CreateMutexExA(
+    POINTER lpMutexAttributes, LPCSTR lpName, DWORD dwFlags, DWORD dwDesiredAccess
+);
+HANDLE RT_CreateMutexExW(
+    POINTER lpMutexAttributes, LPCWSTR lpName, DWORD dwFlags, DWORD dwDesiredAccess
+);
+
 HANDLE RT_CreateEventA(
     POINTER lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCSTR lpName
 );
 HANDLE RT_CreateEventW(
     POINTER lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCWSTR lpName
 );
+HANDLE RT_CreateEventExA(
+    POINTER lpEventAttributes, LPCSTR lpName, DWORD dwFlags, DWORD dwDesiredAccess
+);
+HANDLE RT_CreateEventExW(
+    POINTER lpEventAttributes, LPCWSTR lpName, DWORD dwFlags, DWORD dwDesiredAccess
+);
+
 HANDLE RT_CreateFileA(
     LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
     POINTER lpSecurityAttributes, DWORD dwCreationDisposition,
@@ -241,10 +259,14 @@ static bool initTrackerAPI(ResourceTracker* tracker, Context* context)
     winapi list[] =
 #ifdef _WIN64
     {
-        { 0xBE6B0C7A1989DA3F, 0x8709FD5F025268A3 }, // CreateMutexA
-        { 0x2E98327F9F2AE9E4, 0x0CA92ECD20195756 }, // CreateMutexW
-        { 0x7F663FAF25E1C782, 0x4A44C351427113CD }, // CreateEventA
-        { 0x923A0A427C8A4AF7, 0xF608FFAFE8DA485F }, // CreateEventW
+        { 0xE71F5525D721E78C, 0xE11FEB9E512C3553 }, // CreateMutexA
+        { 0x295624AAC9B7A9CF, 0x5E4366A9F3C3C96B }, // CreateMutexW
+        { 0xCA1BEE55D503E8D3, 0x05CA734617BCB235 }, // CreateMutexExA
+        { 0x235F6300B18F96FA, 0x462245D0B8E090B4 }, // CreateMutexExW
+        { 0x9DD020DC005DFF26, 0x84F68DC491FB820C }, // CreateEventA
+        { 0xC83FE97180E4699D, 0xF809ED9855BEB13D }, // CreateEventW
+        { 0xDEAACA998C18D9CF, 0x2F9217FFF5838855 }, // CreateEventExA
+        { 0x0D90DD87F8996201, 0x8775BEA3A96EE2FD }, // CreateEventExW
         { 0x31399C47B70A8590, 0x5C59C3E176954594 }, // CreateFileA
         { 0xD1B5E30FA8812243, 0xFD9A53B98C9A437E }, // CreateFileW
         { 0x60041DBB2B0D19DF, 0x7BD2C85D702B4DDC }, // FindFirstFileA
@@ -255,10 +277,14 @@ static bool initTrackerAPI(ResourceTracker* tracker, Context* context)
     };
 #elif _WIN32
     {
-        { 0xD62A0D2B, 0x4E5739E6 }, // CreateMutexA
-        { 0xC3AD063F, 0x38B9DD21 }, // CreateMutexW
-        { 0x208C03DA, 0x501FAE59 }, // CreateEventA
-        { 0x4B422F89, 0xB1533D9B }, // CreateEventW
+        { 0x944F5EC7, 0x2006E943 }, // CreateMutexA
+        { 0xC753F3A6, 0x71358A2E }, // CreateMutexW
+        { 0x0E1E9EE7, 0x6E41C8B1 }, // CreateMutexExA
+        { 0xF609D00D, 0x2F424452 }, // CreateMutexExW
+        { 0xC974EC02, 0x4DFD8870 }, // CreateEventA
+        { 0x0545121C, 0x23C575E7 }, // CreateEventW
+        { 0x653BE09B, 0xDD06E20B }, // CreateEventExA
+        { 0x7F51F1C0, 0xC0601496 }, // CreateEventExW
         { 0x0BB8EEBE, 0x28E70E8D }, // CreateFileA
         { 0x2CB7048A, 0x76AC9783 }, // CreateFileW
         { 0x131B6345, 0x65478818 }, // FindFirstFileA
@@ -279,15 +305,19 @@ static bool initTrackerAPI(ResourceTracker* tracker, Context* context)
     }
     tracker->CreateMutexA     = list[0x00].proc;
     tracker->CreateMutexW     = list[0x01].proc;
-    tracker->CreateEventA     = list[0x02].proc;
-    tracker->CreateEventW     = list[0x03].proc;
-    tracker->CreateFileA      = list[0x04].proc;
-    tracker->CreateFileW      = list[0x05].proc;
-    tracker->FindFirstFileA   = list[0x06].proc;
-    tracker->FindFirstFileW   = list[0x07].proc;
-    tracker->FindFirstFileExA = list[0x08].proc;
-    tracker->FindFirstFileExW = list[0x09].proc;
-    tracker->FindClose        = list[0x0A].proc;
+    tracker->CreateMutexExA   = list[0x02].proc;
+    tracker->CreateMutexExW   = list[0x03].proc;
+    tracker->CreateEventA     = list[0x04].proc;
+    tracker->CreateEventW     = list[0x05].proc;
+    tracker->CreateEventExA   = list[0x06].proc;
+    tracker->CreateEventExW   = list[0x07].proc;
+    tracker->CreateFileA      = list[0x08].proc;
+    tracker->CreateFileW      = list[0x09].proc;
+    tracker->FindFirstFileA   = list[0x0A].proc;
+    tracker->FindFirstFileW   = list[0x0B].proc;
+    tracker->FindFirstFileExA = list[0x0C].proc;
+    tracker->FindFirstFileExW = list[0x0D].proc;
+    tracker->FindClose        = list[0x0E].proc;
 
     tracker->CloseHandle         = context->CloseHandle;
     tracker->ReleaseMutex        = context->ReleaseMutex;
@@ -433,6 +463,7 @@ HANDLE RT_CreateMutexA(POINTER lpMutexAttributes, BOOL bInitialOwner, LPCSTR lpN
         }
         if (!addHandle(tracker, hMutex, SRC_CREATE_MUTEX_A))
         {
+            tracker->CloseHandle(hMutex);
             lastErr = ERR_RESOURCE_ADD_MUTEX;
             break;
         }
@@ -471,6 +502,7 @@ HANDLE RT_CreateMutexW(POINTER lpMutexAttributes, BOOL bInitialOwner, LPCWSTR lp
         }
         if (!addHandle(tracker, hMutex, SRC_CREATE_MUTEX_W))
         {
+            tracker->CloseHandle(hMutex);
             lastErr = ERR_RESOURCE_ADD_MUTEX;
             break;
         }
@@ -482,6 +514,86 @@ HANDLE RT_CreateMutexW(POINTER lpMutexAttributes, BOOL bInitialOwner, LPCWSTR lp
     }
 
     dbg_log("[resource]", "CreateMutexW: 0x%zu", hMutex);
+    SetLastErrno(lastErr);
+    return hMutex;
+}
+
+__declspec(noinline)
+HANDLE RT_CreateMutexExA(
+    POINTER lpMutexAttributes, LPCSTR lpName, DWORD dwFlags, DWORD dwDesiredAccess
+){
+    ResourceTracker* tracker = getTrackerPointer();
+
+    HANDLE hMutex  = NULL;
+    errno  lastErr = NO_ERROR;
+    for (;;)
+    {
+        hMutex = tracker->CreateMutexExA(
+            lpMutexAttributes, lpName, dwFlags, dwDesiredAccess
+        );
+        lastErr = GetLastErrno();
+        if (hMutex == NULL)
+        {
+            break;
+        }
+        if (!RT_Lock())
+        {
+            break;
+        }
+        if (!addHandle(tracker, hMutex, SRC_CREATE_MUTEX_EX_A))
+        {
+            tracker->CloseHandle(hMutex);
+            lastErr = ERR_RESOURCE_ADD_MUTEX;
+            break;
+        }
+        if (!RT_Unlock())
+        {
+            break;
+        }
+        break;
+    }
+
+    dbg_log("[resource]", "CreateMutexExA: 0x%zu", hMutex);
+    SetLastErrno(lastErr);
+    return hMutex;
+}
+
+__declspec(noinline)
+HANDLE RT_CreateMutexExW(
+    POINTER lpMutexAttributes, LPCWSTR lpName, DWORD dwFlags, DWORD dwDesiredAccess
+){
+    ResourceTracker* tracker = getTrackerPointer();
+
+    HANDLE hMutex  = NULL;
+    errno  lastErr = NO_ERROR;
+    for (;;)
+    {
+        hMutex = tracker->CreateMutexExW(
+            lpMutexAttributes, lpName, dwFlags, dwDesiredAccess
+        );
+        lastErr = GetLastErrno();
+        if (hMutex == NULL)
+        {
+            break;
+        }
+        if (!RT_Lock())
+        {
+            break;
+        }
+        if (!addHandle(tracker, hMutex, SRC_CREATE_MUTEX_EX_W))
+        {
+            tracker->CloseHandle(hMutex);
+            lastErr = ERR_RESOURCE_ADD_MUTEX;
+            break;
+        }
+        if (!RT_Unlock())
+        {
+            break;
+        }
+        break;
+    }
+
+    dbg_log("[resource]", "CreateMutexExW: 0x%zu", hMutex);
     SetLastErrno(lastErr);
     return hMutex;
 }

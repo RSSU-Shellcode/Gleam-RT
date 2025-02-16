@@ -72,6 +72,10 @@ typedef struct {
     CreateEventW_t        CreateEventW;
     CreateEventExA_t      CreateEventExA;
     CreateEventExW_t      CreateEventExW;
+    CreateSemaphoreA_t    CreateSemaphoreA;
+    CreateSemaphoreW_t    CreateSemaphoreW;
+    CreateSemaphoreExA_t  CreateSemaphoreExA;
+    CreateSemaphoreExW_t  CreateSemaphoreExW;
     CreateFileA_t         CreateFileA;
     CreateFileW_t         CreateFileW;
     FindFirstFileA_t      FindFirstFileA;
@@ -104,7 +108,6 @@ HANDLE RT_CreateMutexExA(
 HANDLE RT_CreateMutexExW(
     POINTER lpMutexAttributes, LPCWSTR lpName, DWORD dwFlags, DWORD dwDesiredAccess
 );
-
 HANDLE RT_CreateEventA(
     POINTER lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCSTR lpName
 );
@@ -117,7 +120,20 @@ HANDLE RT_CreateEventExA(
 HANDLE RT_CreateEventExW(
     POINTER lpEventAttributes, LPCWSTR lpName, DWORD dwFlags, DWORD dwDesiredAccess
 );
-
+HANDLE RT_CreateSemaphoreA(
+    POINTER lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount, LPCSTR lpName
+);
+HANDLE RT_CreateSemaphoreW(
+    POINTER lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount, LPCWSTR lpName
+);
+HANDLE RT_CreateSemaphoreExA(
+    POINTER lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount,
+    LPCSTR lpName, DWORD dwFlags, DWORD dwDesiredAccess
+);
+HANDLE RT_CreateSemaphoreExW(
+    POINTER lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount,
+    LPCWSTR lpName, DWORD dwFlags, DWORD dwDesiredAccess
+);
 HANDLE RT_CreateFileA(
     LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
     POINTER lpSecurityAttributes, DWORD dwCreationDisposition,
@@ -693,6 +709,36 @@ HANDLE RT_CreateEventExW(
 }
 
 __declspec(noinline)
+HANDLE RT_CreateSemaphoreA(
+    POINTER lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount, LPCSTR lpName
+){
+
+}
+
+__declspec(noinline)
+HANDLE RT_CreateSemaphoreW(
+    POINTER lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount, LPCWSTR lpName
+){
+
+}
+
+__declspec(noinline)
+HANDLE RT_CreateSemaphoreExA(
+    POINTER lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount,
+    LPCSTR lpName, DWORD dwFlags, DWORD dwDesiredAccess
+){
+
+}
+
+__declspec(noinline)
+HANDLE RT_CreateSemaphoreExW(
+    POINTER lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount,
+    LPCWSTR lpName, DWORD dwFlags, DWORD dwDesiredAccess
+){
+
+}
+
+__declspec(noinline)
 HANDLE RT_CreateFileA(
     LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
     POINTER lpSecurityAttributes, DWORD dwCreationDisposition,
@@ -1000,6 +1046,7 @@ BOOL RT_FindClose(HANDLE hFindFile)
     return success;
 };
 
+__declspec(noinline)
 static bool addHandle(ResourceTracker* tracker, void* hObject, uint32 source)
 {
     List* handles = &tracker->Handles;
@@ -1009,9 +1056,23 @@ static bool addHandle(ResourceTracker* tracker, void* hObject, uint32 source)
         .handle = hObject,
         .locked = false,
     };
-    return List_Insert(handles, &handle);
+    if (List_Insert(handles, &handle))
+    {
+        return true;
+    }
+    switch (source & TYPE_MASK)
+    {
+    case TYPE_CLOSE_HANDLE:
+        tracker->CloseHandle(hObject);
+        break;
+    case TYPE_FIND_CLOSE:
+        tracker->FindClose(hObject);
+        break;
+    }
+    return false;
 };
 
+__declspec(noinline)
 static void delHandle(ResourceTracker* tracker, void* hObject, uint32 type)
 {
     List* handles = &tracker->Handles;
@@ -1058,20 +1119,7 @@ static bool addHandleMu(ResourceTracker* tracker, void* hObject, uint32 source)
         success = ok;
         break;
     }
-    if (success)
-    {
-        return true;
-    }
-    switch (source & TYPE_MASK)
-    {
-    case TYPE_CLOSE_HANDLE:
-        tracker->CloseHandle(hObject);
-        break;
-    case TYPE_FIND_CLOSE:
-        tracker->FindClose(hObject);
-        break;
-    }
-    return false;
+    return success;
 };
 
 __declspec(noinline)

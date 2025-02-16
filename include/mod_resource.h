@@ -11,6 +11,7 @@
 typedef struct {
     int64 NumMutexs;
     int64 NumEvents;
+    int64 NumSemaphores;
     int64 NumFiles;
     int64 NumDirs;
 } RT_Status;
@@ -28,22 +29,26 @@ typedef errno (*ResFreeAll_t)();
 typedef errno (*ResClean_t)();
 
 typedef struct {
-    CreateMutexA_t     CreateMutexA;
-    CreateMutexW_t     CreateMutexW;
-    CreateMutexExA_t   CreateMutexExA;
-    CreateMutexExW_t   CreateMutexExW;
-    CreateEventA_t     CreateEventA;
-    CreateEventW_t     CreateEventW;
-    CreateEventExA_t   CreateEventExA;
-    CreateEventExW_t   CreateEventExW;
-    CreateFileA_t      CreateFileA;
-    CreateFileW_t      CreateFileW;
-    FindFirstFileA_t   FindFirstFileA;
-    FindFirstFileW_t   FindFirstFileW;
-    FindFirstFileExA_t FindFirstFileExA;
-    FindFirstFileExW_t FindFirstFileExW;
-    CloseHandle_t      CloseHandle;
-    FindClose_t        FindClose;
+    CreateMutexA_t       CreateMutexA;
+    CreateMutexW_t       CreateMutexW;
+    CreateMutexExA_t     CreateMutexExA;
+    CreateMutexExW_t     CreateMutexExW;
+    CreateEventA_t       CreateEventA;
+    CreateEventW_t       CreateEventW;
+    CreateEventExA_t     CreateEventExA;
+    CreateEventExW_t     CreateEventExW;
+    CreateSemaphoreA_t   CreateSemaphoreA;
+    CreateSemaphoreW_t   CreateSemaphoreW;
+    CreateSemaphoreExA_t CreateSemaphoreExA;
+    CreateSemaphoreExW_t CreateSemaphoreExW;
+    CreateFileA_t        CreateFileA;
+    CreateFileW_t        CreateFileW;
+    FindFirstFileA_t     FindFirstFileA;
+    FindFirstFileW_t     FindFirstFileW;
+    FindFirstFileExA_t   FindFirstFileExA;
+    FindFirstFileExW_t   FindFirstFileExW;
+    CloseHandle_t        CloseHandle;
+    FindClose_t          FindClose;
 
     WSAStartup_t WSAStartup;
     WSACleanup_t WSACleanup;

@@ -519,20 +519,19 @@ LPVOID MT_VirtualAlloc(LPVOID address, SIZE_T size, DWORD type, DWORD protect)
     protect = replacePageProtect(protect);
 
     LPVOID page;
-    bool success = true;
+    bool success = false;
     for (;;)
     {
         page = tracker->VirtualAlloc(address, size, type, protect);
         if (page == NULL)
         {
-            success = false;
             break;
         }
         if (!allocPage((uintptr)page, size, type, protect))
         {
-            success = false;
             break;
         }
+        success = true;
         break;
     }
 
@@ -632,19 +631,18 @@ BOOL MT_VirtualFree(LPVOID address, SIZE_T size, DWORD type)
         address, size, type
     );
 
-    BOOL success = true;
+    BOOL success = false;
     for (;;)
     {
         if (!tracker->VirtualFree(address, size, type))
         {
-            success = false;
             break;
         }
         if (!freePage((uintptr)address, size, type))
         {
-            success = false;
             break;
         }
+        success = true;
         break;
     }
 
@@ -782,15 +780,15 @@ BOOL MT_VirtualProtect(LPVOID address, SIZE_T size, DWORD new, DWORD* old)
         address, size, new
     );
 
-    BOOL success = true;
+    BOOL success = false;
     for (;;)
     {
         if (!tracker->VirtualProtect(address, size, new, old))
         {
-            success = false;
             break;
         }
         protectPage((uintptr)address, size, new);
+        success = true;
         break;
     }
 

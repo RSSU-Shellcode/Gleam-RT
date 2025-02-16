@@ -66,6 +66,10 @@ https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createe
 https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createeventexw
 https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-setevent
 https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-resetevent
+https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createsemaphorea
+https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createsemaphorew
+https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createsemaphoreexa
+https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createsemaphoreexw
 https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createwaitabletimerw
 https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-setwaitabletimer
 https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-sleep

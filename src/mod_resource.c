@@ -755,9 +755,9 @@ HANDLE RT_CreateSemaphoreA(
         }
         break;
     }
+    SetLastErrno(lastErr);
 
     dbg_log("[resource]", "CreateSemaphoreA: 0x%zu", hSempho);
-    SetLastErrno(lastErr);
     return hSempho;
 }
 
@@ -765,7 +765,31 @@ __declspec(noinline)
 HANDLE RT_CreateSemaphoreW(
     POINTER lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount, LPCWSTR lpName
 ){
+    ResourceTracker* tracker = getTrackerPointer();
 
+    HANDLE hSempho = NULL;
+    errno  lastErr = NO_ERROR;
+    for (;;)
+    {
+        hSempho = tracker->CreateSemaphoreW(
+            lpSemaphoreAttributes, lInitialCount, lMaximumCount, lpName
+        );
+        lastErr = GetLastErrno();
+        if (hSempho == NULL)
+        {
+            break;
+        }
+        if (!addHandleMu(tracker, hSempho, SRC_CREATE_SEMAPHORE_W))
+        {
+            lastErr = ERR_RESOURCE_ADD_SEMAPHORE;
+            break;
+        }
+        break;
+    }
+    SetLastErrno(lastErr);
+
+    dbg_log("[resource]", "CreateSemaphoreW: 0x%zu", hSempho);
+    return hSempho;
 }
 
 __declspec(noinline)
@@ -773,7 +797,32 @@ HANDLE RT_CreateSemaphoreExA(
     POINTER lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount,
     LPCSTR lpName, DWORD dwFlags, DWORD dwDesiredAccess
 ){
+    ResourceTracker* tracker = getTrackerPointer();
 
+    HANDLE hSempho = NULL;
+    errno  lastErr = NO_ERROR;
+    for (;;)
+    {
+        hSempho = tracker->CreateSemaphoreExA(
+            lpSemaphoreAttributes, lInitialCount, lMaximumCount, lpName,
+            dwFlags, dwDesiredAccess
+        );
+        lastErr = GetLastErrno();
+        if (hSempho == NULL)
+        {
+            break;
+        }
+        if (!addHandleMu(tracker, hSempho, SRC_CREATE_SEMAPHORE_EX_A))
+        {
+            lastErr = ERR_RESOURCE_ADD_SEMAPHORE;
+            break;
+        }
+        break;
+    }
+    SetLastErrno(lastErr);
+
+    dbg_log("[resource]", "CreateSemaphoreExA: 0x%zu", hSempho);
+    return hSempho;
 }
 
 __declspec(noinline)
@@ -781,7 +830,32 @@ HANDLE RT_CreateSemaphoreExW(
     POINTER lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount,
     LPCWSTR lpName, DWORD dwFlags, DWORD dwDesiredAccess
 ){
+    ResourceTracker* tracker = getTrackerPointer();
 
+    HANDLE hSempho = NULL;
+    errno  lastErr = NO_ERROR;
+    for (;;)
+    {
+        hSempho = tracker->CreateSemaphoreExW(
+            lpSemaphoreAttributes, lInitialCount, lMaximumCount, lpName,
+            dwFlags, dwDesiredAccess
+        );
+        lastErr = GetLastErrno();
+        if (hSempho == NULL)
+        {
+            break;
+        }
+        if (!addHandleMu(tracker, hSempho, SRC_CREATE_SEMAPHORE_EX_W))
+        {
+            lastErr = ERR_RESOURCE_ADD_SEMAPHORE;
+            break;
+        }
+        break;
+    }
+    SetLastErrno(lastErr);
+
+    dbg_log("[resource]", "CreateSemaphoreExW: 0x%zu", hSempho);
+    return hSempho;
 }
 
 __declspec(noinline)

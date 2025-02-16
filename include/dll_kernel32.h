@@ -561,6 +561,28 @@ typedef BOOL (*ResetEvent_t)
     HANDLE hEvent
 );
 
+typedef HANDLE (*CreateSemaphoreA_t)
+(
+    POINTER lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount, LPCSTR lpName
+);
+
+typedef HANDLE (*CreateSemaphoreW_t)
+(
+    POINTER lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount, LPCWSTR lpName
+);
+
+typedef HANDLE (*CreateSemaphoreExA_t)
+(
+    POINTER lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount,
+    LPCSTR lpName, DWORD dwFlags, DWORD dwDesiredAccess
+);
+
+typedef HANDLE (*CreateSemaphoreExW_t)
+(
+    POINTER lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount,
+    LPCWSTR lpName, DWORD dwFlags, DWORD dwDesiredAccess
+);
+
 typedef HANDLE (*CreateWaitableTimerW_t)
 (
     POINTER lpTimerAttributes, BOOL bManualReset, LPCWSTR lpTimerName

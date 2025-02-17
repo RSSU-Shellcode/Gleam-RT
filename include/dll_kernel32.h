@@ -583,9 +583,24 @@ typedef HANDLE (*CreateSemaphoreExW_t)
     LPCWSTR lpName, DWORD dwFlags, DWORD dwDesiredAccess
 );
 
+typedef HANDLE (*CreateWaitableTimerA_t)
+(
+    POINTER lpTimerAttributes, BOOL bManualReset, LPCSTR lpTimerName
+);
+
 typedef HANDLE (*CreateWaitableTimerW_t)
 (
     POINTER lpTimerAttributes, BOOL bManualReset, LPCWSTR lpTimerName
+);
+
+typedef HANDLE (*CreateWaitableTimerExA_t)
+(
+    POINTER lpTimerAttributes, LPWSTR lpTimerName, DWORD dwFlags, DWORD dwDesiredAccess
+);
+
+typedef HANDLE (*CreateWaitableTimerExW_t)
+(
+    POINTER lpTimerAttributes, LPCWSTR lpTimerName, DWORD dwFlags, DWORD dwDesiredAccess
 );
 
 typedef BOOL (*SetWaitableTimer_t)

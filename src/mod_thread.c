@@ -415,7 +415,7 @@ HANDLE tt_createThread(
     DWORD  threadID;
     HANDLE hThread = NULL;
 
-    bool success = true;
+    bool success = false;
     for (;;)
     {
         // create thread from camouflaged start address and pause it
@@ -429,7 +429,6 @@ HANDLE tt_createThread(
         );
         if (hThread == NULL)
         {
-            success = false;
             break;
         }
 
@@ -445,7 +444,6 @@ HANDLE tt_createThread(
 
         if (!tracker->GetThreadContext(hThread, &ctx))
         {
-            success = false;
             break;
         }
     #ifdef _WIN64
@@ -483,23 +481,21 @@ HANDLE tt_createThread(
     #endif
         if (!tracker->SetThreadContext(hThread, &ctx))
         {
-            success = false;
             break;
         }
 
         // resume the thread
         if (resume && !tracker->ResumeThread(hThread))
         {
-            success = false;
             break;
         }
         if (track && !addThread(tracker, threadID, hThread))
         {
-            success = false;
             break;
         }
         dbg_log("[thread]", "Fake Address: 0x%zX", fakeAddr);
         dbg_log("[thread]", "CreateThread: 0x%zX, %lu", lpStartAddress, threadID);
+        success = true;
         break;
     }
 

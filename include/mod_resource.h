@@ -29,26 +29,36 @@ typedef errno (*ResFreeAll_t)();
 typedef errno (*ResClean_t)();
 
 typedef struct {
-    CreateMutexA_t       CreateMutexA;
-    CreateMutexW_t       CreateMutexW;
-    CreateMutexExA_t     CreateMutexExA;
-    CreateMutexExW_t     CreateMutexExW;
-    CreateEventA_t       CreateEventA;
-    CreateEventW_t       CreateEventW;
-    CreateEventExA_t     CreateEventExA;
-    CreateEventExW_t     CreateEventExW;
+    CreateMutexA_t   CreateMutexA;
+    CreateMutexW_t   CreateMutexW;
+    CreateMutexExA_t CreateMutexExA;
+    CreateMutexExW_t CreateMutexExW;
+
+    CreateEventA_t   CreateEventA;
+    CreateEventW_t   CreateEventW;
+    CreateEventExA_t CreateEventExA;
+    CreateEventExW_t CreateEventExW;
+
     CreateSemaphoreA_t   CreateSemaphoreA;
     CreateSemaphoreW_t   CreateSemaphoreW;
     CreateSemaphoreExA_t CreateSemaphoreExA;
     CreateSemaphoreExW_t CreateSemaphoreExW;
-    CreateFileA_t        CreateFileA;
-    CreateFileW_t        CreateFileW;
-    FindFirstFileA_t     FindFirstFileA;
-    FindFirstFileW_t     FindFirstFileW;
-    FindFirstFileExA_t   FindFirstFileExA;
-    FindFirstFileExW_t   FindFirstFileExW;
-    CloseHandle_t        CloseHandle;
-    FindClose_t          FindClose;
+
+    CreateWaitableTimerA_t   CreateWaitableTimerA;
+    CreateWaitableTimerW_t   CreateWaitableTimerW;
+    CreateWaitableTimerExA_t CreateWaitableTimerExA;
+    CreateWaitableTimerExW_t CreateWaitableTimerExW;
+
+    CreateFileA_t CreateFileA;
+    CreateFileW_t CreateFileW;
+
+    FindFirstFileA_t   FindFirstFileA;
+    FindFirstFileW_t   FindFirstFileW;
+    FindFirstFileExA_t FindFirstFileExA;
+    FindFirstFileExW_t FindFirstFileExW;
+
+    CloseHandle_t CloseHandle;
+    FindClose_t   FindClose;
 
     WSAStartup_t WSAStartup;
     WSACleanup_t WSACleanup;

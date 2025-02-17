@@ -508,9 +508,9 @@ HANDLE RT_CreateMutexA(POINTER lpMutexAttributes, BOOL bInitialOwner, LPCSTR lpN
         }
         break;
     }
+    SetLastErrno(lastErr);
 
     dbg_log("[resource]", "CreateMutexA: 0x%zu", hMutex);
-    SetLastErrno(lastErr);
     return hMutex;
 }
 
@@ -538,9 +538,9 @@ HANDLE RT_CreateMutexW(POINTER lpMutexAttributes, BOOL bInitialOwner, LPCWSTR lp
         }
         break;
     }
-
-    dbg_log("[resource]", "CreateMutexW: 0x%zu", hMutex);
     SetLastErrno(lastErr);
+
+    dbg_log("[resource]", "CreateMutexW: 0x%zu", hMutex);    
     return hMutex;
 }
 
@@ -569,9 +569,9 @@ HANDLE RT_CreateMutexExA(
         }
         break;
     }
+    SetLastErrno(lastErr);
 
     dbg_log("[resource]", "CreateMutexExA: 0x%zu", hMutex);
-    SetLastErrno(lastErr);
     return hMutex;
 }
 
@@ -600,9 +600,9 @@ HANDLE RT_CreateMutexExW(
         }
         break;
     }
+    SetLastErrno(lastErr);
 
     dbg_log("[resource]", "CreateMutexExW: 0x%zu", hMutex);
-    SetLastErrno(lastErr);
     return hMutex;
 }
 
@@ -631,9 +631,9 @@ HANDLE RT_CreateEventA(
         }
         break;
     }
-
-    dbg_log("[resource]", "CreateEventA: 0x%zu", hEvent);
     SetLastErrno(lastErr);
+
+    dbg_log("[resource]", "CreateEventA: 0x%zu", hEvent);    
     return hEvent;
 }
 
@@ -662,9 +662,9 @@ HANDLE RT_CreateEventW(
         }
         break;
     }
+    SetLastErrno(lastErr);
 
     dbg_log("[resource]", "CreateEventW: 0x%zu", hEvent);
-    SetLastErrno(lastErr);
     return hEvent;
 }
 
@@ -693,9 +693,9 @@ HANDLE RT_CreateEventExA(
         }
         break;
     }
-
-    dbg_log("[resource]", "CreateEventExA: 0x%zu", hEvent);
     SetLastErrno(lastErr);
+
+    dbg_log("[resource]", "CreateEventExA: 0x%zu", hEvent);    
     return hEvent;
 }
 
@@ -724,9 +724,9 @@ HANDLE RT_CreateEventExW(
         }
         break;
     }
+    SetLastErrno(lastErr);
 
     dbg_log("[resource]", "CreateEventExW: 0x%zu", hEvent);
-    SetLastErrno(lastErr);
     return hEvent;
 }
 
@@ -873,13 +873,15 @@ HANDLE RT_CreateFileA(
 
     HANDLE hFile;
 
-    bool success = false;
+    bool  success = false;
+    errno lastErr = NO_ERROR;
     for (;;)
     {
         hFile = tracker->CreateFileA(
             lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes,
             dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile
         );
+        lastErr = GetLastErrno();
         if (hFile == INVALID_HANDLE_VALUE)
         {
             break;
@@ -891,6 +893,7 @@ HANDLE RT_CreateFileA(
         success = true;
         break;
     }
+    SetLastErrno(lastErr);
 
     dbg_log("[resource]", "CreateFileA: %s", lpFileName);
 
@@ -898,6 +901,7 @@ HANDLE RT_CreateFileA(
     {
         return INVALID_HANDLE_VALUE;
     }
+
     if (!success)
     {
         return INVALID_HANDLE_VALUE;
@@ -920,13 +924,15 @@ HANDLE RT_CreateFileW(
 
     HANDLE hFile;
 
-    bool success = false;
+    bool  success = false;
+    errno lastErr = NO_ERROR;
     for (;;)
     {
         hFile = tracker->CreateFileW(
             lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes,
             dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile
         );
+        lastErr = GetLastErrno();
         if (hFile == INVALID_HANDLE_VALUE)
         {
             break;
@@ -938,6 +944,7 @@ HANDLE RT_CreateFileW(
         success = true;
         break;
     }
+    SetLastErrno(lastErr);
 
     dbg_log("[resource]", "CreateFileW: %ls", lpFileName);
 
@@ -964,7 +971,8 @@ HANDLE RT_FindFirstFileA(LPCSTR lpFileName, POINTER lpFindFileData)
 
     HANDLE hFindFile;
 
-    bool success = false;
+    bool  success = false;
+    errno lastErr = NO_ERROR;
     for (;;)
     {
         hFindFile = tracker->FindFirstFileA(lpFileName, lpFindFileData);
@@ -972,6 +980,7 @@ HANDLE RT_FindFirstFileA(LPCSTR lpFileName, POINTER lpFindFileData)
         {
             break;
         }
+        lastErr = GetLastErrno();
         if (!addHandle(tracker, hFindFile, SRC_FIND_FIRST_FILE_A))
         {
             break;
@@ -979,6 +988,7 @@ HANDLE RT_FindFirstFileA(LPCSTR lpFileName, POINTER lpFindFileData)
         success = true;
         break;
     }
+    SetLastErrno(lastErr);
 
     dbg_log("[resource]", "FindFirstFileA: %s", lpFileName);
 
@@ -1005,7 +1015,8 @@ HANDLE RT_FindFirstFileW(LPCWSTR lpFileName, POINTER lpFindFileData)
 
     HANDLE hFindFile;
 
-    bool success = false;
+    bool  success = false;
+    errno lastErr = NO_ERROR;
     for (;;)
     {
         hFindFile = tracker->FindFirstFileW(lpFileName, lpFindFileData);
@@ -1013,6 +1024,7 @@ HANDLE RT_FindFirstFileW(LPCWSTR lpFileName, POINTER lpFindFileData)
         {
             break;
         }
+        lastErr = GetLastErrno();
         if (!addHandle(tracker, hFindFile, SRC_FIND_FIRST_FILE_W))
         {
             break;
@@ -1020,6 +1032,7 @@ HANDLE RT_FindFirstFileW(LPCWSTR lpFileName, POINTER lpFindFileData)
         success = true;
         break;
     }
+    SetLastErrno(lastErr);
 
     dbg_log("[resource]", "FindFirstFileW: %ls", lpFileName);
 
@@ -1047,13 +1060,15 @@ HANDLE RT_FindFirstFileExA(
 
     HANDLE hFindFile;
 
-    bool success = false;
+    bool  success = false;
+    errno lastErr = NO_ERROR;
     for (;;)
     {
         hFindFile = tracker->FindFirstFileExA(
             lpFileName, fInfoLevelId, lpFindFileData,
             fSearchOp, lpSearchFilter, dwAdditionalFlags
         );
+        lastErr = GetLastErrno();
         if (hFindFile == INVALID_HANDLE_VALUE)
         {
             break;
@@ -1065,6 +1080,7 @@ HANDLE RT_FindFirstFileExA(
         success = true;
         break;
     }
+    SetLastErrno(lastErr);
 
     dbg_log("[resource]", "FindFirstFileExA: %s", lpFileName);
 
@@ -1092,13 +1108,15 @@ HANDLE RT_FindFirstFileExW(
 
     HANDLE hFindFile;
 
-    bool success = false;
+    bool  success = false;
+    errno lastErr = NO_ERROR;
     for (;;)
     {
         hFindFile = tracker->FindFirstFileExW(
             lpFileName, fInfoLevelId, lpFindFileData,
             fSearchOp, lpSearchFilter, dwAdditionalFlags
         );
+        lastErr = GetLastErrno();
         if (hFindFile == INVALID_HANDLE_VALUE)
         {
             break;
@@ -1110,6 +1128,7 @@ HANDLE RT_FindFirstFileExW(
         success = true;
         break;
     }
+    SetLastErrno(lastErr);
 
     dbg_log("[resource]", "FindFirstFileExW: %ls", lpFileName);
 
@@ -1129,17 +1148,20 @@ BOOL RT_CloseHandle(HANDLE hObject)
 {
     ResourceTracker* tracker = getTrackerPointer();
 
-    BOOL success = false;
+    BOOL  success = false;
+    errno lastErr = NO_ERROR;
     for (;;)
     {
         if (!tracker->CloseHandle(hObject))
         {
             break;
         }
+        lastErr = GetLastErrno();
         delHandleMu(tracker, hObject, TYPE_CLOSE_HANDLE);
         success = true;
         break;
-    }    
+    }
+    SetLastErrno(lastErr);
 
     dbg_log("[resource]", "CloseHandle: 0x%zX", hObject);
     return success;
@@ -1150,17 +1172,20 @@ BOOL RT_FindClose(HANDLE hFindFile)
 {
     ResourceTracker* tracker = getTrackerPointer();
 
-    BOOL success = false;
+    BOOL  success = false;
+    errno lastErr = NO_ERROR;
     for (;;)
     {
         if (!tracker->FindClose(hFindFile))
         {
             break;
         }
+        lastErr = GetLastErrno();
         delHandleMu(tracker, hFindFile, TYPE_FIND_CLOSE);
         success = true;
         break;
     }
+    SetLastErrno(lastErr);
 
     dbg_log("[resource]", "FindClose: 0x%zX", hFindFile);
     return success;
@@ -1294,6 +1319,7 @@ int RT_WSAStartup(WORD wVersionRequired, POINTER lpWSAData)
         lastErr = GetLastErrno();
         break;
     }
+    SetLastErrno(lastErr);
 
     dbg_log("[resource]", "WSAStartup is called");
 
@@ -1301,8 +1327,6 @@ int RT_WSAStartup(WORD wVersionRequired, POINTER lpWSAData)
     {
         return WSASYSNOTREADY;
     }
-
-    SetLastErrno(lastErr);
     return ret;
 }
 
@@ -1340,6 +1364,7 @@ int RT_WSACleanup()
         lastErr = GetLastErrno();
         break;
     }
+    SetLastErrno(lastErr);
 
     dbg_log("[resource]", "WSACleanup is called");
 
@@ -1347,8 +1372,6 @@ int RT_WSACleanup()
     {
         return WSAEINPROGRESS;
     }
-
-    SetLastErrno(lastErr);
     return ret;
 }
 

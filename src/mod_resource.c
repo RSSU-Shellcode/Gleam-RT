@@ -1446,10 +1446,12 @@ bool RT_GetStatus(RT_Status* status)
     }
 
     List* handles = &tracker->Handles;
-    int64 numMutexs = 0;
-    int64 numEvents = 0;
-    int64 numFiles  = 0;
-    int64 numDirs   = 0;
+
+    int64 numMutexs  = 0;
+    int64 numEvents  = 0;
+    int64 numSemphos = 0;
+    int64 numFiles   = 0;
+    int64 numDirs    = 0;
 
     uint len = handles->Len;
     uint idx = 0;
@@ -1468,6 +1470,9 @@ bool RT_GetStatus(RT_Status* status)
         case FUNC_CREATE_EVENT:
             numEvents++;
             break;
+        case FUNC_CREATE_SEMAPHORE:
+            numSemphos++;
+            break;
         case FUNC_CREATE_FILE:
             numFiles++;
             break;
@@ -1483,10 +1488,11 @@ bool RT_GetStatus(RT_Status* status)
         return false;
     }
 
-    status->NumMutexs = numMutexs;
-    status->NumEvents = numEvents;
-    status->NumFiles  = numFiles;
-    status->NumDirs   = numDirs;
+    status->NumMutexs     = numMutexs;
+    status->NumEvents     = numEvents;
+    status->NumSemaphores = numSemphos;
+    status->NumFiles      = numFiles;
+    status->NumDirs       = numDirs;
     return true;
 }
 

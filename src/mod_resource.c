@@ -25,10 +25,11 @@
 #define TYPE_FIND_CLOSE   0x02000000
 
 // major function types
-#define FUNC_CREATE_MUTEX     (TYPE_CLOSE_HANDLE|0x00000100)
-#define FUNC_CREATE_EVENT     (TYPE_CLOSE_HANDLE|0x00000200)
-#define FUNC_CREATE_SEMAPHORE (TYPE_CLOSE_HANDLE|0x00000300)
-#define FUNC_CREATE_FILE      (TYPE_CLOSE_HANDLE|0x00000800)
+#define FUNC_CREATE_MUTEX         (TYPE_CLOSE_HANDLE|0x00000100)
+#define FUNC_CREATE_EVENT         (TYPE_CLOSE_HANDLE|0x00000200)
+#define FUNC_CREATE_SEMAPHORE     (TYPE_CLOSE_HANDLE|0x00000300)
+#define FUNC_CREATE_WAITABLETIMER (TYPE_CLOSE_HANDLE|0x00000400)
+#define FUNC_CREATE_FILE          (TYPE_CLOSE_HANDLE|0x00000800)
 
 #define FUNC_FIND_FIRST_FILE (TYPE_FIND_CLOSE|0x00000100)
 
@@ -47,6 +48,11 @@
 #define SRC_CREATE_SEMAPHORE_W    (FUNC_CREATE_SEMAPHORE|0x02)
 #define SRC_CREATE_SEMAPHORE_EX_A (FUNC_CREATE_SEMAPHORE|0x03)
 #define SRC_CREATE_SEMAPHORE_EX_W (FUNC_CREATE_SEMAPHORE|0x04)
+
+#define SRC_CREATE_WAITABLETIMER_A    (FUNC_CREATE_WAITABLETIMER|0x01)
+#define SRC_CREATE_WAITABLETIMER_W    (FUNC_CREATE_WAITABLETIMER|0x02)
+#define SRC_CREATE_WAITABLETIMER_EX_A (FUNC_CREATE_WAITABLETIMER|0x03)
+#define SRC_CREATE_WAITABLETIMER_EX_W (FUNC_CREATE_WAITABLETIMER|0x04)
 
 #define SRC_CREATE_FILE_A (FUNC_CREATE_FILE|0x01)
 #define SRC_CREATE_FILE_W (FUNC_CREATE_FILE|0x02)
@@ -70,28 +76,32 @@ typedef struct {
     bool NotEraseInstruction;
 
     // API addresses
-    CreateMutexA_t        CreateMutexA;
-    CreateMutexW_t        CreateMutexW;
-    CreateMutexExA_t      CreateMutexExA;
-    CreateMutexExW_t      CreateMutexExW;
-    CreateEventA_t        CreateEventA;
-    CreateEventW_t        CreateEventW;
-    CreateEventExA_t      CreateEventExA;
-    CreateEventExW_t      CreateEventExW;
-    CreateSemaphoreA_t    CreateSemaphoreA;
-    CreateSemaphoreW_t    CreateSemaphoreW;
-    CreateSemaphoreExA_t  CreateSemaphoreExA;
-    CreateSemaphoreExW_t  CreateSemaphoreExW;
-    CreateFileA_t         CreateFileA;
-    CreateFileW_t         CreateFileW;
-    FindFirstFileA_t      FindFirstFileA;
-    FindFirstFileW_t      FindFirstFileW;
-    FindFirstFileExA_t    FindFirstFileExA;
-    FindFirstFileExW_t    FindFirstFileExW;
-    CloseHandle_t         CloseHandle;
-    FindClose_t           FindClose;
-    ReleaseMutex_t        ReleaseMutex;
-    WaitForSingleObject_t WaitForSingleObject;
+    CreateMutexA_t           CreateMutexA;
+    CreateMutexW_t           CreateMutexW;
+    CreateMutexExA_t         CreateMutexExA;
+    CreateMutexExW_t         CreateMutexExW;
+    CreateEventA_t           CreateEventA;
+    CreateEventW_t           CreateEventW;
+    CreateEventExA_t         CreateEventExA;
+    CreateEventExW_t         CreateEventExW;
+    CreateSemaphoreA_t       CreateSemaphoreA;
+    CreateSemaphoreW_t       CreateSemaphoreW;
+    CreateSemaphoreExA_t     CreateSemaphoreExA;
+    CreateSemaphoreExW_t     CreateSemaphoreExW;
+    CreateWaitableTimerA_t   CreateWaitableTimerA;
+    CreateWaitableTimerW_t   CreateWaitableTimerW;
+    CreateWaitableTimerExA_t CreateWaitableTimerExA;
+    CreateWaitableTimerExW_t CreateWaitableTimerExW;
+    CreateFileA_t            CreateFileA;
+    CreateFileW_t            CreateFileW;
+    FindFirstFileA_t         FindFirstFileA;
+    FindFirstFileW_t         FindFirstFileW;
+    FindFirstFileExA_t       FindFirstFileExA;
+    FindFirstFileExW_t       FindFirstFileExW;
+    CloseHandle_t            CloseHandle;
+    FindClose_t              FindClose;
+    ReleaseMutex_t           ReleaseMutex;
+    WaitForSingleObject_t    WaitForSingleObject;
 
     // protect data
     HANDLE hMutex;
@@ -139,6 +149,18 @@ HANDLE RT_CreateSemaphoreExA(
 HANDLE RT_CreateSemaphoreExW(
     POINTER lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount,
     LPCWSTR lpName, DWORD dwFlags, DWORD dwDesiredAccess
+);
+HANDLE RT_CreateWaitableTimerA(
+    POINTER lpTimerAttributes, BOOL bManualReset, LPCSTR lpTimerName
+);
+HANDLE RT_CreateWaitableTimerW(
+    POINTER lpTimerAttributes, BOOL bManualReset, LPCWSTR lpTimerName
+);
+HANDLE RT_CreateWaitableTimerExA(
+    POINTER lpTimerAttributes, LPWSTR lpTimerName, DWORD dwFlags, DWORD dwDesiredAccess
+);
+HANDLE RT_CreateWaitableTimerExW(
+    POINTER lpTimerAttributes, LPCWSTR lpTimerName, DWORD dwFlags, DWORD dwDesiredAccess
 );
 HANDLE RT_CreateFileA(
     LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
@@ -245,28 +267,32 @@ ResourceTracker_M* InitResourceTracker(Context* context)
     // create methods for tracker
     ResourceTracker_M* module = (ResourceTracker_M*)moduleAddr;
     // Windows API hooks
-    module->CreateMutexA       = GetFuncAddr(&RT_CreateMutexA);
-    module->CreateMutexW       = GetFuncAddr(&RT_CreateMutexW);
-    module->CreateMutexExA     = GetFuncAddr(&RT_CreateMutexExA);
-    module->CreateMutexExW     = GetFuncAddr(&RT_CreateMutexExW);
-    module->CreateEventA       = GetFuncAddr(&RT_CreateEventA);
-    module->CreateEventW       = GetFuncAddr(&RT_CreateEventW);
-    module->CreateEventExA     = GetFuncAddr(&RT_CreateEventExA);
-    module->CreateEventExW     = GetFuncAddr(&RT_CreateEventExW);
-    module->CreateSemaphoreA   = GetFuncAddr(&RT_CreateSemaphoreA);
-    module->CreateSemaphoreW   = GetFuncAddr(&RT_CreateSemaphoreW);
-    module->CreateSemaphoreExA = GetFuncAddr(&RT_CreateSemaphoreExA);
-    module->CreateSemaphoreExW = GetFuncAddr(&RT_CreateSemaphoreExW);
-    module->CreateFileA        = GetFuncAddr(&RT_CreateFileA);
-    module->CreateFileW        = GetFuncAddr(&RT_CreateFileW);
-    module->FindFirstFileA     = GetFuncAddr(&RT_FindFirstFileA);
-    module->FindFirstFileW     = GetFuncAddr(&RT_FindFirstFileW);
-    module->FindFirstFileExA   = GetFuncAddr(&RT_FindFirstFileExA);
-    module->FindFirstFileExW   = GetFuncAddr(&RT_FindFirstFileExW);
-    module->CloseHandle        = GetFuncAddr(&RT_CloseHandle);
-    module->FindClose          = GetFuncAddr(&RT_FindClose);
-    module->WSAStartup         = GetFuncAddr(&RT_WSAStartup);
-    module->WSACleanup         = GetFuncAddr(&RT_WSACleanup);
+    module->CreateMutexA           = GetFuncAddr(&RT_CreateMutexA);
+    module->CreateMutexW           = GetFuncAddr(&RT_CreateMutexW);
+    module->CreateMutexExA         = GetFuncAddr(&RT_CreateMutexExA);
+    module->CreateMutexExW         = GetFuncAddr(&RT_CreateMutexExW);
+    module->CreateEventA           = GetFuncAddr(&RT_CreateEventA);
+    module->CreateEventW           = GetFuncAddr(&RT_CreateEventW);
+    module->CreateEventExA         = GetFuncAddr(&RT_CreateEventExA);
+    module->CreateEventExW         = GetFuncAddr(&RT_CreateEventExW);
+    module->CreateSemaphoreA       = GetFuncAddr(&RT_CreateSemaphoreA);
+    module->CreateSemaphoreW       = GetFuncAddr(&RT_CreateSemaphoreW);
+    module->CreateSemaphoreExA     = GetFuncAddr(&RT_CreateSemaphoreExA);
+    module->CreateSemaphoreExW     = GetFuncAddr(&RT_CreateSemaphoreExW);
+    module->CreateWaitableTimerA   = GetFuncAddr(&RT_CreateWaitableTimerA);
+    module->CreateWaitableTimerW   = GetFuncAddr(&RT_CreateWaitableTimerW);
+    module->CreateWaitableTimerExA = GetFuncAddr(&RT_CreateWaitableTimerExA);
+    module->CreateWaitableTimerExW = GetFuncAddr(&RT_CreateWaitableTimerExW);
+    module->CreateFileA            = GetFuncAddr(&RT_CreateFileA);
+    module->CreateFileW            = GetFuncAddr(&RT_CreateFileW);
+    module->FindFirstFileA         = GetFuncAddr(&RT_FindFirstFileA);
+    module->FindFirstFileW         = GetFuncAddr(&RT_FindFirstFileW);
+    module->FindFirstFileExA       = GetFuncAddr(&RT_FindFirstFileExA);
+    module->FindFirstFileExW       = GetFuncAddr(&RT_FindFirstFileExW);
+    module->CloseHandle            = GetFuncAddr(&RT_CloseHandle);
+    module->FindClose              = GetFuncAddr(&RT_FindClose);
+    module->WSAStartup             = GetFuncAddr(&RT_WSAStartup);
+    module->WSACleanup             = GetFuncAddr(&RT_WSACleanup);
     // methods for user
     module->LockMutex   = GetFuncAddr(&RT_LockMutex);
     module->UnlockMutex = GetFuncAddr(&RT_UnlockMutex);
@@ -303,6 +329,10 @@ static bool initTrackerAPI(ResourceTracker* tracker, Context* context)
         { 0xD76E7132C31D9F7F, 0x810A5E8DF521AF8B }, // CreateSemaphoreW
         { 0x603EC9885322BE77, 0x91EBBF49FD30CD6C }, // CreateSemaphoreExA
         { 0x68A9D452BFC4E94E, 0xBDD2F8F5CE920D49 }, // CreateSemaphoreExW
+        { 0xAD2659306A728E9A, 0x3D365A4A5231844C }, // CreateWaitableTimerA
+        { 0x2C557505730F7644, 0x304567D9E1D3AC17 }, // CreateWaitableTimerW
+        { 0x66CA41440F9FF868, 0xBE5C05614AC956F3 }, // CreateWaitableTimerExA
+        { 0xD0262257462ECF54, 0x142D85B27172BAD1 }, // CreateWaitableTimerExW
         { 0x31399C47B70A8590, 0x5C59C3E176954594 }, // CreateFileA
         { 0xD1B5E30FA8812243, 0xFD9A53B98C9A437E }, // CreateFileW
         { 0x60041DBB2B0D19DF, 0x7BD2C85D702B4DDC }, // FindFirstFileA
@@ -325,6 +355,10 @@ static bool initTrackerAPI(ResourceTracker* tracker, Context* context)
         { 0xB05FAEA3, 0xC2CC106A }, // CreateSemaphoreW
         { 0xA6C4A8F2, 0xD597C8AC }, // CreateSemaphoreExA
         { 0x80B696F0, 0x5DF96491 }, // CreateSemaphoreExW
+        { 0x6EF1C038, 0x8BB752D2 }, // CreateWaitableTimerA
+        { 0x20E11F8D, 0x0515A457 }, // CreateWaitableTimerW
+        { 0x64CC2090, 0xFB298A53 }, // CreateWaitableTimerExA
+        { 0x89FD1E78, 0xAFCC42D6 }, // CreateWaitableTimerExW
         { 0x0BB8EEBE, 0x28E70E8D }, // CreateFileA
         { 0x2CB7048A, 0x76AC9783 }, // CreateFileW
         { 0x131B6345, 0x65478818 }, // FindFirstFileA
@@ -343,25 +377,29 @@ static bool initTrackerAPI(ResourceTracker* tracker, Context* context)
         }
         list[i].proc = proc;
     }
-    tracker->CreateMutexA       = list[0x00].proc;
-    tracker->CreateMutexW       = list[0x01].proc;
-    tracker->CreateMutexExA     = list[0x02].proc;
-    tracker->CreateMutexExW     = list[0x03].proc;
-    tracker->CreateEventA       = list[0x04].proc;
-    tracker->CreateEventW       = list[0x05].proc;
-    tracker->CreateEventExA     = list[0x06].proc;
-    tracker->CreateEventExW     = list[0x07].proc;
-    tracker->CreateSemaphoreA   = list[0x08].proc;
-    tracker->CreateSemaphoreW   = list[0x09].proc;
-    tracker->CreateSemaphoreExA = list[0x0A].proc;
-    tracker->CreateSemaphoreExW = list[0x0B].proc;
-    tracker->CreateFileA        = list[0x0C].proc;
-    tracker->CreateFileW        = list[0x0D].proc;
-    tracker->FindFirstFileA     = list[0x0E].proc;
-    tracker->FindFirstFileW     = list[0x0F].proc;
-    tracker->FindFirstFileExA   = list[0x10].proc;
-    tracker->FindFirstFileExW   = list[0x11].proc;
-    tracker->FindClose          = list[0x12].proc;
+    tracker->CreateMutexA           = list[0x00].proc;
+    tracker->CreateMutexW           = list[0x01].proc;
+    tracker->CreateMutexExA         = list[0x02].proc;
+    tracker->CreateMutexExW         = list[0x03].proc;
+    tracker->CreateEventA           = list[0x04].proc;
+    tracker->CreateEventW           = list[0x05].proc;
+    tracker->CreateEventExA         = list[0x06].proc;
+    tracker->CreateEventExW         = list[0x07].proc;
+    tracker->CreateSemaphoreA       = list[0x08].proc;
+    tracker->CreateSemaphoreW       = list[0x09].proc;
+    tracker->CreateSemaphoreExA     = list[0x0A].proc;
+    tracker->CreateSemaphoreExW     = list[0x0B].proc;
+    tracker->CreateWaitableTimerA   = list[0x0C].proc;
+    tracker->CreateWaitableTimerW   = list[0x0D].proc;
+    tracker->CreateWaitableTimerExA = list[0x0E].proc;
+    tracker->CreateWaitableTimerExW = list[0x0F].proc;
+    tracker->CreateFileA            = list[0x10].proc;
+    tracker->CreateFileW            = list[0x11].proc;
+    tracker->FindFirstFileA         = list[0x12].proc;
+    tracker->FindFirstFileW         = list[0x13].proc;
+    tracker->FindFirstFileExA       = list[0x14].proc;
+    tracker->FindFirstFileExW       = list[0x15].proc;
+    tracker->FindClose              = list[0x16].proc;
 
     tracker->CloseHandle         = context->CloseHandle;
     tracker->ReleaseMutex        = context->ReleaseMutex;
@@ -856,6 +894,34 @@ HANDLE RT_CreateSemaphoreExW(
 
     dbg_log("[resource]", "CreateSemaphoreExW: 0x%zu", hSempho);
     return hSempho;
+}
+
+__declspec(noinline)
+HANDLE RT_CreateWaitableTimerA(
+    POINTER lpTimerAttributes, BOOL bManualReset, LPCSTR lpTimerName
+){
+
+}
+
+__declspec(noinline)
+HANDLE RT_CreateWaitableTimerW(
+    POINTER lpTimerAttributes, BOOL bManualReset, LPCWSTR lpTimerName
+){
+
+}
+
+__declspec(noinline)
+HANDLE RT_CreateWaitableTimerExA(
+    POINTER lpTimerAttributes, LPWSTR lpTimerName, DWORD dwFlags, DWORD dwDesiredAccess
+){
+
+}
+
+__declspec(noinline)
+HANDLE RT_CreateWaitableTimerExW(
+    POINTER lpTimerAttributes, LPCWSTR lpTimerName, DWORD dwFlags, DWORD dwDesiredAccess
+){
+
 }
 
 __declspec(noinline)

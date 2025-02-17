@@ -900,28 +900,124 @@ __declspec(noinline)
 HANDLE RT_CreateWaitableTimerA(
     POINTER lpTimerAttributes, BOOL bManualReset, LPCSTR lpTimerName
 ){
+    ResourceTracker* tracker = getTrackerPointer();
 
+    HANDLE hTimer  = NULL;
+    errno  lastErr = NO_ERROR;
+    for (;;)
+    {
+        hTimer = tracker->CreateWaitableTimerA(
+            lpTimerAttributes, bManualReset, lpTimerName
+        );
+        lastErr = GetLastErrno();
+        if (hTimer == NULL)
+        {
+            break;
+        }
+        if (!addHandleMu(tracker, hTimer, SRC_CREATE_WAITABLETIMER_A))
+        {
+            lastErr = ERR_RESOURCE_ADD_WAITABLETIMER;
+            break;
+        }
+        break;
+    }
+    SetLastErrno(lastErr);
+
+    dbg_log("[resource]", "CreateWaitableTimerA: 0x%zu", hTimer);
+    return hTimer;
 }
 
 __declspec(noinline)
 HANDLE RT_CreateWaitableTimerW(
     POINTER lpTimerAttributes, BOOL bManualReset, LPCWSTR lpTimerName
 ){
+    ResourceTracker* tracker = getTrackerPointer();
 
+    HANDLE hTimer  = NULL;
+    errno  lastErr = NO_ERROR;
+    for (;;)
+    {
+        hTimer = tracker->CreateWaitableTimerW(
+            lpTimerAttributes, bManualReset, lpTimerName
+        );
+        lastErr = GetLastErrno();
+        if (hTimer == NULL)
+        {
+            break;
+        }
+        if (!addHandleMu(tracker, hTimer, SRC_CREATE_WAITABLETIMER_W))
+        {
+            lastErr = ERR_RESOURCE_ADD_WAITABLETIMER;
+            break;
+        }
+        break;
+    }
+    SetLastErrno(lastErr);
+
+    dbg_log("[resource]", "CreateWaitableTimerW: 0x%zu", hTimer);
+    return hTimer;
 }
 
 __declspec(noinline)
 HANDLE RT_CreateWaitableTimerExA(
     POINTER lpTimerAttributes, LPWSTR lpTimerName, DWORD dwFlags, DWORD dwDesiredAccess
 ){
+    ResourceTracker* tracker = getTrackerPointer();
 
+    HANDLE hTimer  = NULL;
+    errno  lastErr = NO_ERROR;
+    for (;;)
+    {
+        hTimer = tracker->CreateWaitableTimerExA(
+            lpTimerAttributes, lpTimerName, dwFlags, dwDesiredAccess
+        );
+        lastErr = GetLastErrno();
+        if (hTimer == NULL)
+        {
+            break;
+        }
+        if (!addHandleMu(tracker, hTimer, SRC_CREATE_WAITABLETIMER_EX_A))
+        {
+            lastErr = ERR_RESOURCE_ADD_WAITABLETIMER;
+            break;
+        }
+        break;
+    }
+    SetLastErrno(lastErr);
+
+    dbg_log("[resource]", "CreateWaitableTimerExA: 0x%zu", hTimer);
+    return hTimer;
 }
 
 __declspec(noinline)
 HANDLE RT_CreateWaitableTimerExW(
     POINTER lpTimerAttributes, LPCWSTR lpTimerName, DWORD dwFlags, DWORD dwDesiredAccess
 ){
+    ResourceTracker* tracker = getTrackerPointer();
 
+    HANDLE hTimer  = NULL;
+    errno  lastErr = NO_ERROR;
+    for (;;)
+    {
+        hTimer = tracker->CreateWaitableTimerExW(
+            lpTimerAttributes, lpTimerName, dwFlags, dwDesiredAccess
+        );
+        lastErr = GetLastErrno();
+        if (hTimer == NULL)
+        {
+            break;
+        }
+        if (!addHandleMu(tracker, hTimer, SRC_CREATE_WAITABLETIMER_EX_W))
+        {
+            lastErr = ERR_RESOURCE_ADD_WAITABLETIMER;
+            break;
+        }
+        break;
+    }
+    SetLastErrno(lastErr);
+
+    dbg_log("[resource]", "CreateWaitableTimerExW: 0x%zu", hTimer);
+    return hTimer;
 }
 
 __declspec(noinline)

@@ -118,6 +118,10 @@ hash_api -fmt 64 -conc -func CreateSemaphoreA
 hash_api -fmt 64 -conc -func CreateSemaphoreW
 hash_api -fmt 64 -conc -func CreateSemaphoreExA
 hash_api -fmt 64 -conc -func CreateSemaphoreExW
+hash_api -fmt 64 -conc -func CreateWaitableTimerA
+hash_api -fmt 64 -conc -func CreateWaitableTimerW
+hash_api -fmt 64 -conc -func CreateWaitableTimerExA
+hash_api -fmt 64 -conc -func CreateWaitableTimerExW
 hash_api -fmt 64 -conc -func CreateFileA
 hash_api -fmt 64 -conc -func CreateFileW
 hash_api -fmt 64 -conc -func FindFirstFileA
@@ -305,6 +309,10 @@ hash_api -fmt 32 -conc -func CreateSemaphoreA
 hash_api -fmt 32 -conc -func CreateSemaphoreW
 hash_api -fmt 32 -conc -func CreateSemaphoreExA
 hash_api -fmt 32 -conc -func CreateSemaphoreExW
+hash_api -fmt 32 -conc -func CreateWaitableTimerA
+hash_api -fmt 32 -conc -func CreateWaitableTimerW
+hash_api -fmt 32 -conc -func CreateWaitableTimerExA
+hash_api -fmt 32 -conc -func CreateWaitableTimerExW
 hash_api -fmt 32 -conc -func CreateFileA
 hash_api -fmt 32 -conc -func CreateFileW
 hash_api -fmt 32 -conc -func FindFirstFileA

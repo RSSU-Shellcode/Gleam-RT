@@ -70,7 +70,10 @@ https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-creates
 https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createsemaphorew
 https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createsemaphoreexa
 https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createsemaphoreexw
+https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createwaitabletimera
 https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createwaitabletimerw
+https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createwaitabletimerexa
+https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createwaitabletimerexw
 https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-setwaitabletimer
 https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-sleep
 https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-sleepex

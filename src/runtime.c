@@ -87,7 +87,7 @@ typedef struct {
     HANDLE hThreadEvent; // event handler thread
 
     // IAT hooks about GetProcAddress
-    Hook IATHooks[61];
+    Hook IATHooks[65];
 
     // runtime submodules
     LibraryTracker_M*  LibraryTracker;
@@ -897,6 +897,10 @@ static bool initIATHooks(Runtime* runtime)
         { 0x05110AD1D211F776, 0xE4991237499AA3C6, RT->CreateSemaphoreW },
         { 0x4FB9F7F3F0E2F362, 0x7446C8F3BF89FD93, RT->CreateSemaphoreExA },
         { 0xC7892873869A1252, 0x05A561B8DF4D705B, RT->CreateSemaphoreExW },
+        { 0xEEAA2E22C8B204FF, 0x14B8510CB1CA2432, RT->CreateWaitableTimerA },
+        { 0x49698D9C89EB77D9, 0xE4F15FA3B48299CD, RT->CreateWaitableTimerW },
+        { 0x4E2E823834034B82, 0x65B10CE650DF86E9, RT->CreateWaitableTimerExA },
+        { 0xD4A475D82D61AA80, 0x289B9102E50F75E0, RT->CreateWaitableTimerExW },
         { 0x94DAFAE03484102D, 0x300F881516DC2FF5, RT->CreateFileA },
         { 0xC3D28B35396A90DA, 0x8BA6316E5F5DC86E, RT->CreateFileW },
         { 0x4015A18370E27D65, 0xA5B47007B7B8DD26, RT->FindFirstFileA },
@@ -961,6 +965,10 @@ static bool initIATHooks(Runtime* runtime)
         { 0xE2655818, 0x9430A61A, RT->CreateSemaphoreW },
         { 0xDDD06BBB, 0xA89F7CAB, RT->CreateSemaphoreExA },
         { 0x578BC255, 0xFB809D2C, RT->CreateSemaphoreExW },
+        { 0x53258B07, 0x9C27F3E5, RT->CreateWaitableTimerA },
+        { 0x6683BD06, 0x42CF3850, RT->CreateWaitableTimerW },
+        { 0xD1B81B9F, 0xD65A9635, RT->CreateWaitableTimerExA },
+        { 0xB925AC84, 0x564EE9F7, RT->CreateWaitableTimerExW },
         { 0x79796D6E, 0x6DBBA55C, RT->CreateFileA },
         { 0x0370C4B8, 0x76254EF3, RT->CreateFileW },
         { 0x629ADDFA, 0x749D1CC9, RT->FindFirstFileA },

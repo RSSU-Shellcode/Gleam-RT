@@ -12,8 +12,9 @@ typedef struct {
     int64 NumMutexs;
     int64 NumEvents;
     int64 NumSemaphores;
+    int64 NumWaitableTimers;
     int64 NumFiles;
-    int64 NumDirs;
+    int64 NumDirectories;
 } RT_Status;
 
 typedef bool (*ResLockMutex_t)(HANDLE hMutex);

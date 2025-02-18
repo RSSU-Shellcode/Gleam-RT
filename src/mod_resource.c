@@ -1612,6 +1612,7 @@ bool RT_GetStatus(RT_Status* status)
     int64 numMutexs  = 0;
     int64 numEvents  = 0;
     int64 numSemphos = 0;
+    int64 numTimers  = 0;
     int64 numFiles   = 0;
     int64 numDirs    = 0;
 
@@ -1635,6 +1636,9 @@ bool RT_GetStatus(RT_Status* status)
         case FUNC_CREATE_SEMAPHORE:
             numSemphos++;
             break;
+        case FUNC_CREATE_WAITABLETIMER:
+            numTimers++;
+            break;
         case FUNC_CREATE_FILE:
             numFiles++;
             break;
@@ -1650,11 +1654,12 @@ bool RT_GetStatus(RT_Status* status)
         return false;
     }
 
-    status->NumMutexs     = numMutexs;
-    status->NumEvents     = numEvents;
-    status->NumSemaphores = numSemphos;
-    status->NumFiles      = numFiles;
-    status->NumDirs       = numDirs;
+    status->NumMutexs         = numMutexs;
+    status->NumEvents         = numEvents;
+    status->NumSemaphores     = numSemphos;
+    status->NumWaitableTimers = numTimers;
+    status->NumFiles          = numFiles;
+    status->NumDirectories    = numDirs;
     return true;
 }
 
@@ -1865,8 +1870,8 @@ static errno doWSACleanup(ResourceTracker* tracker)
     {
         return NO_ERROR;
     }
-    errno errno = NO_ERROR;
 
+    errno errno = NO_ERROR;
     int64 counter = tracker->Counters[CTR_WSA_STARTUP];
     for (int64 i = 0; i < counter; i++)
     {
@@ -1875,6 +1880,8 @@ static errno doWSACleanup(ResourceTracker* tracker)
             errno = ERR_RESOURCE_WSA_CLEANUP;
         }
     }
+
+    // reset counter
     tracker->Counters[CTR_WSA_STARTUP] = 0;
     return errno;
 }

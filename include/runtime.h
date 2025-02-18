@@ -74,8 +74,10 @@ typedef bool   (*ThdKillAllMu_t)();
 typedef struct {
     int64 NumMutexs;
     int64 NumEvents;
+    int64 NumSemaphores;
+    int64 NumWaitableTimers;
     int64 NumFiles;
-    int64 NumDirs;
+    int64 NumDirectories;
 } RT_Status;
 #endif // MOD_RESOURCE_H
 

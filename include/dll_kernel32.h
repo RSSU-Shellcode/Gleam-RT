@@ -573,14 +573,14 @@ typedef HANDLE (*CreateSemaphoreW_t)
 
 typedef HANDLE (*CreateSemaphoreExA_t)
 (
-    POINTER lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount,
-    LPCSTR lpName, DWORD dwFlags, DWORD dwDesiredAccess
+    POINTER lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount, LPCSTR lpName,
+    DWORD dwFlags, DWORD dwDesiredAccess
 );
 
 typedef HANDLE (*CreateSemaphoreExW_t)
 (
-    POINTER lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount,
-    LPCWSTR lpName, DWORD dwFlags, DWORD dwDesiredAccess
+    POINTER lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount, LPCWSTR lpName,
+    DWORD dwFlags, DWORD dwDesiredAccess
 );
 
 typedef HANDLE (*CreateWaitableTimerA_t)
@@ -605,9 +605,8 @@ typedef HANDLE (*CreateWaitableTimerExW_t)
 
 typedef BOOL (*SetWaitableTimer_t)
 (
-    HANDLE hTimer, LONGLONG* lpDueTime, LONG lPeriod,
-    LPVOID pfnCompletionRoutine, LPVOID lpArgToCompletionRoutine,
-    BOOL fResume
+    HANDLE hTimer, LONGLONG* lpDueTime, LONG lPeriod, LPVOID pfnCompletionRoutine,
+    LPVOID lpArgToCompletionRoutine, BOOL fResume
 );
 
 typedef void (*Sleep_t)
@@ -627,9 +626,8 @@ typedef DWORD (*WaitForSingleObject_t)
 
 typedef BOOL (*DuplicateHandle_t)
 (
-    HANDLE hSourceProcessHandle, HANDLE hSourceHandle,
-    HANDLE hTargetProcessHandle, LPHANDLE lpTargetHandle,
-    DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwOptions
+    HANDLE hSourceProcessHandle, HANDLE hSourceHandle, HANDLE hTargetProcessHandle, 
+    LPHANDLE lpTargetHandle, DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwOptions
 );
 
 typedef BOOL (*CloseHandle_t)
@@ -639,15 +637,14 @@ typedef BOOL (*CloseHandle_t)
 
 typedef int (*MultiByteToWideChar_t)
 (
-    UINT CodePage, DWORD dwFlags, LPSTR lpMultiByteStr, 
-    int cbMultiByte, LPWSTR lpWideCharStr, int cchWideChar
+    UINT CodePage, DWORD dwFlags, LPSTR lpMultiByteStr, int cbMultiByte, 
+    LPWSTR lpWideCharStr, int cchWideChar
 );
 
 typedef int (*WideCharToMultiByte_t)
 (
-    UINT CodePage, DWORD dwFlags, LPWSTR lpWideCharStr,
-    int cchWideChar, LPSTR lpMultiByteStr, int cbMultiByte,
-    byte* lpDefaultChar, BOOL* lpUsedDefaultChar
+    UINT CodePage, DWORD dwFlags, LPWSTR lpWideCharStr, int cchWideChar,
+    LPSTR lpMultiByteStr, int cbMultiByte, byte* lpDefaultChar, BOOL* lpUsedDefaultChar
 );
 
 #endif // DLL_KERNEL32_H

@@ -174,8 +174,8 @@ typedef errno (*HTTPFree_t)();
 
 #endif // WIN_CRYPTO_H
 
-typedef errno (*CryptoRandBuffer_t)(byte* data, uint len);
-typedef errno (*CryptoSHA1_t)(byte* data, uint len, byte* hash);
+typedef errno (*CryptoRandBuffer_t)(databuf* data);
+typedef errno (*CryptoSHA1_t)(databuf* data, byte* hash);
 typedef errno (*CryptoAESEncrypt_t)(databuf* data, databuf* key, databuf* output);
 typedef errno (*CryptoAESDecrypt_t)(databuf* data, databuf* key, databuf* output);
 typedef errno (*CryptoRSAGenKey_t)(uint usage, uint bits, databuf* key);

@@ -53,8 +53,8 @@ typedef struct {
 } WinCrypto;
 
 // methods for user
-errno WC_RandBuffer(byte* data, uint len);
-errno WC_SHA1(byte* data, uint len, byte* hash);
+errno WC_RandBuffer(databuf* data);
+errno WC_SHA1(databuf* data, byte* hash);
 errno WC_AESEncrypt(databuf* data, databuf* key, databuf* output);
 errno WC_AESDecrypt(databuf* data, databuf* key, databuf* output);
 errno WC_RSAGenKey(uint usage, uint bits, databuf* key);
@@ -437,7 +437,7 @@ static errno isValidRSAPublicKey(databuf* key)
 }
 
 __declspec(noinline)
-errno WC_RandBuffer(byte* data, uint len)
+errno WC_RandBuffer(databuf* data)
 {
     WinCrypto* module = getModulePointer();
 
@@ -458,7 +458,7 @@ errno WC_RandBuffer(byte* data, uint len)
         )){
             break;
         }
-        if (!module->CryptGenRandom(hProv, (DWORD)len, data))
+        if (!module->CryptGenRandom(hProv, (DWORD)(data->len), data->buf))
         {
             break;
         }
@@ -480,7 +480,7 @@ errno WC_RandBuffer(byte* data, uint len)
 }
 
 __declspec(noinline)
-errno WC_SHA1(byte* data, uint len, byte* hash)
+errno WC_SHA1(databuf* data, byte* hash)
 {
     WinCrypto* module = getModulePointer();
 
@@ -506,7 +506,7 @@ errno WC_SHA1(byte* data, uint len, byte* hash)
         {
             break;
         }
-        if (!module->CryptHashData(hHash, data, (DWORD)len, 0))
+        if (!module->CryptHashData(hHash, data->buf, (DWORD)(data->len), 0))
         {
             break;
         }

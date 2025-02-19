@@ -34,10 +34,10 @@ typedef struct {
 } WinFile;
 
 // methods for user
-errno WF_ReadFileA(LPSTR path, byte** buf, uint* size);
-errno WF_ReadFileW(LPWSTR path, byte** buf, uint* size);
-errno WF_WriteFileA(LPSTR path, byte* buf, uint size);
-errno WF_WriteFileW(LPWSTR path, byte* buf, uint size);
+errno WF_ReadFileA(LPSTR path, databuf* file);
+errno WF_ReadFileW(LPWSTR path, databuf* file);
+errno WF_WriteFileA(LPSTR path, databuf* file);
+errno WF_WriteFileW(LPWSTR path, databuf* file);
 
 // methods for runtime
 errno WF_Uninstall();
@@ -56,8 +56,8 @@ static bool recoverModulePointer(WinFile* module);
 static bool initModuleEnvironment(WinFile* module, Context* context);
 static void eraseModuleMethods(Context* context);
 
-errno readFile(HANDLE hFile, byte** buf, uint* size);
-errno writeFile(HANDLE hFile, byte* buf, uint size);
+errno readFile(HANDLE hFile, databuf* file);
+errno writeFile(HANDLE hFile, databuf* file);
 
 WinFile_M* InitWinFile(Context* context)
 {
@@ -220,7 +220,7 @@ static WinFile* getModulePointer()
 #pragma optimize("", on)
 
 __declspec(noinline)
-errno WF_ReadFileA(LPSTR path, byte** buf, uint* size)
+errno WF_ReadFileA(LPSTR path, databuf* file)
 {
     WinFile* module = getModulePointer();
 
@@ -232,11 +232,11 @@ errno WF_ReadFileA(LPSTR path, byte** buf, uint* size)
     {
         return GetLastErrno();
     }
-    return readFile(hFile, buf, size);
+    return readFile(hFile, file);
 }
 
 __declspec(noinline)
-errno WF_ReadFileW(LPWSTR path, byte** buf, uint* size)
+errno WF_ReadFileW(LPWSTR path, databuf* file)
 {
     WinFile* module = getModulePointer();
 
@@ -248,11 +248,11 @@ errno WF_ReadFileW(LPWSTR path, byte** buf, uint* size)
     {
         return GetLastErrno();
     }
-    return readFile(hFile, buf, size);
+    return readFile(hFile, file);
 }
 
 __declspec(noinline)
-errno readFile(HANDLE hFile, byte** buf, uint* size)
+errno readFile(HANDLE hFile, databuf* file)
 {
     WinFile* module = getModulePointer();
 
@@ -320,16 +320,13 @@ errno readFile(HANDLE hFile, byte** buf, uint* size)
     }
 
     // write result
-    *buf = buffer;
-    if (size != NULL)
-    {
-        *size = (uint)fSize;
-    }
+    file->buf = buffer;
+    file->len = (uint)fSize;
     return NO_ERROR;
 }
 
 __declspec(noinline)
-errno WF_WriteFileA(LPSTR path, byte* buf, uint size)
+errno WF_WriteFileA(LPSTR path, databuf* file)
 {
     WinFile* module = getModulePointer();
 
@@ -341,11 +338,11 @@ errno WF_WriteFileA(LPSTR path, byte* buf, uint size)
     {
         return GetLastErrno();
     }
-    return writeFile(hFile, buf, size);
+    return writeFile(hFile, file);
 }
 
 __declspec(noinline)
-errno WF_WriteFileW(LPWSTR path, byte* buf, uint size)
+errno WF_WriteFileW(LPWSTR path, databuf* file)
 {
     WinFile* module = getModulePointer();
 
@@ -357,21 +354,22 @@ errno WF_WriteFileW(LPWSTR path, byte* buf, uint size)
     {
         return GetLastErrno();
     }
-    return writeFile(hFile, buf, size);
+    return writeFile(hFile, file);
 }
 
 __declspec(noinline)
-errno writeFile(HANDLE hFile, byte* buf, uint size)
+errno writeFile(HANDLE hFile, databuf* file)
 {
     WinFile* module = getModulePointer();
 
+    byte* buf     = file->buf;
     uint  written = 0;
     errno errno   = NO_ERROR;
     for (;;)
     {
         // prevent buffer overflow
         uint chunkSize = CHUNK_SIZE;
-        uint remaining = size - written;
+        uint remaining = file->len - written;
         if (remaining < chunkSize)
         {
             chunkSize = remaining;
@@ -385,7 +383,7 @@ errno writeFile(HANDLE hFile, byte* buf, uint size)
         }
         // check is finished
         written += n;
-        if (written == size)
+        if (written == file->len)
         {
             break;
         }

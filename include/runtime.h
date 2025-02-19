@@ -108,10 +108,10 @@ typedef ANSI  (*UTF16ToANSIN_t)(UTF16 s, int n);
 
 // about WinFile
 // The buffer allocated from ReadFile must call Runtime_M.Memory.Free().
-typedef errno (*ReadFileA_t)(LPSTR path, byte** buf, uint* size);
-typedef errno (*ReadFileW_t)(LPWSTR path, byte** buf, uint* size);
-typedef errno (*WriteFileA_t)(LPSTR path, byte* buf, uint size);
-typedef errno (*WriteFileW_t)(LPWSTR path, byte* buf, uint size);
+typedef errno (*ReadFileA_t)(LPSTR path, databuf* file);
+typedef errno (*ReadFileW_t)(LPWSTR path, databuf* file);
+typedef errno (*WriteFileA_t)(LPSTR path, databuf* file);
+typedef errno (*WriteFileW_t)(LPWSTR path, databuf* file);
 
 // =================================WinHTTP=================================
 #ifndef WIN_HTTP_H

@@ -8,10 +8,10 @@
 
 // The buffer allocated from ReadFile must call Runtime_M.Memory.Free().
 
-typedef errno (*WFReadFileA_t)(LPSTR path, byte** buf, uint* size);
-typedef errno (*WFReadFileW_t)(LPWSTR path, byte** buf, uint* size);
-typedef errno (*WFWriteFileA_t)(LPSTR path, byte* buf, uint size);
-typedef errno (*WFWriteFileW_t)(LPWSTR path, byte* buf, uint size);
+typedef errno (*WFReadFileA_t)(LPSTR path, databuf* file);
+typedef errno (*WFReadFileW_t)(LPWSTR path, databuf* file);
+typedef errno (*WFWriteFileA_t)(LPSTR path, databuf* file);
+typedef errno (*WFWriteFileW_t)(LPWSTR path, databuf* file);
 
 typedef errno (*WFUninstall_t)();
 

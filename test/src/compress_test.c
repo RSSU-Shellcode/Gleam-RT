@@ -32,9 +32,8 @@ bool TestCompress()
 static bool TestCom_Compress()
 {
     LPSTR path = "..\\src\\runtime.c";
-
-    byte* data; uint size;
-    errno errno = runtime->WinFile.ReadFileA(path, &data, &size);
+    databuf data;
+    errno errno = runtime->WinFile.ReadFileA(path, &data);
     if (errno != NO_ERROR)
     {
         printf_s("failed to read test file: 0x%X\n", errno);
@@ -42,18 +41,17 @@ static bool TestCom_Compress()
     }
 
     uint windows[] = {
-        32, 64, 128, 256, 512,
-        1024, 1536, 2048, 4096,
+        32, 64, 128, 256, 512, 1024, 1536, 2048, 4096,
     };
     for (int i = 0; i < arrlen(windows); i++)
     {
-        void* dst = runtime->Memory.Alloc(size);
-        uint  len = Compress(dst, data, size, windows[i]);
-        printf_s("compressed: %zu/%zu, window: %zu\n", len, size, windows[i]);
+        void* dst = runtime->Memory.Alloc(data.len);
+        uint  len = Compress(dst, data.buf, data.len, windows[i]);
+        printf_s("compressed: %zu/%zu, window: %zu\n", len, data.len, windows[i]);
         runtime->Memory.Free(dst);
     }
 
-    runtime->Memory.Free(data);
+    runtime->Memory.Free(data.buf);
     printf_s("test compress passed\n");
     return true;
 }
@@ -61,35 +59,34 @@ static bool TestCom_Compress()
 static bool TestCom_Decompress()
 {
     LPSTR path = "..\\src\\runtime.c";
-
-    byte* data; uint size;
-    errno errno = runtime->WinFile.ReadFileA(path, &data, &size);
+    databuf data;
+    errno errno = runtime->WinFile.ReadFileA(path, &data);
     if (errno != NO_ERROR)
     {
         printf_s("failed to read test file: 0x%X\n", errno);
         return false;
     }
 
-    void* dst = runtime->Memory.Alloc(size);
-    uint len = Compress(dst, data, size, 2048);
+    void* dst = runtime->Memory.Alloc(data.len);
+    uint len = Compress(dst, data.buf, data.len, 2048);
     printf_s("compressed:   %zu\n", len);
 
-    void* raw = runtime->Memory.Alloc(size);
+    void* raw = runtime->Memory.Alloc(data.len);
     len = Decompress(raw, dst, len);
     printf_s("decompressed: %zu\n", len);
 
-    if (len != size)
+    if (len != data.len)
     {
         printf_s("incorrect decompressed data size: %zu\n", len);
         return false;
     }
-    if (mem_cmp(data, raw, size) != 0)
+    if (mem_cmp(data.buf, raw, data.len) != 0)
     {
         printf_s("incorrect decompressed data\n");
         return false;
     }
 
-    runtime->Memory.Free(data);
+    runtime->Memory.Free(data.buf);
     runtime->Memory.Free(dst);
     runtime->Memory.Free(raw);
     printf_s("test decompress passed\n");

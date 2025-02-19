@@ -27,8 +27,8 @@
 #define WC_RSA_KEY_USAGE_SIGN 1
 #define WC_RSA_KEY_USAGE_KEYX 2
 
-typedef errno (*WCRandBuffer_t)(byte* data, uint len);
-typedef errno (*WCSHA1_t)(byte* data, uint len, byte* hash);
+typedef errno (*WCRandBuffer_t)(databuf* data);
+typedef errno (*WCSHA1_t)(databuf* data, byte* hash);
 typedef errno (*WCAESEncrypt_t)(databuf* data, databuf* key, databuf* output);
 typedef errno (*WCAESDecrypt_t)(databuf* data, databuf* key, databuf* output);
 typedef errno (*WCRSAGenKey_t)(uint usage, uint bits, databuf* key);

@@ -36,30 +36,32 @@ bool TestRuntime_WinHTTP()
 
 static bool TestWinHTTP_Get()
 {
-    UTF16 URL = L"http://127.0.0.1:8001/hello.txt";
-    HTTP_Resp resp;
+    HTTP_Request req;
+    runtime->WinHTTP.Init(&req);
+    req.URL = L"http://127.0.0.1:8001/hello.txt";
 
-    errno err = runtime->WinHTTP.Get(URL, NULL, &resp);
+    HTTP_Response resp;
+    errno err = runtime->WinHTTP.Get(&req, &resp);
     if (err != NO_ERROR)
     {
         printf_s("failed to get: 0x%X\n", err);
         return false;
     }
 
-    if (resp.Body.Size != 5)
+    if (resp.Body.len != 5)
     {
-        printf_s("invalid response body size: %zu\n", resp.Body.Size);
+        printf_s("invalid response body size: %zu\n", resp.Body.len);
         return false;
     }
-    if (strncmp_a(resp.Body.Buf, "hello", 5) != 0)
+    if (strncmp_a(resp.Body.buf, "hello", 5) != 0)
     {
         printf_s("invalid response body\n");
         return false;
     }
-    printf_s("response size: %zu\n", resp.Body.Size);
-    printf_s("response body: %s\n", (byte*)resp.Body.Buf);
+    printf_s("response body: %s\n", (byte*)(resp.Body.buf));
+    printf_s("response size: %zu\n", resp.Body.len);
 
-    runtime->Memory.Free(resp.Body.Buf);
+    runtime->Memory.Free(resp.Body.buf);
 
     printf_s("test Get passed\n");
     return true;
@@ -67,35 +69,39 @@ static bool TestWinHTTP_Get()
 
 static bool TestWinHTTP_Post()
 {
-    UTF16 URL  = L"http://127.0.0.1:8001/hello.txt";
-    ANSI  data = "test body data";
-    HTTP_Body body = {
-        .Buf  = data,
-        .Size = strlen_a(data),
+    ANSI data = "test body data";
+    databuf body = {
+        .buf = data,
+        .len = strlen_a(data),
     };
-    HTTP_Resp resp;
 
-    errno err = runtime->WinHTTP.Post(URL, &body, NULL, &resp);
+    HTTP_Request req;
+    runtime->WinHTTP.Init(&req);
+    req.URL  = L"http://127.0.0.1:8001/hello.txt";
+    req.Body = &body;
+
+    HTTP_Response resp;
+    errno err = runtime->WinHTTP.Post(&req, &resp);
     if (err != NO_ERROR)
     {
         printf_s("failed to post: 0x%X\n", err);
         return false;
     }
 
-    if (resp.Body.Size != 5)
+    if (resp.Body.len != 5)
     {
-        printf_s("invalid response body size: %zu\n", resp.Body.Size);
+        printf_s("invalid response body size: %zu\n", resp.Body.len);
         return false;
     }
-    if (strncmp_a(resp.Body.Buf, "hello", 5) != 0)
+    if (strncmp_a(resp.Body.buf, "hello", 5) != 0)
     {
         printf_s("invalid response body\n");
         return false;
     }
-    printf_s("response size: %zu\n", resp.Body.Size);
-    printf_s("response body: %s\n", (byte*)resp.Body.Buf);
+    printf_s("response body: %s\n", (byte*)(resp.Body.buf));
+    printf_s("response size: %zu\n", resp.Body.len);
 
-    runtime->Memory.Free(resp.Body.Buf);
+    runtime->Memory.Free(resp.Body.buf);
 
     printf_s("test Post passed\n");
     return true;

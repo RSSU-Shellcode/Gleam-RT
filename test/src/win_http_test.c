@@ -12,6 +12,7 @@
 
 static bool TestWinHTTP_Get();
 static bool TestWinHTTP_Post();
+static bool TestWinHTTP_Do();
 static bool TestWinHTTP_Free();
 
 bool TestRuntime_WinHTTP()
@@ -20,6 +21,7 @@ bool TestRuntime_WinHTTP()
     {
         { TestWinHTTP_Get  },
         { TestWinHTTP_Post },
+        { TestWinHTTP_Do   },
         { TestWinHTTP_Free },
     };
     for (int i = 0; i < arrlen(tests); i++)
@@ -48,6 +50,13 @@ static bool TestWinHTTP_Get()
         return false;
     }
 
+    if (resp.StatusCode != 200)
+    {
+        printf_s("invalid status code: %d\n", resp.StatusCode);
+        return false;
+    }
+    printf_s("Headers:\n%ls", resp.Headers);
+
     if (resp.Body.len != 5)
     {
         printf_s("invalid response body size: %zu\n", resp.Body.len);
@@ -61,6 +70,7 @@ static bool TestWinHTTP_Get()
     printf_s("response body: %s\n", (byte*)(resp.Body.buf));
     printf_s("response size: %zu\n", resp.Body.len);
 
+    runtime->Memory.Free(resp.Headers);
     runtime->Memory.Free(resp.Body.buf);
 
     printf_s("test Get passed\n");
@@ -88,6 +98,13 @@ static bool TestWinHTTP_Post()
         return false;
     }
 
+    if (resp.StatusCode != 200)
+    {
+        printf_s("invalid status code: %d\n", resp.StatusCode);
+        return false;
+    }
+    printf_s("Headers:\n%ls", resp.Headers);
+
     if (resp.Body.len != 5)
     {
         printf_s("invalid response body size: %zu\n", resp.Body.len);
@@ -101,9 +118,18 @@ static bool TestWinHTTP_Post()
     printf_s("response body: %s\n", (byte*)(resp.Body.buf));
     printf_s("response size: %zu\n", resp.Body.len);
 
+    runtime->Memory.Free(resp.Headers);
     runtime->Memory.Free(resp.Body.buf);
 
     printf_s("test Post passed\n");
+    return true;
+}
+
+static bool TestWinHTTP_Do()
+{
+    // set headers
+    // set user-agent
+    // set proxy url
     return true;
 }
 

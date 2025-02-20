@@ -366,6 +366,7 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->WinHTTP.Get  = runtime->WinHTTP->Get;
     module->WinHTTP.Post = runtime->WinHTTP->Post;
     module->WinHTTP.Do   = runtime->WinHTTP->Do;
+    module->WinHTTP.Init = runtime->WinHTTP->Init;
     module->WinHTTP.Free = runtime->WinHTTP->Free;
     // WinCrypto
     module->WinCrypto.RandBuffer = runtime->WinCrypto->RandBuffer;

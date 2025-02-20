@@ -13,20 +13,21 @@
 typedef struct {
     UTF16 URL; // https://www.example.com/test.txt
 
-    UTF16  Headers;     // split by "\r\n"
-    UTF16  ContentType; // for POST method
-    UTF16  UserAgent;   // default User-Agent
-    UTF16  ProxyURL;    // http://user:pass@host.com/
-    uint   MaxBodySize; // default is no limit
-    uint32 Timeout;     // millseconds
-    uint8  AccessType;  // reference document about WinHttpOpen
+    UTF16 Headers;        // split by "\r\n"
+    UTF16 UserAgent;      // default User-Agent
+    UTF16 ProxyURL;       // http://user:pass@host.com/
+    uint  MaxBodySize;    // zero is no limit
+    uint  ConnectTimeout; // millseconds
+    uint  SendTimeout;    // millseconds
+    uint  ReceiveTimeout; // millseconds
+    uint8 AccessType;     // reference document about WinHttpOpen
 
     databuf* Body;
 } HTTP_Request;
 
 typedef struct {
-    int32 StatusCode;
-    UTF16 Headers;
+    int32 StatusCode; // example 200, 404
+    UTF16 Headers;    // split by "\r\n"
 
     databuf Body;
 } HTTP_Response;

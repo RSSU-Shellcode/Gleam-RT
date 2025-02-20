@@ -359,19 +359,19 @@ static bool findWinHTTPAPI()
         }
         list[i].proc = proc;
     }
-    module->WinHttpCrackUrl            = list[0x00].proc;
-    module->WinHttpOpen                = list[0x01].proc;
-    module->WinHttpConnect             = list[0x02].proc;
-    module->WinHttpSetOption           = list[0x03].proc;
-    module->WinHttpSetTimeouts         = list[0x04].proc;
-    module->WinHttpOpenRequest         = list[0x05].proc;
-    module->WinHttpSetCredentials      = list[0x06].proc; 
-    module->WinHttpSendRequest         = list[0x07].proc;
-    module->WinHttpReceiveResponse     = list[0x08].proc;  
-    module->WinHttpQueryHeaders        = list[0x09].proc;
-    module->WinHttpQueryDataAvailable  = list[0x0A].proc;     
-    module->WinHttpReadData            = list[0x0B].proc;
-    module->WinHttpCloseHandle         = list[0x0C].proc;     
+    module->WinHttpCrackUrl           = list[0x00].proc;
+    module->WinHttpOpen               = list[0x01].proc;
+    module->WinHttpConnect            = list[0x02].proc;
+    module->WinHttpSetOption          = list[0x03].proc;
+    module->WinHttpSetTimeouts        = list[0x04].proc;
+    module->WinHttpOpenRequest        = list[0x05].proc;
+    module->WinHttpSetCredentials     = list[0x06].proc;
+    module->WinHttpSendRequest        = list[0x07].proc;
+    module->WinHttpReceiveResponse    = list[0x08].proc;
+    module->WinHttpQueryHeaders       = list[0x09].proc;
+    module->WinHttpQueryDataAvailable = list[0x0A].proc;
+    module->WinHttpReadData           = list[0x0B].proc;
+    module->WinHttpCloseHandle        = list[0x0C].proc;
     return true;
 }
 
@@ -518,7 +518,8 @@ errno WH_Do(UTF16 method, HTTP_Request* req, HTTP_Response* resp)
     HINTERNET hConnect = NULL;
     HINTERNET hRequest = NULL;
 
-    byte* bodyBuf = NULL;
+    UTF16 headerBuf = NULL;
+    byte* bodyBuf   = NULL;
 
     bool success = false;
     for (;;)
@@ -543,6 +544,15 @@ errno WH_Do(UTF16 method, HTTP_Request* req, HTTP_Response* resp)
         );
         if (hSession == NULL)
         {
+            break;
+        }
+        // set timeouts
+        int connectTimeout = (int)(req->ConnectTimeout);
+        int sendTimeout    = (int)(req->SendTimeout);
+        int receiveTimeout = (int)(req->ReceiveTimeout);
+        if (!module->WinHttpSetTimeouts(
+            hSession, 0, connectTimeout, sendTimeout, receiveTimeout
+        )){
             break;
         }
         // try to enable compression
@@ -592,13 +602,38 @@ errno WH_Do(UTF16 method, HTTP_Request* req, HTTP_Response* resp)
         }
         if (!module->WinHttpSendRequest(
             hRequest, headers, headersLen, body, bodyLen, bodyLen, NULL
-        ))
-        {
+        )){
             break;
         }
         // receive response
         if (!module->WinHttpReceiveResponse(hRequest, NULL))
         {
+            break;
+        }
+        // get response status code
+        DWORD statusCodeLen = sizeof(DWORD);
+        if (!module->WinHttpQueryHeaders(
+            hRequest, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER,
+            WINHTTP_HEADER_NAME_BY_INDEX, &resp->StatusCode, &statusCodeLen,
+            WINHTTP_NO_HEADER_INDEX
+        )) {
+            break;
+        }
+        // get response header
+        DWORD headerLen;
+        module->WinHttpQueryHeaders(
+            hRequest, WINHTTP_QUERY_RAW_HEADERS_CRLF, WINHTTP_HEADER_NAME_BY_INDEX, 
+            NULL, &headerLen, WINHTTP_NO_HEADER_INDEX
+        );
+        if (GetLastErrno() != ERROR_INSUFFICIENT_BUFFER)
+        {
+            break;
+        }
+        headerBuf = module->malloc(headerLen);
+        if (!module->WinHttpQueryHeaders(
+            hRequest, WINHTTP_QUERY_RAW_HEADERS_CRLF, WINHTTP_HEADER_NAME_BY_INDEX,
+            headerBuf, &headerLen, WINHTTP_NO_HEADER_INDEX
+        )) {
             break;
         }
         // read body data
@@ -626,9 +661,7 @@ errno WH_Do(UTF16 method, HTTP_Request* req, HTTP_Response* resp)
             }
             bodySize += (uint)size;
         }
-        // TODO
-        // resp->StatusCode = 200; 
-        // resp->Headers    = NULL;
+        resp->Headers  = headerBuf;
         resp->Body.buf = bodyBuf;
         resp->Body.len = bodySize;
         success = true;
@@ -640,6 +673,7 @@ exit_loop:
     if (!success)
     {
         errno = GetLastErrno();
+        module->free(headerBuf);
         module->free(bodyBuf);
     }
 
@@ -682,15 +716,16 @@ exit_loop:
 __declspec(noinline)
 void WH_Init(HTTP_Request* req)
 {
-    req->URL         = NULL;
-    req->Headers     = NULL;
-    req->ContentType = NULL;
-    req->UserAgent   = NULL;
-    req->ProxyURL    = NULL;
-    req->MaxBodySize = 0;
-    req->Timeout     = DEFAULT_TIMEOUT;
-    req->AccessType  = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
-    req->Body        = NULL;
+    req->URL            = NULL;
+    req->Headers        = NULL;
+    req->UserAgent      = NULL;
+    req->ProxyURL       = NULL;
+    req->MaxBodySize    = 0;
+    req->ConnectTimeout = DEFAULT_TIMEOUT;
+    req->SendTimeout    = DEFAULT_TIMEOUT;
+    req->ReceiveTimeout = DEFAULT_TIMEOUT;
+    req->AccessType     = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
+    req->Body           = NULL;
 }
 
 __declspec(noinline)

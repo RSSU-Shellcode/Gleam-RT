@@ -115,13 +115,13 @@ typedef errno (*WriteFileW_t)(LPWSTR path, databuf* file);
 
 // =================================WinHTTP=================================
 #ifndef WIN_HTTP_H
-// The HTTP_Body.Buf allocated from WinHTTP must call Runtime_M.Memory.Free().
-typedef struct {
-    void* Buf;
-    uint  Size;
-} HTTP_Body;
+// The databuf allocated from HTTP_Response must call Runtime_M.Memory.Free().
+// Init is used to initialize a HTTP request structure.
+// Free is used to try to free winhttp.dll after use.
 
 typedef struct {
+    UTF16 URL; // https://www.example.com/test.txt
+
     UTF16  Headers;     // split by "\r\n"
     UTF16  ContentType; // for POST method
     UTF16  UserAgent;   // default User-Agent
@@ -130,20 +130,23 @@ typedef struct {
     uint32 Timeout;     // millseconds
     uint8  AccessType;  // reference document about WinHttpOpen
 
-    HTTP_Body* Body;
-} HTTP_Opts;
+    databuf* Body;
+} HTTP_Request;
 
 typedef struct {
     int32 StatusCode;
     UTF16 Headers;
 
-    HTTP_Body Body;
-} HTTP_Resp;
+    databuf Body;
+} HTTP_Response;
+
 #endif // WIN_HTTP_H
 
-typedef errno (*HTTPGet_t)(UTF16 url, HTTP_Opts* opts, HTTP_Resp* resp);
-typedef errno (*HTTPPost_t)(UTF16 url, HTTP_Body* body, HTTP_Opts* opts, HTTP_Resp* resp);
-typedef errno (*HTTPDo_t)(UTF16 url, UTF16 method, HTTP_Opts* opts, HTTP_Resp* resp);
+typedef errno (*HTTPGet_t)(HTTP_Request* req, HTTP_Response* resp);
+typedef errno (*HTTPPost_t)(HTTP_Request* req, HTTP_Response* resp);
+typedef errno (*HTTPDo_t)(UTF16 method, HTTP_Request* req, HTTP_Response* resp);
+
+typedef void  (*HTTPInit_t)(HTTP_Request* req);
 typedef errno (*HTTPFree_t)();
 
 // ================================WinCrypto================================
@@ -332,6 +335,8 @@ typedef struct {
         HTTPGet_t  Get;
         HTTPPost_t Post;
         HTTPDo_t   Do;
+
+        HTTPInit_t Init;
         HTTPFree_t Free;
     } WinHTTP;
 

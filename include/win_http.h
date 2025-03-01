@@ -7,6 +7,8 @@
 #include "context.h"
 
 // The databuf allocated from HTTP_Response must call Runtime_M.Memory.Free().
+// The Headers in HTTP_Response must call Runtime_M.Memory.Free() after use.
+// 
 // Init is used to initialize a HTTP request structure.
 // Free is used to try to free winhttp.dll after use.
 

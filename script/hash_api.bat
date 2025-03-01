@@ -129,8 +129,15 @@ hash_api -fmt 64 -conc -func FindFirstFileW
 hash_api -fmt 64 -conc -func FindFirstFileExA
 hash_api -fmt 64 -conc -func FindFirstFileExW
 hash_api -fmt 64 -conc -func FindClose
+hash_api -fmt 64 -conc -func CreateIoCompletionPort
 hash_api -fmt 64 -conc -mod "ws2_32.dll" -func WSAStartup
 hash_api -fmt 64 -conc -mod "ws2_32.dll" -func WSACleanup
+hash_api -fmt 64 -conc -mod "ws2_32.dll" -func WSASocketA
+hash_api -fmt 64 -conc -mod "ws2_32.dll" -func WSASocketW
+hash_api -fmt 64 -conc -mod "ws2_32.dll" -func socket
+hash_api -fmt 64 -conc -mod "ws2_32.dll" -func accept
+hash_api -fmt 64 -conc -mod "ws2_32.dll" -func closesocket
+hash_api -fmt 64 -conc -mod "mswsock.dll" -func AcceptEx
 echo.
 
 echo [Argument Store]
@@ -320,8 +327,15 @@ hash_api -fmt 32 -conc -func FindFirstFileW
 hash_api -fmt 32 -conc -func FindFirstFileExA
 hash_api -fmt 32 -conc -func FindFirstFileExW
 hash_api -fmt 32 -conc -func FindClose
+hash_api -fmt 32 -conc -func CreateIoCompletionPort
 hash_api -fmt 32 -conc -mod "ws2_32.dll" -func WSAStartup
 hash_api -fmt 32 -conc -mod "ws2_32.dll" -func WSACleanup
+hash_api -fmt 32 -conc -mod "ws2_32.dll" -func WSASocketA
+hash_api -fmt 32 -conc -mod "ws2_32.dll" -func WSASocketW
+hash_api -fmt 32 -conc -mod "ws2_32.dll" -func socket
+hash_api -fmt 32 -conc -mod "ws2_32.dll" -func accept
+hash_api -fmt 32 -conc -mod "ws2_32.dll" -func closesocket
+hash_api -fmt 32 -conc -mod "mswsock.dll" -func AcceptEx
 echo.
 
 echo [Argument Store]

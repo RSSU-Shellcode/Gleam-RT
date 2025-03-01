@@ -648,4 +648,10 @@ typedef int (*WideCharToMultiByte_t)
     LPSTR lpMultiByteStr, int cbMultiByte, byte* lpDefaultChar, BOOL* lpUsedDefaultChar
 );
 
+typedef HANDLE (*CreateIoCompletionPort_t)
+(
+    HANDLE FileHandle, HANDLE ExistingCompletionPort, POINTER CompletionKey,
+    DWORD NumberOfConcurrentThreads
+);
+
 #endif // DLL_KERNEL32_H

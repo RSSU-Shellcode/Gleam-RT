@@ -23,15 +23,22 @@
 // function types about release handle
 #define TYPE_CLOSE_HANDLE 0x01000000
 #define TYPE_FIND_CLOSE   0x02000000
+#define TYPE_CLOSE_SOCKET 0x03000000
 
 // major function types
-#define FUNC_CREATE_MUTEX         (TYPE_CLOSE_HANDLE|0x00000100)
-#define FUNC_CREATE_EVENT         (TYPE_CLOSE_HANDLE|0x00000200)
-#define FUNC_CREATE_SEMAPHORE     (TYPE_CLOSE_HANDLE|0x00000300)
-#define FUNC_CREATE_WAITABLETIMER (TYPE_CLOSE_HANDLE|0x00000400)
-#define FUNC_CREATE_FILE          (TYPE_CLOSE_HANDLE|0x00000800)
+#define FUNC_CREATE_MUTEX              (TYPE_CLOSE_HANDLE|0x00000100)
+#define FUNC_CREATE_EVENT              (TYPE_CLOSE_HANDLE|0x00000200)
+#define FUNC_CREATE_SEMAPHORE          (TYPE_CLOSE_HANDLE|0x00000300)
+#define FUNC_CREATE_WAITABLETIMER      (TYPE_CLOSE_HANDLE|0x00000400)
+#define FUNC_CREATE_FILE               (TYPE_CLOSE_HANDLE|0x00000500)
+#define FUNC_CREATE_IO_COMPLETION_PORT (TYPE_CLOSE_HANDLE|0x00000600)
 
 #define FUNC_FIND_FIRST_FILE (TYPE_FIND_CLOSE|0x00000100)
+
+#define FUNC_WSA_SOCKET (TYPE_CLOSE_SOCKET|0x00000100)
+#define FUNC_ACCEPT     (TYPE_CLOSE_SOCKET|0x00000200)
+#define FUNC_SOCKET     (TYPE_CLOSE_SOCKET|0x00000300)
+#define FUNC_ACCEPTEX   (TYPE_CLOSE_SOCKET|0x00000400)
 
 // source of handles created by functions
 #define SRC_CREATE_MUTEX_A    (FUNC_CREATE_MUTEX|0x01)
@@ -57,10 +64,19 @@
 #define SRC_CREATE_FILE_A (FUNC_CREATE_FILE|0x01)
 #define SRC_CREATE_FILE_W (FUNC_CREATE_FILE|0x02)
 
+#define SRC_CREATE_IO_COMPLETION_PORT (FUNC_CREATE_IO_COMPLETION_PORT|0x01)
+
 #define SRC_FIND_FIRST_FILE_A    (FUNC_FIND_FIRST_FILE|0x01)
 #define SRC_FIND_FIRST_FILE_W    (FUNC_FIND_FIRST_FILE|0x02)
 #define SRC_FIND_FIRST_FILE_EX_A (FUNC_FIND_FIRST_FILE|0x03)
 #define SRC_FIND_FIRST_FILE_EX_W (FUNC_FIND_FIRST_FILE|0x04)
+
+#define SRC_WSA_SOCKET_A (FUNC_WSA_SOCKET|0x01)
+#define SRC_WSA_SOCKET_W (FUNC_WSA_SOCKET|0x02)
+
+#define SRC_ACCEPT   (FUNC_ACCEPT|0x01)
+#define SRC_SOCKET   (FUNC_SOCKET|0x01)
+#define SRC_ACCEPTEX (FUNC_ACCEPTEX|0x01)
 
 // resource counters index
 #define CTR_WSA_STARTUP 0x0000
@@ -98,6 +114,7 @@ typedef struct {
     FindFirstFileW_t         FindFirstFileW;
     FindFirstFileExA_t       FindFirstFileExA;
     FindFirstFileExW_t       FindFirstFileExW;
+    CreateIoCompletionPort_t CreateIoCompletionPort;
     CloseHandle_t            CloseHandle;
     FindClose_t              FindClose;
     ReleaseMutex_t           ReleaseMutex;
@@ -182,8 +199,33 @@ HANDLE RT_FindFirstFileExW(
     LPCWSTR lpFileName, UINT fInfoLevelId, LPVOID lpFindFileData,
     UINT fSearchOp, LPVOID lpSearchFilter, DWORD dwAdditionalFlags
 );
+HANDLE RT_CreateIoCompletionPort(
+    HANDLE FileHandle, HANDLE ExistingCompletionPort, POINTER CompletionKey,
+    DWORD NumberOfConcurrentThreads
+);
+SOCKET RT_WSASocketA(
+    int af, int type, int protocol, POINTER lpProtocolInfo, 
+    POINTER g, DWORD dwFlags
+);
+SOCKET RT_WSASocketW(
+    int af, int type, int protocol, POINTER lpProtocolInfo, 
+    POINTER g, DWORD dwFlags
+);
+SOCKET RT_socket(
+    int af, int type, int protocol
+);
+SOCKET RT_accept(
+    SOCKET s, POINTER addr, int* addrlen
+);
+BOOL RT_AcceptEx(
+    SOCKET sListenSocket, SOCKET sAcceptSocket, PVOID lpOutputBuffer,
+    DWORD dwReceiveDataLength, DWORD dwLocalAddressLength,
+    DWORD dwRemoteAddressLength, DWORD* lpdwBytesReceived, POINTER lpOverlapped
+);
+
 BOOL RT_CloseHandle(HANDLE hObject);
 BOOL RT_FindClose(HANDLE hFindFile);
+int  RT_closesocket(SOCKET hSocket);
 
 // resource counters
 int RT_WSAStartup(WORD wVersionRequired, POINTER lpWSAData);
@@ -289,8 +331,15 @@ ResourceTracker_M* InitResourceTracker(Context* context)
     module->FindFirstFileW         = GetFuncAddr(&RT_FindFirstFileW);
     module->FindFirstFileExA       = GetFuncAddr(&RT_FindFirstFileExA);
     module->FindFirstFileExW       = GetFuncAddr(&RT_FindFirstFileExW);
+    module->CreateIoCompletionPort = GetFuncAddr(&RT_CreateIoCompletionPort);
+    module->WSASocketA             = GetFuncAddr(&RT_WSASocketA);
+    module->WSASocketW             = GetFuncAddr(&RT_WSASocketW);
+    module->socket                 = GetFuncAddr(&RT_socket);
+    module->accept                 = GetFuncAddr(&RT_accept);
+    module->AcceptEx               = GetFuncAddr(&RT_AcceptEx);
     module->CloseHandle            = GetFuncAddr(&RT_CloseHandle);
     module->FindClose              = GetFuncAddr(&RT_FindClose);
+    module->closesocket            = GetFuncAddr(&RT_closesocket);
     module->WSAStartup             = GetFuncAddr(&RT_WSAStartup);
     module->WSACleanup             = GetFuncAddr(&RT_WSACleanup);
     // methods for user
@@ -340,6 +389,7 @@ static bool initTrackerAPI(ResourceTracker* tracker, Context* context)
         { 0xCAA3E575156CF368, 0x8A587657CB19E9BB }, // FindFirstFileExA
         { 0x7E4308DC46D7B281, 0x10C4F8ED60BC5EB5 }, // FindFirstFileExW
         { 0x98AC87F60ED8677D, 0x2DF5C74604B2E3A1 }, // FindClose
+        { 0xD696B340A7E3A5ED, 0x535C420EC1129AB9 }, // CreateIoCompletionPort
     };
 #elif _WIN32
     {
@@ -366,6 +416,7 @@ static bool initTrackerAPI(ResourceTracker* tracker, Context* context)
         { 0xADD805AF, 0xD14251F2 }, // FindFirstFileExA
         { 0x0A45496A, 0x4A4A7F36 }, // FindFirstFileExW
         { 0xE992A699, 0x8B6ED092 }, // FindClose
+        { 0x6A3CA941, 0xDAE6E303 }, // CreateIoCompletionPort
     };
 #endif
     for (int i = 0; i < arrlen(list); i++)
@@ -400,6 +451,7 @@ static bool initTrackerAPI(ResourceTracker* tracker, Context* context)
     tracker->FindFirstFileExA       = list[0x14].proc;
     tracker->FindFirstFileExW       = list[0x15].proc;
     tracker->FindClose              = list[0x16].proc;
+    tracker->CreateIoCompletionPort = list[0x17].proc;
 
     tracker->CloseHandle         = context->CloseHandle;
     tracker->ReleaseMutex        = context->ReleaseMutex;
@@ -1209,6 +1261,7 @@ HANDLE RT_FindFirstFileW(LPCWSTR lpFileName, POINTER lpFindFileData)
     return hFindFile;
 };
 
+__declspec(noinline)
 HANDLE RT_FindFirstFileExA(
     LPCSTR lpFileName, UINT fInfoLevelId, LPVOID lpFindFileData,
     UINT fSearchOp, LPVOID lpSearchFilter, DWORD dwAdditionalFlags
@@ -1257,6 +1310,7 @@ HANDLE RT_FindFirstFileExA(
     return hFindFile;
 };
 
+__declspec(noinline)
 HANDLE RT_FindFirstFileExW(
     LPCWSTR lpFileName, UINT fInfoLevelId, LPVOID lpFindFileData,
     UINT fSearchOp, LPVOID lpSearchFilter, DWORD dwAdditionalFlags
@@ -1306,6 +1360,53 @@ HANDLE RT_FindFirstFileExW(
 };
 
 __declspec(noinline)
+HANDLE RT_CreateIoCompletionPort(
+    HANDLE FileHandle, HANDLE ExistingCompletionPort, POINTER CompletionKey,
+    DWORD NumberOfConcurrentThreads
+){
+
+}
+
+__declspec(noinline)
+SOCKET RT_WSASocketA(
+    int af, int type, int protocol, POINTER lpProtocolInfo, 
+    POINTER g, DWORD dwFlags
+){
+
+}
+
+__declspec(noinline)
+SOCKET RT_WSASocketW(
+    int af, int type, int protocol, POINTER lpProtocolInfo, 
+    POINTER g, DWORD dwFlags
+){
+
+}
+
+__declspec(noinline)
+SOCKET RT_socket(
+    int af, int type, int protocol
+){
+
+}
+
+__declspec(noinline)
+SOCKET RT_accept(
+    SOCKET s, POINTER addr, int* addrlen
+){
+
+}
+
+__declspec(noinline)
+BOOL RT_AcceptEx(
+    SOCKET sListenSocket, SOCKET sAcceptSocket, PVOID lpOutputBuffer,
+    DWORD dwReceiveDataLength, DWORD dwLocalAddressLength,
+    DWORD dwRemoteAddressLength, DWORD* lpdwBytesReceived, POINTER lpOverlapped
+){
+
+}
+
+__declspec(noinline)
 BOOL RT_CloseHandle(HANDLE hObject)
 {
     ResourceTracker* tracker = getTrackerPointer();
@@ -1352,6 +1453,12 @@ BOOL RT_FindClose(HANDLE hFindFile)
     dbg_log("[resource]", "FindClose: 0x%zX", hFindFile);
     return success;
 };
+
+__declspec(noinline)
+int RT_closesocket(SOCKET hSocket)
+{
+
+}
 
 __declspec(noinline)
 static bool addHandle(ResourceTracker* tracker, void* hObject, uint32 source)

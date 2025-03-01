@@ -29,7 +29,7 @@
 #define FUNC_CREATE_MUTEX              (TYPE_CLOSE_HANDLE|0x00000100)
 #define FUNC_CREATE_EVENT              (TYPE_CLOSE_HANDLE|0x00000200)
 #define FUNC_CREATE_SEMAPHORE          (TYPE_CLOSE_HANDLE|0x00000300)
-#define FUNC_CREATE_WAITABLETIMER      (TYPE_CLOSE_HANDLE|0x00000400)
+#define FUNC_CREATE_WAITABLE_TIMER     (TYPE_CLOSE_HANDLE|0x00000400)
 #define FUNC_CREATE_FILE               (TYPE_CLOSE_HANDLE|0x00000500)
 #define FUNC_CREATE_IO_COMPLETION_PORT (TYPE_CLOSE_HANDLE|0x00000600)
 
@@ -56,10 +56,10 @@
 #define SRC_CREATE_SEMAPHORE_EX_A (FUNC_CREATE_SEMAPHORE|0x03)
 #define SRC_CREATE_SEMAPHORE_EX_W (FUNC_CREATE_SEMAPHORE|0x04)
 
-#define SRC_CREATE_WAITABLETIMER_A    (FUNC_CREATE_WAITABLETIMER|0x01)
-#define SRC_CREATE_WAITABLETIMER_W    (FUNC_CREATE_WAITABLETIMER|0x02)
-#define SRC_CREATE_WAITABLETIMER_EX_A (FUNC_CREATE_WAITABLETIMER|0x03)
-#define SRC_CREATE_WAITABLETIMER_EX_W (FUNC_CREATE_WAITABLETIMER|0x04)
+#define SRC_CREATE_WAITABLE_TIMER_A    (FUNC_CREATE_WAITABLE_TIMER|0x01)
+#define SRC_CREATE_WAITABLE_TIMER_W    (FUNC_CREATE_WAITABLE_TIMER|0x02)
+#define SRC_CREATE_WAITABLE_TIMER_EX_A (FUNC_CREATE_WAITABLE_TIMER|0x03)
+#define SRC_CREATE_WAITABLE_TIMER_EX_W (FUNC_CREATE_WAITABLE_TIMER|0x04)
 
 #define SRC_CREATE_FILE_A (FUNC_CREATE_FILE|0x01)
 #define SRC_CREATE_FILE_W (FUNC_CREATE_FILE|0x02)
@@ -966,9 +966,9 @@ HANDLE RT_CreateWaitableTimerA(
         {
             break;
         }
-        if (!addHandleMu(tracker, hTimer, SRC_CREATE_WAITABLETIMER_A))
+        if (!addHandleMu(tracker, hTimer, SRC_CREATE_WAITABLE_TIMER_A))
         {
-            lastErr = ERR_RESOURCE_ADD_WAITABLETIMER;
+            lastErr = ERR_RESOURCE_ADD_WAITABLE_TIMER;
             break;
         }
         break;
@@ -997,9 +997,9 @@ HANDLE RT_CreateWaitableTimerW(
         {
             break;
         }
-        if (!addHandleMu(tracker, hTimer, SRC_CREATE_WAITABLETIMER_W))
+        if (!addHandleMu(tracker, hTimer, SRC_CREATE_WAITABLE_TIMER_W))
         {
-            lastErr = ERR_RESOURCE_ADD_WAITABLETIMER;
+            lastErr = ERR_RESOURCE_ADD_WAITABLE_TIMER;
             break;
         }
         break;
@@ -1028,9 +1028,9 @@ HANDLE RT_CreateWaitableTimerExA(
         {
             break;
         }
-        if (!addHandleMu(tracker, hTimer, SRC_CREATE_WAITABLETIMER_EX_A))
+        if (!addHandleMu(tracker, hTimer, SRC_CREATE_WAITABLE_TIMER_EX_A))
         {
-            lastErr = ERR_RESOURCE_ADD_WAITABLETIMER;
+            lastErr = ERR_RESOURCE_ADD_WAITABLE_TIMER;
             break;
         }
         break;
@@ -1059,9 +1059,9 @@ HANDLE RT_CreateWaitableTimerExW(
         {
             break;
         }
-        if (!addHandleMu(tracker, hTimer, SRC_CREATE_WAITABLETIMER_EX_W))
+        if (!addHandleMu(tracker, hTimer, SRC_CREATE_WAITABLE_TIMER_EX_W))
         {
-            lastErr = ERR_RESOURCE_ADD_WAITABLETIMER;
+            lastErr = ERR_RESOURCE_ADD_WAITABLE_TIMER;
             break;
         }
         break;
@@ -1364,7 +1364,31 @@ HANDLE RT_CreateIoCompletionPort(
     HANDLE FileHandle, HANDLE ExistingCompletionPort, POINTER CompletionKey,
     DWORD NumberOfConcurrentThreads
 ){
+    ResourceTracker* tracker = getTrackerPointer();
 
+    HANDLE hPort   = NULL;
+    errno  lastErr = NO_ERROR;
+    for (;;)
+    {
+        hPort = tracker->CreateIoCompletionPort(
+            FileHandle, ExistingCompletionPort, CompletionKey, NumberOfConcurrentThreads
+        );
+        lastErr = GetLastErrno();
+        if (hPort == NULL)
+        {
+            break;
+        }
+        if (!addHandleMu(tracker, hPort, SRC_CREATE_IO_COMPLETION_PORT))
+        {
+            lastErr = ERR_RESOURCE_ADD_IO_COMPLETION_PORT;
+            break;
+        }
+        break;
+    }
+    SetLastErrno(lastErr);
+
+    dbg_log("[resource]", "CreateIoCompletionPort: %ls", lpFileName);
+    return hPort;
 }
 
 __declspec(noinline)
@@ -1415,11 +1439,12 @@ BOOL RT_CloseHandle(HANDLE hObject)
     errno lastErr = NO_ERROR;
     for (;;)
     {
-        if (!tracker->CloseHandle(hObject))
+        bool ok = tracker->CloseHandle(hObject);
+        lastErr = GetLastErrno();
+        if (!ok)
         {
             break;
         }
-        lastErr = GetLastErrno();
         delHandleMu(tracker, hObject, TYPE_CLOSE_HANDLE);
         success = true;
         break;
@@ -1439,11 +1464,12 @@ BOOL RT_FindClose(HANDLE hFindFile)
     errno lastErr = NO_ERROR;
     for (;;)
     {
-        if (!tracker->FindClose(hFindFile))
+        bool ok = tracker->FindClose(hFindFile);
+        lastErr = GetLastErrno();
+        if (!ok)
         {
             break;
         }
-        lastErr = GetLastErrno();
         delHandleMu(tracker, hFindFile, TYPE_FIND_CLOSE);
         success = true;
         break;
@@ -1457,7 +1483,40 @@ BOOL RT_FindClose(HANDLE hFindFile)
 __declspec(noinline)
 int RT_closesocket(SOCKET hSocket)
 {
+    ResourceTracker* tracker = getTrackerPointer();
 
+    BOOL  success = false;
+    errno lastErr = NO_ERROR;
+    for (;;)
+    {
+        closesocket_t closesocket;
+    #ifdef _WIN64
+        closesocket = FindAPI(0x53A87D9CE52FEC49, 0xBBC0625CD7DA8E92);
+    #elif _WIN32
+        closesocket = FindAPI(0x224A8165, 0x524B8D52);
+    #endif
+        if (closesocket == NULL)
+        {
+            lastErr = ERR_RESOURCE_API_NOT_FOUND;
+            break;
+        }
+        if (closesocket(hSocket) != 0)
+        {
+            break;
+        }
+        delHandleMu(tracker, hSocket, TYPE_CLOSE_SOCKET);
+        success = true;
+        break;
+    }
+    SetLastErrno(lastErr);
+
+    dbg_log("[resource]", "closesocket: 0x%zX", hSocket);
+
+    if (!success)
+    {
+        return SOCKET_ERROR;
+    }
+    return 0;
 }
 
 __declspec(noinline)
@@ -1561,10 +1620,10 @@ int RT_WSAStartup(WORD wVersionRequired, POINTER lpWSAData)
 
     if (!RT_Lock())
     {
-        return WSASYSNOTREADY;
+        return SOCKET_ERROR;
     }
 
-    int ret = WSASYSNOTREADY;
+    int ret = SOCKET_ERROR;
 
     errno lastErr = NO_ERROR;
     for (;;)
@@ -1594,7 +1653,7 @@ int RT_WSAStartup(WORD wVersionRequired, POINTER lpWSAData)
 
     if (!RT_Unlock())
     {
-        return WSASYSNOTREADY;
+        return SOCKET_ERROR;
     }
     return ret;
 }
@@ -1606,10 +1665,10 @@ int RT_WSACleanup()
 
     if (!RT_Lock())
     {
-        return WSAEINPROGRESS;
+        return SOCKET_ERROR;
     }
 
-    int ret = WSASYSNOTREADY;
+    int ret = SOCKET_ERROR;
 
     errno lastErr = NO_ERROR;
     for (;;)
@@ -1639,7 +1698,7 @@ int RT_WSACleanup()
 
     if (!RT_Unlock())
     {
-        return WSAEINPROGRESS;
+        return SOCKET_ERROR;
     }
     return ret;
 }
@@ -1743,7 +1802,7 @@ bool RT_GetStatus(RT_Status* status)
         case FUNC_CREATE_SEMAPHORE:
             numSemphos++;
             break;
-        case FUNC_CREATE_WAITABLETIMER:
+        case FUNC_CREATE_WAITABLE_TIMER:
             numTimers++;
             break;
         case FUNC_CREATE_FILE:

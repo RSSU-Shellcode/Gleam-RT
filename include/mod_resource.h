@@ -5,6 +5,7 @@
 #include "win_types.h"
 #include "dll_kernel32.h"
 #include "dll_ws2_32.h"
+#include "dll_mswsock.h"
 #include "errno.h"
 #include "context.h"
 
@@ -58,8 +59,17 @@ typedef struct {
     FindFirstFileExA_t FindFirstFileExA;
     FindFirstFileExW_t FindFirstFileExW;
 
+    CreateIoCompletionPort_t CreateIoCompletionPort;
+
+    WSASocketA_t WSASocketA;
+    WSASocketW_t WSASocketW;
+    socket_t     socket;
+    accept_t     accept;
+    AcceptEx_t   AcceptEx;
+
     CloseHandle_t CloseHandle;
     FindClose_t   FindClose;
+    closesocket_t closesocket;
 
     WSAStartup_t WSAStartup;
     WSACleanup_t WSACleanup;

@@ -20,6 +20,7 @@
     <ClInclude Include="..\include\dll_msvcrt.h" />
     <ClInclude Include="..\include\dll_ucrtbase.h" />
     <ClInclude Include="..\include\dll_ws2_32.h" />
+	<ClInclude Include="..\include\dll_mswsock.h" />
     <ClInclude Include="..\include\dll_winhttp.h" />
     <ClInclude Include="..\include\dll_advapi32.h" />
     <ClInclude Include="..\include\lib_memory.h" />
@@ -67,7 +68,7 @@
     <ClCompile Include="src\win_base_test.c" />
     <ClCompile Include="src\win_file_test.c" />
     <ClCompile Include="src\win_http_test.c" />
-	<ClCompile Include="src\win_crypto_test.c" />
+    <ClCompile Include="src\win_crypto_test.c" />
     <ClCompile Include="..\src\runtime.c" />
     <ClCompile Include="..\src\lib_memory.c" />
     <ClCompile Include="..\src\lib_string.c" />

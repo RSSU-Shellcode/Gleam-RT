@@ -38,7 +38,6 @@
 #define FUNC_WSA_SOCKET (TYPE_CLOSE_SOCKET|0x00000100)
 #define FUNC_ACCEPT     (TYPE_CLOSE_SOCKET|0x00000200)
 #define FUNC_SOCKET     (TYPE_CLOSE_SOCKET|0x00000300)
-#define FUNC_ACCEPTEX   (TYPE_CLOSE_SOCKET|0x00000400)
 
 // source of handles created by functions
 #define SRC_CREATE_MUTEX_A    (FUNC_CREATE_MUTEX|0x01)
@@ -74,9 +73,8 @@
 #define SRC_WSA_SOCKET_A (FUNC_WSA_SOCKET|0x01)
 #define SRC_WSA_SOCKET_W (FUNC_WSA_SOCKET|0x02)
 
-#define SRC_ACCEPT   (FUNC_ACCEPT|0x01)
-#define SRC_SOCKET   (FUNC_SOCKET|0x01)
-#define SRC_ACCEPTEX (FUNC_ACCEPTEX|0x01)
+#define SRC_ACCEPT (FUNC_ACCEPT|0x01)
+#define SRC_SOCKET (FUNC_SOCKET|0x01)
 
 // resource counters index
 #define CTR_WSA_STARTUP 0x0000
@@ -217,11 +215,6 @@ SOCKET RT_socket(
 SOCKET RT_accept(
     SOCKET s, POINTER addr, int* addrlen
 );
-BOOL RT_AcceptEx(
-    SOCKET sListenSocket, SOCKET sAcceptSocket, PVOID lpOutputBuffer,
-    DWORD dwReceiveDataLength, DWORD dwLocalAddressLength,
-    DWORD dwRemoteAddressLength, DWORD* lpdwBytesReceived, POINTER lpOverlapped
-);
 
 BOOL RT_CloseHandle(HANDLE hObject);
 BOOL RT_FindClose(HANDLE hFindFile);
@@ -336,7 +329,6 @@ ResourceTracker_M* InitResourceTracker(Context* context)
     module->WSASocketW             = GetFuncAddr(&RT_WSASocketW);
     module->socket                 = GetFuncAddr(&RT_socket);
     module->accept                 = GetFuncAddr(&RT_accept);
-    module->AcceptEx               = GetFuncAddr(&RT_AcceptEx);
     module->CloseHandle            = GetFuncAddr(&RT_CloseHandle);
     module->FindClose              = GetFuncAddr(&RT_FindClose);
     module->closesocket            = GetFuncAddr(&RT_closesocket);
@@ -1377,6 +1369,7 @@ SOCKET RT_WSASocketA(
             break;
         }
         hSocket = WSASocketA(af, type, protocol, lpProtocolInfo, g, dwFlags);
+        lastErr = GetLastErrno();
         if (hSocket == INVALID_SOCKET)
         {
             break;
@@ -1417,6 +1410,7 @@ SOCKET RT_WSASocketW(
             break;
         }
         hSocket = WSASocketW(af, type, protocol, lpProtocolInfo, g, dwFlags);
+        lastErr = GetLastErrno();
         if (hSocket == INVALID_SOCKET)
         {
             break;
@@ -1438,23 +1432,80 @@ __declspec(noinline)
 SOCKET RT_socket(
     int af, int type, int protocol
 ){
+    ResourceTracker* tracker = getTrackerPointer();
 
+    SOCKET hSocket = INVALID_SOCKET;
+    errno  lastErr = NO_ERROR;
+    for (;;)
+    {
+        socket_t socket;
+    #ifdef _WIN64
+        socket = FindAPI(0x2F4244FE0885F2C3, 0x3AD9A156D89CC096);
+    #elif _WIN32
+        socket = FindAPI(0xBC5E9C2A, 0x0148A701);
+    #endif
+        if (socket == NULL)
+        {
+            lastErr = ERR_RESOURCE_API_NOT_FOUND;
+            break;
+        }
+        hSocket = socket(af, type, protocol);
+        lastErr = GetLastErrno();
+        if (hSocket == INVALID_SOCKET)
+        {
+            break;
+        }
+        if (!addHandleMu(tracker, hSocket, SRC_SOCKET))
+        {
+            lastErr = ERR_RESOURCE_ADD_SOCKET;
+            break;
+        }
+        break;
+    }
+    SetLastErrno(lastErr);
+
+    dbg_log("[resource]", "socket: 0x%zX", hSocket);
+    return hSocket;
 }
 
 __declspec(noinline)
 SOCKET RT_accept(
     SOCKET s, POINTER addr, int* addrlen
 ){
+    ResourceTracker* tracker = getTrackerPointer();
 
-}
+    SOCKET hSocket = INVALID_SOCKET;
+    errno  lastErr = NO_ERROR;
+    for (;;)
+    {
+        accept_t accept;
+    #ifdef _WIN64
+        accept = FindAPI(0x10D963E47F6DB6B9, 0x8DD31C5FBD824AD8);
+    #elif _WIN32
+        accept = FindAPI(0x1F94AC37, 0x93C9AB8B);
+    #endif
+        if (accept == NULL)
+        {
+            lastErr = ERR_RESOURCE_API_NOT_FOUND;
+            break;
+        }
+        hSocket = accept(s, addr, addrlen);
+        lastErr = GetLastErrno();
+        if (hSocket == INVALID_SOCKET)
+        {
+            break;
+        }
+        if (!addHandleMu(tracker, hSocket, SRC_ACCEPT))
+        {
+            lastErr = ERR_RESOURCE_ADD_SOCKET;
+            break;
+        }
+        break;
+    }
+    SetLastErrno(lastErr);
 
-__declspec(noinline)
-BOOL RT_AcceptEx(
-    SOCKET sListenSocket, SOCKET sAcceptSocket, PVOID lpOutputBuffer,
-    DWORD dwReceiveDataLength, DWORD dwLocalAddressLength,
-    DWORD dwRemoteAddressLength, DWORD* lpdwBytesReceived, POINTER lpOverlapped
-){
-
+    dbg_log("[resource]", "accept: 0x%zX", hSocket);
+    return hSocket;
 }
 
 __declspec(noinline)
@@ -1527,7 +1578,9 @@ int RT_closesocket(SOCKET hSocket)
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
             break;
         }
-        if (closesocket(hSocket) != 0)
+        int ret = closesocket(hSocket);
+        lastErr = GetLastErrno();
+        if (ret != 0)
         {
             break;
         }
@@ -1541,7 +1594,7 @@ int RT_closesocket(SOCKET hSocket)
 
     if (!success)
     {
-        return SOCKET_ERROR;
+        return (int)SOCKET_ERROR;
     }
     return 0;
 }

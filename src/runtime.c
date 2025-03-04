@@ -87,7 +87,7 @@ typedef struct {
     HANDLE hThreadEvent; // event handler thread
 
     // IAT hooks about GetProcAddress
-    Hook IATHooks[65];
+    Hook IATHooks[66];
 
     // runtime submodules
     LibraryTracker_M*  LibraryTracker;
@@ -908,6 +908,7 @@ static bool initIATHooks(Runtime* runtime)
         { 0x7C520EB61A85181B, 0x933C760F029EF1DD, RT->FindFirstFileW },
         { 0xFB272B44E7E9CFC6, 0xB5F76233869E347D, RT->FindFirstFileExA },
         { 0x1C30504D9D6BC5E5, 0xF5C232B8DEEC41C8, RT->FindFirstFileExW },
+        { 0x54FDF3852F96A11F, 0x239752D7D0A979E4, RT->CreateIoCompletionPort },
         { 0x78AEE64CADBBC72F, 0x480A328AEFFB1A39, RT->CloseHandle },
         { 0x3D3A73632A3BCEDA, 0x72E6CA3A0850F779, RT->FindClose },
     };
@@ -976,6 +977,7 @@ static bool initIATHooks(Runtime* runtime)
         { 0x612273CD, 0x563EDF55, RT->FindFirstFileW },
         { 0x8C692AD6, 0xB63ECE85, RT->FindFirstFileExA },
         { 0xE52EE07C, 0x6C2F10B6, RT->FindFirstFileExW },
+        { 0x27E2A688, 0x121931EA, RT->CreateIoCompletionPort },
         { 0xCB5BD447, 0x49A6FC78, RT->CloseHandle },
         { 0x6CD807C4, 0x812C40E9, RT->FindClose },
     };
@@ -1658,6 +1660,11 @@ static void* getLazyAPIHook(Runtime* runtime, void* proc)
         { 0x765FF1E84D3CA299, 0x2B93B5CE54D15111, MT->ucrtbase_msize   },
         { 0x7749934E33C18703, 0xCFB41E32B03DC637, RT->WSAStartup       },
         { 0x46C76E87C13DF670, 0x37B6B54E4B2FBECC, RT->WSACleanup       },
+        { 0x70D1185F52938D74, 0xF7E6BBBD8910788F, RT->WSASocketA       },
+        { 0xC927D51029E597DD, 0x338682C6A8A05E96, RT->WSASocketW       },
+        { 0x4B3665285BC53DA0, 0x617201DEB1745A32, RT->socket           },
+        { 0x5A633D63562D1F6A, 0xE4F5C861D2574114, RT->accept           },
+        { 0xEA43E78F0C2989E3, 0xF29E4A42BAC74CE8, RT->closesocket      },
     };
 #elif _WIN32
     {
@@ -1673,6 +1680,11 @@ static void* getLazyAPIHook(Runtime* runtime, void* proc)
         { 0x203FE479, 0xDE2A742F, MT->ucrtbase_msize   },
         { 0xE487BC0B, 0x283C1684, RT->WSAStartup       },
         { 0x175B553E, 0x541A996E, RT->WSACleanup       },
+        { 0x2F782742, 0x3E840BCE, RT->WSASocketA       },
+        { 0x4AF6596E, 0x56695630, RT->WSASocketW       },
+        { 0xF01C85D5, 0xA4A6130C, RT->socket           },
+        { 0xBADEAB08, 0xCF42DE35, RT->accept           },
+        { 0x55CC7BBE, 0x3CD9CFDC, RT->closesocket      },
     };
 #endif
     for (int i = 0; i < arrlen(hooks); i++)

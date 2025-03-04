@@ -209,12 +209,8 @@ SOCKET RT_WSASocketW(
     int af, int type, int protocol, POINTER lpProtocolInfo, 
     POINTER g, DWORD dwFlags
 );
-SOCKET RT_socket(
-    int af, int type, int protocol
-);
-SOCKET RT_accept(
-    SOCKET s, POINTER addr, int* addrlen
-);
+SOCKET RT_socket(int af, int type, int protocol);
+SOCKET RT_accept(SOCKET s, POINTER addr, int* addrlen);
 
 BOOL RT_CloseHandle(HANDLE hObject);
 BOOL RT_FindClose(HANDLE hFindFile);
@@ -1342,7 +1338,7 @@ HANDLE RT_CreateIoCompletionPort(
     }
     SetLastErrno(lastErr);
 
-    dbg_log("[resource]", "CreateIoCompletionPort: %ls", lpFileName);
+    dbg_log("[resource]", "CreateIoCompletionPort: 0x%zX", FileHandle);
     return hPort;
 }
 
@@ -1429,9 +1425,8 @@ SOCKET RT_WSASocketW(
 }
 
 __declspec(noinline)
-SOCKET RT_socket(
-    int af, int type, int protocol
-){
+SOCKET RT_socket(int af, int type, int protocol)
+{
     ResourceTracker* tracker = getTrackerPointer();
 
     SOCKET hSocket = INVALID_SOCKET;
@@ -1469,9 +1464,8 @@ SOCKET RT_socket(
 }
 
 __declspec(noinline)
-SOCKET RT_accept(
-    SOCKET s, POINTER addr, int* addrlen
-){
+SOCKET RT_accept(SOCKET s, POINTER addr, int* addrlen)
+{
     ResourceTracker* tracker = getTrackerPointer();
 
     SOCKET hSocket = INVALID_SOCKET;

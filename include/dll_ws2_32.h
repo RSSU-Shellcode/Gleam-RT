@@ -4,6 +4,9 @@
 #include "c_types.h"
 #include "win_types.h"
 
+#define INVALID_SOCKET (-1)
+#define SOCKET_ERROR   (-1)
+
 #define WSASYSNOTREADY 10091
 #define WSAEINPROGRESS 10036
 

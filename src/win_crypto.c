@@ -441,7 +441,7 @@ errno WC_RandBuffer(databuf* data)
 {
     WinCrypto* module = getModulePointer();
 
-    dbg_log("[WinCrypto]", "RandBuffer: 0x%zX, %zu", data, len);
+    dbg_log("[WinCrypto]", "RandBuffer: 0x%zX, %zu", data->buf, data->len);
 
     if (!initWinCryptoEnv())
     {
@@ -484,7 +484,7 @@ errno WC_SHA1(databuf* data, byte* hash)
 {
     WinCrypto* module = getModulePointer();
 
-    dbg_log("[WinCrypto]", "SHA1: 0x%zX, %zu", data, len);
+    dbg_log("[WinCrypto]", "SHA1: 0x%zX, %zu", data->buf, data->len);
 
     if (!initWinCryptoEnv())
     {

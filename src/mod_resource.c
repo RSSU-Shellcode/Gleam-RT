@@ -1085,10 +1085,8 @@ HANDLE RT_CreateFileA(
         return INVALID_HANDLE_VALUE;
     }
 
-    HANDLE hFile;
-
-    bool  success = false;
-    errno lastErr = NO_ERROR;
+    HANDLE hFile   = INVALID_HANDLE_VALUE;
+    errno  lastErr = NO_ERROR;
     for (;;)
     {
         hFile = tracker->CreateFileA(
@@ -1102,9 +1100,9 @@ HANDLE RT_CreateFileA(
         }
         if (!addHandle(tracker, hFile, SRC_CREATE_FILE_A))
         {
+            lastErr = ERR_RESOURCE_ADD_FILE;
             break;
         }
-        success = true;
         break;
     }
     SetLastErrno(lastErr);
@@ -1112,11 +1110,6 @@ HANDLE RT_CreateFileA(
     dbg_log("[resource]", "CreateFileA: %s", lpFileName);
 
     if (!RT_Unlock())
-    {
-        return INVALID_HANDLE_VALUE;
-    }
-
-    if (!success)
     {
         return INVALID_HANDLE_VALUE;
     }
@@ -1136,10 +1129,8 @@ HANDLE RT_CreateFileW(
         return INVALID_HANDLE_VALUE;
     }
 
-    HANDLE hFile;
-
-    bool  success = false;
-    errno lastErr = NO_ERROR;
+    HANDLE hFile   = INVALID_HANDLE_VALUE;
+    errno  lastErr = NO_ERROR;
     for (;;)
     {
         hFile = tracker->CreateFileW(
@@ -1153,9 +1144,9 @@ HANDLE RT_CreateFileW(
         }
         if (!addHandle(tracker, hFile, SRC_CREATE_FILE_W))
         {
+            lastErr = ERR_RESOURCE_ADD_FILE;
             break;
         }
-        success = true;
         break;
     }
     SetLastErrno(lastErr);
@@ -1163,10 +1154,6 @@ HANDLE RT_CreateFileW(
     dbg_log("[resource]", "CreateFileW: %ls", lpFileName);
 
     if (!RT_Unlock())
-    {
-        return INVALID_HANDLE_VALUE;
-    }
-    if (!success)
     {
         return INVALID_HANDLE_VALUE;
     }
@@ -1183,23 +1170,21 @@ HANDLE RT_FindFirstFileA(LPCSTR lpFileName, POINTER lpFindFileData)
         return INVALID_HANDLE_VALUE;
     }
 
-    HANDLE hFindFile;
-
-    bool  success = false;
-    errno lastErr = NO_ERROR;
+    HANDLE hFindFile = INVALID_HANDLE_VALUE;
+    errno  lastErr   = NO_ERROR;
     for (;;)
     {
         hFindFile = tracker->FindFirstFileA(lpFileName, lpFindFileData);
+        lastErr = GetLastErrno();
         if (hFindFile == INVALID_HANDLE_VALUE)
         {
             break;
         }
-        lastErr = GetLastErrno();
         if (!addHandle(tracker, hFindFile, SRC_FIND_FIRST_FILE_A))
         {
+            lastErr = ERR_RESOURCE_ADD_DIRECTORY;
             break;
         }
-        success = true;
         break;
     }
     SetLastErrno(lastErr);
@@ -1207,10 +1192,6 @@ HANDLE RT_FindFirstFileA(LPCSTR lpFileName, POINTER lpFindFileData)
     dbg_log("[resource]", "FindFirstFileA: %s", lpFileName);
 
     if (!RT_Unlock())
-    {
-        return INVALID_HANDLE_VALUE;
-    }
-    if (!success)
     {
         return INVALID_HANDLE_VALUE;
     }
@@ -1227,23 +1208,21 @@ HANDLE RT_FindFirstFileW(LPCWSTR lpFileName, POINTER lpFindFileData)
         return INVALID_HANDLE_VALUE;
     }
 
-    HANDLE hFindFile;
-
-    bool  success = false;
-    errno lastErr = NO_ERROR;
+    HANDLE hFindFile = INVALID_HANDLE_VALUE;
+    errno  lastErr   = NO_ERROR;
     for (;;)
     {
         hFindFile = tracker->FindFirstFileW(lpFileName, lpFindFileData);
+        lastErr = GetLastErrno();
         if (hFindFile == INVALID_HANDLE_VALUE)
         {
             break;
         }
-        lastErr = GetLastErrno();
         if (!addHandle(tracker, hFindFile, SRC_FIND_FIRST_FILE_W))
         {
+            lastErr = ERR_RESOURCE_ADD_DIRECTORY;
             break;
         }
-        success = true;
         break;
     }
     SetLastErrno(lastErr);
@@ -1251,10 +1230,6 @@ HANDLE RT_FindFirstFileW(LPCWSTR lpFileName, POINTER lpFindFileData)
     dbg_log("[resource]", "FindFirstFileW: %ls", lpFileName);
 
     if (!RT_Unlock())
-    {
-        return INVALID_HANDLE_VALUE;
-    }
-    if (!success)
     {
         return INVALID_HANDLE_VALUE;
     }
@@ -1273,10 +1248,8 @@ HANDLE RT_FindFirstFileExA(
         return INVALID_HANDLE_VALUE;
     }
 
-    HANDLE hFindFile;
-
-    bool  success = false;
-    errno lastErr = NO_ERROR;
+    HANDLE hFindFile = INVALID_HANDLE_VALUE;
+    errno  lastErr   = NO_ERROR;
     for (;;)
     {
         hFindFile = tracker->FindFirstFileExA(
@@ -1290,9 +1263,9 @@ HANDLE RT_FindFirstFileExA(
         }
         if (!addHandle(tracker, hFindFile, SRC_FIND_FIRST_FILE_EX_A))
         {
+            lastErr = ERR_RESOURCE_ADD_DIRECTORY;
             break;
         }
-        success = true;
         break;
     }
     SetLastErrno(lastErr);
@@ -1300,10 +1273,6 @@ HANDLE RT_FindFirstFileExA(
     dbg_log("[resource]", "FindFirstFileExA: %s", lpFileName);
 
     if (!RT_Unlock())
-    {
-        return INVALID_HANDLE_VALUE;
-    }
-    if (!success)
     {
         return INVALID_HANDLE_VALUE;
     }
@@ -1322,10 +1291,8 @@ HANDLE RT_FindFirstFileExW(
         return INVALID_HANDLE_VALUE;
     }
 
-    HANDLE hFindFile;
-
-    bool  success = false;
-    errno lastErr = NO_ERROR;
+    HANDLE hFindFile = INVALID_HANDLE_VALUE;
+    errno  lastErr   = NO_ERROR;
     for (;;)
     {
         hFindFile = tracker->FindFirstFileExW(
@@ -1339,9 +1306,9 @@ HANDLE RT_FindFirstFileExW(
         }
         if (!addHandle(tracker, hFindFile, SRC_FIND_FIRST_FILE_EX_W))
         {
+            lastErr = ERR_RESOURCE_ADD_DIRECTORY;
             break;
         }
-        success = true;
         break;
     }
     SetLastErrno(lastErr);
@@ -1349,10 +1316,6 @@ HANDLE RT_FindFirstFileExW(
     dbg_log("[resource]", "FindFirstFileExW: %ls", lpFileName);
 
     if (!RT_Unlock())
-    {
-        return INVALID_HANDLE_VALUE;
-    }
-    if (!success)
     {
         return INVALID_HANDLE_VALUE;
     }
@@ -1396,7 +1359,39 @@ SOCKET RT_WSASocketA(
     int af, int type, int protocol, POINTER lpProtocolInfo, 
     POINTER g, DWORD dwFlags
 ){
+    ResourceTracker* tracker = getTrackerPointer();
 
+    SOCKET hSocket = INVALID_SOCKET;
+    errno  lastErr = NO_ERROR;
+    for (;;)
+    {
+        WSASocketA_t WSASocketA;
+    #ifdef _WIN64
+        WSASocketA = FindAPI(0x9423BC8A7F7135CE, 0xBF3CF52071378ED3);
+    #elif _WIN32
+        WSASocketA = FindAPI(0xA853C263, 0x43B98477);
+    #endif
+        if (WSASocketA == NULL)
+        {
+            lastErr = ERR_RESOURCE_API_NOT_FOUND;
+            break;
+        }
+        hSocket = WSASocketA(af, type, protocol, lpProtocolInfo, g, dwFlags);
+        if (hSocket == INVALID_SOCKET)
+        {
+            break;
+        }
+        if (!addHandleMu(tracker, hSocket, SRC_WSA_SOCKET_A))
+        {
+            lastErr = ERR_RESOURCE_ADD_SOCKET;
+            break;
+        }
+        break;
+    }
+    SetLastErrno(lastErr);
+
+    dbg_log("[resource]", "WSASocketA: 0x%zX", hSocket);
+    return hSocket;
 }
 
 __declspec(noinline)
@@ -1404,7 +1399,39 @@ SOCKET RT_WSASocketW(
     int af, int type, int protocol, POINTER lpProtocolInfo, 
     POINTER g, DWORD dwFlags
 ){
+    ResourceTracker* tracker = getTrackerPointer();
 
+    SOCKET hSocket = INVALID_SOCKET;
+    errno  lastErr = NO_ERROR;
+    for (;;)
+    {
+        WSASocketA_t WSASocketW;
+    #ifdef _WIN64
+        WSASocketW = FindAPI(0x7BCE82408C2BFF04, 0xC39F53FE566C687A);
+    #elif _WIN32
+        WSASocketW = FindAPI(0xE94A63DF, 0xA4F52264);
+    #endif
+        if (WSASocketW == NULL)
+        {
+            lastErr = ERR_RESOURCE_API_NOT_FOUND;
+            break;
+        }
+        hSocket = WSASocketW(af, type, protocol, lpProtocolInfo, g, dwFlags);
+        if (hSocket == INVALID_SOCKET)
+        {
+            break;
+        }
+        if (!addHandleMu(tracker, hSocket, SRC_WSA_SOCKET_W))
+        {
+            lastErr = ERR_RESOURCE_ADD_SOCKET;
+            break;
+        }
+        break;
+    }
+    SetLastErrno(lastErr);
+
+    dbg_log("[resource]", "WSASocketW: 0x%zX", hSocket);
+    return hSocket;
 }
 
 __declspec(noinline)
@@ -1620,11 +1647,10 @@ int RT_WSAStartup(WORD wVersionRequired, POINTER lpWSAData)
 
     if (!RT_Lock())
     {
-        return SOCKET_ERROR;
+        return WSAEINPROGRESS;
     }
 
-    int ret = SOCKET_ERROR;
-
+    int   retVal  = WSASYSNOTREADY;
     errno lastErr = NO_ERROR;
     for (;;)
     {
@@ -1639,8 +1665,8 @@ int RT_WSAStartup(WORD wVersionRequired, POINTER lpWSAData)
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
             break;
         }
-        ret = WSAStartup(wVersionRequired, lpWSAData);
-        if (ret == 0)
+        retVal = WSAStartup(wVersionRequired, lpWSAData);
+        if (retVal == 0)
         {
             tracker->Counters[CTR_WSA_STARTUP]++;
         }
@@ -1653,9 +1679,9 @@ int RT_WSAStartup(WORD wVersionRequired, POINTER lpWSAData)
 
     if (!RT_Unlock())
     {
-        return SOCKET_ERROR;
+        return WSAEINPROGRESS;
     }
-    return ret;
+    return retVal;
 }
 
 __declspec(noinline)
@@ -1668,8 +1694,7 @@ int RT_WSACleanup()
         return SOCKET_ERROR;
     }
 
-    int ret = SOCKET_ERROR;
-
+    int   retVal  = SOCKET_ERROR;
     errno lastErr = NO_ERROR;
     for (;;)
     {
@@ -1684,8 +1709,8 @@ int RT_WSACleanup()
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
             break;
         }
-        ret = WSACleanup();
-        if (ret == 0)
+        retVal = WSACleanup();
+        if (retVal == 0)
         {
             tracker->Counters[CTR_WSA_STARTUP]--;
         }
@@ -1700,7 +1725,7 @@ int RT_WSACleanup()
     {
         return SOCKET_ERROR;
     }
-    return ret;
+    return retVal;
 }
 
 __declspec(noinline)

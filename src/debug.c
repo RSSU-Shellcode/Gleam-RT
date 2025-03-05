@@ -10,6 +10,8 @@
 #include "hash_api.h"
 #include "debug.h"
 
+static bool initialized = false;
+
 static CreateMutexA_t        dbg_CreateMutexA;
 static ReleaseMutex_t        dbg_ReleaseMutex;
 static WaitForSingleObject_t dbg_WaitForSingleObject;
@@ -19,6 +21,11 @@ static HANDLE dbg_hMutex;
 __declspec(noinline)
 bool InitDebugger()
 {
+    if (initialized)
+    {
+        return true;
+    }
+
     dbg_CreateMutexA        = FindAPI_A("kernel32.dll", "CreateMutexA");
     dbg_ReleaseMutex        = FindAPI_A("kernel32.dll", "ReleaseMutex");
     dbg_WaitForSingleObject = FindAPI_A("kernel32.dll", "WaitForSingleObject");
@@ -28,6 +35,8 @@ bool InitDebugger()
     {
         return false;
     }
+
+    initialized = true;
     return true;
 }
 

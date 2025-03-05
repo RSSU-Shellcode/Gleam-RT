@@ -616,7 +616,7 @@ errno WH_Do(UTF16 method, HTTP_Request* req, HTTP_Response* resp)
             hRequest, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER,
             WINHTTP_HEADER_NAME_BY_INDEX, &resp->StatusCode, &statusCodeLen,
             WINHTTP_NO_HEADER_INDEX
-        )) {
+        )){
             break;
         }
         // get response header
@@ -633,7 +633,7 @@ errno WH_Do(UTF16 method, HTTP_Request* req, HTTP_Response* resp)
         if (!module->WinHttpQueryHeaders(
             hRequest, WINHTTP_QUERY_RAW_HEADERS_CRLF, WINHTTP_HEADER_NAME_BY_INDEX,
             headerBuf, &headerLen, WINHTTP_NO_HEADER_INDEX
-        )) {
+        )){
             break;
         }
         // read body data
@@ -648,6 +648,11 @@ errno WH_Do(UTF16 method, HTTP_Request* req, HTTP_Response* resp)
             if (size == 0)
             {
                 break;
+            }
+            if (req->MaxBodySize > 0 && bodySize + (uint)size > req->MaxBodySize)
+            {
+                SetLastErrno(ERR_WIN_HTTP_TOO_LARGE_BODY);
+                goto exit_loop;
             }
             // allocate buffer
             bodyBuf = module->realloc(bodyBuf, bodySize+(uint)size);

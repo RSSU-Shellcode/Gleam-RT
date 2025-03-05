@@ -202,12 +202,10 @@ HANDLE RT_CreateIoCompletionPort(
     DWORD NumberOfConcurrentThreads
 );
 SOCKET RT_WSASocketA(
-    int af, int type, int protocol, POINTER lpProtocolInfo, 
-    POINTER g, DWORD dwFlags
+    int af, int type, int protocol, POINTER lpProtocolInfo, POINTER g, DWORD dwFlags
 );
 SOCKET RT_WSASocketW(
-    int af, int type, int protocol, POINTER lpProtocolInfo, 
-    POINTER g, DWORD dwFlags
+    int af, int type, int protocol, POINTER lpProtocolInfo, POINTER g, DWORD dwFlags
 );
 SOCKET RT_socket(int af, int type, int protocol);
 SOCKET RT_accept(SOCKET s, POINTER addr, int* addrlen);
@@ -1344,8 +1342,7 @@ HANDLE RT_CreateIoCompletionPort(
 
 __declspec(noinline)
 SOCKET RT_WSASocketA(
-    int af, int type, int protocol, POINTER lpProtocolInfo, 
-    POINTER g, DWORD dwFlags
+    int af, int type, int protocol, POINTER lpProtocolInfo, POINTER g, DWORD dwFlags
 ){
     ResourceTracker* tracker = getTrackerPointer();
 
@@ -1385,8 +1382,7 @@ SOCKET RT_WSASocketA(
 
 __declspec(noinline)
 SOCKET RT_WSASocketW(
-    int af, int type, int protocol, POINTER lpProtocolInfo, 
-    POINTER g, DWORD dwFlags
+    int af, int type, int protocol, POINTER lpProtocolInfo, POINTER g, DWORD dwFlags
 ){
     ResourceTracker* tracker = getTrackerPointer();
 
@@ -1853,6 +1849,8 @@ bool RT_GetStatus(RT_Status* status)
     int64 numTimers  = 0;
     int64 numFiles   = 0;
     int64 numDirs    = 0;
+    int64 numIOCPs   = 0;
+    int64 numSockets = 0;
 
     uint len = handles->Len;
     uint idx = 0;
@@ -1883,6 +1881,12 @@ bool RT_GetStatus(RT_Status* status)
         case FUNC_FIND_FIRST_FILE:
             numDirs++;
             break;
+        case FUNC_CREATE_IO_COMPLETION_PORT:
+            numIOCPs++;
+            break;
+        case FUNC_WSA_SOCKET: case FUNC_ACCEPT: case FUNC_SOCKET:
+            numSockets++;
+            break;
         }
         num++;
     }
@@ -1892,12 +1896,14 @@ bool RT_GetStatus(RT_Status* status)
         return false;
     }
 
-    status->NumMutexs         = numMutexs;
-    status->NumEvents         = numEvents;
-    status->NumSemaphores     = numSemphos;
-    status->NumWaitableTimers = numTimers;
-    status->NumFiles          = numFiles;
-    status->NumDirectories    = numDirs;
+    status->NumMutexs            = numMutexs;
+    status->NumEvents            = numEvents;
+    status->NumSemaphores        = numSemphos;
+    status->NumWaitableTimers    = numTimers;
+    status->NumFiles             = numFiles;
+    status->NumDirectories       = numDirs;
+    status->NumIOCompletionPorts = numIOCPs;
+    status->NumSockets           = numSockets;
     return true;
 }
 

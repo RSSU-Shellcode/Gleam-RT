@@ -539,9 +539,17 @@ errno WH_Do(UTF16 method, HTTP_Request* req, HTTP_Response* resp)
             goto exit_loop;
         }
         // create session
-        hSession = module->WinHttpOpen(
-            req->UserAgent, req->AccessType, NULL, NULL, 0
-        );
+        if (req->ProxyURL == NULL)
+        {
+            hSession = module->WinHttpOpen(
+                req->UserAgent, req->AccessType, NULL, NULL, 0
+            );
+        } else {
+            hSession = module->WinHttpOpen(
+                req->UserAgent, WINHTTP_ACCESS_TYPE_NAMED_PROXY, 
+                req->ProxyURL, NULL, 0
+            );
+        }
         if (hSession == NULL)
         {
             break;
@@ -584,6 +592,26 @@ errno WH_Do(UTF16 method, HTTP_Request* req, HTTP_Response* resp)
         if (hRequest == NULL)
         {
             break;
+        }
+        // set server authentication
+        if (url_com.dwUserNameLength > 0)
+        {
+            if (!module->WinHttpSetCredentials(
+                hRequest, WINHTTP_AUTH_TARGET_SERVER, WINHTTP_AUTH_SCHEME_BASIC,
+                url_com.lpszUserName, url_com.lpszPassword, NULL
+            )){
+                break;
+            }
+        }
+        // set proxy server authentication
+        if (req->ProxyUser != NULL)
+        {
+            if (!module->WinHttpSetCredentials(
+                hRequest, WINHTTP_AUTH_TARGET_PROXY, WINHTTP_AUTH_SCHEME_BASIC,
+                req->ProxyUser, req->ProxyPass, NULL
+            )){
+                break;
+            }
         }
         // send request
         LPCWSTR headers    = WINHTTP_NO_ADDITIONAL_HEADERS;
@@ -725,10 +753,12 @@ void WH_Init(HTTP_Request* req)
     req->Headers        = NULL;
     req->UserAgent      = NULL;
     req->ProxyURL       = NULL;
-    req->MaxBodySize    = 0;
+    req->ProxyUser      = NULL;
+    req->ProxyPass      = NULL;
     req->ConnectTimeout = DEFAULT_TIMEOUT;
     req->SendTimeout    = DEFAULT_TIMEOUT;
     req->ReceiveTimeout = DEFAULT_TIMEOUT;
+    req->MaxBodySize    = 0;
     req->AccessType     = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
     req->Body           = NULL;
 }

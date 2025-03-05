@@ -78,6 +78,8 @@ typedef struct {
     int64 NumWaitableTimers;
     int64 NumFiles;
     int64 NumDirectories;
+    int64 NumIOCompletionPorts;
+    int64 NumSockets;
 } RT_Status;
 #endif // MOD_RESOURCE_H
 

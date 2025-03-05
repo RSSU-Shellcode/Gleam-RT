@@ -5,7 +5,6 @@
 #include "win_types.h"
 #include "dll_kernel32.h"
 #include "dll_ws2_32.h"
-#include "dll_mswsock.h"
 #include "errno.h"
 #include "context.h"
 
@@ -16,6 +15,8 @@ typedef struct {
     int64 NumWaitableTimers;
     int64 NumFiles;
     int64 NumDirectories;
+    int64 NumIOCompletionPorts;
+    int64 NumSockets;
 } RT_Status;
 
 typedef bool (*ResLockMutex_t)(HANDLE hMutex);
@@ -65,7 +66,6 @@ typedef struct {
     WSASocketW_t WSASocketW;
     socket_t     socket;
     accept_t     accept;
-    AcceptEx_t   AcceptEx;
 
     CloseHandle_t CloseHandle;
     FindClose_t   FindClose;

@@ -20,7 +20,6 @@
     <ClInclude Include="..\include\dll_msvcrt.h" />
     <ClInclude Include="..\include\dll_ucrtbase.h" />
     <ClInclude Include="..\include\dll_ws2_32.h" />
-	<ClInclude Include="..\include\dll_mswsock.h" />
     <ClInclude Include="..\include\dll_winhttp.h" />
     <ClInclude Include="..\include\dll_advapi32.h" />
     <ClInclude Include="..\include\lib_memory.h" />

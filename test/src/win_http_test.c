@@ -127,9 +127,47 @@ static bool TestWinHTTP_Post()
 
 static bool TestWinHTTP_Do()
 {
-    // set headers
-    // set user-agent
-    // set proxy url
+    HTTP_Request req;
+    runtime->WinHTTP.Init(&req);
+    req.URL       = L"http://user:pass@127.0.0.1:8001/hello.txt";
+    req.Headers   = L"Header1: 1\r\nHeader2: 2";
+    req.UserAgent = L"Mozilla/5.0";
+    // req.ProxyURL  = L"http://127.0.0.1:8080";
+    // req.ProxyUser = L"p_user";
+    // req.ProxyPass = L"p_pass";
+
+    HTTP_Response resp;
+    errno err = runtime->WinHTTP.Get(&req, &resp);
+    if (err != NO_ERROR)
+    {
+        printf_s("failed to get: 0x%X\n", err);
+        return false;
+    }
+
+    if (resp.StatusCode != 200)
+    {
+        printf_s("invalid status code: %d\n", resp.StatusCode);
+        return false;
+    }
+    printf_s("Headers:\n%ls", resp.Headers);
+
+    if (resp.Body.len != 5)
+    {
+        printf_s("invalid response body size: %zu\n", resp.Body.len);
+        return false;
+    }
+    if (strncmp_a(resp.Body.buf, "hello", 5) != 0)
+    {
+        printf_s("invalid response body\n");
+        return false;
+    }
+    printf_s("response body: %s\n", (byte*)(resp.Body.buf));
+    printf_s("response size: %zu\n", resp.Body.len);
+
+    runtime->Memory.Free(resp.Headers);
+    runtime->Memory.Free(resp.Body.buf);
+
+    printf_s("test Do passed\n");
     return true;
 }
 

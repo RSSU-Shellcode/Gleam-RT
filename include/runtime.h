@@ -119,20 +119,23 @@ typedef errno (*WriteFileW_t)(LPWSTR path, databuf* file);
 #ifndef WIN_HTTP_H
 // The databuf allocated from HTTP_Response must call Runtime_M.Memory.Free().
 // The Headers in HTTP_Response must call Runtime_M.Memory.Free() after use.
-// 
+// NOT add "/" at the last of ProxyURL.
+//
 // Init is used to initialize a HTTP request structure.
 // Free is used to try to free winhttp.dll after use.
 
 typedef struct {
-    UTF16 URL; // https://www.example.com/test.txt
+    UTF16 URL; // https://user:pass@www.example.com/test.txt
 
     UTF16 Headers;        // split by "\r\n"
     UTF16 UserAgent;      // default User-Agent
-    UTF16 ProxyURL;       // http://user:pass@host.com/
-    uint  MaxBodySize;    // zero is no limit
+    UTF16 ProxyURL;       // http://www.example.com:8080
+    UTF16 ProxyUser;      // proxy server username
+    UTF16 ProxyPass;      // proxy server password
     uint  ConnectTimeout; // millseconds
     uint  SendTimeout;    // millseconds
     uint  ReceiveTimeout; // millseconds
+    uint  MaxBodySize;    // zero is no limit
     uint8 AccessType;     // reference document about WinHttpOpen
 
     databuf* Body;

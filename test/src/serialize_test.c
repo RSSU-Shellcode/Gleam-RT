@@ -2,13 +2,14 @@
 #include "c_types.h"
 #include "lib_memory.h"
 #include "lib_string.h"
+#include "random.h"
 #include "serialize.h"
 #include "test.h"
 
 static bool TestSer_Serialize();
 static bool TestSer_Unserialize();
 
-static void printHexBytes(byte* buf, uint size);
+static void printHexBytes(void* buf, uint size);
 
 bool TestSerialize()
 {
@@ -37,12 +38,12 @@ typedef struct {
     ANSI   arg4;
     uint8  arg5;
     uint16 arg6;
-} struct1;
+} test_s;
 #pragma pack()
 
 static bool TestSer_Serialize()
 {
-    struct1 s1 = {
+    test_s s1 = {
         .arg1 = 123,
         .arg3 = NULL,
         .arg4 = "123",
@@ -65,14 +66,14 @@ static bool TestSer_Serialize()
     uint32 len = Serialize(descriptor, &s1, NULL);
     if (len != expected)
     {
-        printf_s("Serialize with invalid output length\n");
+        printf_s("serialize with invalid output length\n");
         return false;
     }
     void* serialized = runtime->Memory.Alloc(len);
     len = Serialize(descriptor, &s1, serialized);
     if (len != expected)
     {
-        printf_s("Serialize with invalid output length\n");
+        printf_s("serialize with invalid output length\n");
         return false;
     }
 
@@ -88,7 +89,7 @@ static bool TestSer_Serialize()
     };
     if (!mem_equal(expecteds, serialized, len))
     {
-        printf_s("Serialize with invalid output data\n");
+        printf_s("serialize with invalid output data\n");
         return false;
     }
 
@@ -100,22 +101,102 @@ static bool TestSer_Serialize()
 
 static bool TestSer_Unserialize()
 {
+    test_s s1 = {
+        .arg1 = 123,
+        .arg3 = NULL,
+        .arg4 = "123",
+        .arg5 = 0x19,
+        .arg6 = 0x1548,
+    };
+    s1.arg2[0] = 456;
+    s1.arg2[1] = 789;
+    uint32 descriptor[] = {
+        SERIALIZE_FLAG_VALUE|sizeof(s1.arg1),
+        SERIALIZE_FLAG_VALUE|sizeof(s1.arg2),
+        SERIALIZE_FLAG_POINTER|0,
+        SERIALIZE_FLAG_POINTER|4,
+        SERIALIZE_FLAG_VALUE|sizeof(s1.arg5),
+        SERIALIZE_FLAG_VALUE|sizeof(s1.arg6),
+        SERIALIZE_ITEM_END,
+    };
+    uint32 expected = 4 + (7 * 4) + (4 + 8 + 0 + 4 + 1 + 2);
+
+    uint32 len = Serialize(descriptor, &s1, NULL);
+    if (len != expected)
+    {
+        printf_s("serialize with invalid output length\n");
+        return false;
+    }
+    void* serialized = runtime->Memory.Alloc(len);
+    len = Serialize(descriptor, &s1, serialized);
+    if (len != expected)
+    {
+        printf_s("serialize with invalid output length\n");
+        return false;
+    }
+
+    test_s s2 = {
+        .arg1 = 0,
+    };
+    RandBuffer(&s2, sizeof(s2));
+    if (!Unserialize(serialized, &s2))
+    {
+        printf_s("invalid serialized data\n");
+        return false;
+    }
+
+    if (s1.arg1 != s2.arg1)
+    {
+        printf_s("invalid unserialized arg1\n");
+        return false;
+    }
+    if (s1.arg2[0] != s2.arg2[0])
+    {
+        printf_s("invalid unserialized arg2[0]\n");
+        return false;
+    }
+    if (s1.arg2[1] != s2.arg2[1])
+    {
+        printf_s("invalid unserialized arg2[1]\n");
+        return false;
+    }
+    if (s1.arg3 != s2.arg3)
+    {
+        printf_s("invalid unserialized arg3\n");
+        return false;
+    }
+    if (strcmp_a(s1.arg4, s2.arg4))
+    {
+        printf_s("invalid unserialized arg4\n");
+        return false;
+    }
+    if (s1.arg5 != s2.arg5)
+    {
+        printf_s("invalid unserialized arg5\n");
+        return false;
+    }
+    if (s1.arg6 != s2.arg6)
+    {
+        printf_s("invalid unserialized arg6\n");
+        return false;
+    }
+
     printf_s("test Unserialize passed\n");
     return true;
 }
 
-static void printHexBytes(byte* buf, uint size)
+static void printHexBytes(void* buf, uint size)
 {
-    int counter = 0;
+    byte* buffer = buf;
+    int ctr = 0;
     for (uint i = 0; i < size; i++)
     {
-        printf_s("%02X ", *buf);
-
-        buf++;
-        counter++;
-        if (counter >= 16)
+        printf_s("%02X ", *buffer);
+        buffer++;
+        ctr++;
+        if (ctr >= 16)
         {
-            counter = 0;
+            ctr = 0;
             printf_s("\n");
         }
     }

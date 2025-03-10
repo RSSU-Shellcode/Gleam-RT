@@ -92,6 +92,9 @@
     <ClCompile Include="..\src\win_crypto.c">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\serialize.c">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\crypto.h">
@@ -200,6 +203,9 @@
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="..\include\win_crypto.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\serialize.h">
       <Filter>Header</Filter>
     </ClInclude>
   </ItemGroup>

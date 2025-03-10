@@ -31,6 +31,7 @@
     <ClInclude Include="..\include\random.h" />
     <ClInclude Include="..\include\crypto.h" />
     <ClInclude Include="..\include\compress.h" />
+	<ClInclude Include="..\include\serialize.h" />
     <ClInclude Include="..\include\pe_image.h" />
     <ClInclude Include="..\include\win_api.h" />
     <ClInclude Include="..\include\errno.h" />
@@ -57,6 +58,7 @@
     <ClCompile Include="src\random_test.c" />
     <ClCompile Include="src\crypto_test.c" />
     <ClCompile Include="src\compress_test.c" />
+	<ClCompile Include="src\serialize_test.c" />
     <ClCompile Include="src\runtime_test.c" />
     <ClCompile Include="src\mod_library_test.c" />
     <ClCompile Include="src\mod_memory_test.c" />
@@ -78,6 +80,7 @@
     <ClCompile Include="..\src\random.c" />
     <ClCompile Include="..\src\crypto.c" />
     <ClCompile Include="..\src\compress.c" />
+	<ClCompile Include="..\src\serialize.c" />
     <ClCompile Include="..\src\pe_image.c" />
     <ClCompile Include="..\src\win_api.c" />
     <ClCompile Include="..\src\errno.c" />

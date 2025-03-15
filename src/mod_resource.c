@@ -1896,14 +1896,14 @@ bool RT_GetStatus(RT_Status* status)
         return false;
     }
 
-    status->NumMutexs            = numMutexs;
-    status->NumEvents            = numEvents;
-    status->NumSemaphores        = numSemphos;
-    status->NumWaitableTimers    = numTimers;
-    status->NumFiles             = numFiles;
-    status->NumDirectories       = numDirs;
-    status->NumIOCompletionPorts = numIOCPs;
-    status->NumSockets           = numSockets;
+    status->NumMutexs         = numMutexs;
+    status->NumEvents         = numEvents;
+    status->NumSemaphores     = numSemphos;
+    status->NumWaitableTimers = numTimers;
+    status->NumFiles          = numFiles;
+    status->NumDirectories    = numDirs;
+    status->NumIOCPs          = numIOCPs;
+    status->NumSockets        = numSockets;
     return true;
 }
 

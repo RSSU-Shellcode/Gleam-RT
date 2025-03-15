@@ -26,7 +26,7 @@ static byte rol(byte value, uint8 bits);
 
 #pragma optimize("t", on)
 
-void EncryptBuf(byte* buf, uint size, byte* key, byte* iv)
+void EncryptBuf(void* buf, uint size, byte* key, byte* iv)
 {
     if (size == 0)
     {
@@ -263,7 +263,7 @@ static void encryptBuf(byte* buf, uint size, byte* key, byte* iv, byte* sBox)
     }
 }
 
-void DecryptBuf(byte* buf, uint size, byte* key, byte* iv)
+void DecryptBuf(void* buf, uint size, byte* key, byte* iv)
 {
     if (size == 0)
     {
@@ -563,23 +563,25 @@ static byte rol(byte value, uint8 bits)
 
 #else
 
-void EncryptBuf(byte* buf, uint size, byte* key, byte* iv)
+void EncryptBuf(void* buf, uint size, byte* key, byte* iv)
 {
+    byte* buffer = buf;
     byte b = *key + *iv;
     for (uint i = 0; i < size; i++)
     {
-        *buf ^= b;
-        buf++;
+        *buffer ^= b;
+        buffer++;
     }
 }
 
-void DecryptBuf(byte* buf, uint size, byte* key, byte* iv)
+void DecryptBuf(void* buf, uint size, byte* key, byte* iv)
 {
+    byte* buffer = buf;
     byte b = *key + *iv;
     for (uint i = 0; i < size; i++)
     {
-        *buf ^= b;
-        buf++;
+        *buffer ^= b;
+        buffer++;
     }
 }
 

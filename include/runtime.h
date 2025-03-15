@@ -200,7 +200,7 @@ typedef errno (*CryptoRSADecrypt_t)(databuf* data, databuf* key, databuf* output
 // =================================Runtime=================================
 
 // about random module
-typedef void   (*RandBuffer_t)(byte* buf, int64 size);
+typedef void   (*RandBuffer_t)(void* buf, int64 size);
 typedef bool   (*RandBool_t)(uint64 seed);
 typedef int64  (*RandInt64_t)(uint64 seed);
 typedef uint64 (*RandUint64_t)(uint64 seed);
@@ -208,8 +208,8 @@ typedef int64  (*RandInt64N_t)(uint64 seed, int64 n);
 typedef uint64 (*RandUint64N_t)(uint64 seed, uint64 n);
 
 // about crypto module
-typedef void (*Encrypt_t)(byte* buf, uint size, byte* key, byte* iv);
-typedef void (*Decrypt_t)(byte* buf, uint size, byte* key, byte* iv);
+typedef void (*Encrypt_t)(void* buf, uint size, byte* key, byte* iv);
+typedef void (*Decrypt_t)(void* buf, uint size, byte* key, byte* iv);
 
 // about compress module
 // 
@@ -224,6 +224,43 @@ typedef void (*Decrypt_t)(byte* buf, uint size, byte* key, byte* iv);
 // facilitate decompression。
 typedef uint (*Compress_t)(void* dst, void* src, uint len, uint window);
 typedef uint (*Decompress_t)(void* dst, void* src, uint len);
+
+// about serialization module
+//
+// serialized data structure
+// +---------+----------+----------+----------+------------+
+// |  magic  |  item 1  |  item 2  | item END |  raw data  |
+// +---------+----------+----------+----------+------------+
+// |  uint32 |  uint32  |  uint32  |  uint32  |    var     |
+// +---------+----------+----------+----------+------------+
+//
+// item data structure
+//  0，，，，，，， value or pointer
+//  ，0000000 data length
+// 
+// Serialize is used to serialize structure to a buffer.
+// If success, return the serialized data length. If failed, return 0.
+// If serialized is NULL, it will calculate the serialized data length.
+//
+// Unserialize is used to unserialize data to a structure.
+//
+// example: test/src/serialize_test.c
+
+#ifndef SERIALIZE_H
+
+#define SERIALIZE_HEADER_MAGIC 0xFFFFFFFF
+#define SERIALIZE_ITEM_END     0x00000000
+
+#define SERIALIZE_FLAG_VALUE   0x00000000
+#define SERIALIZE_FLAG_POINTER 0x80000000
+
+#define SERIALIZE_MASK_FLAG   0x80000000
+#define SERIALIZE_MASK_LENGTH 0x7FFFFFFF
+
+#endif // SERIALIZE_H
+
+typedef uint32 (*Serialize_t)(uint32* descriptor, void* data, void* serialized);
+typedef bool   (*Unserialize_t)(void* serialized, void* data);
 
 // GetProcAddress, GetProcAddressByName and GetProcAddressByHash
 // are use Hash API module for implement original GetProcAddress.
@@ -380,6 +417,11 @@ typedef struct {
         Compress_t   Compress;
         Decompress_t Decompress;
     } Compressor;
+
+    struct {
+        Serialize_t   Serialize;
+        Unserialize_t Unserialize;
+    } Serialization;
 
     struct {
         GetProcByName_t   GetProcByName;

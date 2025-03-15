@@ -7,7 +7,7 @@
 // https://en.wikipedia.org/wiki/xorshift
 
 // RandBuffer is used to fill random bytes to the memory.
-void RandBuffer(byte* buf, int64 size);
+void RandBuffer(void* buf, int64 size);
 
 // RandByte is used to generate random byte.
 byte RandByte(uint64 seed);

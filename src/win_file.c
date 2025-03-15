@@ -257,7 +257,7 @@ errno readFile(HANDLE hFile, databuf* file)
     WinFile* module = getModulePointer();
 
     int64 fSize  = 0;
-    byte* buffer = NULL;
+    void* buffer = NULL;
     errno errno  = NO_ERROR;
     for (;;)
     {
@@ -362,7 +362,7 @@ errno writeFile(HANDLE hFile, databuf* file)
 {
     WinFile* module = getModulePointer();
 
-    byte* buf     = file->buf;
+    byte* buffer  = file->buf;
     uint  written = 0;
     errno errno   = NO_ERROR;
     for (;;)
@@ -376,7 +376,7 @@ errno writeFile(HANDLE hFile, databuf* file)
         }
         // write file chunk
         DWORD n;
-        if (!module->WriteFile(hFile, buf, (DWORD)chunkSize, &n, NULL))
+        if (!module->WriteFile(hFile, buffer, (DWORD)chunkSize, &n, NULL))
         {
             errno = GetLastErrno();
             break;
@@ -388,7 +388,7 @@ errno writeFile(HANDLE hFile, databuf* file)
             break;
         }
         // write next chunk
-        buf += n;
+        buffer += n;
     }
 
     if (!module->CloseHandle(hFile) && errno == NO_ERROR)

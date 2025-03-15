@@ -8,12 +8,13 @@ static uintptr getStackAddr();
 
 #pragma optimize("t", on)
 
-void RandBuffer(byte* buf, int64 size)
+void RandBuffer(void* buf, int64 size)
 {
     if (size < 1)
     {
         return;
     }
+    byte* buffer = buf;
     // limit the max loop times
     int64 times = size;
     if (times > 16)
@@ -21,11 +22,11 @@ void RandBuffer(byte* buf, int64 size)
         times = 16;
     }
     // generate seed from buffer address
-    uint64 seed = (uint64)(buf);
+    uint64 seed = (uint64)(buffer);
     seed += GenerateSeed();
     for (int64 i = 0; i < times; i++)
     {
-        byte b = *(buf + i);
+        byte b = *(buffer + i);
         if (b == 0)
         {
             b = 170;
@@ -46,7 +47,7 @@ void RandBuffer(byte* buf, int64 size)
         seed ^= seed << 5;
     #endif
         // write generate byte
-        *(buf + i) = (byte)seed;
+        *(buffer + i) = (byte)seed;
     }
 }
 

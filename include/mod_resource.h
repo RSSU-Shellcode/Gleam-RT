@@ -15,7 +15,7 @@ typedef struct {
     int64 NumWaitableTimers;
     int64 NumFiles;
     int64 NumDirectories;
-    int64 NumIOCompletionPorts;
+    int64 NumIOCPs;
     int64 NumSockets;
 } RT_Status;
 

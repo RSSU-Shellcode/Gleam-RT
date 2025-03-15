@@ -685,7 +685,7 @@ errno WC_AESDecrypt(databuf* data, databuf* key, databuf* output)
 
     HCRYPTPROV hProv = NULL;
     HCRYPTKEY  hKey  = NULL;
-    byte* buffer = NULL;
+    void* buffer = NULL;
     uint  length = 0;
 
     bool success = false;
@@ -787,7 +787,7 @@ errno WC_RSAGenKey(uint usage, uint bits, databuf* key)
 
     HCRYPTPROV hProv = NULL;
     HCRYPTKEY  hKey  = NULL;
-    byte* buffer = NULL;
+    void* buffer = NULL;
     uint  length = 0;
 
     bool success = false;
@@ -911,7 +911,7 @@ errno WC_RSASign(databuf* data, databuf* key, databuf* signature)
     HCRYPTPROV hProv = NULL;
     HCRYPTKEY  hKey  = NULL;
     HCRYPTHASH hHash = NULL;
-    byte* buffer = NULL;
+    void* buffer = NULL;
     DWORD length = 0;
 
     bool success = false;
@@ -1108,7 +1108,7 @@ errno WC_RSAEncrypt(databuf* data, databuf* key, databuf* output)
 
     HCRYPTPROV hProv = NULL;
     HCRYPTKEY  hKey  = NULL;
-    byte* buffer = NULL;
+    void* buffer = NULL;
     uint  length = 0;
 
     bool success = false;
@@ -1195,7 +1195,7 @@ errno WC_RSADecrypt(databuf* data, databuf* key, databuf* output)
 
     HCRYPTPROV hProv = NULL;
     HCRYPTKEY  hKey  = NULL;
-    byte* buffer = NULL;
+    void* buffer = NULL;
     uint  length = 0;
 
     bool success = false;

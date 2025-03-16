@@ -756,8 +756,8 @@ void WH_Init(HTTP_Request* req)
     req->ProxyUser      = NULL;
     req->ProxyPass      = NULL;
     req->ConnectTimeout = DEFAULT_TIMEOUT;
-    req->SendTimeout    = DEFAULT_TIMEOUT;
-    req->ReceiveTimeout = DEFAULT_TIMEOUT;
+    req->SendTimeout    = 10 * DEFAULT_TIMEOUT;
+    req->ReceiveTimeout = 10 * DEFAULT_TIMEOUT;
     req->MaxBodySize    = 0;
     req->AccessType     = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
     req->Body           = NULL;

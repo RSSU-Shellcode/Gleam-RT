@@ -13,22 +13,24 @@
 // Init is used to initialize a HTTP request structure.
 // Free is used to try to free winhttp.dll after use.
 
+#pragma pack(1)
 typedef struct {
     UTF16 URL; // https://user:pass@www.example.com/test.txt
 
-    UTF16 Headers;        // split by "\r\n"
-    UTF16 UserAgent;      // default User-Agent
-    UTF16 ProxyURL;       // http://www.example.com:8080
-    UTF16 ProxyUser;      // proxy server username
-    UTF16 ProxyPass;      // proxy server password
-    uint  ConnectTimeout; // millseconds
-    uint  SendTimeout;    // millseconds
-    uint  ReceiveTimeout; // millseconds
-    uint  MaxBodySize;    // zero is no limit
-    uint8 AccessType;     // reference document about WinHttpOpen
+    UTF16  Headers;        // split by "\r\n"
+    UTF16  UserAgent;      // default User-Agent
+    UTF16  ProxyURL;       // http://www.example.com:8080
+    UTF16  ProxyUser;      // proxy server username
+    UTF16  ProxyPass;      // proxy server password
+    uint32 ConnectTimeout; // millseconds, default is 60s
+    uint32 SendTimeout;    // millseconds, default is 600s
+    uint32 ReceiveTimeout; // millseconds, default is 600s
+    uint32 MaxBodySize;    // zero is no limit
+    uint8  AccessType;     // reference document about WinHttpOpen
 
     databuf* Body;
 } HTTP_Request;
+#pragma pack()
 
 typedef struct {
     int32 StatusCode; // example 200, 404
@@ -40,7 +42,6 @@ typedef struct {
 typedef errno (*WHGet_t)(HTTP_Request* req, HTTP_Response* resp);
 typedef errno (*WHPost_t)(HTTP_Request* req, HTTP_Response* resp);
 typedef errno (*WHDo_t)(UTF16 method, HTTP_Request* req, HTTP_Response* resp);
-
 typedef void  (*WHInit_t)(HTTP_Request* req);
 typedef errno (*WHFree_t)();
 

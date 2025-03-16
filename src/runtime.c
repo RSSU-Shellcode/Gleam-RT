@@ -9,6 +9,7 @@
 #include "random.h"
 #include "crypto.h"
 #include "compress.h"
+#include "serialize.h"
 #include "win_api.h"
 #include "errno.h"
 #include "context.h"
@@ -392,6 +393,9 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     // compress module
     module->Compressor.Compress   = GetFuncAddr(&Compress);
     module->Compressor.Decompress = GetFuncAddr(&Decompress);
+    // serialization module
+    module->Serialization.Serialize   = GetFuncAddr(&Serialize);
+    module->Serialization.Unserialize = GetFuncAddr(&Unserialize);
     // runtime IAT
     module->IAT.GetProcByName   = GetFuncAddr(&RT_GetProcAddressByName);
     module->IAT.GetProcByHash   = GetFuncAddr(&RT_GetProcAddressByHash);

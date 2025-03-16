@@ -78,13 +78,13 @@ static bool TestWinFile_ReadFileA()
         printf_s("get different file size %zu %llu\n", data.len, fSize);
         return false;
     }
-    byte* buf = runtime->Memory.Alloc((uint)fSize);
-    if (!ReadFile(hFile, buf, (DWORD)fSize, NULL, NULL))
+    void* buffer = runtime->Memory.Alloc((uint)fSize);
+    if (!ReadFile(hFile, buffer, (DWORD)fSize, NULL, NULL))
     {
         printf_s("failed to read file: 0x%X\n", GetLastErrno());
         return false;
     }
-    if (mem_cmp(data.buf, buf, data.len) != 0)
+    if (mem_cmp(data.buf, buffer, data.len) != 0)
     {
         printf_s("read different file data\n");
         return false;
@@ -96,7 +96,7 @@ static bool TestWinFile_ReadFileA()
     }
 
     runtime->Memory.Free(data.buf);
-    runtime->Memory.Free(buf);
+    runtime->Memory.Free(buffer);
     printf_s("test ReadFileA passed\n");
     return true;
 }
@@ -133,13 +133,13 @@ static bool TestWinFile_ReadFileW()
         printf_s("get different file size %zu %llu\n", data.len, fSize);
         return false;
     }
-    byte* buf = runtime->Memory.Alloc((uint)fSize);
-    if (!ReadFile(hFile, buf, (DWORD)fSize, NULL, NULL))
+    void* buffer = runtime->Memory.Alloc((uint)fSize);
+    if (!ReadFile(hFile, buffer, (DWORD)fSize, NULL, NULL))
     {
         printf_s("failed to read file: 0x%X\n", GetLastErrno());
         return false;
     }
-    if (mem_cmp(data.buf, buf, data.len) != 0)
+    if (mem_cmp(data.buf, buffer, data.len) != 0)
     {
         printf_s("read different file data\n");
         return false;
@@ -151,7 +151,7 @@ static bool TestWinFile_ReadFileW()
     }
 
     runtime->Memory.Free(data.buf);
-    runtime->Memory.Free(buf);
+    runtime->Memory.Free(buffer);
     printf_s("test ReadFileW passed\n");
     return true;
 }

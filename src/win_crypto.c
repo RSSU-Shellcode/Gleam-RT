@@ -54,13 +54,14 @@ typedef struct {
 
 // methods for user
 errno WC_RandBuffer(databuf* data);
-errno WC_SHA1(databuf* data, byte* hash);
+errno WC_Hash(ALG_ID aid, databuf* data, databuf* hash);
+errno WC_HMAC(ALG_ID aid, databuf* data, databuf* key, databuf* hash);
 errno WC_AESEncrypt(databuf* data, databuf* key, databuf* output);
 errno WC_AESDecrypt(databuf* data, databuf* key, databuf* output);
 errno WC_RSAGenKey(uint usage, uint bits, databuf* key);
 errno WC_RSAPubKey(databuf* key, databuf* output);
-errno WC_RSASign(databuf* data, databuf* key, databuf* signature);
-errno WC_RSAVerify(databuf* data, databuf* key, databuf* signature);
+errno WC_RSASign(ALG_ID aid, databuf* data, databuf* key, databuf* signature);
+errno WC_RSAVerify(ALG_ID aid, databuf* data, databuf* key, databuf* signature);
 errno WC_RSAEncrypt(databuf* data, databuf* key, databuf* output);
 errno WC_RSADecrypt(databuf* data, databuf* key, databuf* output);
 
@@ -130,7 +131,8 @@ WinCrypto_M* InitWinCrypto(Context* context)
     // methods for user
     WinCrypto_M* method = (WinCrypto_M*)methodAddr;
     method->RandBuffer = GetFuncAddr(&WC_RandBuffer);
-    method->SHA1       = GetFuncAddr(&WC_SHA1);
+    method->Hash       = GetFuncAddr(&WC_Hash);
+    method->HMAC       = GetFuncAddr(&WC_HMAC);
     method->AESEncrypt = GetFuncAddr(&WC_AESEncrypt);
     method->AESDecrypt = GetFuncAddr(&WC_AESDecrypt);
     method->RSAGenKey  = GetFuncAddr(&WC_RSAGenKey);
@@ -454,7 +456,7 @@ errno WC_RandBuffer(databuf* data)
     for (;;)
     {
         if (!module->CryptAcquireContextA(
-            &hProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT
+            &hProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT
         )){
             break;
         }
@@ -480,11 +482,11 @@ errno WC_RandBuffer(databuf* data)
 }
 
 __declspec(noinline)
-errno WC_SHA1(databuf* data, byte* hash)
+errno WC_Hash(ALG_ID aid, databuf* data, databuf* hash)
 {
     WinCrypto* module = getModulePointer();
 
-    dbg_log("[WinCrypto]", "SHA1: 0x%zX, %zu", data->buf, data->len);
+    dbg_log("[WinCrypto]", "Hash: 0x%zX, %zu", data->buf, data->len);
 
     if (!initWinCryptoEnv())
     {
@@ -493,16 +495,18 @@ errno WC_SHA1(databuf* data, byte* hash)
 
     HCRYPTPROV hProv = NULL;
     HCRYPTHASH hHash = NULL;
+    void* buffer = NULL;
+    DWORD length = 0;
 
     bool success = false;
     for (;;)
     {
         if (!module->CryptAcquireContextA(
-            &hProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT
+            &hProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT
         )){
             break;
         }
-        if (!module->CryptCreateHash(hProv, CALG_SHA1, NULL, 0, &hHash))
+        if (!module->CryptCreateHash(hProv, aid, NULL, 0, &hHash))
         {
             break;
         }
@@ -510,8 +514,12 @@ errno WC_SHA1(databuf* data, byte* hash)
         {
             break;
         }
-        DWORD hashLen = WC_SHA1_HASH_SIZE;
-        if (!module->CryptGetHashParam(hHash, HP_HASHVAL, hash, &hashLen, 0))
+        if (!module->CryptGetHashParam(hHash, HP_HASHVAL, NULL, &length, 0))
+        {
+            break;
+        }
+        buffer = module->malloc(length);
+        if (!module->CryptGetHashParam(hHash, HP_HASHVAL, buffer, &length, 0))
         {
             break;
         }
@@ -531,9 +539,18 @@ errno WC_SHA1(databuf* data, byte* hash)
 
     if (!success)
     {
+        module->free(buffer);
         return lastErr;
     }
+    hash->buf = buffer;
+    hash->len = length;
     return NO_ERROR;
+}
+
+__declspec(noinline)
+errno WC_HMAC(ALG_ID aid, databuf* data, databuf* key, databuf* hash)
+{
+
 }
 
 __declspec(noinline)
@@ -794,7 +811,7 @@ errno WC_RSAGenKey(uint usage, uint bits, databuf* key)
     for (;;)
     {
         if (!module->CryptAcquireContextA(
-            &hProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT
+            &hProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT
         )){
             break;
         }
@@ -881,7 +898,7 @@ errno WC_RSAPubKey(databuf* key, databuf* output)
 }
 
 __declspec(noinline)
-errno WC_RSASign(databuf* data, databuf* key, databuf* signature)
+errno WC_RSASign(ALG_ID aid, databuf* data, databuf* key, databuf* signature)
 {
     WinCrypto* module = getModulePointer();
 
@@ -918,7 +935,7 @@ errno WC_RSASign(databuf* data, databuf* key, databuf* signature)
     for (;;)
     {
         if (!module->CryptAcquireContextA(
-            &hProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT
+            &hProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT
         )){
             break;
         }
@@ -929,17 +946,11 @@ errno WC_RSASign(databuf* data, databuf* key, databuf* signature)
             break;
         }
         // calculate hash of data
-        if (!module->CryptCreateHash(hProv, CALG_SHA1, NULL, 0, &hHash))
+        if (!module->CryptCreateHash(hProv, aid, NULL, 0, &hHash))
         {
             break;
         }
         if (!module->CryptHashData(hHash, data->buf, (DWORD)(data->len), 0))
-        {
-            break;
-        }
-        byte  hash[WC_SHA1_HASH_SIZE];
-        DWORD hashLen = sizeof(hash);
-        if (!module->CryptGetHashParam(hHash, HP_HASHVAL, hash, &hashLen, 0))
         {
             break;
         }
@@ -983,7 +994,7 @@ errno WC_RSASign(databuf* data, databuf* key, databuf* signature)
 }
 
 __declspec(noinline)
-errno WC_RSAVerify(databuf* data, databuf* key, databuf* signature)
+errno WC_RSAVerify(ALG_ID aid, databuf* data, databuf* key, databuf* signature)
 {
     WinCrypto* module = getModulePointer();
 
@@ -1022,7 +1033,7 @@ errno WC_RSAVerify(databuf* data, databuf* key, databuf* signature)
     for (;;)
     {
         if (!module->CryptAcquireContextA(
-            &hProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT
+            &hProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT
         )){
             break;
         }
@@ -1033,17 +1044,11 @@ errno WC_RSAVerify(databuf* data, databuf* key, databuf* signature)
             break;
         }
         // calculate hash of data
-        if (!module->CryptCreateHash(hProv, CALG_SHA1, NULL, 0, &hHash))
+        if (!module->CryptCreateHash(hProv, aid, NULL, 0, &hHash))
         {
             break;
         }
         if (!module->CryptHashData(hHash, data->buf, (DWORD)(data->len), 0))
-        {
-            break;
-        }
-        byte  hash[WC_SHA1_HASH_SIZE];
-        DWORD hashLen = sizeof(hash);
-        if (!module->CryptGetHashParam(hHash, HP_HASHVAL, hash, &hashLen, 0))
         {
             break;
         }
@@ -1115,7 +1120,7 @@ errno WC_RSAEncrypt(databuf* data, databuf* key, databuf* output)
     for (;;)
     {
         if (!module->CryptAcquireContextA(
-            &hProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT
+            &hProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT
         )){
             break;
         }
@@ -1202,7 +1207,7 @@ errno WC_RSADecrypt(databuf* data, databuf* key, databuf* output)
     for (;;)
     {
         if (!module->CryptAcquireContextA(
-            &hProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT
+            &hProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT
         )){
             break;
         }

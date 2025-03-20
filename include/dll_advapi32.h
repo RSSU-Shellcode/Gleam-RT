@@ -51,15 +51,17 @@ typedef DWORD ALG_ID;
 #define CALG_SHA_256  0x0000800C
 #define CALG_SHA_384  0x0000800D
 #define CALG_SHA_512  0x0000800E
+#define CALG_HMAC     0x00008009
 #define CALG_AES_128  0x0000660E
 #define CALG_AES_192  0x0000660F
 #define CALG_AES_256  0x00006610
 #define CALG_RSA_SIGN 0x00002400
 #define CALG_RSA_KEYX 0x0000A400
 
-#define HP_ALGID    0x0001
-#define HP_HASHVAL  0x0002
-#define HP_HASHSIZE 0x0004
+#define HP_ALGID     0x0001
+#define HP_HASHVAL   0x0002
+#define HP_HASHSIZE  0x0004
+#define HP_HMAC_INFO 0x0005
 
 #define SIMPLEBLOB           0x1
 #define PUBLICKEYBLOB        0x6
@@ -106,7 +108,7 @@ typedef struct {
 typedef struct {
     BLOBHEADER header;
     DWORD      dwKeySize;
-} AESKEYHEADER;
+} KEYHEADER;
 
 typedef struct {
     DWORD magic;
@@ -118,6 +120,14 @@ typedef struct {
     BLOBHEADER header;
     RSAPUBKEY  rsaPubKey;
 } RSAPUBKEYHEADER;
+
+typedef struct {
+    ALG_ID HashAlgid;
+    BYTE*  pbInnerString;
+    DWORD  cbInnerString;
+    BYTE*  pbOuterString;
+    DWORD  cbOuterString;
+} HMAC_INFO;
 
 typedef BOOL (*CryptAcquireContextA_t)
 (
@@ -152,16 +162,20 @@ typedef BOOL (*CryptCreateHash_t)
     DWORD dwFlags, HCRYPTHASH* phHash
 );
 
-typedef BOOL (*CryptHashData_t)
+typedef BOOL (*CryptSetHashParam_t)
 (
-    HCRYPTHASH hHash, BYTE* pbData, DWORD dwDataLen,
-    DWORD dwFlags
+   HCRYPTHASH hHash, DWORD dwParam, BYTE* pbData, DWORD dwFlags
 );
 
 typedef BOOL (*CryptGetHashParam_t)
 (
     HCRYPTHASH hHash, DWORD dwParam, BYTE* pbData,
     DWORD* pdwDataLen, DWORD dwFlags
+);
+
+typedef BOOL (*CryptHashData_t)
+(
+    HCRYPTHASH hHash, BYTE* pbData, DWORD dwDataLen, DWORD dwFlags
 );
 
 typedef BOOL (*CryptDestroyHash_t)

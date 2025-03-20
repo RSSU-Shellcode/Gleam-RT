@@ -191,8 +191,9 @@ hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptGenRandom
 hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptGenKey
 hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptExportKey
 hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptCreateHash
-hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptHashData
+hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptSetHashParam
 hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptGetHashParam
+hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptHashData
 hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptDestroyHash
 hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptImportKey
 hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptSetKeyParam
@@ -389,8 +390,9 @@ hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptGenRandom
 hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptGenKey
 hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptExportKey
 hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptCreateHash
-hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptHashData
+hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptSetHashParam
 hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptGetHashParam
+hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptHashData
 hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptDestroyHash
 hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptImportKey
 hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptSetKeyParam

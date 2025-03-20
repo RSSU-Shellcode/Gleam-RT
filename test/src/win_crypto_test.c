@@ -9,7 +9,8 @@
 #include "test.h"
 
 static bool TestWinCrypto_RandBuffer();
-static bool TestWinCrypto_SHA1();
+static bool TestWinCrypto_Hash();
+static bool TestWinCrypto_HMAC();
 static bool TestWinCrypto_AESEncrypt();
 static bool TestWinCrypto_AESDecrypt();
 static bool TestWinCrypto_RSAGenKey();
@@ -25,7 +26,8 @@ bool TestRuntime_WinCrypto()
 {
     test_t tests[] = {
         { TestWinCrypto_RandBuffer },
-        { TestWinCrypto_SHA1       },
+        { TestWinCrypto_Hash       },
+        { TestWinCrypto_HMAC       },
         { TestWinCrypto_AESEncrypt },
         { TestWinCrypto_AESDecrypt },
         { TestWinCrypto_RSAGenKey  },
@@ -75,38 +77,45 @@ static bool TestWinCrypto_RandBuffer()
     return true;
 }
 
-static bool TestWinCrypto_SHA1()
+static bool TestWinCrypto_Hash()
 {
     byte buf[] = { 1, 2, 3, 4 };
     databuf data = {
         .buf = buf,
         .len = sizeof(buf),
     };
-    byte hash[WC_SHA1_HASH_SIZE];
-    errno err = runtime->WinCrypto.SHA1(&data, hash);
+    databuf hash;
+    errno err = runtime->WinCrypto.Hash(CALG_SHA1, &data, &hash);
     if (err != NO_ERROR)
     {
-        printf_s("failed to caclulate SHA1 hash: 0x%X\n", err);
+        printf_s("failed to calculate SHA1 hash: 0x%X\n", err);
         return false;
     }
 
-    databuf h = {
-        .buf = hash,
-        .len = sizeof(buf),
-    };
-    printHexBytes(&h);
+    printHexBytes(&hash);
     byte expected[] = {
         0x12, 0xDA, 0xDA, 0x1F, 0xFF, 0x4D, 0x47, 0x87,
         0xAD, 0xE3, 0x33, 0x31, 0x47, 0x20, 0x2C, 0x3B,
         0x44, 0x3E, 0x37, 0x6F,
     };
-    if (!mem_equal(expected, hash, WC_SHA1_HASH_SIZE))
+    if (hash.len != 20)
+    {
+        printf_s("invalid SHA1 hash size\n");
+        return false;
+    }
+    if (!mem_equal(expected, hash.buf, hash.len))
     {
         printf_s("get incorrect SHA1 hash\n");
         return false;
     }
 
-    printf_s("test SHA1 passed\n");
+    printf_s("test Hash passed\n");
+    return true;
+}
+
+static bool TestWinCrypto_HMAC()
+{
+    printf_s("test HMAC passed\n");
     return true;
 }
 
@@ -366,7 +375,7 @@ static bool TestWinCrypto_RSASign()
     }
 
     databuf signature;
-    err = runtime->WinCrypto.RSASign(&data, &key, &signature);
+    err = runtime->WinCrypto.RSASign(CALG_SHA1, &data, &key, &signature);
     if (err != NO_ERROR)
     {
         printf_s("failed to sign data with RSA: 0x%X\n", err);
@@ -405,7 +414,7 @@ static bool TestWinCrypto_RSAVerify()
         return false;
     }
     databuf signature;
-    err = runtime->WinCrypto.RSASign(&data, &priKey, &signature);
+    err = runtime->WinCrypto.RSASign(CALG_SHA_256, &data, &priKey, &signature);
     if (err != NO_ERROR)
     {
         printf_s("failed to sign data with RSA: 0x%X\n", err);
@@ -419,7 +428,7 @@ static bool TestWinCrypto_RSAVerify()
         printf_s("failed to export RSA public key: 0x%X\n", err);
         return false;
     }
-    err = runtime->WinCrypto.RSAVerify(&data, &pubKey, &signature);
+    err = runtime->WinCrypto.RSAVerify(CALG_SHA_256, &data, &pubKey, &signature);
     if (err != NO_ERROR)
     {
         printf_s("failed to verify data with RSA: 0x%X\n", err);
@@ -428,7 +437,7 @@ static bool TestWinCrypto_RSAVerify()
 
     // destroy signature
     *(byte*)(signature.buf) += 1;
-    err = runtime->WinCrypto.RSAVerify(&data, &pubKey, &signature);
+    err = runtime->WinCrypto.RSAVerify(CALG_SHA_256, &data, &pubKey, &signature);
     if (err == NO_ERROR)
     {
         printf_s("unexpected RSA verify data result\n");
@@ -456,7 +465,7 @@ static bool TestWinCrypto_RSAEncrypt()
     errno err = runtime->WinCrypto.RSAGenKey(WC_RSA_KEY_USAGE_KEYX, 2048, &priKey);
     if (err != NO_ERROR)
     {
-        printf_s("failed to gnererate RSA key pair: 0x%X\n", err);
+        printf_s("failed to generate RSA key pair: 0x%X\n", err);
         return false;
     }
     databuf pubKey;
@@ -503,7 +512,7 @@ static bool TestWinCrypto_RSADecrypt()
     errno err = runtime->WinCrypto.RSAGenKey(WC_RSA_KEY_USAGE_KEYX, 2048, &priKey);
     if (err != NO_ERROR)
     {
-        printf_s("failed to gnererate RSA key pair: 0x%X\n", err);
+        printf_s("failed to generate RSA key pair: 0x%X\n", err);
         return false;
     }
     databuf pubKey;

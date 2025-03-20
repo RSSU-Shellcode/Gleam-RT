@@ -2,6 +2,7 @@
 #define WIN_CRYPTO_H
 
 #include "c_types.h"
+#include "dll_advapi32.h"
 #include "errno.h"
 #include "context.h"
 
@@ -20,7 +21,6 @@
 // The AES Key only contain the key data, not contain header.
 // The RSA Private/Public Key contain the header RSAPUBKEYHEADER.
 
-#define WC_SHA1_HASH_SIZE 20
 #define WC_AES_BLOCK_SIZE 16
 #define WC_AES_IV_SIZE    16
 
@@ -28,13 +28,14 @@
 #define WC_RSA_KEY_USAGE_KEYX 2
 
 typedef errno (*WCRandBuffer_t)(databuf* data);
-typedef errno (*WCSHA1_t)(databuf* data, byte* hash);
+typedef errno (*WCHash_t)(ALG_ID aid, databuf* data, databuf* hash);
+typedef errno (*WCHMAC_t)(ALG_ID aid, databuf* data, databuf* key, databuf* hash);
 typedef errno (*WCAESEncrypt_t)(databuf* data, databuf* key, databuf* output);
 typedef errno (*WCAESDecrypt_t)(databuf* data, databuf* key, databuf* output);
 typedef errno (*WCRSAGenKey_t)(uint usage, uint bits, databuf* key);
 typedef errno (*WCRSAPubKey_t)(databuf* key, databuf* output);
-typedef errno (*WCRSASign_t)(databuf* data, databuf* key, databuf* signature);
-typedef errno (*WCRSAVerify_t)(databuf* data, databuf* key, databuf* signature);
+typedef errno (*WCRSASign_t)(ALG_ID aid, databuf* data, databuf* key, databuf* sign);
+typedef errno (*WCRSAVerify_t)(ALG_ID aid, databuf* data, databuf* key, databuf* sign);
 typedef errno (*WCRSAEncrypt_t)(databuf* data, databuf* key, databuf* output);
 typedef errno (*WCRSADecrypt_t)(databuf* data, databuf* key, databuf* output);
 
@@ -42,7 +43,8 @@ typedef errno (*WCUninstall_t)();
 
 typedef struct {
     WCRandBuffer_t RandBuffer;
-    WCSHA1_t       SHA1;
+    WCHash_t       Hash;
+    WCHMAC_t       HMAC;
     WCAESEncrypt_t AESEncrypt;
     WCAESDecrypt_t AESDecrypt;
     WCRSAGenKey_t  RSAGenKey;

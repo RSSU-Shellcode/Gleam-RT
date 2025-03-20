@@ -371,7 +371,8 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->WinHTTP.Free = runtime->WinHTTP->Free;
     // WinCrypto
     module->WinCrypto.RandBuffer = runtime->WinCrypto->RandBuffer;
-    module->WinCrypto.SHA1       = runtime->WinCrypto->SHA1;
+    module->WinCrypto.Hash       = runtime->WinCrypto->Hash;
+    module->WinCrypto.HMAC       = runtime->WinCrypto->HMAC;
     module->WinCrypto.AESEncrypt = runtime->WinCrypto->AESEncrypt;
     module->WinCrypto.AESDecrypt = runtime->WinCrypto->AESDecrypt;
     module->WinCrypto.RSAGenKey  = runtime->WinCrypto->RSAGenKey;
@@ -1518,10 +1519,10 @@ void* RT_GetProcAddressByName(HMODULE hModule, LPCSTR lpProcName, bool hook)
         return proc;
     }
     // if failed to found, use original GetProcAddress
-    // must skip runtime internel methods like "RT_Method"
-    byte preifx[4] = { 'R', 'T', '_', 0x00 };
+    // must skip runtime internal methods like "RT_Method"
+    byte prefix[4] = { 'R', 'T', '_', 0x00 };
     ANSI procName  = (ANSI)lpProcName;
-    if (strncmp_a(procName, preifx, 3) == 0)
+    if (strncmp_a(procName, prefix, 3) == 0)
     {
         return NULL;
     }
@@ -2258,7 +2259,7 @@ errno RT_Cleanup()
         return errlm;
     }
 
-    // maybe some librarys will use the tracked
+    // maybe some libraries will use the tracked
     // memory page or heap, so free memory after
     // free all library.
     errno err = NO_ERROR;
@@ -2320,7 +2321,7 @@ errno RT_Exit()
         return ERR_RUNTIME_ADJUST_PROTECT;
     }
 
-    // maybe some librarys will use the tracked
+    // maybe some libraries will use the tracked
     // memory page or heap, so free memory after
     // free all library.
     typedef errno (*submodule_t)();

@@ -107,6 +107,7 @@ https://learn.microsoft.com/en-us/windows/win32/api/winhttp/nf-winhttp-winhttpcl
 https://learn.microsoft.com/en-us/windows/win32/seccrypto/alg-id
 https://learn.microsoft.com/en-us/windows/win32/seccrypto/cryptographic-provider-types
 https://learn.microsoft.com/en-us/windows/win32/seccrypto/rsa-schannel-key-blobs
+https://learn.microsoft.com/en-us/windows/win32/api/wincrypt/ns-wincrypt-hmac_info
 https://learn.microsoft.com/en-us/windows/win32/api/wincrypt/ns-wincrypt-publickeystruc
 https://learn.microsoft.com/en-us/windows/win32/api/wincrypt/ns-wincrypt-rsapubkey
 https://learn.microsoft.com/en-us/windows/win32/api/wincrypt/nf-wincrypt-cryptacquirecontexta
@@ -116,6 +117,7 @@ https://learn.microsoft.com/en-us/windows/win32/api/wincrypt/nf-wincrypt-cryptge
 https://learn.microsoft.com/en-us/windows/win32/api/wincrypt/nf-wincrypt-cryptexportkey
 https://learn.microsoft.com/en-us/windows/win32/api/wincrypt/nf-wincrypt-cryptcreatehash
 https://learn.microsoft.com/en-us/windows/win32/api/wincrypt/nf-wincrypt-crypthashdata
+https://learn.microsoft.com/en-us/windows/win32/api/wincrypt/nf-wincrypt-cryptsethashparam
 https://learn.microsoft.com/en-us/windows/win32/api/wincrypt/nf-wincrypt-cryptgethashparam
 https://learn.microsoft.com/en-us/windows/win32/api/wincrypt/nf-wincrypt-cryptdestroyhash
 https://learn.microsoft.com/en-us/windows/win32/api/wincrypt/nf-wincrypt-cryptimportkey

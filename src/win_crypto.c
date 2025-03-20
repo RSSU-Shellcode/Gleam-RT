@@ -23,8 +23,9 @@ typedef struct {
     CryptGenKey_t           CryptGenKey;
     CryptExportKey_t        CryptExportKey;
     CryptCreateHash_t       CryptCreateHash;
-    CryptHashData_t         CryptHashData;
+    CryptSetHashParam_t     CryptSetHashParam;
     CryptGetHashParam_t     CryptGetHashParam;
+    CryptHashData_t         CryptHashData;
     CryptDestroyHash_t      CryptDestroyHash;
     CryptImportKey_t        CryptImportKey;
     CryptSetKeyParam_t      CryptSetKeyParam;
@@ -323,8 +324,9 @@ static bool findWinCryptoAPI()
         { 0x7139781045860379, 0xD9B823C41B31892D }, // CryptGenKey
         { 0xFBD14E610ABC19B0, 0x427A278C5526F497 }, // CryptExportKey
         { 0xCA46DCB36C8EF17A, 0xEDEA67BFCC8F2970 }, // CryptCreateHash
-        { 0x08F3ADAD64028885, 0xFF7C7DF5E4A9283F }, // CryptHashData
+        { 0x0E182B65460D3A77, 0xD15B5AD9BC662323 }, // CryptSetHashParam
         { 0x76F8459880F8ACF9, 0x252C1D935020E9D4 }, // CryptGetHashParam
+        { 0x08F3ADAD64028885, 0xFF7C7DF5E4A9283F }, // CryptHashData
         { 0x2003C9A7DB794999, 0x0E51E1688FD1869E }, // CryptDestroyHash
         { 0x8D1E49656BB1E55E, 0x7EF987CE7272029B }, // CryptImportKey
         { 0x3D31DE5787EA688F, 0xB851328C0A45FBD2 }, // CryptSetKeyParam
@@ -342,8 +344,9 @@ static bool findWinCryptoAPI()
         { 0x9EDA4CE2, 0x1D81FE5F }, // CryptGenKey
         { 0x1F7F51F7, 0x38675FE9 }, // CryptExportKey
         { 0xAC10214C, 0x745E27FB }, // CryptCreateHash
-        { 0x34BF08ED, 0x2C655EC2 }, // CryptHashData
+        { 0xCC7D1FC5, 0x29A75B86 }, // CryptSetHashParam
         { 0x5D3903BA, 0x461539AA }, // CryptGetHashParam
+        { 0x34BF08ED, 0x2C655EC2 }, // CryptHashData
         { 0x599DEAEE, 0xB4B75228 }, // CryptDestroyHash
         { 0xF6111932, 0x31A2ABE4 }, // CryptImportKey
         { 0x847508E7, 0xBAA59832 }, // CryptSetKeyParam
@@ -369,16 +372,17 @@ static bool findWinCryptoAPI()
     module->CryptGenKey           = list[0x03].proc;
     module->CryptExportKey        = list[0x04].proc;
     module->CryptCreateHash       = list[0x05].proc;
-    module->CryptHashData         = list[0x06].proc;
+    module->CryptSetHashParam     = list[0x06].proc;
     module->CryptGetHashParam     = list[0x07].proc;
-    module->CryptDestroyHash      = list[0x08].proc;
-    module->CryptImportKey        = list[0x09].proc;
-    module->CryptSetKeyParam      = list[0x0A].proc;
-    module->CryptEncrypt          = list[0x0B].proc;
-    module->CryptDecrypt          = list[0x0C].proc;
-    module->CryptDestroyKey       = list[0x0D].proc;
-    module->CryptSignHashA        = list[0x0E].proc;
-    module->CryptVerifySignatureA = list[0x0F].proc;
+    module->CryptHashData         = list[0x08].proc;
+    module->CryptDestroyHash      = list[0x09].proc;
+    module->CryptImportKey        = list[0x0A].proc;
+    module->CryptSetKeyParam      = list[0x0B].proc;
+    module->CryptEncrypt          = list[0x0C].proc;
+    module->CryptDecrypt          = list[0x0D].proc;
+    module->CryptDestroyKey       = list[0x0E].proc;
+    module->CryptSignHashA        = list[0x0F].proc;
+    module->CryptVerifySignatureA = list[0x10].proc;
     return true;
 }
 
@@ -486,7 +490,7 @@ errno WC_Hash(ALG_ID aid, databuf* data, databuf* hash)
 {
     WinCrypto* module = getModulePointer();
 
-    dbg_log("[WinCrypto]", "Hash: 0x%zX, %zu", data->buf, data->len);
+    dbg_log("[WinCrypto]", "Hash: 0x%X, 0x%zX, %zu", aid, data->buf, data->len);
 
     if (!initWinCryptoEnv())
     {
@@ -550,7 +554,94 @@ errno WC_Hash(ALG_ID aid, databuf* data, databuf* hash)
 __declspec(noinline)
 errno WC_HMAC(ALG_ID aid, databuf* data, databuf* key, databuf* hash)
 {
+    WinCrypto* module = getModulePointer();
 
+    dbg_log("[WinCrypto]", "HMAC: 0x%X, 0x%zX, %zu", aid, data->buf, data->len);
+
+    if (!initWinCryptoEnv())
+    {
+        return GetLastErrno();
+    }
+
+    HCRYPTPROV hProv = NULL;
+    HCRYPTKEY  hKey  = NULL;
+    HCRYPTHASH hHash = NULL;
+    void* buffer = NULL;
+    DWORD length = 0;
+
+    bool success = false;
+    for (;;)
+    {
+        if (!module->CryptAcquireContextA(
+            &hProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT
+        )){
+            break;
+        }
+        // import key to context
+        byte buf[sizeof(KEYHEADER) + 128];
+        mem_init(buf, sizeof(buf));
+        KEYHEADER* header = (KEYHEADER*)buf;
+        header->header.bType = PLAINTEXTKEYBLOB;
+        header->header.bVersion = CUR_BLOB_VERSION;
+        header->header.reserved = 0;
+        header->header.aiKeyAlg = CALG_HMAC;
+        header->dwKeySize = (DWORD)(key->len);
+        mem_copy(buf + sizeof(KEYHEADER), key->buf, key->len);
+        if (!module->CryptImportKey(hProv, buf, sizeof(buf), NULL, CRYPT_EXPORTABLE, &hKey))
+        {
+            break;
+        }
+        if (!module->CryptCreateHash(hProv, CALG_HMAC, hKey, 0, &hHash))
+        {
+            break;
+        }
+        // set hash algorithm id
+        HMAC_INFO info;
+        mem_init(&info, sizeof(HMAC_INFO));
+        info.HashAlgid = aid;
+        if (!module->CryptSetHashParam(hHash, HP_HMAC_INFO, (BYTE*)(&info), 0))
+        {
+            break;
+        }
+        if (!module->CryptHashData(hHash, data->buf, (DWORD)(data->len), 0))
+        {
+            break;
+        }
+        if (!module->CryptGetHashParam(hHash, HP_HASHVAL, NULL, &length, 0))
+        {
+            break;
+        }
+        buffer = module->malloc(length);
+        if (!module->CryptGetHashParam(hHash, HP_HASHVAL, buffer, &length, 0))
+        {
+            break;
+        }
+        success = true;
+        break;
+    }
+    errno lastErr = GetLastErrno();
+
+    if (hHash != NULL)
+    {
+        module->CryptDestroyHash(hHash);
+    }
+    if (hKey != NULL)
+    {
+        module->CryptDestroyKey(hKey);
+    }
+    if (hProv != NULL)
+    {
+        module->CryptReleaseContext(hProv, 0);
+    }
+
+    if (!success)
+    {
+        module->free(buffer);
+        return lastErr;
+    }
+    hash->buf = buffer;
+    hash->len = length;
+    return NO_ERROR;
 }
 
 __declspec(noinline)
@@ -593,9 +684,9 @@ errno WC_AESEncrypt(databuf* data, databuf* key, databuf* output)
             break;
         }
         // build exportable AES key with PLAINTEXTKEY
-        byte buf[sizeof(AESKEYHEADER) + 32];
+        byte buf[sizeof(KEYHEADER) + 32];
         mem_init(buf, sizeof(buf));
-        AESKEYHEADER* header = (AESKEYHEADER*)buf;
+        KEYHEADER* header = (KEYHEADER*)buf;
         header->header.bType    = PLAINTEXTKEYBLOB;
         header->header.bVersion = CUR_BLOB_VERSION;
         header->header.reserved = 0;
@@ -612,7 +703,7 @@ errno WC_AESEncrypt(databuf* data, databuf* key, databuf* output)
             break;
         }
         header->dwKeySize = (DWORD)(key->len);
-        mem_copy(buf + sizeof(AESKEYHEADER), key->buf, key->len);
+        mem_copy(buf + sizeof(KEYHEADER), key->buf, key->len);
         // import AES key to context
         if (!module->CryptImportKey(hProv, buf, sizeof(buf), NULL, CRYPT_EXPORTABLE, &hKey))
         {
@@ -714,9 +805,9 @@ errno WC_AESDecrypt(databuf* data, databuf* key, databuf* output)
             break;
         }
         // build exportable AES key with PLAINTEXTKEY
-        byte buf[sizeof(AESKEYHEADER) + 32];
+        byte buf[sizeof(KEYHEADER) + 32];
         mem_init(buf, sizeof(buf));
-        AESKEYHEADER* header = (AESKEYHEADER*)buf;
+        KEYHEADER* header = (KEYHEADER*)buf;
         header->header.bType    = PLAINTEXTKEYBLOB;
         header->header.bVersion = CUR_BLOB_VERSION;
         header->header.reserved = 0;
@@ -733,7 +824,7 @@ errno WC_AESDecrypt(databuf* data, databuf* key, databuf* output)
             break;
         }
         header->dwKeySize = (DWORD)(key->len);
-        mem_copy(buf + sizeof(AESKEYHEADER), key->buf, key->len);
+        mem_copy(buf + sizeof(KEYHEADER), key->buf, key->len);
         // import AES key to context
         if (!module->CryptImportKey(hProv, buf, sizeof(buf), NULL, CRYPT_EXPORTABLE, &hKey))
         {

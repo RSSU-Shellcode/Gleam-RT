@@ -115,6 +115,41 @@ static bool TestWinCrypto_Hash()
 
 static bool TestWinCrypto_HMAC()
 {
+    byte buf[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
+    databuf data = {
+        .buf = buf,
+        .len = sizeof(buf),
+    };
+    databuf key = {
+        .buf = buf,
+        .len = sizeof(buf),
+    };
+    databuf hash;
+    errno err = runtime->WinCrypto.HMAC(CALG_SHA_256, &data, &key, &hash);
+    if (err != NO_ERROR)
+    {
+        printf_s("failed to calculate HMAC-SHA256 hash: 0x%X\n", err);
+        return false;
+    }
+
+    printHexBytes(&hash);
+    byte expected[] = {
+        0xD1, 0x29, 0x0E, 0xB2, 0x59, 0x65, 0x23, 0x3C,
+        0x91, 0x3C, 0x3D, 0xEB, 0x22, 0x2E, 0x79, 0x86,
+        0x68, 0x4C, 0xE6, 0xB0, 0x8D, 0x93, 0x21, 0xAB, 
+        0xC1, 0x11, 0xD8, 0x70, 0x68, 0xE3, 0xD7, 0xF8,
+    };
+    if (hash.len != 32)
+    {
+        printf_s("invalid HMAC-SHA256 hash size\n");
+        return false;
+    }
+    if (!mem_equal(expected, hash.buf, hash.len))
+    {
+        printf_s("get incorrect HMAC-SHA256 hash\n");
+        return false;
+    }
+
     printf_s("test HMAC passed\n");
     return true;
 }
@@ -128,13 +163,13 @@ static bool TestWinCrypto_AESEncrypt()
         .buf = testdata,
         .len = sizeof(testdata),
     };
-    byte testkey[] = {
+    byte testKey[] = {
         0x00, 0x01, 0x02, 0x03, 0x00, 0x01, 0x02, 0x03,
         0x00, 0x01, 0x02, 0x03, 0x00, 0x01, 0x02, 0x03,
     };
     databuf key = {
-        .buf = testkey,
-        .len = sizeof(testkey),
+        .buf = testKey,
+        .len = sizeof(testKey),
     };
     databuf output;
     errno err = runtime->WinCrypto.AESEncrypt(&data, &key, &output);
@@ -166,15 +201,15 @@ static bool TestWinCrypto_AESDecrypt()
         .buf = testdata1,
         .len = sizeof(testdata1),
     };
-    byte testkey[] = {
+    byte testKey[] = {
         0x00, 0x01, 0x02, 0x03, 0x00, 0x01, 0x02, 0x03,
         0x00, 0x01, 0x02, 0x03, 0x00, 0x01, 0x02, 0x03,
         0x00, 0x01, 0x02, 0x03, 0x00, 0x01, 0x02, 0x03,
         0x00, 0x01, 0x02, 0x03, 0x00, 0x01, 0x02, 0x03,
     };
     databuf key = {
-        .buf = testkey,
-        .len = sizeof(testkey),
+        .buf = testKey,
+        .len = sizeof(testKey),
     };
     databuf cipherData;
     errno err = runtime->WinCrypto.AESEncrypt(&data1, &key, &cipherData);

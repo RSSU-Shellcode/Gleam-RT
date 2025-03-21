@@ -45,9 +45,10 @@ static bool TestCom_Compress()
     };
     for (int i = 0; i < arrlen(windows); i++)
     {
-        void* dst = runtime->Memory.Alloc(data.len);
-        uint  len = Compress(dst, data.buf, data.len, windows[i]);
+        uint len = Compress(NULL, data.buf, data.len, windows[i]);
         printf_s("compressed: %zu/%zu, window: %zu\n", len, data.len, windows[i]);
+        void* dst = runtime->Memory.Alloc(len);
+        len = Compress(dst, data.buf, data.len, windows[i]);
         runtime->Memory.Free(dst);
     }
 
@@ -67,17 +68,19 @@ static bool TestCom_Decompress()
         return false;
     }
 
-    void* dst = runtime->Memory.Alloc(data.len);
-    uint len = Compress(dst, data.buf, data.len, 2048);
-    printf_s("compressed:   %zu\n", len);
+    uint cLen = Compress(NULL, data.buf, data.len, 2048);
+    printf_s("compressed:   %zu\n", cLen);
+    void* dst = runtime->Memory.Alloc(cLen);
+    cLen = Compress(dst, data.buf, data.len, 2048);
 
-    void* raw = runtime->Memory.Alloc(data.len);
-    len = Decompress(raw, dst, len);
-    printf_s("decompressed: %zu\n", len);
+    uint dLen = Decompress(NULL, dst, cLen);
+    void* raw = runtime->Memory.Alloc(dLen);
+    dLen = Decompress(raw, dst, cLen);
+    printf_s("decompressed: %zu\n", dLen);
 
-    if (len != data.len)
+    if (dLen != data.len)
     {
-        printf_s("incorrect decompressed data size: %zu\n", len);
+        printf_s("incorrect decompressed data size: %zu\n", dLen);
         return false;
     }
     if (mem_cmp(data.buf, raw, data.len) != 0)

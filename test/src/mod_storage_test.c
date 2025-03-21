@@ -108,13 +108,13 @@ static bool TestStorage_GetValue()
 
 static bool TestStorage_GetPointer()
 {
-    printf_s("get ponter and receive size\n");
+    printf_s("get pointer and receive size\n");
     int id = 0;
     uint* val = NULL;
     uint  size;
     if (!runtime->Storage.GetPointer(id, &val, &size))
     {
-        printf_s("failed to get ponter with id 0: 0x%X\n", GetLastErrno());
+        printf_s("failed to get pointer with id 0: 0x%X\n", GetLastErrno());
         return false;
     }
     if (*val != 5678)
@@ -124,17 +124,17 @@ static bool TestStorage_GetPointer()
     }
     if (size != sizeof(*val))
     {
-        printf_s("get ponter with incorrect size\n");
+        printf_s("get pointer with incorrect size\n");
         return false;
     }
 
-    printf_s("get ponter but not receive size\n");
+    printf_s("get pointer but not receive size\n");
     id   = 16;
     val  = NULL;
     size = 0;
     if (!runtime->Storage.GetPointer(id, &val, NULL))
     {
-        printf_s("failed to get ponter with id 0: 0x%X\n", GetLastErrno());
+        printf_s("failed to get pointer with id 0: 0x%X\n", GetLastErrno());
         return false;
     }
     if (*val != 1234)
@@ -144,7 +144,7 @@ static bool TestStorage_GetPointer()
     }
     if (size != 0)
     {
-        printf_s("get ponter with incorrect size\n");
+        printf_s("get pointer with incorrect size\n");
         return false;
     }
     return true;

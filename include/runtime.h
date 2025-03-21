@@ -173,11 +173,12 @@ typedef errno (*HTTPFree_t)();
 // +---------+-------------+
 //
 // The AES is use CBC mode with PKCS#5 padding method.
-// The valid AES key length are 16, 24, 32 bytes.
 // The RSA is use PKCS#1 v1.5 padding method.
 //
-// The AES Key only contain the key data, not contain header.
+// The HMAC/AES Key only contain the key data, not contain header.
 // The RSA Private/Public Key contain the header RSAPUBKEYHEADER.
+// 
+// The valid AES key length are 16, 24, 32 bytes.
 
 #ifndef WIN_CRYPTO_H
 
@@ -217,15 +218,16 @@ typedef void (*Decrypt_t)(void* buf, uint size, byte* key, byte* iv);
 
 // about compress module
 // 
-// In general, the size of the destination buffer is 1.125
-// times the size of the source buffer to handle the worst
-// case (no compressible data).
+// Compress is used to compress data with LZSS.
+// If return value is -1, window size is invalid.
+// If dst is NULL, calculate the compressed length.
+// 
+// Decompress is used to decompress data with LZSS.
+// If dst is NULL, calculate the raw data length.
 // 
 // Since the algorithm is relatively simple to implement, 
-// it is NOT recommended to compress data exceeding 1MB.
-// 
-// Please record the original size when compressing to 
-// facilitate decompression¡£
+// it is NOT recommended to compress data exceeding 8MB.
+
 typedef uint (*Compress_t)(void* dst, void* src, uint len, uint window);
 typedef uint (*Decompress_t)(void* dst, void* src, uint len);
 

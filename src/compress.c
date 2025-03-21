@@ -65,17 +65,26 @@ uint Compress(void* dst, void* src, uint len, uint win)
             // offset max is 4095, max length value is [0-15] + 3
             uint16 mark = (uint16)((offset << 4) + (length - MIN_MATCH_LENGTH));
             // encode mark to buffer
-            output[dstPtr+0] = (byte)(mark >> 0);
-            output[dstPtr+1] = (byte)(mark >> 8);
+            if (dst != NULL)
+            {
+                output[dstPtr + 0] = (byte)(mark >> 0);
+                output[dstPtr + 1] = (byte)(mark >> 8);
+            }
             dstPtr += 2;
         } else {
-            output[dstPtr] = input[srcPtr];
+            if (dst != NULL)
+            {
+                output[dstPtr] = input[srcPtr];
+            }
             dstPtr++;
         }
         // update flag block
         if (flagCtr == 7) 
         {
-            output[flagPtr] = flag;
+            if (dst != NULL)
+            {
+                output[flagPtr] = flag;
+            }
             // update pointer
             flagPtr = dstPtr;
             dstPtr++;
@@ -106,7 +115,10 @@ uint Compress(void* dst, void* src, uint len, uint win)
     if (flagCtr != 0) 
     {
         flag <<= (byte)(7 - flagCtr);
-        output[flagPtr] = flag;
+        if (dst != NULL)
+        {
+            output[flagPtr] = flag;
+        }
     } else {
         dstPtr--; // rollback pointer
     }
@@ -148,11 +160,17 @@ uint Decompress(void* dst, void* src, uint len)
             integer offset = (integer)((mark >> 4) + 1);
             integer length = (integer)((mark & 0xF) + MIN_MATCH_LENGTH);
             integer start = dstPtr - offset;
-            mem_copy(output + dstPtr, output + start, length);
+            if (dst != NULL)
+            {
+                mem_copy(output + dstPtr, output + start, length);
+            }
             srcPtr += 2;
             dstPtr += length;
         } else {
-            output[dstPtr] = input[srcPtr];
+            if (dst != NULL)
+            {
+                output[dstPtr] = input[srcPtr];
+            }
             srcPtr++;
             dstPtr++;
         }

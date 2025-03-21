@@ -584,11 +584,12 @@ errno WC_HMAC(ALG_ID aid, databuf* data, databuf* key, databuf* hash)
         header->header.bType = PLAINTEXTKEYBLOB;
         header->header.bVersion = CUR_BLOB_VERSION;
         header->header.reserved = 0;
-        header->header.aiKeyAlg = CALG_HMAC;
+        header->header.aiKeyAlg = CALG_RC2;
         header->dwKeySize = (DWORD)(key->len);
         mem_copy(buf + sizeof(KEYHEADER), key->buf, key->len);
-        if (!module->CryptImportKey(hProv, buf, sizeof(buf), NULL, CRYPT_EXPORTABLE, &hKey))
-        {
+        if (!module->CryptImportKey(
+            hProv, buf, sizeof(buf), NULL, CRYPT_IPSEC_HMAC_KEY, &hKey
+        )){
             break;
         }
         if (!module->CryptCreateHash(hProv, CALG_HMAC, hKey, 0, &hHash))
@@ -705,7 +706,7 @@ errno WC_AESEncrypt(databuf* data, databuf* key, databuf* output)
         header->dwKeySize = (DWORD)(key->len);
         mem_copy(buf + sizeof(KEYHEADER), key->buf, key->len);
         // import AES key to context
-        if (!module->CryptImportKey(hProv, buf, sizeof(buf), NULL, CRYPT_EXPORTABLE, &hKey))
+        if (!module->CryptImportKey(hProv, buf, sizeof(buf), NULL, 0, &hKey))
         {
             break;
         }
@@ -826,7 +827,7 @@ errno WC_AESDecrypt(databuf* data, databuf* key, databuf* output)
         header->dwKeySize = (DWORD)(key->len);
         mem_copy(buf + sizeof(KEYHEADER), key->buf, key->len);
         // import AES key to context
-        if (!module->CryptImportKey(hProv, buf, sizeof(buf), NULL, CRYPT_EXPORTABLE, &hKey))
+        if (!module->CryptImportKey(hProv, buf, sizeof(buf), NULL, 0, &hKey))
         {
             break;
         }
@@ -1031,9 +1032,8 @@ errno WC_RSASign(ALG_ID aid, databuf* data, databuf* key, databuf* signature)
             break;
         }
         // import private key to context
-        if (!module->CryptImportKey(
-            hProv, key->buf, (DWORD)(key->len), NULL, CRYPT_EXPORTABLE, &hKey
-        )){
+        if (!module->CryptImportKey(hProv, key->buf, (DWORD)(key->len), NULL, 0, &hKey))
+        {
             break;
         }
         // calculate hash of data
@@ -1129,9 +1129,8 @@ errno WC_RSAVerify(ALG_ID aid, databuf* data, databuf* key, databuf* signature)
             break;
         }
         // import public key to context
-        if (!module->CryptImportKey(
-            hProv, key->buf, (DWORD)(key->len), NULL, CRYPT_EXPORTABLE, &hKey
-        )){
+        if (!module->CryptImportKey(hProv, key->buf, (DWORD)(key->len), NULL, 0, &hKey))
+        {
             break;
         }
         // calculate hash of data
@@ -1216,9 +1215,8 @@ errno WC_RSAEncrypt(databuf* data, databuf* key, databuf* output)
             break;
         }
         // import RSA public key to context
-        if (!module->CryptImportKey(
-            hProv, key->buf, (DWORD)(key->len), NULL, CRYPT_EXPORTABLE, &hKey
-        )){
+        if (!module->CryptImportKey(hProv, key->buf, (DWORD)(key->len), NULL, 0, &hKey))
+        {
             break;
         }
         // calculate the cipher data size
@@ -1303,9 +1301,8 @@ errno WC_RSADecrypt(databuf* data, databuf* key, databuf* output)
             break;
         }
         // import RSA private key to context
-        if (!module->CryptImportKey(
-            hProv, key->buf, (DWORD)(key->len), NULL, CRYPT_EXPORTABLE, &hKey
-        )){
+        if (!module->CryptImportKey(hProv, key->buf, (DWORD)(key->len), NULL, 0, &hKey))
+        {
             break;
         }
         // copy cipher data and decrypt it

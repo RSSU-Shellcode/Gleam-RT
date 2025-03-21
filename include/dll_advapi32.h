@@ -41,10 +41,13 @@ typedef DWORD ALG_ID;
 #define CRYPT_UPDATE_KEY     0x00000008
 #define CRYPT_NO_SALT        0x00000010
 #define CRYPT_PREGEN         0x00000040
+#define CRYPT_IPSEC_HMAC_KEY 0x00000100
 #define CRYPT_SERVER         0x00000400
 #define CRYPT_ARCHIVABLE     0x00004000
 
 // CALG_SHA_256/384/512 is not supported until Windows XP SP3
+#define CALG_RC2      0x00006602
+#define CALG_RC4      0x00006801
 #define CALG_MD4      0x00008002
 #define CALG_MD5      0x00008003
 #define CALG_SHA1     0x00008004

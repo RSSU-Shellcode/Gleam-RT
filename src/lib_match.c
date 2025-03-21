@@ -2,7 +2,7 @@
 #include "lib_memory.h"
 #include "lib_match.h"
 
-static integer burteForce(byte* s, integer ns, byte* sep, integer nsep);
+static integer bruteForce(byte* s, integer ns, byte* sep, integer nsep);
 
 #pragma optimize("t", on)
 
@@ -44,7 +44,7 @@ integer MatchBytes(byte* s, integer ns, byte* sep, integer nsep)
     // use brute force if data is too small
     if (ns <= 64)
     {
-        return burteForce(s, ns, sep, nsep);
+        return bruteForce(s, ns, sep, nsep);
     }
     byte b0 = sep[0];
     byte b1 = sep[1];
@@ -78,7 +78,7 @@ integer MatchBytes(byte* s, integer ns, byte* sep, integer nsep)
     return -1;
 }
 
-static integer burteForce(byte* s, integer ns, byte* sep, integer nsep)
+static integer bruteForce(byte* s, integer ns, byte* sep, integer nsep)
 {
     for (integer i = 0; i < (ns - nsep + 1); i++)
     {

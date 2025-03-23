@@ -19,6 +19,7 @@ static bool TestWinCrypto_RSASign();
 static bool TestWinCrypto_RSAVerify();
 static bool TestWinCrypto_RSAEncrypt();
 static bool TestWinCrypto_RSADecrypt();
+static bool TestWinCrypto_Golang();
 
 static void printHexBytes(databuf* data);
 
@@ -36,6 +37,7 @@ bool TestRuntime_WinCrypto()
         { TestWinCrypto_RSAVerify  },
         { TestWinCrypto_RSAEncrypt },
         { TestWinCrypto_RSADecrypt },
+        { TestWinCrypto_Golang     },
     };
     for (int i = 0; i < arrlen(tests); i++)
     {
@@ -597,6 +599,65 @@ static bool TestWinCrypto_RSADecrypt()
     runtime->Memory.Free(plainData.buf);
 
     printf_s("test RSADecrypt passed\n");
+    return true;
+}
+
+static bool TestWinCrypto_Golang()
+{
+    // ================AES Encrypt================
+    byte testdata1[] = {
+        1, 2, 3, 4
+    };
+    byte cipherData[] = {
+        0xA6, 0x06, 0xE1, 0xCB, 0x32, 0x0E, 0xED, 0x88, 
+        0x50, 0x35, 0xEF, 0xFA, 0xEE, 0x9C, 0xA2, 0xDF, 
+        0x3F, 0xC5, 0x4B, 0x76, 0x84, 0xB4, 0xB8, 0xAB, 
+        0x3F, 0xD1, 0x70, 0x9F, 0x05, 0x76, 0x9C, 0x9E,
+    };
+    databuf data = {
+        .buf = cipherData,
+        .len = sizeof(cipherData),
+    };
+    byte testKey[] = {
+        0x00, 0x01, 0x02, 0x03, 0x00, 0x01, 0x02, 0x03,
+        0x00, 0x01, 0x02, 0x03, 0x00, 0x01, 0x02, 0x03,
+        0x00, 0x01, 0x02, 0x03, 0x00, 0x01, 0x02, 0x03,
+        0x00, 0x01, 0x02, 0x03, 0x00, 0x01, 0x02, 0x03,
+    };
+    databuf key = {
+        .buf = testKey,
+        .len = sizeof(testKey),
+    };
+    databuf plainData;
+    errno err = runtime->WinCrypto.AESDecrypt(&data, &key, &plainData);
+    if (err != NO_ERROR)
+    {
+        printf_s("failed to decrypt data: 0x%X\n", err);
+        return false;
+    }
+    printHexBytes(&plainData);
+    if (plainData.len != sizeof(testdata1))
+    {
+        printf_s("invalid plain data length\n");
+        return false;
+    }
+    byte expected1[] = { 1, 2, 3, 4 };
+    if (!mem_equal(expected1, plainData.buf, sizeof(expected1)))
+    {
+        printf_s("get incorrect plain data\n");
+        return false;
+    }
+    if (!mem_equal(expected1, testdata1, sizeof(expected1)))
+    {
+        printf_s("the original data is changed\n");
+        return false;
+    }
+    runtime->Memory.Free(plainData.buf);
+    // ================RSA Sign================
+    
+    // ================RSA Encrypt================
+
+    printf_s("test external Golang passed\n");
     return true;
 }
 

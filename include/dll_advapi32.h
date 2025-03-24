@@ -66,13 +66,13 @@ typedef DWORD ALG_ID;
 #define HP_HASHSIZE  0x0004
 #define HP_HMAC_INFO 0x0005
 
-#define SIMPLEBLOB           0x1
-#define PUBLICKEYBLOB        0x6
-#define PRIVATEKEYBLOB       0x7
-#define PLAINTEXTKEYBLOB     0x8
-#define OPAQUEKEYBLOB        0x9
-#define PUBLICKEYBLOBEX      0xA
-#define SYMMETRICWRAPKEYBLOB 0xB
+#define SIMPLEBLOB           0x01
+#define PUBLICKEYBLOB        0x06
+#define PRIVATEKEYBLOB       0x07
+#define PLAINTEXTKEYBLOB     0x08
+#define OPAQUEKEYBLOB        0x09
+#define PUBLICKEYBLOBEX      0x0A
+#define SYMMETRICWRAPKEYBLOB 0x0B
 
 #define CUR_BLOB_VERSION 2
 

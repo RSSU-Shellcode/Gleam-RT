@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/RSSU-Shellcode/GRT-Config/argument"
+	"github.com/RSSU-Shellcode/GRT-Develop/argument"
 )
 
 func main() {

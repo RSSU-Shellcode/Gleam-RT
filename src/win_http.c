@@ -554,10 +554,22 @@ errno WH_Do(UTF16 method, HTTP_Request* req, HTTP_Response* resp)
         {
             break;
         }
-        // set timeouts
+        // set timeouts for session
         int connectTimeout = (int)(req->ConnectTimeout);
-        int sendTimeout    = (int)(req->SendTimeout);
+        if (connectTimeout == 0)
+        {
+            connectTimeout = DEFAULT_TIMEOUT;
+        }
+        int sendTimeout = (int)(req->SendTimeout);
+        if (sendTimeout == 0)
+        {
+            sendTimeout = 10 * DEFAULT_TIMEOUT;
+        }
         int receiveTimeout = (int)(req->ReceiveTimeout);
+        if (receiveTimeout == 0)
+        {
+            receiveTimeout = 10 * DEFAULT_TIMEOUT;
+        }
         if (!module->WinHttpSetTimeouts(
             hSession, 0, connectTimeout, sendTimeout, receiveTimeout
         )){

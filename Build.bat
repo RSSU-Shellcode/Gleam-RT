@@ -33,7 +33,7 @@ rd /S /Q "Release"
 rd /S /Q "x64"
 
 echo ================ generate assembly module ================
-go run assembly.go
+go run dump.go
 
 echo ==========================================================
 echo                  build shellcode finish!

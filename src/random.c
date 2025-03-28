@@ -8,6 +8,7 @@ static uintptr getStackAddr();
 
 #pragma optimize("t", on)
 
+__declspec(noinline)
 void RandBuffer(void* buf, int64 size)
 {
     if (size < 1)
@@ -201,6 +202,7 @@ static uint64 ror(uint64 value, uint8 bits)
     return value >> bits | value << (64 - bits);
 }
 
+__declspec(noinline)
 uint XORShift(uint seed)
 {
 #ifdef _WIN64
@@ -215,6 +217,7 @@ uint XORShift(uint seed)
     return seed;
 }
 
+__declspec(noinline)
 uint32 XORShift32(uint32 seed)
 {
     seed ^= seed << 13;
@@ -223,6 +226,7 @@ uint32 XORShift32(uint32 seed)
     return seed;
 }
 
+__declspec(noinline)
 uint64 XORShift64(uint64 seed)
 {
     seed ^= seed << 13;

@@ -13,9 +13,9 @@
 #include "mod_resource.h"
 #include "debug.h"
 
-// 00······ types of close function
-// ··0000·· functions about resource
-// ······00 function suffix types
+// 00路路路路路路 types of close function
+// 路路0000路路 functions about resource
+// 路路路路路路00 function suffix types
 
 #define TYPE_MASK 0xFF000000
 #define FUNC_MASK 0xFFFFFF00

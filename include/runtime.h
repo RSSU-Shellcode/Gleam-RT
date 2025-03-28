@@ -241,8 +241,8 @@ typedef uint (*Decompress_t)(void* dst, void* src, uint len);
 // +---------+----------+----------+----------+------------+
 //
 // item data structure
-//  0······· value or pointer
-//  ·0000000 data length
+// 0路路路路路路路 value or pointer
+// 路0000000 data length
 // 
 // Serialize is used to serialize structure to a buffer.
 // If success, return the serialized data length. If failed, return 0.

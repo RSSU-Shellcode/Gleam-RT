@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"syscall"
 	"time"
+	"unsafe"
 )
 
 type errno struct {
@@ -15,12 +16,54 @@ func (e *errno) Error() string {
 	return fmt.Sprintf("RuntimeM.%s return errno: 0x%08X", e.proc, e.num)
 }
 
+// LTStatus contains status about library tracker.
+type LTStatus struct {
+	NumModules int64 `toml:"num_modules" json:"num_modules"`
+}
+
+// MTStatus contains status about memory tracker.
+type MTStatus struct {
+	NumGlobals int64 `toml:"num_globals" json:"num_globals"`
+	NumLocals  int64 `toml:"num_locals"  json:"num_locals"`
+	NumBlocks  int64 `toml:"num_blocks"  json:"num_blocks"`
+	NumRegions int64 `toml:"num_regions" json:"num_regions"`
+	NumPages   int64 `toml:"num_pages"   json:"num_pages"`
+	NumHeaps   int64 `toml:"num_heaps"   json:"num_heaps"`
+}
+
+// TTStatus contains status about thread tracker.
+type TTStatus struct {
+	NumThreads  int64 `toml:"num_threads"   json:"num_threads"`
+	NumTLSIndex int64 `toml:"num_tls_index" json:"num_tls_index"`
+	NumSuspend  int64 `toml:"num_suspend"   json:"num_suspend"`
+}
+
+// RTStatus contains status about resource tracker.
+type RTStatus struct {
+	NumMutexs         int64 `toml:"num_mutexs"          json:"num_mutexs"`
+	NumEvents         int64 `toml:"num_events"          json:"num_events"`
+	NumSemaphores     int64 `toml:"num_semaphores"      json:"num_semaphores"`
+	NumWaitableTimers int64 `toml:"num_waitable_timers" json:"num_waitable_timers"`
+	NumFiles          int64 `toml:"num_files"           json:"num_files"`
+	NumDirectories    int64 `toml:"num_directories"     json:"num_directories"`
+	NumIOCPs          int64 `toml:"num_iocps"           json:"num_iocps"`
+	NumSockets        int64 `toml:"num_sockets"         json:"num_sockets"`
+}
+
+// Metrics contains status about core modules.
+type Metrics struct {
+	Library  LTStatus `toml:"library"  json:"library"`
+	Memory   MTStatus `toml:"memory"   json:"memory"`
+	Thread   TTStatus `toml:"thread"   json:"thread"`
+	Resource RTStatus `toml:"resource" json:"resource"`
+}
+
 // RuntimeOpts contains options about initialize runtime.
 type RuntimeOpts struct {
-	BootInstAddress     uintptr `toml:"boot_inst_address" json:"boot_inst_address"`
+	BootInstAddress     uintptr `toml:"boot_inst_address"     json:"boot_inst_address"`
 	NotEraseInstruction bool    `toml:"not_erase_instruction" json:"not_erase_instruction"`
-	NotAdjustProtect    bool    `toml:"not_adjust_protect" json:"not_adjust_protect"`
-	TrackCurrentThread  bool    `toml:"track_current_thread" json:"track_current_thread"`
+	NotAdjustProtect    bool    `toml:"not_adjust_protect"    json:"not_adjust_protect"`
+	TrackCurrentThread  bool    `toml:"track_current_thread"  json:"track_current_thread"`
 }
 
 // RuntimeM contains exported runtime methods.
@@ -185,9 +228,24 @@ func (rt *RuntimeM) Sleep(d time.Duration) error {
 	return &errno{proc: "Core.Sleep", num: ret}
 }
 
-// func (rt *RuntimeM) Metrics()(*){
-//
-// }
+// Metrics is used to get runtime metric about core modules.
+func (rt *RuntimeM) Metrics() (*Metrics, error) {
+	metrics := Metrics{}
+	ret, _, _ := syscall.SyscallN(rt.Core.Metrics, uintptr(unsafe.Pointer(&metrics)))
+	if ret == 0 {
+		return &metrics, nil
+	}
+	return nil, &errno{proc: "Core.Metrics", num: ret}
+}
+
+// Cleanup is used to clean all tracked object except locked.
+func (rt *RuntimeM) Cleanup() error {
+	ret, _, _ := syscall.SyscallN(rt.Core.Cleanup)
+	if ret == 0 {
+		return nil
+	}
+	return &errno{proc: "Core.Cleanup", num: ret}
+}
 
 // Exit is used to exit runtime.
 func (rt *RuntimeM) Exit() error {

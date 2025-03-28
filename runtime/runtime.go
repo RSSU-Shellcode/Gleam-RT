@@ -1,4 +1,4 @@
-package gleam
+package gleamrt
 
 import (
 	"fmt"
@@ -38,6 +38,11 @@ type RuntimeM struct {
 		LoadExW uintptr
 		Free    uintptr
 		GetProc uintptr
+
+		Lock    uintptr
+		Unlock  uintptr
+		Status  uintptr
+		FreeAll uintptr
 	}
 
 	Memory struct {
@@ -45,12 +50,31 @@ type RuntimeM struct {
 		Calloc  uintptr
 		Realloc uintptr
 		Free    uintptr
+		Size    uintptr
+		Cap     uintptr
+
+		Lock    uintptr
+		Unlock  uintptr
+		Status  uintptr
+		FreeAll uintptr
 	}
 
 	Thread struct {
 		New   uintptr
 		Exit  uintptr
 		Sleep uintptr
+
+		Lock    uintptr
+		Unlock  uintptr
+		Status  uintptr
+		KillAll uintptr
+	}
+
+	Resource struct {
+		LockMutex   uintptr
+		UnlockMutex uintptr
+		Status      uintptr
+		FreeAll     uintptr
 	}
 
 	Argument struct {
@@ -58,6 +82,14 @@ type RuntimeM struct {
 		GetPointer uintptr
 		Erase      uintptr
 		EraseAll   uintptr
+	}
+
+	Storage struct {
+		SetValue   uintptr
+		GetValue   uintptr
+		GetPointer uintptr
+		Delete     uintptr
+		DeleteAll  uintptr
 	}
 
 	WinBase struct {
@@ -78,6 +110,23 @@ type RuntimeM struct {
 		Get  uintptr
 		Post uintptr
 		Do   uintptr
+
+		Init uintptr
+		Free uintptr
+	}
+
+	WinCrypto struct {
+		RandBuffer uintptr
+		Hash       uintptr
+		HMAC       uintptr
+		AESEncrypt uintptr
+		AESDecrypt uintptr
+		RSAGenKey  uintptr
+		RSAPubKey  uintptr
+		RSASign    uintptr
+		RSAVerify  uintptr
+		RSAEncrypt uintptr
+		RSADecrypt uintptr
 	}
 
 	Random struct {
@@ -99,6 +148,11 @@ type RuntimeM struct {
 		Decompress uintptr
 	}
 
+	Serialization struct {
+		Serialize   uintptr
+		Unserialize uintptr
+	}
+
 	IAT struct {
 		GetProcByName   uintptr
 		GetProcByHash   uintptr
@@ -109,8 +163,16 @@ type RuntimeM struct {
 		Sleep   uintptr
 		Hide    uintptr
 		Recover uintptr
+		Metrics uintptr
+		Cleanup uintptr
 		Exit    uintptr
 	}
+
+	Data struct {
+		Mutex uintptr
+	}
+
+	ExitProcess uintptr
 }
 
 // Sleep is used to sleep and hide runtime.
@@ -122,6 +184,10 @@ func (rt *RuntimeM) Sleep(d time.Duration) error {
 	}
 	return &errno{proc: "Core.Sleep", num: ret}
 }
+
+// func (rt *RuntimeM) Metrics()(*){
+//
+// }
 
 // Exit is used to exit runtime.
 func (rt *RuntimeM) Exit() error {

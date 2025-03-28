@@ -11,8 +11,8 @@
 // +---------+----------+----------+----------+------------+
 //
 // item data structure
-// 0······· value or pointer
-// ·0000000 data length
+// 0路路路路路路路 value or pointer
+// 路0000000 data length
 
 #define SERIALIZE_HEADER_MAGIC 0xFFFFFFFF
 #define SERIALIZE_ITEM_END     0x00000000

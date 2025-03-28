@@ -1,6 +1,7 @@
 #include "c_types.h"
 #include "errno.h"
 
+__declspec(noinline)
 void SetLastErrno(errno err)
 {
 #ifdef _WIN64
@@ -13,6 +14,7 @@ void SetLastErrno(errno err)
     *ptr = err;
 }
 
+__declspec(noinline)
 errno GetLastErrno()
 {
 #ifdef _WIN64

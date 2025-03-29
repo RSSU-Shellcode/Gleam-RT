@@ -1,3 +1,5 @@
+//go:build windows
+
 package gleamrt
 
 import (
@@ -9,11 +11,11 @@ import (
 
 type errno struct {
 	proc string
-	num  uintptr
+	err  syscall.Errno
 }
 
 func (e *errno) Error() string {
-	return fmt.Sprintf("RuntimeM.%s return errno: 0x%08X", e.proc, e.num)
+	return fmt.Sprintf("RuntimeM.%s return errno: 0x%08X", e.proc, e.err)
 }
 
 // LTStatus contains status about library tracker.
@@ -58,8 +60,8 @@ type Metrics struct {
 	Resource RTStatus `toml:"resource" json:"resource"`
 }
 
-// RuntimeOpts contains options about initialize runtime.
-type RuntimeOpts struct {
+// Options contains options about initialize runtime.
+type Options struct {
 	BootInstAddress     uintptr `toml:"boot_inst_address"     json:"boot_inst_address"`
 	NotEraseInstruction bool    `toml:"not_erase_instruction" json:"not_erase_instruction"`
 	NotAdjustProtect    bool    `toml:"not_adjust_protect"    json:"not_adjust_protect"`
@@ -218,40 +220,49 @@ type RuntimeM struct {
 	ExitProcess uintptr
 }
 
+// InitRuntime is used to initialize runtime from shellcode instance.
+// Each shellcode instance can only initialize once.
+func InitRuntime(addr uintptr, opts *Options) (*RuntimeM, error) {
+	ret, _, err := syscall.SyscallN(addr, uintptr(unsafe.Pointer(opts))) // #nosec
+	if ret == 0 {
+		return nil, fmt.Errorf("failed to initialize runtime: 0x%X", err)
+	}
+	return (*RuntimeM)(unsafe.Pointer(ret)), nil // #nosec
+}
+
 // Sleep is used to sleep and hide runtime.
 func (rt *RuntimeM) Sleep(d time.Duration) error {
-	ms := uintptr(d.Milliseconds())
-	ret, _, _ := syscall.SyscallN(rt.Core.Sleep, ms)
-	if ret == 0 {
-		return nil
+	ret, _, err := syscall.SyscallN(rt.Core.Sleep, uintptr(d.Milliseconds()))
+	if ret != 0 {
+		return &errno{proc: "Core.Sleep", err: err}
 	}
-	return &errno{proc: "Core.Sleep", num: ret}
+	return nil
 }
 
 // Metrics is used to get runtime metric about core modules.
 func (rt *RuntimeM) Metrics() (*Metrics, error) {
 	metrics := Metrics{}
-	ret, _, _ := syscall.SyscallN(rt.Core.Metrics, uintptr(unsafe.Pointer(&metrics)))
-	if ret == 0 {
-		return &metrics, nil
+	ret, _, err := syscall.SyscallN(rt.Core.Metrics, uintptr(unsafe.Pointer(&metrics))) // #nosec
+	if ret != 0 {
+		return nil, &errno{proc: "Core.Metrics", err: err}
 	}
-	return nil, &errno{proc: "Core.Metrics", num: ret}
+	return &metrics, nil
 }
 
 // Cleanup is used to clean all tracked object except locked.
 func (rt *RuntimeM) Cleanup() error {
-	ret, _, _ := syscall.SyscallN(rt.Core.Cleanup)
-	if ret == 0 {
-		return nil
+	ret, _, err := syscall.SyscallN(rt.Core.Cleanup) // #nosec
+	if ret != 0 {
+		return &errno{proc: "Core.Cleanup", err: err}
 	}
-	return &errno{proc: "Core.Cleanup", num: ret}
+	return nil
 }
 
 // Exit is used to exit runtime.
 func (rt *RuntimeM) Exit() error {
-	ret, _, _ := syscall.SyscallN(rt.Core.Exit)
-	if ret == 0 {
-		return nil
+	ret, _, err := syscall.SyscallN(rt.Core.Exit) // #nosec
+	if ret != 0 {
+		return &errno{proc: "Core.Exit", err: err}
 	}
-	return &errno{proc: "Core.Exit", num: ret}
+	return nil
 }

@@ -35,6 +35,9 @@ rd /S /Q "x64"
 echo ================ generate assembly module ================
 go run dump.go
 
+echo ===================== test shellcode =====================
+call test.bat
+
 echo ==========================================================
 echo                  build shellcode finish!
 echo ==========================================================

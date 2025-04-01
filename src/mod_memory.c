@@ -2038,6 +2038,7 @@ uint __cdecl MT_ucrtbase_msize(void* ptr)
     return size;
 }
 
+__declspec(noinline)
 static uint calcHeapMark(uint mark, uintptr addr, uint size)
 {
     mark = XORShift(mark ^ addr);
@@ -2060,6 +2061,7 @@ static uint32 replacePageProtect(uint32 protect)
     }
 }
 
+__declspec(noinline)
 static bool isPageTypeTrackable(uint32 type)
 {
     switch (type&0xF000)
@@ -2076,6 +2078,7 @@ static bool isPageTypeTrackable(uint32 type)
     return true;
 }
 
+__declspec(noinline)
 static bool isPageProtectWriteable(uint32 protect)
 {
     switch (protect&0xFF)

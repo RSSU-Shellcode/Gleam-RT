@@ -507,6 +507,7 @@ static bool addItem(int id, void* data, uint size)
     return success;
 }
 
+__declspec(noinline)
 static bool setItem(imsItem* item, void* data, uint size)
 {
     InMemoryStorage* storage = getStoragePointer();

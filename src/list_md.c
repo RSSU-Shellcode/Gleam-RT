@@ -4,6 +4,7 @@
 
 #pragma optimize("t", on)
 
+__declspec(noinline)
 void List_Init(List* list, List_Ctx* ctx, uint unit)
 {
     list->ctx  = *ctx;
@@ -14,6 +15,7 @@ void List_Init(List* list, List_Ctx* ctx, uint unit)
     list->Unit = unit;
 }
 
+__declspec(noinline)
 bool List_Set(List* list, uint index, void* data)
 {
     if (index + 1 > list->Cap)
@@ -28,6 +30,7 @@ bool List_Set(List* list, uint index, void* data)
     return true;
 }
 
+__declspec(noinline)
 void* List_Get(List* list, uint index)
 {
     if (index + 1 > list->Cap)
@@ -38,6 +41,7 @@ void* List_Get(List* list, uint index)
     return (void*)(addr + index * list->Unit);
 }
 
+__declspec(noinline)
 bool List_Insert(List* list, void* data)
 {
     bool resized = false;
@@ -97,6 +101,7 @@ bool List_Insert(List* list, void* data)
     return false;
 }
 
+__declspec(noinline)
 bool List_Delete(List* list, uint index)
 {
     if (index + 1 > list->Cap)
@@ -109,6 +114,7 @@ bool List_Delete(List* list, uint index)
     return true;
 }
 
+__declspec(noinline)
 bool List_Find(List* list, void* data, uint equal, uint* idx)
 {
     uint equLen = equal;
@@ -146,6 +152,7 @@ bool List_Find(List* list, void* data, uint equal, uint* idx)
     return true;
 }
 
+__declspec(noinline)
 bool List_Resize(List* list, uint cap)
 {
     uint  size = cap * list->Unit;
@@ -183,6 +190,7 @@ uint List_Size(List* list)
     return list->Cap * list->Unit;
 }
 
+__declspec(noinline)
 bool List_Free(List* list)
 {
     if (list->Data == NULL || list->ctx.free == NULL)

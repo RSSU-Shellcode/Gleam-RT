@@ -10,12 +10,12 @@ import (
 )
 
 type errno struct {
-	proc string
-	err  syscall.Errno
+	method string
+	errno  uintptr
 }
 
 func (e *errno) Error() string {
-	return fmt.Sprintf("RuntimeM.%s return errno: 0x%08X", e.proc, e.err)
+	return fmt.Sprintf("RuntimeM.%s return errno: 0x%08X", e.method, e.errno)
 }
 
 // LTStatus contains status about library tracker.
@@ -68,7 +68,7 @@ type Options struct {
 	TrackCurrentThread  bool    `toml:"track_current_thread"  json:"track_current_thread"`
 }
 
-// RuntimeM contains exported runtime methods.
+// RuntimeM contains exported methods of runtime.
 type RuntimeM struct {
 	HashAPI struct {
 		FindAPI  uintptr
@@ -232,9 +232,9 @@ func InitRuntime(addr uintptr, opts *Options) (*RuntimeM, error) {
 
 // Sleep is used to sleep and hide runtime.
 func (rt *RuntimeM) Sleep(d time.Duration) error {
-	ret, _, err := syscall.SyscallN(rt.Core.Sleep, uintptr(d.Milliseconds()))
+	ret, _, _ := syscall.SyscallN(rt.Core.Sleep, uintptr(d.Milliseconds()))
 	if ret != 0 {
-		return &errno{proc: "Core.Sleep", err: err}
+		return &errno{method: "Core.Sleep", errno: ret}
 	}
 	return nil
 }
@@ -242,27 +242,27 @@ func (rt *RuntimeM) Sleep(d time.Duration) error {
 // Metrics is used to get runtime metric about core modules.
 func (rt *RuntimeM) Metrics() (*Metrics, error) {
 	metrics := Metrics{}
-	ret, _, err := syscall.SyscallN(rt.Core.Metrics, uintptr(unsafe.Pointer(&metrics))) // #nosec
+	ret, _, _ := syscall.SyscallN(rt.Core.Metrics, uintptr(unsafe.Pointer(&metrics))) // #nosec
 	if ret != 0 {
-		return nil, &errno{proc: "Core.Metrics", err: err}
+		return nil, &errno{method: "Core.Metrics", errno: ret}
 	}
 	return &metrics, nil
 }
 
 // Cleanup is used to clean all tracked object except locked.
 func (rt *RuntimeM) Cleanup() error {
-	ret, _, err := syscall.SyscallN(rt.Core.Cleanup) // #nosec
+	ret, _, _ := syscall.SyscallN(rt.Core.Cleanup) // #nosec
 	if ret != 0 {
-		return &errno{proc: "Core.Cleanup", err: err}
+		return &errno{method: "Core.Cleanup", errno: ret}
 	}
 	return nil
 }
 
 // Exit is used to exit runtime.
 func (rt *RuntimeM) Exit() error {
-	ret, _, err := syscall.SyscallN(rt.Core.Exit) // #nosec
+	ret, _, _ := syscall.SyscallN(rt.Core.Exit) // #nosec
 	if ret != 0 {
-		return &errno{proc: "Core.Exit", err: err}
+		return &errno{method: "Core.Exit", errno: ret}
 	}
 	return nil
 }

@@ -968,21 +968,30 @@ bool TT_KillAllMu()
 {
     ThreadTracker* tracker = getTrackerPointer();
 
-    if (tracker->RT_Lock() != NO_ERROR)
-    {
-        return false;
-    }
-
-    errno errno = TT_KillAll();
     dbg_log("[thread]", "KillAll has been called");
 
-    if (tracker->RT_Unlock() != NO_ERROR)
+    errno lastErr = NO_ERROR;
+    for (;;)
     {
+        lastErr = tracker->RT_Lock();
+        if (lastErr != NO_ERROR)
+        {
+            break;
+        }
+        lastErr = TT_KillAll();
+        errno err = tracker->RT_Unlock();
+        if (err != NO_ERROR && lastErr == NO_ERROR)
+        {
+            lastErr = err;
+        }
+        break;
+    }
+    if (lastErr != NO_ERROR)
+    {
+        SetLastErrno(lastErr);
         return false;
     }
-
-    SetLastErrno(errno);
-    return errno == NO_ERROR;
+    return true;
 }
 
 __declspec(noinline)

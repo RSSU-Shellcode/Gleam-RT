@@ -56,7 +56,7 @@ func TestRuntime(t *testing.T) {
 		err = Runtime.Sleep(time.Second)
 		require.NoError(t, err)
 
-		require.Greater(t, time.Since(now).Milliseconds(), int64(1000))
+		require.GreaterOrEqual(t, time.Since(now).Milliseconds(), int64(1000))
 	})
 
 	t.Run("Metrics", func(t *testing.T) {

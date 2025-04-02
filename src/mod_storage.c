@@ -285,8 +285,13 @@ bool IM_SetValue(int id, void* value, uint size)
     {
         return false;
     }
-    SetLastErrno(lastErr);
-    return lastErr == NO_ERROR;
+
+    if (lastErr != NO_ERROR)
+    {
+        SetLastErrno(lastErr);
+        return false;
+    }
+    return true;
 }
 
 __declspec(noinline)
@@ -324,8 +329,13 @@ bool IM_GetValue(int id, void* value, uint* size)
     {
         return false;
     }
-    SetLastErrno(lastErr);
-    return lastErr == NO_ERROR;
+
+    if (lastErr != NO_ERROR)
+    {
+        SetLastErrno(lastErr);
+        return false;
+    }
+    return true;
 }
 
 __declspec(noinline)
@@ -363,8 +373,13 @@ bool IM_GetPointer(int id, void** pointer, uint* size)
     {
         return false;
     }
-    SetLastErrno(lastErr);
-    return lastErr == NO_ERROR;
+
+    if (lastErr != NO_ERROR)
+    {
+        SetLastErrno(lastErr);
+        return false;
+    }
+    return true;
 }
 
 __declspec(noinline)
@@ -396,8 +411,13 @@ bool IM_Delete(int id)
     {
         return false;
     }
-    SetLastErrno(lastErr);
-    return lastErr == NO_ERROR;
+
+    if (lastErr != NO_ERROR)
+    {
+        SetLastErrno(lastErr);
+        return false;
+    }
+    return true;
 }
 
 __declspec(noinline)
@@ -439,8 +459,13 @@ bool IM_DeleteAll()
     {
         return false;
     }
-    SetLastErrno(lastErr);
-    return lastErr == NO_ERROR;
+
+    if (lastErr != NO_ERROR)
+    {
+        SetLastErrno(lastErr);
+        return false;
+    }
+    return true;
 }
 
 __declspec(noinline)

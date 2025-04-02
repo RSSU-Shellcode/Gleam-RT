@@ -82,7 +82,7 @@ BOOL  TT_TlsFree(DWORD dwTlsIndex);
 // methods for user
 HANDLE TT_ThdNew(void* address, void* parameter, bool track);
 void   TT_ThdExit(uint32 code);
-void   TT_ThdSleep(DWORD dwMilliseconds);
+void   TT_ThdSleep(uint32 milliseconds);
 bool   TT_LockThread(DWORD id);
 bool   TT_UnlockThread(DWORD id);
 bool   TT_GetStatus(TT_Status* status);
@@ -900,9 +900,50 @@ void TT_ThdExit(uint32 code)
 }
 
 __declspec(noinline)
-void TT_ThdSleep(DWORD dwMilliseconds)
+void TT_ThdSleep(uint32 milliseconds)
 {
+    ThreadTracker* tracker = getTrackerPointer();
 
+    // copy API address
+    if (!TT_Lock())
+    {
+        return;
+    }
+
+    CreateWaitableTimerA_t create = tracker->CreateWaitableTimerA;
+    SetWaitableTimer_t     set    = tracker->SetWaitableTimer;
+    WaitForSingleObject_t  wait   = tracker->WaitForSingleObject;
+    CloseHandle_t          close  = tracker->CloseHandle;
+
+    if (!TT_Unlock())
+    {
+        return;
+    }
+
+    // simulate kernel32.Sleep
+    HANDLE hTimer = create(NULL, false, NAME_TT_TIMER_SLEEP);
+    if (hTimer == NULL)
+    {
+        return;
+    }
+    for (;;)
+    {
+        if (milliseconds < 10)
+        {
+            milliseconds = 10;
+        }
+        int64 dueTime = -((int64)milliseconds * 1000 * 10);
+        if (!set(hTimer, &dueTime, 0, NULL, NULL, true))
+        {
+            break;
+        }
+        if (wait(hTimer, INFINITE) != WAIT_OBJECT_0)
+        {
+            break;
+        }
+        break;
+    }
+    close(hTimer);
 }
 
 __declspec(noinline)

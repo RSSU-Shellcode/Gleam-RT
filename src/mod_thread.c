@@ -26,21 +26,23 @@ typedef struct {
     bool NotEraseInstruction;
 
     // API addresses
-    CreateThread_t        CreateThread;
-    ExitThread_t          ExitThread;
-    SuspendThread_t       SuspendThread;
-    ResumeThread_t        ResumeThread;
-    GetThreadContext_t    GetThreadContext;
-    SetThreadContext_t    SetThreadContext;
-    GetThreadID_t         GetThreadID;
-    GetCurrentThreadID_t  GetCurrentThreadID;
-    TerminateThread_t     TerminateThread;
-    TlsAlloc_t            TlsAlloc;
-    TlsFree_t             TlsFree;
-    ReleaseMutex_t        ReleaseMutex;
-    WaitForSingleObject_t WaitForSingleObject;
-    DuplicateHandle_t     DuplicateHandle;
-    CloseHandle_t         CloseHandle;
+    CreateThread_t         CreateThread;
+    ExitThread_t           ExitThread;
+    SuspendThread_t        SuspendThread;
+    ResumeThread_t         ResumeThread;
+    GetThreadContext_t     GetThreadContext;
+    SetThreadContext_t     SetThreadContext;
+    GetThreadID_t          GetThreadID;
+    GetCurrentThreadID_t   GetCurrentThreadID;
+    TerminateThread_t      TerminateThread;
+    TlsAlloc_t             TlsAlloc;
+    TlsFree_t              TlsFree;
+    CreateWaitableTimerA_t CreateWaitableTimerA;
+    SetWaitableTimer_t     SetWaitableTimer;
+    ReleaseMutex_t         ReleaseMutex;
+    WaitForSingleObject_t  WaitForSingleObject;
+    DuplicateHandle_t      DuplicateHandle;
+    CloseHandle_t          CloseHandle;
 
     // runtime methods
     rt_lock_t   RT_Lock;
@@ -80,6 +82,7 @@ BOOL  TT_TlsFree(DWORD dwTlsIndex);
 // methods for user
 HANDLE TT_ThdNew(void* address, void* parameter, bool track);
 void   TT_ThdExit(uint32 code);
+void   TT_ThdSleep(DWORD dwMilliseconds);
 bool   TT_LockThread(DWORD id);
 bool   TT_UnlockThread(DWORD id);
 bool   TT_GetStatus(TT_Status* status);
@@ -171,8 +174,9 @@ ThreadTracker_M* InitThreadTracker(Context* context)
     module->TlsAlloc         = GetFuncAddr(&TT_TlsAlloc);
     module->TlsFree          = GetFuncAddr(&TT_TlsFree);
     // methods for user
-    module->New  = GetFuncAddr(&TT_ThdNew);
-    module->Exit = GetFuncAddr(&TT_ThdExit);
+    module->New   = GetFuncAddr(&TT_ThdNew);
+    module->Exit  = GetFuncAddr(&TT_ThdExit);
+    module->Sleep = GetFuncAddr(&TT_ThdSleep);
     module->LockThread   = GetFuncAddr(&TT_LockThread);
     module->UnlockThread = GetFuncAddr(&TT_UnlockThread);
     module->GetStatus    = GetFuncAddr(&TT_GetStatus);
@@ -207,6 +211,8 @@ static bool initTrackerAPI(ThreadTracker* tracker, Context* context)
         { 0xFB891A810F1ABF9A, 0x253BBD721EBD81F0 }, // TerminateThread
         { 0x2C36E30A5F0A762C, 0xFEB91119DD47EE23 }, // TlsAlloc
         { 0x93E44660BF1A6F09, 0x87B9005375387D3C }, // TlsFree
+        { 0xB792795AB6382758, 0x5C9EFDF4B328D22C }, // CreateWaitableTimerA
+        { 0x03CF410B2AD104B7, 0x4F5D3ECB5E4ECFBD }, // SetWaitableTimer
     };
 #elif _WIN32
     {
@@ -221,6 +227,8 @@ static bool initTrackerAPI(ThreadTracker* tracker, Context* context)
         { 0xBA134972, 0x295F9DD2 }, // TerminateThread
         { 0x8749FD07, 0x783A2597 }, // TlsAlloc
         { 0x0B8B8434, 0xAD091548 }, // TlsFree
+        { 0x86B42DFE, 0x10AA2250 }, // CreateWaitableTimerA
+        { 0x9B5031CA, 0x7CD98AEF }, // SetWaitableTimer
     };
 #endif
     for (int i = 0; i < arrlen(list); i++)
@@ -232,17 +240,19 @@ static bool initTrackerAPI(ThreadTracker* tracker, Context* context)
         }
         list[i].proc = proc;
     }
-    tracker->CreateThread       = list[0x00].proc;
-    tracker->ExitThread         = list[0x01].proc;
-    tracker->SuspendThread      = list[0x02].proc;
-    tracker->ResumeThread       = list[0x03].proc;
-    tracker->GetThreadContext   = list[0x04].proc;
-    tracker->SetThreadContext   = list[0x05].proc;
-    tracker->GetThreadID        = list[0x06].proc;
-    tracker->GetCurrentThreadID = list[0x07].proc;
-    tracker->TerminateThread    = list[0x08].proc;
-    tracker->TlsAlloc           = list[0x09].proc;
-    tracker->TlsFree            = list[0x0A].proc;
+    tracker->CreateThread         = list[0x00].proc;
+    tracker->ExitThread           = list[0x01].proc;
+    tracker->SuspendThread        = list[0x02].proc;
+    tracker->ResumeThread         = list[0x03].proc;
+    tracker->GetThreadContext     = list[0x04].proc;
+    tracker->SetThreadContext     = list[0x05].proc;
+    tracker->GetThreadID          = list[0x06].proc;
+    tracker->GetCurrentThreadID   = list[0x07].proc;
+    tracker->TerminateThread      = list[0x08].proc;
+    tracker->TlsAlloc             = list[0x09].proc;
+    tracker->TlsFree              = list[0x0A].proc;
+    tracker->CreateWaitableTimerA = list[0x0B].proc;
+    tracker->SetWaitableTimer     = list[0x0C].proc;
 
     tracker->ReleaseMutex        = context->ReleaseMutex;
     tracker->WaitForSingleObject = context->WaitForSingleObject;
@@ -887,6 +897,12 @@ __declspec(noinline)
 void TT_ThdExit(uint32 code)
 {
     TT_ExitThread(code);
+}
+
+__declspec(noinline)
+void TT_ThdSleep(DWORD dwMilliseconds)
+{
+
 }
 
 __declspec(noinline)

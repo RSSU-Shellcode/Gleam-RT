@@ -2393,8 +2393,12 @@ bool MT_FreeAllMu()
         return false;
     }
 
-    SetLastErrno(errno);
-    return errno == NO_ERROR;
+    if (errno != NO_ERROR)
+    {
+        SetLastErrno(errno);
+        return false;
+    }
+    return true;
 }
 
 __declspec(noinline)

@@ -434,7 +434,7 @@ typedef struct {
         GetProcByName_t   GetProcByName;
         GetProcByHash_t   GetProcByHash;
         GetProcOriginal_t GetProcOriginal;
-    } IAT;
+    } Procedure;
 
     struct {
         SleepHR_t Sleep;

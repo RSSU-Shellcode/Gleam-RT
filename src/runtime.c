@@ -332,7 +332,7 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     // thread tracker
     module->Thread.New     = runtime->ThreadTracker->New;
     module->Thread.Exit    = runtime->ThreadTracker->Exit;
-    module->Thread.Sleep   = GetFuncAddr(&RT_Sleep);
+    module->Thread.Sleep   = runtime->ThreadTracker->Sleep;
     module->Thread.Lock    = runtime->ThreadTracker->LockThread;
     module->Thread.Unlock  = runtime->ThreadTracker->UnlockThread;
     module->Thread.Status  = runtime->ThreadTracker->GetStatus;
@@ -397,10 +397,10 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     // serialization module
     module->Serialization.Serialize   = GetFuncAddr(&Serialize);
     module->Serialization.Unserialize = GetFuncAddr(&Unserialize);
-    // runtime IAT
-    module->IAT.GetProcByName   = GetFuncAddr(&RT_GetProcAddressByName);
-    module->IAT.GetProcByHash   = GetFuncAddr(&RT_GetProcAddressByHash);
-    module->IAT.GetProcOriginal = GetFuncAddr(&RT_GetProcAddressOriginal);
+    // get procedure address
+    module->Procedure.GetProcByName   = GetFuncAddr(&RT_GetProcAddressByName);
+    module->Procedure.GetProcByHash   = GetFuncAddr(&RT_GetProcAddressByHash);
+    module->Procedure.GetProcOriginal = GetFuncAddr(&RT_GetProcAddressOriginal);
     // runtime core methods
     module->Core.Sleep   = GetFuncAddr(&RT_SleepHR);
     module->Core.Hide    = GetFuncAddr(&RT_Hide);
@@ -853,8 +853,8 @@ static bool initIATHooks(Runtime* runtime)
         { 0xCAA4843E1FC90287, 0x2F19F60181B5BFE3, GetFuncAddr(&RT_GetProcAddress) },
         { 0x2619069D6D00AC17, 0xA12815DB2311C3C0, GetFuncAddr(&RT_SetCurrentDirectoryA) },
         { 0x6A8F6B893B3E7468, 0x1C4D6ABB7E274A8A, GetFuncAddr(&RT_SetCurrentDirectoryW) },
-        { 0xCED5CC955152CD43, 0xAA22C83C068CB037, GetFuncAddr(&RT_SleepHR) },
-        { 0xF8AFE6686E40E6E7, 0xE461B3ED286DAF92, GetFuncAddr(&RT_SleepEx) },
+        { 0xCED5CC955152CD43, 0xAA22C83C068CB037, GetFuncAddr(&RT_SleepHR) }, // kernel32.Sleep
+        { 0xF8AFE6686E40E6E7, 0xE461B3ED286DAF92, GetFuncAddr(&RT_SleepEx) }, // kernel32.SleepEx
         { 0xD823D640CA9D87C3, 0x15821AE3463EFBE8, LT->LoadLibraryA },
         { 0xDE75B0371B7500C0, 0x2A1CF678FC737D0F, LT->LoadLibraryW },
         { 0x448751B1385751E8, 0x3AE522A4E9435111, LT->LoadLibraryExA },
@@ -921,9 +921,9 @@ static bool initIATHooks(Runtime* runtime)
     {
         { 0x5E5065D4, 0x63CDAD01, GetFuncAddr(&RT_GetProcAddress) },
         { 0x04A35C23, 0xF841E05C, GetFuncAddr(&RT_SetCurrentDirectoryA) },
-        { 0xCA170DA2, 0x73683646, GetFuncAddr(&RT_SetCurrentDirectoryA) },
-        { 0x705D4FAD, 0x94CF33BF, GetFuncAddr(&RT_SleepHR) },
-        { 0x57601363, 0x0F03636B, GetFuncAddr(&RT_SleepEx) },
+        { 0xCA170DA2, 0x73683646, GetFuncAddr(&RT_SetCurrentDirectoryW) },
+        { 0x705D4FAD, 0x94CF33BF, GetFuncAddr(&RT_SleepHR) }, // kernel32.Sleep
+        { 0x57601363, 0x0F03636B, GetFuncAddr(&RT_SleepEx) }, // kernel32.SleepEx
         { 0x0149E478, 0x86A603D3, LT->LoadLibraryA },
         { 0x90E21596, 0xEBEA7D19, LT->LoadLibraryW },
         { 0xD6C482CE, 0xC6063014, LT->LoadLibraryExA },
@@ -1749,40 +1749,14 @@ void RT_Sleep(DWORD dwMilliseconds)
         return;
     }
 
-    // copy API address
-    CreateWaitableTimerW_t create = runtime->CreateWaitableTimerW;
-    SetWaitableTimer_t     set    = runtime->SetWaitableTimer;
-    WaitForSingleObject_t  wait   = runtime->WaitForSingleObject;
-    CloseHandle_t          close  = runtime->CloseHandle;
+    ThdSleep_t Sleep = runtime->ThreadTracker->Sleep;
 
     if (!rt_unlock())
     {
         return;
     }
 
-    HANDLE hTimer = create(NULL, false, NAME_RT_TIMER_SLEEP);
-    if (hTimer == NULL)
-    {
-        return;
-    }
-    for (;;)
-    {
-        if (dwMilliseconds < 10)
-        {
-            dwMilliseconds = 10;
-        }
-        int64 dueTime = -((int64)dwMilliseconds * 1000 * 10);
-        if (!set(hTimer, &dueTime, 0, NULL, NULL, true))
-        {
-            break;
-        }
-        if (wait(hTimer, INFINITE) != WAIT_OBJECT_0)
-        {
-            break;
-        }
-        break;
-    }
-    close(hTimer);
+    Sleep(dwMilliseconds);
 }
 
 __declspec(noinline)

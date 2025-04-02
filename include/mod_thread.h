@@ -15,6 +15,7 @@ typedef struct {
 
 typedef HANDLE (*ThdNew_t)(void* address, void* parameter, bool track);
 typedef void   (*ThdExit_t)(uint32 code);
+typedef void   (*ThdSleep_t)(uint32 milliseconds);
 
 typedef bool (*ThdLockThread_t)(DWORD id);
 typedef bool (*ThdUnlockThread_t)(DWORD id);
@@ -39,8 +40,9 @@ typedef struct {
     TlsAlloc_t         TlsAlloc;
     TlsFree_t          TlsFree;
 
-    ThdNew_t  New;
-    ThdExit_t Exit;
+    ThdNew_t   New;
+    ThdExit_t  Exit;
+    ThdSleep_t Sleep;
 
     ThdLockThread_t   LockThread;
     ThdUnlockThread_t UnlockThread;

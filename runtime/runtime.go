@@ -198,7 +198,7 @@ type RuntimeM struct {
 		Unserialize uintptr
 	}
 
-	IAT struct {
+	Procedure struct {
 		GetProcByName   uintptr
 		GetProcByHash   uintptr
 		GetProcOriginal uintptr

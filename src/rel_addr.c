@@ -4,23 +4,25 @@
 #ifndef _WIN64
 
 #pragma optimize("", off)
-void* GetFuncAddr(void* func)
+
+__declspec(naked)
+static uintptr GetEIP()
 {
-    uintptr addr = 0; // store address about GetFuncAddr
     _asm {
         call get_eip
-        jmp exit_asm    
     get_eip:
-        pop eax       ; pop return address from stack
-        mov addr, eax ; mov address to variable addr
-        sub addr, 9+5 ; this function prologue + call
-        push eax      ; restore eax
+        pop eax    ; get eip and return address
+        sub eax, 5 ; reduce the size of "call"
         ret
-    exit_asm:
     }
-    uintptr offset = (uintptr)(func) - (uintptr)(&GetFuncAddr);
-    return (void*)(addr + offset);
 }
+
+void* GetFuncAddr(void* func)
+{
+    uintptr offset = (uintptr)(func) - (uintptr)(&GetEIP);
+    return (void*)(GetEIP() + offset);
+}
+
 #pragma optimize("", on)
 
-#endif
+#endif // _WIN64

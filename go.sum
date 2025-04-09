@@ -1,6 +1,6 @@
-github.com/For-ACGN/monkey v0.0.0-20240317114606-276cb1362405 h1:v0o9a8CBYTKnCOCq0dWJInqd6fyS/tn35Ddp1V212GM=
-github.com/RSSU-Shellcode/GRT-Develop v1.3.1 h1:9Li7+EP/6/UU/4YLGTfvyqj6qPjgbuXHImrXHpZZGJc=
-github.com/RSSU-Shellcode/GRT-Develop v1.3.1/go.mod h1:HrjPJ7mH9eKGkjW81rokn4MX/moGelQKEpeEJPzrgkQ=
+github.com/For-ACGN/monkey v1.0.1 h1:LgJow/8dG7iJOweEU1A1qSuTWde93lA+fWpSjjDrJY0=
+github.com/RSSU-Shellcode/GRT-Develop v1.4.0 h1:JYDrIevfQEhigPcUsdhLQUkFqAZP0Ar5945jtzSciRg=
+github.com/RSSU-Shellcode/GRT-Develop v1.4.0/go.mod h1:+0iLYANlJ/OWZsgzW+DZ1X7AGevp22XB50m5Idtt3B0=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=

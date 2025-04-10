@@ -38,10 +38,10 @@ hash_api -fmt 64 -conc -func SleepEx
 echo.
 
 echo [Runtime Methods]
-hash_api -fmt 64 -conc -func RT_GetProcAddressByName
-hash_api -fmt 64 -conc -func RT_GetProcAddressByHash
-hash_api -fmt 64 -conc -func RT_GetProcAddressOriginal
-hash_api -fmt 64 -conc -func RT_ExitProcess
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -func RT_GetProcAddressByName
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -func RT_GetProcAddressByHash
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -func RT_GetProcAddressOriginal
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -func RT_ExitProcess
 echo.
 
 echo [Library Tracker]
@@ -240,10 +240,10 @@ hash_api -fmt 32 -conc -func SleepEx
 echo.
 
 echo [Runtime Methods]
-hash_api -fmt 32 -conc -func RT_GetProcAddressByName
-hash_api -fmt 32 -conc -func RT_GetProcAddressByHash
-hash_api -fmt 32 -conc -func RT_GetProcAddressOriginal
-hash_api -fmt 32 -conc -func RT_ExitProcess
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -func RT_GetProcAddressByName
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -func RT_GetProcAddressByHash
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -func RT_GetProcAddressOriginal
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -func RT_ExitProcess
 echo.
 
 echo [Library Tracker]

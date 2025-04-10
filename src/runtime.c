@@ -1342,6 +1342,7 @@ void* RT_FindAPI_W(uint16* module, byte* function)
 __declspec(noinline)
 void* RT_GetProcAddress(HMODULE hModule, LPCSTR lpProcName)
 {
+    // set last error
     return RT_GetProcAddressByName(hModule, lpProcName, true);
 }
 
@@ -1383,7 +1384,8 @@ void* RT_GetProcAddressByName(HMODULE hModule, LPCSTR lpProcName, bool hook)
     {
         return proc;
     }
-    // if failed to found, use original GetProcAddress
+    // TODO replace it to check hModule
+    // if not found, use original GetProcAddress
     // must skip runtime internal methods like "RT_Method"
     byte prefix[4] = { 'R', 'T', '_', 0x00 };
     ANSI procName  = (ANSI)lpProcName;
@@ -1449,10 +1451,10 @@ static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
     method methods[] =
 #ifdef _WIN64
     {
-        { 0xA23FAC0E6398838A, 0xE4990D7D4933EE6A, GetFuncAddr(&RT_GetProcAddressByName)   },
-        { 0xABD1E8F0D28E9F46, 0xAF34F5979D300C70, GetFuncAddr(&RT_GetProcAddressByHash)   },
-        { 0xC9C5D350BB118FAE, 0x061A602F681F2636, GetFuncAddr(&RT_GetProcAddressOriginal) },
-        { 0xED817580D5E2DD81, 0x84025019004D432B, GetFuncAddr(&RT_ExitProcess)            },
+        { 0xE7AC0FD5CC12AD9D, 0x46AF7436C11E47EB, GetFuncAddr(&RT_GetProcAddressByName)   },
+        { 0x205E958F3478EB29, 0x0B344C483071EA88, GetFuncAddr(&RT_GetProcAddressByHash)   },
+        { 0x52C9A12B0C3BBC29, 0x80D602FC3A5DD22A, GetFuncAddr(&RT_GetProcAddressOriginal) },
+        { 0x0EE2293365063FA9, 0xAE3CDDE21505B0CC, GetFuncAddr(&RT_ExitProcess)            },
         { 0x6A02F558B3968168, 0x15BD021B51796FE2, AS->GetValue   }, // RT_AS_GetValue
         { 0x528C040816E3C7C4, 0xC2BEA0891841420F, AS->GetPointer }, // RT_AS_GetPointer
         { 0x2C971D3A91D6819B, 0xCB6F3EF75315AB9E, AS->Erase      }, // RT_AS_Erase
@@ -1465,10 +1467,10 @@ static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
     };
 #elif _WIN32
     {
-        { 0xCF983018, 0x3ECBF2DF, GetFuncAddr(&RT_GetProcAddressByName)   },
-        { 0x40D5BD08, 0x302D5D2B, GetFuncAddr(&RT_GetProcAddressByHash)   },
-        { 0x45556AA5, 0xB3BEF31D, GetFuncAddr(&RT_GetProcAddressOriginal) },
-        { 0x39A658B0, 0x8C837EFD, GetFuncAddr(&RT_ExitProcess)            },
+        { 0x1341B201, 0x87251AE5, GetFuncAddr(&RT_GetProcAddressByName)   },
+        { 0x54CE5E65, 0x4B1447A8, GetFuncAddr(&RT_GetProcAddressByHash)   },
+        { 0xCCB4626B, 0x89F8B2B0, GetFuncAddr(&RT_GetProcAddressOriginal) },
+        { 0x3630A253, 0x62BC6C1D, GetFuncAddr(&RT_ExitProcess)            },
         { 0x60684ACC, 0xB1F98016, AS->GetValue   }, // RT_AS_GetValue
         { 0x58A01B5B, 0x9E4D45AC, AS->GetPointer }, // RT_AS_GetPointer
         { 0x29C58712, 0x88F20801, AS->Erase      }, // RT_AS_Erase

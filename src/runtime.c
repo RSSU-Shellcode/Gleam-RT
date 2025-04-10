@@ -63,7 +63,7 @@ typedef struct {
     CreateEventA_t          CreateEventA;
     SetEvent_t              SetEvent;
     ResetEvent_t            ResetEvent;
-    CreateWaitableTimerW_t  CreateWaitableTimerW;
+    CreateWaitableTimerA_t  CreateWaitableTimerA;
     SetWaitableTimer_t      SetWaitableTimer;
     SleepEx_t               SleepEx;
     WaitForSingleObject_t   WaitForSingleObject;
@@ -179,14 +179,10 @@ static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName);
 static void* getIATHook(Runtime* runtime, void* proc);
 static void* getLazyAPIHook(Runtime* runtime, void* proc);
 
-static void  eventHandler();
-static errno processEvent(Runtime* runtime, bool* exit);
-static errno sleepHR(Runtime* runtime, uint32 milliseconds);
 static errno sleep(Runtime* runtime, HANDLE hTimer);
 static errno hide(Runtime* runtime);
 static errno recover(Runtime* runtime);
 
-static errno exitEventHandler(Runtime* runtime);
 static errno closeHandles(Runtime* runtime);
 static void  eraseMemory(uintptr address, uintptr size);
 static void  rt_epilogue();
@@ -286,15 +282,15 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
         errno = ERR_RUNTIME_FLUSH_INST;
     }
     // start event handler
-    if (errno == NO_ERROR)
-    {
-        void* addr = GetFuncAddr(&eventHandler);
-        runtime->hThreadEvent = runtime->ThreadTracker->New(addr, NULL, false);
-        if (runtime->hThreadEvent == NULL)
-        {
-            errno = ERR_RUNTIME_START_EVENT_HANDLER;
-        }
-    }
+    // if (errno == NO_ERROR)
+    // {
+    //     void* addr = GetFuncAddr(&eventHandler);
+    //     runtime->hThreadEvent = runtime->ThreadTracker->New(addr, NULL, false);
+    //     if (runtime->hThreadEvent == NULL)
+    //     {
+    //         errno = ERR_RUNTIME_START_EVENT_HANDLER;
+    //     }
+    // }
     if (errno != NO_ERROR)
     {
         cleanRuntime(runtime);
@@ -486,7 +482,7 @@ static bool initRuntimeAPI(Runtime* runtime)
         { 0xDDB64F7D0952649B, 0x7F49C6179CD1D05C }, // CreateEventA
         { 0x4A7C9AD08B398C90, 0x4DA8D0C65ECE8AB5 }, // SetEvent
         { 0xDCC7DDE90F8EF5E5, 0x779EBCBF154A323E }, // ResetEvent
-        { 0xA793213B60B4651D, 0x4CB3588ECF3B0A12 }, // CreateWaitableTimerW
+        { 0x6B664C7B54AA27A8, 0x666DC45A99BC8137 }, // CreateWaitableTimerA
         { 0x1C438D7C33D36592, 0xB8818ECC97728D1F }, // SetWaitableTimer
         { 0xC0B2A3A0E0136020, 0xFCD8552BA93BD07E }, // SleepEx
         { 0xA524CD56CF8DFF7F, 0x5519595458CD47C8 }, // WaitForSingleObject
@@ -511,7 +507,7 @@ static bool initRuntimeAPI(Runtime* runtime)
         { 0x013C9D2B, 0x5A4D045A }, // CreateEventA
         { 0x1F65B288, 0x8502DDE2 }, // SetEvent
         { 0xCB15B6B4, 0x6D95B453 }, // ResetEvent
-        { 0x7AAC7586, 0xB30E1315 }, // CreateWaitableTimerW
+        { 0xEA251494, 0xB8B82DF1 }, // CreateWaitableTimerA
         { 0x3F987BDE, 0x01C8C945 }, // SetWaitableTimer
         { 0xF1994D1A, 0xDFA78EB5 }, // SleepEx
         { 0xC21AB03D, 0xED3AAF22 }, // WaitForSingleObject
@@ -545,7 +541,7 @@ static bool initRuntimeAPI(Runtime* runtime)
     runtime->CreateEventA          = list[0x0C].proc;
     runtime->SetEvent              = list[0x0D].proc;
     runtime->ResetEvent            = list[0x0E].proc;
-    runtime->CreateWaitableTimerW  = list[0x0F].proc;
+    runtime->CreateWaitableTimerA  = list[0x0F].proc;
     runtime->SetWaitableTimer      = list[0x10].proc;
     runtime->SleepEx               = list[0x11].proc;
     runtime->WaitForSingleObject   = list[0x12].proc;
@@ -1078,12 +1074,6 @@ static bool flushInstructionCache(Runtime* runtime)
 static errno cleanRuntime(Runtime* runtime)
 {
     errno err = NO_ERROR;
-    // exit event handler
-    errno enetg = exitEventHandler(runtime);
-    if (enetg != NO_ERROR && err == NO_ERROR)
-    {
-        err = enetg;
-    }
     // close all handles in runtime
     errno enchd = closeHandles(runtime);
     if (enchd != NO_ERROR && err == NO_ERROR)
@@ -1103,74 +1093,6 @@ static errno cleanRuntime(Runtime* runtime)
         }
     }
     return err;
-}
-
-static errno exitEventHandler(Runtime* runtime)
-{
-    if (runtime->hThreadEvent == NULL)
-    {
-        return NO_ERROR;
-    }
-    errno errno = NO_ERROR;
-    for (;;)
-    {
-        // set event type
-        if (runtime->WaitForSingleObject(runtime->hMutexEvent, INFINITE) != WAIT_OBJECT_0)
-        {
-            errno = ERR_RUNTIME_LOCK_EVENT;
-            break;
-        }
-        runtime->EventType = EVENT_TYPE_STOP;
-        if (!runtime->ReleaseMutex(runtime->hMutexEvent))
-        {
-            errno = ERR_RUNTIME_UNLOCK_EVENT;
-            break;
-        }
-        // notice event handler
-        if (!runtime->SetEvent(runtime->hEventArrive))
-        {
-            errno = ERR_RUNTIME_NOTICE_EVENT_HANDLER;
-            break;
-        }
-        // wait handler process event
-        if (runtime->WaitForSingleObject(runtime->hEventDone, INFINITE) != WAIT_OBJECT_0)
-        {
-            errno = ERR_RUNTIME_WAIT_EVENT_HANDLER;
-            break;
-        }
-        // receive errno
-        if (runtime->WaitForSingleObject(runtime->hMutexEvent, INFINITE) != WAIT_OBJECT_0)
-        {
-            errno = ERR_RUNTIME_LOCK_EVENT;
-            break;
-        }
-        errno = runtime->ReturnErrno;
-        if (!runtime->ReleaseMutex(runtime->hMutexEvent))
-        {
-            errno = ERR_RUNTIME_UNLOCK_EVENT;
-            break;
-        }
-        // reset event
-        if (!runtime->ResetEvent(runtime->hEventDone))
-        {
-            errno = ERR_RUNTIME_RESET_EVENT;
-            break;
-        }
-        break;
-    }
-    if (errno != NO_ERROR)
-    {
-        return errno;
-    }
-    // wait event handler thread exit
-    if (runtime->WaitForSingleObject(runtime->hThreadEvent, INFINITE) != WAIT_OBJECT_0)
-    {
-        if (errno == NO_ERROR)
-        {
-            errno = ERR_RUNTIME_EXIT_EVENT_HANDLER;
-        }
-    }
-    return errno;
 }
 
 static errno closeHandles(Runtime* runtime)
@@ -1797,9 +1719,15 @@ errno RT_SleepHR(DWORD dwMilliseconds)
 {
     Runtime* runtime = getRuntimePointer();
 
-    if (runtime->WaitForSingleObject(runtime->hMutexSleep, INFINITE) != WAIT_OBJECT_0)
+    if (!rt_lock())
     {
-        return ERR_RUNTIME_LOCK_SLEEP;
+        return ERR_RUNTIME_LOCK;
+    }
+
+    errno err = RT_lock_mods();
+    if (err != NO_ERROR)
+    {
+        return err;
     }
 
     if (dwMilliseconds <= 100)
@@ -1820,173 +1748,18 @@ errno RT_SleepHR(DWORD dwMilliseconds)
     dwMilliseconds = 5 + (DWORD)RandUintN(0, 50);
 #endif
 
-    errno errno = NO_ERROR;
-    for (;;)
-    {
-        // set sleep arguments
-        if (runtime->WaitForSingleObject(runtime->hMutexEvent, INFINITE) != WAIT_OBJECT_0)
-        {
-            errno = ERR_RUNTIME_LOCK_EVENT;
-            break;
-        }
-        runtime->EventType = EVENT_TYPE_SLEEP;
-        runtime->SleepTime = dwMilliseconds;
-        if (!runtime->ReleaseMutex(runtime->hMutexEvent))
-        {
-            errno = ERR_RUNTIME_UNLOCK_EVENT;
-            break;
-        }
-        // notice event handler
-        if (!runtime->SetEvent(runtime->hEventArrive))
-        {
-            errno = ERR_RUNTIME_NOTICE_EVENT_HANDLER;
-            break;
-        }
-        // wait handler process event
-        if (runtime->WaitForSingleObject(runtime->hEventDone, INFINITE) != WAIT_OBJECT_0)
-        {
-            errno = ERR_RUNTIME_WAIT_EVENT_HANDLER;
-            break;
-        }
-        // receive return errno
-        if (runtime->WaitForSingleObject(runtime->hMutexEvent, INFINITE) != WAIT_OBJECT_0)
-        {
-            errno = ERR_RUNTIME_LOCK_EVENT;
-            break;
-        }
-        errno = runtime->ReturnErrno;
-        if (!runtime->ReleaseMutex(runtime->hMutexEvent))
-        {
-            errno = ERR_RUNTIME_UNLOCK_EVENT;
-            break;
-        }
-        // reset event
-        if (!runtime->ResetEvent(runtime->hEventDone))
-        {
-            errno = ERR_RUNTIME_RESET_EVENT;
-            break;
-        }
-        break;
-    }
-
-    if (!runtime->ReleaseMutex(runtime->hMutexSleep))
-    {
-        return ERR_RUNTIME_UNLOCK_SLEEP;
-    }
-    return errno;
-}
-
-__declspec(noinline)
-static void eventHandler()
-{
-    Runtime* runtime = getRuntimePointer();
-
-    bool  exit  = false;
-    errno errno = NO_ERROR;
-
-    for (;;)
-    {
-        uint32 waitEvent = runtime->WaitForSingleObject(runtime->hEventArrive, INFINITE);
-        switch (waitEvent)
-        {
-        case WAIT_ABANDONED:
-        case WAIT_OBJECT_0:
-            errno = processEvent(runtime, &exit);
-            break;
-        default:
-            return;
-        }
-        // store return error
-        waitEvent = runtime->WaitForSingleObject(runtime->hMutexEvent, INFINITE);
-        if (waitEvent != WAIT_OBJECT_0)
-        {
-            return;
-        }
-        runtime->ReturnErrno = errno;
-        if (!runtime->ReleaseMutex(runtime->hMutexEvent))
-        {
-            return;
-        }
-        // notice caller
-        if (!runtime->ResetEvent(runtime->hEventArrive))
-        {
-            return;
-        }
-        if (!runtime->SetEvent(runtime->hEventDone))
-        {
-            return;
-        }
-        // check is the exit event
-        if (exit)
-        {
-            dbg_log("[runtime]", "exit event handler");
-            return;
-        }
-        // check error for exit event handler
-        if (errno != NO_ERROR && !(errno & ERR_FLAG_CAN_IGNORE))
-        {
-            dbg_log("[runtime]", "exit event handler with errno: 0x%X", errno);
-            return;
-        }
-    }
-}
-
-static errno processEvent(Runtime* runtime, bool* exit)
-{
-    // get event type and arguments
-    uint32 waitEvent = runtime->WaitForSingleObject(runtime->hMutexEvent, INFINITE);
-    if (waitEvent != WAIT_OBJECT_0)
-    {
-        return ERR_RUNTIME_LOCK_EVENT;
-    }
-    uint32 eventType = runtime->EventType;
-    uint32 sleepTime = runtime->SleepTime;
-    if (!runtime->ReleaseMutex(runtime->hMutexEvent))
-    {
-        return ERR_RUNTIME_UNLOCK_EVENT;
-    }
-    // process event
-    switch (eventType)
-    {
-    case EVENT_TYPE_SLEEP:
-        dbg_log("[runtime]", "trigger event: sleep");
-        return sleepHR(runtime, sleepTime);
-    case EVENT_TYPE_STOP:
-        dbg_log("[runtime]", "trigger event: stop");
-        *exit = true;
-        return NO_ERROR;
-    default:
-        panic(PANIC_UNREACHABLE_CODE);
-    }
-    return NO_ERROR;
-}
-
-__declspec(noinline)
-static errno sleepHR(Runtime* runtime, uint32 milliseconds)
-{
-    if (!rt_lock())
-    {
-        return ERR_RUNTIME_LOCK;
-    }
-
-    errno err = RT_lock_mods();
-    if (err != NO_ERROR)
-    {
-        return err;
-    }
-
     HANDLE hTimer = NULL;
     errno  errno  = NO_ERROR;
     for (;;)
     {
         // create and set waitable timer
-        hTimer = runtime->CreateWaitableTimerW(NULL, false, NAME_RT_TIMER_SLEEPHR);
+        hTimer = runtime->CreateWaitableTimerA(NULL, false, NAME_RT_TIMER_SLEEPHR);
         if (hTimer == NULL)
         {
             errno = ERR_RUNTIME_CREATE_WAITABLE_TIMER;
             break;
         }
-        int64 dueTime = -((int64)milliseconds * 1000 * 10);
+        int64 dueTime = -((int64)dwMilliseconds * 1000 * 10);
         if (!runtime->SetWaitableTimer(hTimer, &dueTime, 0, NULL, NULL, true))
         {
             errno = ERR_RUNTIME_SET_WAITABLE_TIMER;

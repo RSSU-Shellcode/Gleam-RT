@@ -11,23 +11,30 @@ echo [Runtime Core]
 hash_api -fmt 64 -conc -func GetSystemInfo
 hash_api -fmt 64 -conc -func LoadLibraryA
 hash_api -fmt 64 -conc -func FreeLibrary
+hash_api -fmt 64 -conc -func GetProcAddress
 hash_api -fmt 64 -conc -func VirtualAlloc
 hash_api -fmt 64 -conc -func VirtualFree
 hash_api -fmt 64 -conc -func VirtualProtect
 hash_api -fmt 64 -conc -func FlushInstructionCache
-hash_api -fmt 64 -conc -func ExitProcess
-hash_api -fmt 64 -conc -func SetCurrentDirectoryA
-hash_api -fmt 64 -conc -func SetCurrentDirectoryW
 hash_api -fmt 64 -conc -func CreateMutexA
 hash_api -fmt 64 -conc -func ReleaseMutex
-hash_api -fmt 64 -conc -func CreateEventA
-hash_api -fmt 64 -conc -func SetEvent
-hash_api -fmt 64 -conc -func ResetEvent
-hash_api -fmt 64 -conc -func CreateWaitableTimerW
+hash_api -fmt 64 -conc -func CreateWaitableTimerA
 hash_api -fmt 64 -conc -func SetWaitableTimer
 hash_api -fmt 64 -conc -func WaitForSingleObject
 hash_api -fmt 64 -conc -func DuplicateHandle
 hash_api -fmt 64 -conc -func CloseHandle
+hash_api -fmt 64 -conc -func SetCurrentDirectoryA
+hash_api -fmt 64 -conc -func SetCurrentDirectoryW
+hash_api -fmt 64 -conc -func SleepEx
+hash_api -fmt 64 -conc -func ExitProcess
+echo.
+
+echo [Runtime IAT Hooks]
+hash_api -fmt 64 -conc -func GetProcAddress
+hash_api -fmt 64 -conc -func SetCurrentDirectoryA
+hash_api -fmt 64 -conc -func SetCurrentDirectoryW
+hash_api -fmt 64 -conc -func Sleep
+hash_api -fmt 64 -conc -func SleepEx
 echo.
 
 echo [Runtime Methods]
@@ -35,12 +42,6 @@ hash_api -fmt 64 -conc -func RT_GetProcAddressByName
 hash_api -fmt 64 -conc -func RT_GetProcAddressByHash
 hash_api -fmt 64 -conc -func RT_GetProcAddressOriginal
 hash_api -fmt 64 -conc -func RT_ExitProcess
-echo.
-
-echo [Runtime IAT Hooks]
-hash_api -fmt 64 -conc -func GetProcAddress
-hash_api -fmt 64 -conc -func Sleep
-hash_api -fmt 64 -conc -func SleepEx
 echo.
 
 echo [Library Tracker]
@@ -212,23 +213,30 @@ echo [Runtime Core]
 hash_api -fmt 32 -conc -func GetSystemInfo
 hash_api -fmt 32 -conc -func LoadLibraryA
 hash_api -fmt 32 -conc -func FreeLibrary
+hash_api -fmt 32 -conc -func GetProcAddress
 hash_api -fmt 32 -conc -func VirtualAlloc
 hash_api -fmt 32 -conc -func VirtualFree
 hash_api -fmt 32 -conc -func VirtualProtect
 hash_api -fmt 32 -conc -func FlushInstructionCache
-hash_api -fmt 32 -conc -func ExitProcess
-hash_api -fmt 32 -conc -func SetCurrentDirectoryA
-hash_api -fmt 32 -conc -func SetCurrentDirectoryW
 hash_api -fmt 32 -conc -func CreateMutexA
 hash_api -fmt 32 -conc -func ReleaseMutex
-hash_api -fmt 32 -conc -func CreateEventA
-hash_api -fmt 32 -conc -func SetEvent
-hash_api -fmt 32 -conc -func ResetEvent
-hash_api -fmt 32 -conc -func CreateWaitableTimerW
+hash_api -fmt 32 -conc -func CreateWaitableTimerA
 hash_api -fmt 32 -conc -func SetWaitableTimer
 hash_api -fmt 32 -conc -func WaitForSingleObject
 hash_api -fmt 32 -conc -func DuplicateHandle
 hash_api -fmt 32 -conc -func CloseHandle
+hash_api -fmt 32 -conc -func SetCurrentDirectoryA
+hash_api -fmt 32 -conc -func SetCurrentDirectoryW
+hash_api -fmt 32 -conc -func SleepEx
+hash_api -fmt 32 -conc -func ExitProcess
+echo.
+
+echo [Runtime IAT Hooks]
+hash_api -fmt 32 -conc -func GetProcAddress
+hash_api -fmt 32 -conc -func SetCurrentDirectoryA
+hash_api -fmt 32 -conc -func SetCurrentDirectoryW
+hash_api -fmt 32 -conc -func Sleep
+hash_api -fmt 32 -conc -func SleepEx
 echo.
 
 echo [Runtime Methods]
@@ -236,12 +244,6 @@ hash_api -fmt 32 -conc -func RT_GetProcAddressByName
 hash_api -fmt 32 -conc -func RT_GetProcAddressByHash
 hash_api -fmt 32 -conc -func RT_GetProcAddressOriginal
 hash_api -fmt 32 -conc -func RT_ExitProcess
-echo.
-
-echo [Runtime IAT Hooks]
-hash_api -fmt 32 -conc -func GetProcAddress
-hash_api -fmt 32 -conc -func Sleep
-hash_api -fmt 32 -conc -func SleepEx
 echo.
 
 echo [Library Tracker]

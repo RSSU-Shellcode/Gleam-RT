@@ -1891,7 +1891,7 @@ bool RT_GetStatus(RT_Status* status)
         num++;
     }
 
-    if (!RT_Lock())
+    if (!RT_Unlock())
     {
         return false;
     }

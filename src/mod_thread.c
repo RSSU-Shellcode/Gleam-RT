@@ -1004,7 +1004,7 @@ bool TT_GetStatus(TT_Status* status)
 {
     ThreadTracker* tracker = getTrackerPointer();
 
-    if (TT_Lock())
+    if (!TT_Lock())
     {
         return false;
     }

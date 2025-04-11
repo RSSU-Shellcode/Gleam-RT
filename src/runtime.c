@@ -1668,11 +1668,10 @@ errno RT_SleepHR(DWORD dwMilliseconds)
     {
         return ERR_RUNTIME_LOCK;
     }
-
-    errno err = RT_lock_mods();
-    if (err != NO_ERROR)
+    errno errlm = RT_lock_mods();
+    if (errlm != NO_ERROR)
     {
-        return err;
+        return errlm;
     }
 
     if (dwMilliseconds <= 100)
@@ -1694,35 +1693,35 @@ errno RT_SleepHR(DWORD dwMilliseconds)
 #endif
 
     HANDLE hTimer = NULL;
-    errno  errno  = NO_ERROR;
+    errno  error  = NO_ERROR;
     for (;;)
     {
         // create and set waitable timer
         hTimer = runtime->CreateWaitableTimerA(NULL, false, NAME_RT_TIMER_SLEEPHR);
         if (hTimer == NULL)
         {
-            errno = ERR_RUNTIME_CREATE_WAITABLE_TIMER;
+            error = ERR_RUNTIME_CREATE_WAITABLE_TIMER;
             break;
         }
         int64 dueTime = -((int64)dwMilliseconds * 1000 * 10);
         if (!runtime->SetWaitableTimer(hTimer, &dueTime, 0, NULL, NULL, true))
         {
-            errno = ERR_RUNTIME_SET_WAITABLE_TIMER;
+            error = ERR_RUNTIME_SET_WAITABLE_TIMER;
             break;
         }
 
-        errno = hide(runtime);
-        if (errno != NO_ERROR && !(errno & ERR_FLAG_CAN_IGNORE))
+        error = hide(runtime);
+        if (error != NO_ERROR && !(error & ERR_FLAG_CAN_IGNORE))
         {
             break;
         }
-        errno = sleep(runtime, hTimer);
-        if (errno != NO_ERROR && !(errno & ERR_FLAG_CAN_IGNORE))
+        error = sleep(runtime, hTimer);
+        if (error != NO_ERROR && !(error & ERR_FLAG_CAN_IGNORE))
         {
             break;
         }
-        errno = recover(runtime);
-        if (errno != NO_ERROR && !(errno & ERR_FLAG_CAN_IGNORE))
+        error = recover(runtime);
+        if (error != NO_ERROR && !(error & ERR_FLAG_CAN_IGNORE))
         {
             break;
         }
@@ -1732,23 +1731,22 @@ errno RT_SleepHR(DWORD dwMilliseconds)
     // clean created waitable timer
     if (hTimer != NULL)
     {
-        if (!runtime->CloseHandle(hTimer) && errno == NO_ERROR)
+        if (!runtime->CloseHandle(hTimer) && error == NO_ERROR)
         {
-            errno = ERR_RUNTIME_CLOSE_WAITABLE_TIMER;
+            error = ERR_RUNTIME_CLOSE_WAITABLE_TIMER;
         }
     }
 
-    err = RT_unlock_mods();
-    if (err != NO_ERROR)
+    errno errum = RT_unlock_mods();
+    if (errum != NO_ERROR)
     {
-        return err;
+        return errum;
     }
-
     if (!rt_unlock())
     {
         return ERR_RUNTIME_UNLOCK;
     }
-    return errno;
+    return error;
 }
 
 __declspec(noinline)
@@ -1764,15 +1762,16 @@ static errno hide(Runtime* runtime)
         runtime->ArgumentStore->Encrypt,
         runtime->InMemoryStorage->Encrypt,
     };
+    errno err = NO_ERROR;
     for (int i = 0; i < arrlen(submodules); i++)
     {
-        errno errno = submodules[i]();
-        if (errno != NO_ERROR && !(errno & ERR_FLAG_CAN_IGNORE))
+        errno enmod = submodules[i]();
+        if (enmod != NO_ERROR && err == NO_ERROR)
         {
-            return errno;
+            err = enmod;
         }
     }
-    return NO_ERROR;
+    return err;
 }
 
 __declspec(noinline)
@@ -1787,15 +1786,16 @@ static errno recover(Runtime* runtime)
         runtime->InMemoryStorage->Decrypt,
         runtime->ThreadTracker->Resume,
     };
+    errno err = NO_ERROR;
     for (int i = 0; i < arrlen(submodules); i++)
     {
-        errno errno = submodules[i]();
-        if (errno != NO_ERROR && !(errno & ERR_FLAG_CAN_IGNORE))
+        errno enmod = submodules[i]();
+        if (enmod != NO_ERROR && err == NO_ERROR)
         {
-            return errno;
+            err = enmod;
         }
     }
-    return NO_ERROR;
+    return err;
 }
 
 __declspec(noinline)
@@ -1924,16 +1924,29 @@ errno RT_Metrics(Runtime_Metrics* metrics)
         return ERR_RUNTIME_LOCK;
     }
 
-    runtime->LibraryTracker->GetStatus(&metrics->Library);
-    runtime->MemoryTracker->GetStatus(&metrics->Memory);
-    runtime->ThreadTracker->GetStatus(&metrics->Thread);
-    runtime->ResourceTracker->GetStatus(&metrics->Resource);
+    errno errno = NO_ERROR;
+    if (!runtime->LibraryTracker->GetStatus(&metrics->Library))
+    {
+        errno = ERR_RUNTIME_GET_STATUS_LIBRARY;
+    }
+    if (!runtime->MemoryTracker->GetStatus(&metrics->Memory))
+    {
+        errno = ERR_RUNTIME_GET_STATUS_MEMORY;
+    }
+    if (!runtime->ThreadTracker->GetStatus(&metrics->Thread))
+    {
+        errno = ERR_RUNTIME_GET_STATUS_THREAD;
+    }
+    if (!runtime->ResourceTracker->GetStatus(&metrics->Resource))
+    {
+        errno = ERR_RUNTIME_GET_STATUS_RESOURCE;
+    }
 
     if (!rt_unlock())
     {
         return ERR_RUNTIME_UNLOCK;
     }
-    return NO_ERROR;
+    return errno;
 }
 
 __declspec(noinline)
@@ -2000,11 +2013,10 @@ errno RT_Exit()
     {
         return ERR_RUNTIME_LOCK;
     }
-
-    errno err = RT_lock_mods();
-    if (err != NO_ERROR)
+    errno errlm = RT_lock_mods();
+    if (errlm != NO_ERROR)
     {
-        return err;
+        return errlm;
     }
 
     DWORD oldProtect;
@@ -2013,6 +2025,7 @@ errno RT_Exit()
         return ERR_RUNTIME_ADJUST_PROTECT;
     }
 
+    errno error = NO_ERROR;
     // maybe some libraries will use the tracked
     // memory page or heap, so free memory after
     // free all library.
@@ -2039,9 +2052,9 @@ errno RT_Exit()
     for (int i = 0; i < arrlen(submodules); i++)
     {
         enmod = submodules[i]();
-        if (enmod != NO_ERROR && err == NO_ERROR)
+        if (enmod != NO_ERROR && error == NO_ERROR)
         {
-            err = enmod;
+            error = enmod;
         }
     }
 
@@ -2052,9 +2065,9 @@ errno RT_Exit()
 
     // clean runtime resource
     errno enclr = cleanRuntime(runtime);
-    if (enclr != NO_ERROR && err == NO_ERROR)
+    if (enclr != NO_ERROR && error == NO_ERROR)
     {
-        err = enclr;
+        error = enclr;
     }
 
     // store original pointer for recover instructions
@@ -2076,9 +2089,9 @@ errno RT_Exit()
     // handler will get the incorrect runtime address
     if (runtime->Options.NotEraseInstruction)
     {
-        if (!recoverRuntimePointer(stub) && err == NO_ERROR)
+        if (!recoverRuntimePointer(stub) && error == NO_ERROR)
         {
-            err = ERR_RUNTIME_EXIT_RECOVER_INST;
+            error = ERR_RUNTIME_EXIT_RECOVER_INST;
         }
     }
 
@@ -2103,15 +2116,15 @@ errno RT_Exit()
         uintptr end   = (uintptr)(runtime->Epilogue);
         SIZE_T  size  = (SIZE_T)(end - begin);
         DWORD old;
-        if (!runtime->VirtualProtect(addr, size, oldProtect, &old) && err == NO_ERROR)
+        if (!runtime->VirtualProtect(addr, size, oldProtect, &old) && error == NO_ERROR)
         {
-            err = ERR_RUNTIME_RECOVER_PROTECT;
+            error = ERR_RUNTIME_RECOVER_PROTECT;
         }
     }
 
     // clean stack that store cloned structure data 
     eraseMemory((uintptr)(runtime), sizeof(Runtime));
-    return err;
+    return error;
 }
 
 // TODO replace to xorshift

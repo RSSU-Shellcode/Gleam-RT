@@ -1342,7 +1342,6 @@ void* RT_FindAPI_W(uint16* module, byte* function)
 __declspec(noinline)
 void* RT_GetProcAddress(HMODULE hModule, LPCSTR lpProcName)
 {
-    // set last error
     return RT_GetProcAddressByName(hModule, lpProcName, true);
 }
 
@@ -1354,6 +1353,11 @@ void* RT_GetProcAddressByName(HMODULE hModule, LPCSTR lpProcName, bool hook)
     // process ordinal import
     if (lpProcName < (LPCSTR)(0xFFFF))
     {
+        if (hModule == HMODULE_GLEAM_RT)
+        {
+            SetLastErrno(ERR_RUNTIME_INVALID_HMODULE);
+            return NULL;
+        }
         return runtime->GetProcAddress(hModule, lpProcName);
     }
     // use "mem_init" for prevent incorrect compiler
@@ -1361,9 +1365,22 @@ void* RT_GetProcAddressByName(HMODULE hModule, LPCSTR lpProcName, bool hook)
     uint16 module[MAX_PATH];
     mem_init(module, sizeof(module));
     // get module file name
-    if (GetModuleFileName(hModule, module, sizeof(module)) == 0)
+    if (hModule == HMODULE_GLEAM_RT)
     {
-        return NULL;
+        uint16 mod[] = {
+            L'G'^0xA3EB, L'l'^0xCD20, L'e'^0x67F4, L'a'^0x19B2, 
+            L'm'^0xA3EB, L'R'^0xCD20, L'T'^0x67F4, L'.'^0x19B2, 
+            L'd'^0xA3EB, L'l'^0xCD20, L'l'^0x67F4, 0000^0x19B2,
+        };
+        uint16 key[] = { 0xA3EB, 0xCD20, 0x67F4, 0x19B2 };
+        XORBuf(mod, sizeof(mod), key, sizeof(key));
+        mem_copy(module, mod, sizeof(mod));
+    } else {
+        if (GetModuleFileName(hModule, module, sizeof(module)) == 0)
+        {
+            SetLastErrno(ERR_RUNTIME_NOT_FOUND_MODULE);
+            return NULL;
+        }
     }
     // check is runtime internal methods
     void* method = getRuntimeMethods(module, lpProcName);
@@ -1384,13 +1401,10 @@ void* RT_GetProcAddressByName(HMODULE hModule, LPCSTR lpProcName, bool hook)
     {
         return proc;
     }
-    // TODO replace it to check hModule
-    // if not found, use original GetProcAddress
-    // must skip runtime internal methods like "RT_Method"
-    byte prefix[4] = { 'R', 'T', '_', 0x00 };
-    ANSI procName  = (ANSI)lpProcName;
-    if (strncmp_a(procName, prefix, 3) == 0)
+    // if all not found, use native GetProcAddress
+    if (hModule == HMODULE_GLEAM_RT)
     {
+        SetLastErrno(ERR_RUNTIME_NOT_FOUND_METHOD);
         return NULL;
     }
     return runtime->GetProcAddress(hModule, lpProcName);
@@ -1577,10 +1591,12 @@ BOOL RT_SetCurrentDirectoryA(LPSTR lpPathName)
 
     dbg_log("[runtime]", "SetCurrentDirectoryA: %s", lpPathName);
 
+    // for call SetLastError
     if (lpPathName == NULL)
     {
-        return false;
+        return runtime->SetCurrentDirectoryA(lpPathName);
     }
+
     if (*lpPathName != '*')
     {
         return true;
@@ -1595,10 +1611,12 @@ BOOL RT_SetCurrentDirectoryW(LPWSTR lpPathName)
 
     dbg_log("[runtime]", "SetCurrentDirectoryW: %ls", lpPathName);
 
+    // for call SetLastError
     if (lpPathName == NULL)
     {
-        return false;
+        return runtime->SetCurrentDirectoryW(lpPathName);
     }
+
     if (*lpPathName != L'*')
     {
         return true;

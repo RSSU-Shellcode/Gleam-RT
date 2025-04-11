@@ -2,6 +2,7 @@
 #include "win_types.h"
 #include "dll_kernel32.h"
 #include "lib_memory.h"
+#include "lib_string.h"
 #include "rel_addr.h"
 #include "hash_api.h"
 #include "list_md.h"
@@ -84,6 +85,8 @@ static bool initTrackerEnvironment(LibraryTracker* tracker, Context* context);
 static void eraseTrackerMethods(Context* context);
 static void cleanTracker(LibraryTracker* tracker);
 
+static bool isGleamRT_A(LPCSTR lpLibFileName);
+static bool isGleamRT_W(LPCWSTR lpLibFileName);
 static bool addModule(LibraryTracker* tracker, HMODULE hModule);
 static bool delModule(LibraryTracker* tracker, HMODULE hModule);
 static bool setModuleLocker(HMODULE hModule, bool lock);
@@ -300,6 +303,11 @@ HMODULE LT_LoadLibraryA(LPCSTR lpLibFileName)
 {
     LibraryTracker* tracker = getTrackerPointer();
 
+    if (isGleamRT_A(lpLibFileName))
+    {
+        return HMODULE_GLEAM_RT;
+    }
+
     if (!LT_Lock())
     {
         return NULL;
@@ -344,6 +352,11 @@ __declspec(noinline)
 HMODULE LT_LoadLibraryW(LPCWSTR lpLibFileName)
 {
     LibraryTracker* tracker = getTrackerPointer();
+
+    if (isGleamRT_W(lpLibFileName))
+    {
+        return HMODULE_GLEAM_RT;
+    }
 
     if (!LT_Lock())
     {
@@ -390,6 +403,11 @@ HMODULE LT_LoadLibraryExA(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 {
     LibraryTracker* tracker = getTrackerPointer();
 
+    if (isGleamRT_A(lpLibFileName))
+    {
+        return HMODULE_GLEAM_RT;
+    }
+
     if (!LT_Lock())
     {
         return NULL;
@@ -434,6 +452,11 @@ __declspec(noinline)
 HMODULE LT_LoadLibraryExW(LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 {
     LibraryTracker* tracker = getTrackerPointer();
+
+    if (isGleamRT_W(lpLibFileName))
+    {
+        return HMODULE_GLEAM_RT;
+    }
 
     if (!LT_Lock())
     {
@@ -480,6 +503,11 @@ BOOL LT_FreeLibrary(HMODULE hLibModule)
 {
     LibraryTracker* tracker = getTrackerPointer();
 
+    if (hLibModule == HMODULE_GLEAM_RT)
+    {
+        return true;
+    }
+
     if (!LT_Lock())
     {
         return false;
@@ -519,7 +547,10 @@ void LT_FreeLibraryAndExitThread(HMODULE hLibModule, DWORD dwExitCode)
         return;
     }
 
-    delModule(tracker, hLibModule);
+    if (hLibModule != HMODULE_GLEAM_RT)
+    {
+        delModule(tracker, hLibModule);
+    }
     dbg_log("[library]", "FreeLibraryAndExitThread: 0x%zX", hLibModule);
 
     if (!LT_Unlock())
@@ -528,6 +559,34 @@ void LT_FreeLibraryAndExitThread(HMODULE hLibModule, DWORD dwExitCode)
     }
 
     tracker->FreeLibraryAndExitThread(hLibModule, dwExitCode);
+}
+
+__declspec(noinline)
+static bool isGleamRT_A(LPCSTR lpLibFileName)
+{
+    // build "GleamRT.dll" string
+    byte module[] = {
+        'G'^0x5D, 'l'^0x2A, 'e'^0x17, 'a'^0xCF, 
+        'm'^0x5D, 'R'^0x2A, 'T'^0x17, '.'^0xCF, 
+        'd'^0x5D, 'l'^0x2A, 'l'^0x17, 000^0xCF,
+    };
+    byte key[] = { 0x5D, 0x2A, 0x17, 0xCF };
+    XORBuf(module, sizeof(module), key, sizeof(key));
+    return stricmp_a(module, (byte*)lpLibFileName) == 0;
+}
+
+__declspec(noinline)
+static bool isGleamRT_W(LPCWSTR lpLibFileName)
+{
+    // build "GleamRT.dll" string
+    uint16 module[] = {
+        L'G'^0x147F, L'l'^0xAA72, L'e'^0xCA43, L'a'^0x19B2, 
+        L'm'^0x147F, L'R'^0xAA72, L'T'^0xCA43, L'.'^0x19B2, 
+        L'd'^0x147F, L'l'^0xAA72, L'l'^0xCA43, 0000^0x19B2,
+    };
+    uint16 key[] = { 0x147F, 0xAA72, 0xCA43, 0x19B2 };
+    XORBuf(module, sizeof(module), key, sizeof(key));
+    return stricmp_w(module, (uint16*)lpLibFileName) == 0;
 }
 
 static bool addModule(LibraryTracker* tracker, HMODULE hModule)

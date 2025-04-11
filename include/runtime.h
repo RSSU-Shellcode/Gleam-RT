@@ -24,6 +24,7 @@ typedef DWORD ALG_ID;
 
 // about library tracker
 #ifndef MOD_LIBRARY_H
+#define HMODULE_GLEAM_RT ((HMODULE)(0x00001234))
 typedef struct {
     int64 NumModules;
 } LT_Status;

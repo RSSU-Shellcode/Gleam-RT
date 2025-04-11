@@ -7,6 +7,8 @@
 #include "errno.h"
 #include "context.h"
 
+#define HMODULE_GLEAM_RT ((HMODULE)(0x00001234))
+
 typedef struct {
     int64 NumModules;
 } LT_Status;

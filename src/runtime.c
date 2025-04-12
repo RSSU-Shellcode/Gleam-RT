@@ -265,6 +265,7 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     {
         errno = ERR_RUNTIME_FLUSH_INST;
     }
+    // TODO remove it
     // start event handler
     // if (errno == NO_ERROR)
     // {
@@ -1450,8 +1451,8 @@ void* RT_GetProcAddressOriginal(HMODULE hModule, LPCSTR lpProcName)
 // getRuntimeMethods is used to obtain runtime internal methods, 
 // such as GetProcAddress, ExitProcess and submodule methods.
 // 
-// HMODULE hModule = LoadLibraryA("GleamRT.dll");
-// void* proc = GetProcAddress(hModule, "RT_AS_GetValue");
+// HMODULE hGleamRT = LoadLibraryA("GleamRT.dll");
+// ArgGetValue_t AS_GetValue = GetProcAddress(hGleamRT, "AS_GetValue");
 static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
 {
     Runtime* runtime = getRuntimePointer();
@@ -1465,35 +1466,35 @@ static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
     method methods[] =
 #ifdef _WIN64
     {
-        { 0xE7AC0FD5CC12AD9D, 0x46AF7436C11E47EB, GetFuncAddr(&RT_GetProcAddressByName)   },
-        { 0x205E958F3478EB29, 0x0B344C483071EA88, GetFuncAddr(&RT_GetProcAddressByHash)   },
-        { 0x52C9A12B0C3BBC29, 0x80D602FC3A5DD22A, GetFuncAddr(&RT_GetProcAddressOriginal) },
-        { 0x0EE2293365063FA9, 0xAE3CDDE21505B0CC, GetFuncAddr(&RT_ExitProcess)            },
-        { 0x6A02F558B3968168, 0x15BD021B51796FE2, AS->GetValue   }, // RT_AS_GetValue
-        { 0x528C040816E3C7C4, 0xC2BEA0891841420F, AS->GetPointer }, // RT_AS_GetPointer
-        { 0x2C971D3A91D6819B, 0xCB6F3EF75315AB9E, AS->Erase      }, // RT_AS_Erase
-        { 0x784C9D23ABAD9E10, 0x3C7CCF88406B3E64, AS->EraseAll   }, // RT_AS_EraseAll
-        { 0xDB9EF088829FCEA9, 0x72EFB3A106842A53, IS->SetValue   }, // RT_IMS_SetValue 
-        { 0xF3377A26479EB3CB, 0xB9D6D8F56D02F264, IS->GetValue   }, // RT_IMS_GetValue 
-        { 0x448103F8E395E880, 0xDDE5F1CCCA965582, IS->GetPointer }, // RT_IMS_GetPointer 
-        { 0x18E68E8D0181C7D3, 0xC1533F69CFD86286, IS->Delete     }, // RT_IMS_Delete 
-        { 0xD4D85FA2D950D418, 0x8EF761B32DD5CF68, IS->DeleteAll  }, // RT_IMS_DeleteAll
+        { 0x52187F62F4945F79, 0xF442C1ADABF51271, GetFuncAddr(&RT_GetProcAddressByName)   },
+        { 0x2FCD603A5673973E, 0x6444A5D4745B752F, GetFuncAddr(&RT_GetProcAddressByHash)   },
+        { 0x5DB9AA507EF01975, 0x93507B2BB7467F2A, GetFuncAddr(&RT_GetProcAddressOriginal) },
+        { 0x08AE916CC0D36CFE, 0x0C38FF56F889D412, GetFuncAddr(&RT_ExitProcess)            },
+        { 0xFFEEAA421CDF46F9, 0x0F45E2D1E152442A, AS->GetValue   }, // AS_GetValue
+        { 0x9D3BD80CE0C033C5, 0x765B0D75B2CD552F, AS->GetPointer }, // AS_GetPointer
+        { 0x80E96A620E350D88, 0x15106DAD2D6BE9CD, AS->Erase      }, // AS_Erase
+        { 0xE9C53880A18DDBC5, 0xAD4B424AD7107356, AS->EraseAll   }, // AS_EraseAll
+        { 0xA0A8E5B8C3DCFA51, 0xF17677C850F79009, IS->SetValue   }, // IMS_SetValue 
+        { 0x5568210A09021F99, 0x7E0F49707DAD80D9, IS->GetValue   }, // IMS_GetValue 
+        { 0x1AFF08C4BE4D98F6, 0x0A4B9FCC81A591B0, IS->GetPointer }, // IMS_GetPointer 
+        { 0xEA25919E9BCC040C, 0x8E6D5D80012FC665, IS->Delete     }, // IMS_Delete 
+        { 0x1BA69F89ED463649, 0xE15C2CBCC46E7A66, IS->DeleteAll  }, // IMS_DeleteAll
     };
 #elif _WIN32
     {
-        { 0x1341B201, 0x87251AE5, GetFuncAddr(&RT_GetProcAddressByName)   },
-        { 0x54CE5E65, 0x4B1447A8, GetFuncAddr(&RT_GetProcAddressByHash)   },
-        { 0xCCB4626B, 0x89F8B2B0, GetFuncAddr(&RT_GetProcAddressOriginal) },
-        { 0x3630A253, 0x62BC6C1D, GetFuncAddr(&RT_ExitProcess)            },
-        { 0x60684ACC, 0xB1F98016, AS->GetValue   }, // RT_AS_GetValue
-        { 0x58A01B5B, 0x9E4D45AC, AS->GetPointer }, // RT_AS_GetPointer
-        { 0x29C58712, 0x88F20801, AS->Erase      }, // RT_AS_Erase
-        { 0x6E0B3B88, 0x6A080B6B, AS->EraseAll   }, // RT_AS_EraseAll
-        { 0x4B5EF362, 0x4238A631, IS->SetValue   }, // RT_IMS_SetValue 
-        { 0x835BFB13, 0xC7907B35, IS->GetValue   }, // RT_IMS_GetValue 
-        { 0xBC30677C, 0x6EF2BC17, IS->GetPointer }, // RT_IMS_GetPointer 
-        { 0x953387D5, 0x3EC82FF1, IS->Delete     }, // RT_IMS_Delete 
-        { 0x9E5771AF, 0x15EF57B3, IS->DeleteAll  }, // RT_IMS_DeleteAll
+        { 0x7E1AF33A, 0xEEE22443, GetFuncAddr(&RT_GetProcAddressByName)   },
+        { 0xA1AAE17C, 0xECCF6C34, GetFuncAddr(&RT_GetProcAddressByHash)   },
+        { 0x6046265E, 0x6ADAF8C8, GetFuncAddr(&RT_GetProcAddressOriginal) },
+        { 0x12FF4CA2, 0xF64D1260, GetFuncAddr(&RT_ExitProcess)            },
+        { 0x2C862E1B, 0xABE0C2CD, AS->GetValue   }, // AS_GetValue
+        { 0xC3EBBD09, 0x5E0F8C56, AS->GetPointer }, // AS_GetPointer
+        { 0x1EFCD1B4, 0x637F5BB1, AS->Erase      }, // AS_Erase
+        { 0xD02FEA75, 0x4665275D, AS->EraseAll   }, // AS_EraseAll
+        { 0x52BC6DA8, 0xBF3C9F7C, IS->SetValue   }, // IMS_SetValue 
+        { 0x26872151, 0x915877AF, IS->GetValue   }, // IMS_GetValue 
+        { 0xE3247E50, 0xB8733B89, IS->GetPointer }, // IMS_GetPointer 
+        { 0x1957C984, 0x0765E67F, IS->Delete     }, // IMS_Delete 
+        { 0x42A377C5, 0x55FBD86A, IS->DeleteAll  }, // IMS_DeleteAll
     };
 #endif
     for (int i = 0; i < arrlen(methods); i++)

@@ -38,10 +38,10 @@ hash_api -fmt 64 -conc -func SleepEx
 echo.
 
 echo [Runtime Methods]
-hash_api -fmt 64 -conc -mod "GleamRT.dll" -func RT_GetProcAddressByName
-hash_api -fmt 64 -conc -mod "GleamRT.dll" -func RT_GetProcAddressByHash
-hash_api -fmt 64 -conc -mod "GleamRT.dll" -func RT_GetProcAddressOriginal
-hash_api -fmt 64 -conc -mod "GleamRT.dll" -func RT_ExitProcess
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -func GetProcAddressByName
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -func GetProcAddressByHash
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -func GetProcAddressOriginal
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -func ExitProcess
 echo.
 
 echo [Library Tracker]
@@ -144,18 +144,18 @@ hash_api -fmt 64 -conc -mod "mswsock.dll" -func AcceptEx
 echo.
 
 echo [Argument Store]
-hash_api -fmt 64 -conc -mod "GleamRT.dll" -func RT_AS_GetValue
-hash_api -fmt 64 -conc -mod "GleamRT.dll" -func RT_AS_GetPointer
-hash_api -fmt 64 -conc -mod "GleamRT.dll" -func RT_AS_Erase
-hash_api -fmt 64 -conc -mod "GleamRT.dll" -func RT_AS_EraseAll
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -func AS_GetValue
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -func AS_GetPointer
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -func AS_Erase
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -func AS_EraseAll
 echo.
 
 echo [In-Memory Storage]
-hash_api -fmt 64 -conc -mod "GleamRT.dll" -func RT_IMS_SetValue
-hash_api -fmt 64 -conc -mod "GleamRT.dll" -func RT_IMS_GetValue
-hash_api -fmt 64 -conc -mod "GleamRT.dll" -func RT_IMS_GetPointer
-hash_api -fmt 64 -conc -mod "GleamRT.dll" -func RT_IMS_Delete
-hash_api -fmt 64 -conc -mod "GleamRT.dll" -func RT_IMS_DeleteAll
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -func IMS_SetValue
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -func IMS_GetValue
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -func IMS_GetPointer
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -func IMS_Delete
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -func IMS_DeleteAll
 echo.
 
 echo [WinBase Module]
@@ -240,10 +240,10 @@ hash_api -fmt 32 -conc -func SleepEx
 echo.
 
 echo [Runtime Methods]
-hash_api -fmt 32 -conc -mod "GleamRT.dll" -func RT_GetProcAddressByName
-hash_api -fmt 32 -conc -mod "GleamRT.dll" -func RT_GetProcAddressByHash
-hash_api -fmt 32 -conc -mod "GleamRT.dll" -func RT_GetProcAddressOriginal
-hash_api -fmt 32 -conc -mod "GleamRT.dll" -func RT_ExitProcess
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -func GetProcAddressByName
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -func GetProcAddressByHash
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -func GetProcAddressOriginal
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -func ExitProcess
 echo.
 
 echo [Library Tracker]
@@ -346,18 +346,18 @@ hash_api -fmt 32 -conc -mod "mswsock.dll" -func AcceptEx
 echo.
 
 echo [Argument Store]
-hash_api -fmt 32 -conc -mod "GleamRT.dll" -func RT_AS_GetValue
-hash_api -fmt 32 -conc -mod "GleamRT.dll" -func RT_AS_GetPointer
-hash_api -fmt 32 -conc -mod "GleamRT.dll" -func RT_AS_Erase
-hash_api -fmt 32 -conc -mod "GleamRT.dll" -func RT_AS_EraseAll
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -func AS_GetValue
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -func AS_GetPointer
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -func AS_Erase
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -func AS_EraseAll
 echo.
 
 echo [In-Memory Storage]
-hash_api -fmt 32 -conc -mod "GleamRT.dll" -func RT_IMS_SetValue
-hash_api -fmt 32 -conc -mod "GleamRT.dll" -func RT_IMS_GetValue
-hash_api -fmt 32 -conc -mod "GleamRT.dll" -func RT_IMS_GetPointer
-hash_api -fmt 32 -conc -mod "GleamRT.dll" -func RT_IMS_Delete
-hash_api -fmt 32 -conc -mod "GleamRT.dll" -func RT_IMS_DeleteAll
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -func IMS_SetValue
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -func IMS_GetValue
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -func IMS_GetPointer
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -func IMS_Delete
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -func IMS_DeleteAll
 echo.
 
 echo [WinBase Module]

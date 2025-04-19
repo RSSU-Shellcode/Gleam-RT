@@ -156,6 +156,7 @@ static errno initWinHTTP(Runtime* runtime, Context* context);
 static errno initWinCrypto(Runtime* runtime, Context* context);
 static bool  initIATHooks(Runtime* runtime);
 static bool  flushInstructionCache(Runtime* runtime);
+static void  eraseArgumentStub(Runtime* runtime);
 static void  eraseRuntimeMethods(Runtime* runtime);
 static errno cleanRuntime(Runtime* runtime);
 
@@ -249,6 +250,11 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
             break;
         }
         break;
+    }
+    // if failed to initialize runtime, erase argument stub if memory page can write.
+    if (errno > ERR_RUNTIME_ADJUST_PROTECT || opts->NotAdjustProtect)
+    {
+        eraseArgumentStub(runtime);
     }
     if (errno == NO_ERROR || errno > ERR_RUNTIME_ADJUST_PROTECT)
     {
@@ -942,6 +948,23 @@ static bool initIATHooks(Runtime* runtime)
         runtime->IATHooks[i].Hook = items[i].hook;
     }
     return true;
+}
+
+__declspec(noinline)
+static void eraseArgumentStub(Runtime* runtime)
+{
+    if (runtime->Options.NotEraseInstruction)
+    {
+        return;
+    }
+    // stub will be erased, if load argument successfully
+    if (!isValidArgumentStub())
+    {
+        return;
+    }
+    uintptr stub = (uintptr)(GetFuncAddr(&Argument_Stub));
+    uint32  size = *(uint32*)(stub + ARG_OFFSET_ARGS_SIZE);
+    RandBuffer((byte*)stub, ARG_HEADER_SIZE + size);
 }
 
 __declspec(noinline)

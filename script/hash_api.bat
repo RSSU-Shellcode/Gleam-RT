@@ -133,6 +133,15 @@ hash_api -fmt 64 -conc -func FindFirstFileExA
 hash_api -fmt 64 -conc -func FindFirstFileExW
 hash_api -fmt 64 -conc -func FindClose
 hash_api -fmt 64 -conc -func CreateIoCompletionPort
+hash_api -fmt 64 -conc -mod "advapi32.dll" -func RegCreateKeyA
+hash_api -fmt 64 -conc -mod "advapi32.dll" -func RegCreateKeyW
+hash_api -fmt 64 -conc -mod "advapi32.dll" -func RegCreateKeyExA
+hash_api -fmt 64 -conc -mod "advapi32.dll" -func RegCreateKeyExW
+hash_api -fmt 64 -conc -mod "advapi32.dll" -func RegOpenKeyA
+hash_api -fmt 64 -conc -mod "advapi32.dll" -func RegOpenKeyW
+hash_api -fmt 64 -conc -mod "advapi32.dll" -func RegOpenKeyExA
+hash_api -fmt 64 -conc -mod "advapi32.dll" -func RegOpenKeyExW
+hash_api -fmt 64 -conc -mod "advapi32.dll" -func RegCloseKey
 hash_api -fmt 64 -conc -mod "ws2_32.dll" -func WSAStartup
 hash_api -fmt 64 -conc -mod "ws2_32.dll" -func WSACleanup
 hash_api -fmt 64 -conc -mod "ws2_32.dll" -func WSASocketA
@@ -335,6 +344,15 @@ hash_api -fmt 32 -conc -func FindFirstFileExA
 hash_api -fmt 32 -conc -func FindFirstFileExW
 hash_api -fmt 32 -conc -func FindClose
 hash_api -fmt 32 -conc -func CreateIoCompletionPort
+hash_api -fmt 32 -conc -mod "advapi32.dll" -func RegCreateKeyA
+hash_api -fmt 32 -conc -mod "advapi32.dll" -func RegCreateKeyW
+hash_api -fmt 32 -conc -mod "advapi32.dll" -func RegCreateKeyExA
+hash_api -fmt 32 -conc -mod "advapi32.dll" -func RegCreateKeyExW
+hash_api -fmt 32 -conc -mod "advapi32.dll" -func RegOpenKeyA
+hash_api -fmt 32 -conc -mod "advapi32.dll" -func RegOpenKeyW
+hash_api -fmt 32 -conc -mod "advapi32.dll" -func RegOpenKeyExA
+hash_api -fmt 32 -conc -mod "advapi32.dll" -func RegOpenKeyExW
+hash_api -fmt 32 -conc -mod "advapi32.dll" -func RegCloseKey
 hash_api -fmt 32 -conc -mod "ws2_32.dll" -func WSAStartup
 hash_api -fmt 32 -conc -mod "ws2_32.dll" -func WSACleanup
 hash_api -fmt 32 -conc -mod "ws2_32.dll" -func WSASocketA

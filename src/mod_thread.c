@@ -309,7 +309,7 @@ __declspec(noinline)
 static bool initTrackerEnvironment(ThreadTracker* tracker, Context* context)
 {
     // create mutex
-    HANDLE hMutex = context->CreateMutexA(NULL, false, NULL);
+    HANDLE hMutex = context->CreateMutexA(NULL, false, NAME_RT_TT_MUTEX_GLOBAL);
     if (hMutex == NULL)
     {
         return false;
@@ -921,7 +921,7 @@ void TT_ThdSleep(uint32 milliseconds)
     }
 
     // simulate kernel32.Sleep
-    HANDLE hTimer = create(NULL, false, NAME_TT_TIMER_SLEEP);
+    HANDLE hTimer = create(NULL, false, NAME_RT_TT_TIMER_SLEEP);
     if (hTimer == NULL)
     {
         return;

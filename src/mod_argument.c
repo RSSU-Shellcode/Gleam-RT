@@ -180,7 +180,7 @@ static bool recoverStorePointer(ArgumentStore* store)
 static bool initStoreEnvironment(ArgumentStore* store, Context* context)
 {
     // create mutex
-    HANDLE hMutex = context->CreateMutexA(NULL, false, NULL);
+    HANDLE hMutex = context->CreateMutexA(NULL, false, NAME_RT_AS_MUTEX_GLOBAL);
     if (hMutex == NULL)
     {
         return false;

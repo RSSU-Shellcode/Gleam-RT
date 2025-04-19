@@ -429,7 +429,7 @@ __declspec(noinline)
 static bool initTrackerEnvironment(MemoryTracker* tracker, Context* context)
 {
     // create mutex
-    HANDLE hMutex = context->CreateMutexA(NULL, false, NULL);
+    HANDLE hMutex = context->CreateMutexA(NULL, false, NAME_RT_MT_MUTEX_GLOBAL);
     if (hMutex == NULL)
     {
         return false;

@@ -204,7 +204,7 @@ static bool recoverModulePointer(WinHTTP* module)
 static bool initModuleEnvironment(WinHTTP* module, Context* context)
 {
     // create global mutex
-    HANDLE hMutex = context->CreateMutexA(NULL, false, NULL);
+    HANDLE hMutex = context->CreateMutexA(NULL, false, NAME_RT_WIN_HTTP_MUTEX);
     if (hMutex == NULL)
     {
         return false;

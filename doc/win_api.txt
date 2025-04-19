@@ -53,6 +53,15 @@ https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-findfirst
 https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-findfirstfileexw
 https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-findclose
 https://learn.microsoft.com/en-us/windows/win32/fileio/createiocompletionport
+https://learn.microsoft.com/en-us/windows/win32/api/winreg/nf-winreg-regcreatekeya
+https://learn.microsoft.com/en-us/windows/win32/api/winreg/nf-winreg-regcreatekeyw
+https://learn.microsoft.com/en-us/windows/win32/api/winreg/nf-winreg-regcreatekeyexa
+https://learn.microsoft.com/en-us/windows/win32/api/winreg/nf-winreg-regcreatekeyexw
+https://learn.microsoft.com/en-us/windows/win32/api/winreg/nf-winreg-regopenkeya
+https://learn.microsoft.com/en-us/windows/win32/api/winreg/nf-winreg-regopenkeyw
+https://learn.microsoft.com/en-us/windows/win32/api/winreg/nf-winreg-regopenkeyexa
+https://learn.microsoft.com/en-us/windows/win32/api/winreg/nf-winreg-regopenkeyexw
+https://learn.microsoft.com/en-us/windows/win32/api/winreg/nf-winreg-regclosekey
 https://learn.microsoft.com/en-us/windows/win32/winsock/windows-sockets-error-codes-2
 https://learn.microsoft.com/en-us/windows/win32/api/winsock/nf-winsock-wsastartup
 https://learn.microsoft.com/en-us/windows/win32/api/winsock/nf-winsock-wsacleanup

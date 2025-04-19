@@ -202,7 +202,7 @@ static bool recoverModulePointer(WinCrypto* module)
 static bool initModuleEnvironment(WinCrypto* module, Context* context)
 {
     // create global mutex
-    HANDLE hMutex = context->CreateMutexA(NULL, false, NULL);
+    HANDLE hMutex = context->CreateMutexA(NULL, false, NAME_RT_WIN_CRYPTO_MUTEX);
     if (hMutex == NULL)
     {
         return false;

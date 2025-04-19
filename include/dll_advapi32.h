@@ -4,10 +4,13 @@
 #include "c_types.h"
 #include "win_types.h"
 
+typedef HANDLE HKEY;
 typedef HANDLE HCRYPTPROV;
 typedef HANDLE HCRYPTKEY;
 typedef HANDLE HCRYPTHASH;
 
+typedef DWORD LSTATUS;
+typedef DWORD REGSAM;
 typedef DWORD ALG_ID;
 
 #define PROV_RSA_FULL      1
@@ -131,6 +134,57 @@ typedef struct {
     BYTE*  pbOuterString;
     DWORD  cbOuterString;
 } HMAC_INFO;
+
+typedef LSTATUS (*RegCreateKeyA_t)
+(
+    HKEY hKey, LPCSTR lpSubKey, HKEY* phkResult
+);
+
+typedef LSTATUS (*RegCreateKeyW_t)
+(
+    HKEY hKey, LPCWSTR lpSubKey, HKEY* phkResult
+);
+
+typedef LSTATUS (*RegCreateKeyExA_t)
+(
+    HKEY hKey, LPCSTR lpSubKey, DWORD Reserved, LPSTR lpClass,
+    DWORD dwOptions, REGSAM samDesired, POINTER lpSecurityAttributes,
+    HKEY* phkResult, DWORD* lpdwDisposition
+);
+
+typedef LSTATUS (*RegCreateKeyExW_t)
+(
+    HKEY hKey, LPCWSTR lpSubKey, DWORD Reserved, LPWSTR lpClass,
+    DWORD dwOptions, REGSAM samDesired, POINTER lpSecurityAttributes,
+    HKEY* phkResult, DWORD* lpdwDisposition
+);
+
+typedef LSTATUS (*RegOpenKeyA_t)
+(
+    HKEY hKey, LPCSTR lpSubKey, HKEY* phkResult
+);
+
+typedef LSTATUS (*RegOpenKeyW_t)
+(
+    HKEY hKey, LPCWSTR lpSubKey, HKEY* phkResult
+);
+
+typedef LSTATUS (*RegOpenKeyExA_t)
+(
+    HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, 
+    REGSAM samDesired, HKEY* phkResult
+);
+
+typedef LSTATUS (*RegOpenKeyExW_t)
+(
+    HKEY hKey, LPCWSTR lpSubKey, DWORD ulOptions,
+    REGSAM samDesired, HKEY* phkResult
+);
+
+typedef LSTATUS (*RegCloseKey_t)
+(
+    HKEY hKey
+);
 
 typedef BOOL (*CryptAcquireContextA_t)
 (

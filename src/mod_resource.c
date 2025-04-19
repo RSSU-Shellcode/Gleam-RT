@@ -1,6 +1,7 @@
 #include "c_types.h"
 #include "win_types.h"
 #include "dll_kernel32.h"
+#include "dll_advapi32.h"
 #include "dll_ws2_32.h"
 #include "lib_memory.h"
 #include "rel_addr.h"
@@ -23,17 +24,21 @@
 // function types about release handle
 #define TYPE_CLOSE_HANDLE 0x01000000
 #define TYPE_FIND_CLOSE   0x02000000
-#define TYPE_CLOSE_SOCKET 0x03000000
+#define TYPE_CLOSE_KEY    0x03000000
+#define TYPE_CLOSE_SOCKET 0x04000000
 
 // major function types
-#define FUNC_CREATE_MUTEX              (TYPE_CLOSE_HANDLE|0x00000100)
-#define FUNC_CREATE_EVENT              (TYPE_CLOSE_HANDLE|0x00000200)
-#define FUNC_CREATE_SEMAPHORE          (TYPE_CLOSE_HANDLE|0x00000300)
-#define FUNC_CREATE_WAITABLE_TIMER     (TYPE_CLOSE_HANDLE|0x00000400)
-#define FUNC_CREATE_FILE               (TYPE_CLOSE_HANDLE|0x00000500)
-#define FUNC_CREATE_IO_COMPLETION_PORT (TYPE_CLOSE_HANDLE|0x00000600)
+#define FUNC_CREATE_MUTEX          (TYPE_CLOSE_HANDLE|0x00000100)
+#define FUNC_CREATE_EVENT          (TYPE_CLOSE_HANDLE|0x00000200)
+#define FUNC_CREATE_SEMAPHORE      (TYPE_CLOSE_HANDLE|0x00000300)
+#define FUNC_CREATE_WAITABLE_TIMER (TYPE_CLOSE_HANDLE|0x00000400)
+#define FUNC_CREATE_FILE           (TYPE_CLOSE_HANDLE|0x00000500)
+#define FUNC_CREATE_IOCP           (TYPE_CLOSE_HANDLE|0x00000600)
 
 #define FUNC_FIND_FIRST_FILE (TYPE_FIND_CLOSE|0x00000100)
+
+#define FUNC_REG_CREATE_KEY (TYPE_CLOSE_KEY|0x00000100)
+#define FUNC_REG_OPEN_KEY   (TYPE_CLOSE_KEY|0x00000200)
 
 #define FUNC_WSA_SOCKET (TYPE_CLOSE_SOCKET|0x00000100)
 #define FUNC_ACCEPT     (TYPE_CLOSE_SOCKET|0x00000200)
@@ -63,12 +68,22 @@
 #define SRC_CREATE_FILE_A (FUNC_CREATE_FILE|0x01)
 #define SRC_CREATE_FILE_W (FUNC_CREATE_FILE|0x02)
 
-#define SRC_CREATE_IO_COMPLETION_PORT (FUNC_CREATE_IO_COMPLETION_PORT|0x01)
+#define SRC_CREATE_IOCP (FUNC_CREATE_IOCP|0x01)
 
 #define SRC_FIND_FIRST_FILE_A    (FUNC_FIND_FIRST_FILE|0x01)
 #define SRC_FIND_FIRST_FILE_W    (FUNC_FIND_FIRST_FILE|0x02)
 #define SRC_FIND_FIRST_FILE_EX_A (FUNC_FIND_FIRST_FILE|0x03)
 #define SRC_FIND_FIRST_FILE_EX_W (FUNC_FIND_FIRST_FILE|0x04)
+
+#define SRC_REG_CREATE_KEY_A    (FUNC_REG_CREATE_KEY|0x01)
+#define SRC_REG_CREATE_KEY_W    (FUNC_REG_CREATE_KEY|0x02)
+#define SRC_REG_CREATE_KEY_EX_A (FUNC_REG_CREATE_KEY|0x03)
+#define SRC_REG_CREATE_KEY_EX_W (FUNC_REG_CREATE_KEY|0x04)
+
+#define SRC_REG_OPEN_KEY_A    (FUNC_REG_OPEN_KEY|0x01)
+#define SRC_REG_OPEN_KEY_W    (FUNC_REG_OPEN_KEY|0x02)
+#define SRC_REG_OPEN_KEY_EX_A (FUNC_REG_OPEN_KEY|0x03)
+#define SRC_REG_OPEN_KEY_EX_W (FUNC_REG_OPEN_KEY|0x04)
 
 #define SRC_WSA_SOCKET_A (FUNC_WSA_SOCKET|0x01)
 #define SRC_WSA_SOCKET_W (FUNC_WSA_SOCKET|0x02)
@@ -201,6 +216,28 @@ HANDLE RT_CreateIoCompletionPort(
     HANDLE FileHandle, HANDLE ExistingCompletionPort, POINTER CompletionKey,
     DWORD NumberOfConcurrentThreads
 );
+
+LSTATUS RT_RegCreateKeyA(HKEY hKey, LPCSTR lpSubKey, HKEY* phkResult);
+LSTATUS RT_RegCreateKeyW(HKEY hKey, LPCWSTR lpSubKey, HKEY* phkResult);
+LSTATUS RT_RegCreateKeyExA(
+    HKEY hKey, LPCSTR lpSubKey, DWORD Reserved, LPSTR lpClass,
+    DWORD dwOptions, REGSAM samDesired, POINTER lpSecurityAttributes,
+    HKEY* phkResult, DWORD* lpdwDisposition
+);
+LSTATUS RT_RegCreateKeyExW(
+    HKEY hKey, LPCWSTR lpSubKey, DWORD Reserved, LPWSTR lpClass,
+    DWORD dwOptions, REGSAM samDesired, POINTER lpSecurityAttributes,
+    HKEY* phkResult, DWORD* lpdwDisposition
+);
+LSTATUS RT_RegOpenKeyA(HKEY hKey, LPCSTR lpSubKey, HKEY* phkResult);
+LSTATUS RT_RegOpenKeyW(HKEY hKey, LPCWSTR lpSubKey, HKEY* phkResult);
+LSTATUS RT_RegOpenKeyExA(
+    HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, HKEY* phkResult
+);
+LSTATUS RT_RegOpenKeyExW(
+    HKEY hKey, LPCWSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, HKEY* phkResult
+);
+
 SOCKET RT_WSASocketA(
     int af, int type, int protocol, POINTER lpProtocolInfo, POINTER g, DWORD dwFlags
 );
@@ -210,9 +247,10 @@ SOCKET RT_WSASocketW(
 SOCKET RT_socket(int af, int type, int protocol);
 SOCKET RT_accept(SOCKET s, POINTER addr, int* addrlen);
 
-BOOL RT_CloseHandle(HANDLE hObject);
-BOOL RT_FindClose(HANDLE hFindFile);
-int  RT_closesocket(SOCKET hSocket);
+BOOL    RT_CloseHandle(HANDLE hObject);
+BOOL    RT_FindClose(HANDLE hFindFile);
+LSTATUS RT_RegCloseKey(HKEY hKey);
+int     RT_closesocket(SOCKET hSocket);
 
 // resource counters
 int RT_WSAStartup(WORD wVersionRequired, POINTER lpWSAData);
@@ -319,12 +357,21 @@ ResourceTracker_M* InitResourceTracker(Context* context)
     module->FindFirstFileExA       = GetFuncAddr(&RT_FindFirstFileExA);
     module->FindFirstFileExW       = GetFuncAddr(&RT_FindFirstFileExW);
     module->CreateIoCompletionPort = GetFuncAddr(&RT_CreateIoCompletionPort);
+    module->RegCreateKeyA          = GetFuncAddr(&RT_RegCreateKeyA);
+    module->RegCreateKeyW          = GetFuncAddr(&RT_RegCreateKeyW);
+    module->RegCreateKeyExA        = GetFuncAddr(&RT_RegCreateKeyExA);
+    module->RegCreateKeyExW        = GetFuncAddr(&RT_RegCreateKeyExW);
+    module->RegOpenKeyA            = GetFuncAddr(&RT_RegOpenKeyA);
+    module->RegOpenKeyW            = GetFuncAddr(&RT_RegOpenKeyW);
+    module->RegOpenKeyExA          = GetFuncAddr(&RT_RegOpenKeyExA);
+    module->RegOpenKeyExW          = GetFuncAddr(&RT_RegOpenKeyExW);
     module->WSASocketA             = GetFuncAddr(&RT_WSASocketA);
     module->WSASocketW             = GetFuncAddr(&RT_WSASocketW);
     module->socket                 = GetFuncAddr(&RT_socket);
     module->accept                 = GetFuncAddr(&RT_accept);
     module->CloseHandle            = GetFuncAddr(&RT_CloseHandle);
     module->FindClose              = GetFuncAddr(&RT_FindClose);
+    module->RegCloseKey            = GetFuncAddr(&RT_RegCloseKey);
     module->closesocket            = GetFuncAddr(&RT_closesocket);
     module->WSAStartup             = GetFuncAddr(&RT_WSAStartup);
     module->WSACleanup             = GetFuncAddr(&RT_WSACleanup);
@@ -1327,7 +1374,7 @@ HANDLE RT_CreateIoCompletionPort(
         {
             break;
         }
-        if (!addHandleMu(tracker, hPort, SRC_CREATE_IO_COMPLETION_PORT))
+        if (!addHandleMu(tracker, hPort, SRC_CREATE_IOCP))
         {
             lastErr = ERR_RESOURCE_ADD_IO_COMPLETION_PORT;
             break;
@@ -1338,6 +1385,60 @@ HANDLE RT_CreateIoCompletionPort(
 
     dbg_log("[resource]", "CreateIoCompletionPort: 0x%zX", FileHandle);
     return hPort;
+}
+
+__declspec(noinline)
+LSTATUS RT_RegCreateKeyA(HKEY hKey, LPCSTR lpSubKey, HKEY* phkResult)
+{
+
+}
+
+__declspec(noinline)
+LSTATUS RT_RegCreateKeyW(HKEY hKey, LPCWSTR lpSubKey, HKEY* phkResult)
+{
+
+}
+
+__declspec(noinline)
+LSTATUS RT_RegCreateKeyExA(
+    HKEY hKey, LPCSTR lpSubKey, DWORD Reserved, LPSTR lpClass,
+    DWORD dwOptions, REGSAM samDesired, POINTER lpSecurityAttributes,
+    HKEY* phkResult, DWORD* lpdwDisposition
+){
+
+}
+
+__declspec(noinline)
+LSTATUS RT_RegCreateKeyExW(
+    HKEY hKey, LPCWSTR lpSubKey, DWORD Reserved, LPWSTR lpClass,
+    DWORD dwOptions, REGSAM samDesired, POINTER lpSecurityAttributes,
+    HKEY* phkResult, DWORD* lpdwDisposition
+){
+
+}
+
+__declspec(noinline)
+LSTATUS RT_RegOpenKeyA(HKEY hKey, LPCSTR lpSubKey, HKEY* phkResult)
+{
+}
+
+__declspec(noinline)
+LSTATUS RT_RegOpenKeyW(HKEY hKey, LPCWSTR lpSubKey, HKEY* phkResult)
+{
+}
+
+__declspec(noinline)
+LSTATUS RT_RegOpenKeyExA(
+    HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, HKEY* phkResult
+){
+
+}
+
+__declspec(noinline)
+LSTATUS RT_RegOpenKeyExW(
+    HKEY hKey, LPCWSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, HKEY* phkResult
+){
+
 }
 
 __declspec(noinline)
@@ -1547,6 +1648,12 @@ BOOL RT_FindClose(HANDLE hFindFile)
     dbg_log("[resource]", "FindClose: 0x%zX", hFindFile);
     return success;
 };
+
+__declspec(noinline)
+LSTATUS RT_RegCloseKey(HKEY hKey)
+{
+
+}
 
 __declspec(noinline)
 int RT_closesocket(SOCKET hSocket)
@@ -1881,7 +1988,7 @@ bool RT_GetStatus(RT_Status* status)
         case FUNC_FIND_FIRST_FILE:
             numDirs++;
             break;
-        case FUNC_CREATE_IO_COMPLETION_PORT:
+        case FUNC_CREATE_IOCP:
             numIOCPs++;
             break;
         case FUNC_WSA_SOCKET: case FUNC_ACCEPT: case FUNC_SOCKET:

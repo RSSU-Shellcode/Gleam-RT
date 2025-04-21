@@ -4,6 +4,7 @@
 #include "c_types.h"
 #include "win_types.h"
 #include "dll_kernel32.h"
+#include "dll_advapi32.h"
 #include "dll_ws2_32.h"
 #include "errno.h"
 #include "context.h"
@@ -62,6 +63,15 @@ typedef struct {
 
     CreateIoCompletionPort_t CreateIoCompletionPort;
 
+    RegCreateKeyA_t   RegCreateKeyA;
+    RegCreateKeyW_t   RegCreateKeyW;
+    RegCreateKeyExA_t RegCreateKeyExA;
+    RegCreateKeyExW_t RegCreateKeyExW;
+    RegOpenKeyA_t     RegOpenKeyA;
+    RegOpenKeyW_t     RegOpenKeyW;
+    RegOpenKeyExA_t   RegOpenKeyExA;
+    RegOpenKeyExW_t   RegOpenKeyExW;
+
     WSASocketA_t WSASocketA;
     WSASocketW_t WSASocketW;
     socket_t     socket;
@@ -69,6 +79,7 @@ typedef struct {
 
     CloseHandle_t CloseHandle;
     FindClose_t   FindClose;
+    RegCloseKey_t RegCloseKey;
     closesocket_t closesocket;
 
     WSAStartup_t WSAStartup;

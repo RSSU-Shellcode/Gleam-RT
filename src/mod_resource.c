@@ -1554,11 +1554,77 @@ LSTATUS RT_RegCreateKeyExW(
 __declspec(noinline)
 LSTATUS RT_RegOpenKeyA(HKEY hKey, LPCSTR lpSubKey, HKEY* phkResult)
 {
+    ResourceTracker* tracker = getTrackerPointer();
+
+    LSTATUS lStatus = ERROR_SUCCESS;
+    errno   lastErr = NO_ERROR;
+    for (;;)
+    {
+        RegOpenKeyA_t RegOpenKeyA;
+    #ifdef _WIN64
+        RegOpenKeyA = FindAPI(0x857AA6888A45F4C9, 0x4AFAFEEEC73E784C);
+    #elif _WIN32
+        RegOpenKeyA = FindAPI(0x5F3B549C, 0x588ACE35);
+    #endif
+        if (RegOpenKeyA == NULL)
+        {
+            lastErr = ERR_RESOURCE_API_NOT_FOUND;
+            break;
+        }
+        lStatus = RegOpenKeyA(hKey, lpSubKey, phkResult);
+        if (lStatus != ERROR_SUCCESS)
+        {
+            break;
+        }
+        if (!addHandleMu(tracker, *phkResult, SRC_REG_OPEN_KEY_A))
+        {
+            lastErr = ERR_RESOURCE_ADD_HKEY;
+            break;
+        }
+        break;
+    }
+    SetLastErrno(lastErr);
+
+    dbg_log("[resource]", "RegOpenKeyA: 0x%zX", *phkResult);
+    return lStatus;
 }
 
 __declspec(noinline)
 LSTATUS RT_RegOpenKeyW(HKEY hKey, LPCWSTR lpSubKey, HKEY* phkResult)
 {
+    ResourceTracker* tracker = getTrackerPointer();
+
+    LSTATUS lStatus = ERROR_SUCCESS;
+    errno   lastErr = NO_ERROR;
+    for (;;)
+    {
+        RegOpenKeyW_t RegOpenKeyW;
+    #ifdef _WIN64
+        RegOpenKeyW = FindAPI(0x596B080727585709, 0xB6E5C5A7344C86EF);
+    #elif _WIN32
+        RegOpenKeyW = FindAPI(0xFE6E3A60, 0x1F3C45C5);
+    #endif
+        if (RegOpenKeyW == NULL)
+        {
+            lastErr = ERR_RESOURCE_API_NOT_FOUND;
+            break;
+        }
+        lStatus = RegOpenKeyW(hKey, lpSubKey, phkResult);
+        if (lStatus != ERROR_SUCCESS)
+        {
+            break;
+        }
+        if (!addHandleMu(tracker, *phkResult, SRC_REG_OPEN_KEY_W))
+        {
+            lastErr = ERR_RESOURCE_ADD_HKEY;
+            break;
+        }
+        break;
+    }
+    SetLastErrno(lastErr);
+
+    dbg_log("[resource]", "RegOpenKeyW: 0x%zX", *phkResult);
+    return lStatus;
 }
 
 __declspec(noinline)

@@ -16,6 +16,7 @@ typedef HANDLE HLOCAL;
 #define CURRENT_PROCESS ((HANDLE)(-1))
 #define CURRENT_THREAD  ((HANDLE)(-2))
 
+#define ERROR_SUCCESS             0
 #define ERROR_NO_MORE_ITEMS       259
 #define ERROR_INSUFFICIENT_BUFFER 122
 

@@ -24,7 +24,7 @@
 // function types about release handle
 #define TYPE_CLOSE_HANDLE 0x01000000
 #define TYPE_FIND_CLOSE   0x02000000
-#define TYPE_CLOSE_KEY    0x03000000
+#define TYPE_CLOSE_HKEY   0x03000000
 #define TYPE_CLOSE_SOCKET 0x04000000
 
 // major function types
@@ -37,8 +37,8 @@
 
 #define FUNC_FIND_FIRST_FILE (TYPE_FIND_CLOSE|0x00000100)
 
-#define FUNC_REG_CREATE_KEY (TYPE_CLOSE_KEY|0x00000100)
-#define FUNC_REG_OPEN_KEY   (TYPE_CLOSE_KEY|0x00000200)
+#define FUNC_REG_CREATE_KEY (TYPE_CLOSE_HKEY|0x00000100)
+#define FUNC_REG_OPEN_KEY   (TYPE_CLOSE_HKEY|0x00000200)
 
 #define FUNC_WSA_SOCKET (TYPE_CLOSE_SOCKET|0x00000100)
 #define FUNC_ACCEPT     (TYPE_CLOSE_SOCKET|0x00000200)
@@ -1376,7 +1376,7 @@ HANDLE RT_CreateIoCompletionPort(
         }
         if (!addHandleMu(tracker, hPort, SRC_CREATE_IOCP))
         {
-            lastErr = ERR_RESOURCE_ADD_IO_COMPLETION_PORT;
+            lastErr = ERR_RESOURCE_ADD_IOCP;
             break;
         }
         break;
@@ -1387,16 +1387,100 @@ HANDLE RT_CreateIoCompletionPort(
     return hPort;
 }
 
+// 0xDEF562502ECFC906, 0x3F5AA82CB3098A5E // RegCreateKeyA
+// 0x44B01D3112A46809, 0x45D6EE3EFCCE4368 // RegCreateKeyW
+// 0xE1FEFF278289A0C6, 0x190D4FE8AC872642 // RegCreateKeyExA
+// 0x94B8538578BDDBEE, 0xCC21BEDFFEB6BBDF // RegCreateKeyExW
+// 0x857AA6888A45F4C9, 0x4AFAFEEEC73E784C // RegOpenKeyA
+// 0x596B080727585709, 0xB6E5C5A7344C86EF // RegOpenKeyW
+// 0x189F0999A7259053, 0x4C99200BFC0E770B // RegOpenKeyExA
+// 0xC11E19BF67DF5A0F, 0x9CC21D811EA014ED // RegOpenKeyExW
+// 0xD73DC3457F3F2267, 0xDE79CCC293884D1C // RegCloseKey
+
+// 0x953DDEB4, 0xBD4C7C1F // RegCreateKeyA
+// 0x49E44B92, 0xEAD232CB // RegCreateKeyW
+// 0x32BDE294, 0x3489A92B // RegCreateKeyExA
+// 0x5F5EC82E, 0x2205AD9E // RegCreateKeyExW
+// 0x5F3B549C, 0x588ACE35 // RegOpenKeyA
+// 0xFE6E3A60, 0x1F3C45C5 // RegOpenKeyW
+// 0xBE726FAA, 0xEAD2E08B // RegOpenKeyExA
+// 0x4668AB03, 0xC1931B55 // RegOpenKeyExW
+// 0xB63BD7A6, 0x614CB75F // RegCloseKey
+
 __declspec(noinline)
 LSTATUS RT_RegCreateKeyA(HKEY hKey, LPCSTR lpSubKey, HKEY* phkResult)
 {
+    ResourceTracker* tracker = getTrackerPointer();
 
+    LSTATUS lStatus = ERROR_SUCCESS;
+    errno   lastErr = NO_ERROR;
+    for (;;)
+    {
+        RegCreateKeyA_t RegCreateKeyA;
+    #ifdef _WIN64
+        RegCreateKeyA = FindAPI(0xDEF562502ECFC906, 0x3F5AA82CB3098A5E);
+    #elif _WIN32
+        RegCreateKeyA = FindAPI(0x953DDEB4, 0xBD4C7C1F);
+    #endif
+        if (RegCreateKeyA == NULL)
+        {
+            lastErr = ERR_RESOURCE_API_NOT_FOUND;
+            break;
+        }
+        lStatus = RegCreateKeyA(hKey, lpSubKey, phkResult);
+        if (lStatus != ERROR_SUCCESS)
+        {
+            break;
+        }
+        if (!addHandleMu(tracker, *phkResult, SRC_REG_CREATE_KEY_A))
+        {
+            lastErr = ERR_RESOURCE_ADD_HKEY;
+            break;
+        }
+        break;
+    }
+    SetLastErrno(lastErr);
+
+    dbg_log("[resource]", "RegCreateKeyA: 0x%zX", *phkResult);
+    return lStatus;
 }
 
 __declspec(noinline)
 LSTATUS RT_RegCreateKeyW(HKEY hKey, LPCWSTR lpSubKey, HKEY* phkResult)
 {
+    ResourceTracker* tracker = getTrackerPointer();
 
+    LSTATUS lStatus = ERROR_SUCCESS;
+    errno   lastErr = NO_ERROR;
+    for (;;)
+    {
+        RegCreateKeyW_t RegCreateKeyW;
+    #ifdef _WIN64
+        RegCreateKeyW = FindAPI(0x44B01D3112A46809, 0x45D6EE3EFCCE4368);
+    #elif _WIN32
+        RegCreateKeyW = FindAPI(0x49E44B92, 0xEAD232CB);
+    #endif
+        if (RegCreateKeyW == NULL)
+        {
+            lastErr = ERR_RESOURCE_API_NOT_FOUND;
+            break;
+        }
+        lStatus = RegCreateKeyW(hKey, lpSubKey, phkResult);
+        if (lStatus != ERROR_SUCCESS)
+        {
+            break;
+        }
+        if (!addHandleMu(tracker, *phkResult, SRC_REG_CREATE_KEY_W))
+        {
+            lastErr = ERR_RESOURCE_ADD_HKEY;
+            break;
+        }
+        break;
+    }
+    SetLastErrno(lastErr);
+
+    dbg_log("[resource]", "RegCreateKeyW: 0x%zX", *phkResult);
+    return lStatus;
 }
 
 __declspec(noinline)
@@ -1718,6 +1802,7 @@ static bool addHandle(ResourceTracker* tracker, void* hObject, uint32 source)
     case TYPE_FIND_CLOSE:
         tracker->FindClose(hObject);
         break;
+        // TODO find api
     }
     return false;
 };
@@ -1938,6 +2023,7 @@ static bool setHandleLocker(HANDLE hObject, uint32 func, bool lock)
     return success;
 }
 
+// TODO add 
 __declspec(noinline)
 bool RT_GetStatus(RT_Status* status)
 {
@@ -2088,6 +2174,9 @@ errno RT_FreeAll()
 {
     ResourceTracker* tracker = getTrackerPointer();
 
+    
+
+
     // close all tracked handles
     List* handles = &tracker->Handles;
     errno errno   = NO_ERROR;
@@ -2120,6 +2209,12 @@ errno RT_FreeAll()
             {
                 errno = ERR_RESOURCE_FIND_CLOSE;
             }
+            break;
+        case TYPE_CLOSE_HKEY:
+            // TODO find api
+            break;
+        case TYPE_CLOSE_SOCKET:
+
             break;
         default:
             // must cover previous errno
@@ -2172,6 +2267,12 @@ errno RT_Clean()
             {
                 err = ERR_RESOURCE_FIND_CLOSE;
             }
+            break;
+        case TYPE_CLOSE_HKEY:
+            // TODO find api
+            break;
+        case TYPE_CLOSE_SOCKET:
+
             break;
         default:
             // must cover previous errno

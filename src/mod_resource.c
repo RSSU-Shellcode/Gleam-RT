@@ -1421,7 +1421,7 @@ LSTATUS RT_RegCreateKeyA(HKEY hKey, LPCSTR lpSubKey, HKEY* phkResult)
     }
     SetLastErrno(lastErr);
 
-    dbg_log("[resource]", "RegCreateKeyA: 0x%zX", *phkResult);
+    dbg_log("[resource]", "RegCreateKeyA: %s 0x%zX", lpSubKey, * phkResult);
     return lStatus;
 }
 
@@ -1459,7 +1459,7 @@ LSTATUS RT_RegCreateKeyW(HKEY hKey, LPCWSTR lpSubKey, HKEY* phkResult)
     }
     SetLastErrno(lastErr);
 
-    dbg_log("[resource]", "RegCreateKeyW: 0x%zX", *phkResult);
+    dbg_log("[resource]", "RegCreateKeyW: %ls 0x%zX", lpSubKey, *phkResult);
     return lStatus;
 }
 
@@ -1503,7 +1503,7 @@ LSTATUS RT_RegCreateKeyExA(
     }
     SetLastErrno(lastErr);
 
-    dbg_log("[resource]", "RegCreateKeyExA: 0x%zX", *phkResult);
+    dbg_log("[resource]", "RegCreateKeyExA: %s 0x%zX", lpSubKey, *phkResult);
     return lStatus;
 }
 
@@ -1547,7 +1547,7 @@ LSTATUS RT_RegCreateKeyExW(
     }
     SetLastErrno(lastErr);
 
-    dbg_log("[resource]", "RegCreateKeyExW: 0x%zX", *phkResult);
+    dbg_log("[resource]", "RegCreateKeyExW: %ls 0x%zX", lpSubKey, *phkResult);
     return lStatus;
 }
 
@@ -1585,7 +1585,7 @@ LSTATUS RT_RegOpenKeyA(HKEY hKey, LPCSTR lpSubKey, HKEY* phkResult)
     }
     SetLastErrno(lastErr);
 
-    dbg_log("[resource]", "RegOpenKeyA: 0x%zX", *phkResult);
+    dbg_log("[resource]", "RegOpenKeyA: %s 0x%zX", lpSubKey, *phkResult);
     return lStatus;
 }
 
@@ -1623,7 +1623,7 @@ LSTATUS RT_RegOpenKeyW(HKEY hKey, LPCWSTR lpSubKey, HKEY* phkResult)
     }
     SetLastErrno(lastErr);
 
-    dbg_log("[resource]", "RegOpenKeyW: 0x%zX", *phkResult);
+    dbg_log("[resource]", "RegOpenKeyW: %ls 0x%zX", lpSubKey, *phkResult);
     return lStatus;
 }
 
@@ -1631,14 +1631,82 @@ __declspec(noinline)
 LSTATUS RT_RegOpenKeyExA(
     HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, HKEY* phkResult
 ){
+    ResourceTracker* tracker = getTrackerPointer();
 
+    LSTATUS lStatus = ERROR_SUCCESS;
+    errno   lastErr = NO_ERROR;
+    for (;;)
+    {
+        RegOpenKeyExA_t RegOpenKeyExA;
+    #ifdef _WIN64
+        RegOpenKeyExA = FindAPI(0x189F0999A7259053, 0x4C99200BFC0E770B);
+    #elif _WIN32
+        RegOpenKeyExA = FindAPI(0xBE726FAA, 0xEAD2E08B);
+    #endif
+        if (RegOpenKeyExA == NULL)
+        {
+            lastErr = ERR_RESOURCE_API_NOT_FOUND;
+            break;
+        }
+        lStatus = RegOpenKeyExA(
+            hKey, lpSubKey, ulOptions, samDesired, phkResult
+        );
+        if (lStatus != ERROR_SUCCESS)
+        {
+            break;
+        }
+        if (!addHandleMu(tracker, *phkResult, SRC_REG_OPEN_KEY_EX_A))
+        {
+            lastErr = ERR_RESOURCE_ADD_HKEY;
+            break;
+        }
+        break;
+    }
+    SetLastErrno(lastErr);
+
+    dbg_log("[resource]", "RegOpenKeyExA: %s 0x%zX", lpSubKey, *phkResult);
+    return lStatus;
 }
 
 __declspec(noinline)
 LSTATUS RT_RegOpenKeyExW(
     HKEY hKey, LPCWSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, HKEY* phkResult
 ){
+    ResourceTracker* tracker = getTrackerPointer();
 
+    LSTATUS lStatus = ERROR_SUCCESS;
+    errno   lastErr = NO_ERROR;
+    for (;;)
+    {
+        RegOpenKeyExW_t RegOpenKeyExW;
+    #ifdef _WIN64
+        RegOpenKeyExW = FindAPI(0xC11E19BF67DF5A0F, 0x9CC21D811EA014ED);
+    #elif _WIN32
+        RegOpenKeyExW = FindAPI(0x4668AB03, 0xC1931B55);
+    #endif
+        if (RegOpenKeyExW == NULL)
+        {
+            lastErr = ERR_RESOURCE_API_NOT_FOUND;
+            break;
+        }
+        lStatus = RegOpenKeyExW(
+            hKey, lpSubKey, ulOptions, samDesired, phkResult
+        );
+        if (lStatus != ERROR_SUCCESS)
+        {
+            break;
+        }
+        if (!addHandleMu(tracker, *phkResult, SRC_REG_OPEN_KEY_EX_W))
+        {
+            lastErr = ERR_RESOURCE_ADD_HKEY;
+            break;
+        }
+        break;
+    }
+    SetLastErrno(lastErr);
+
+    dbg_log("[resource]", "RegOpenKeyExW: %ls 0x%zX", lpSubKey, *phkResult);
+    return lStatus;
 }
 
 __declspec(noinline)
@@ -1852,7 +1920,35 @@ BOOL RT_FindClose(HANDLE hFindFile)
 __declspec(noinline)
 LSTATUS RT_RegCloseKey(HKEY hKey)
 {
+    ResourceTracker* tracker = getTrackerPointer();
 
+    LSTATUS lStatus = ERROR_SUCCESS;
+    errno   lastErr = NO_ERROR;
+    for (;;)
+    {
+        RegCloseKey_t RegCloseKey;
+    #ifdef _WIN64
+        RegCloseKey = FindAPI(0xD73DC3457F3F2267, 0xDE79CCC293884D1C);
+    #elif _WIN32
+        RegCloseKey = FindAPI(0xB63BD7A6, 0x614CB75F);
+    #endif
+        if (RegCloseKey == NULL)
+        {
+            lastErr = ERR_RESOURCE_API_NOT_FOUND;
+            break;
+        }
+        lStatus = RegCloseKey(hKey);
+        if (lStatus != ERROR_SUCCESS)
+        {
+            break;
+        }
+        delHandleMu(tracker, hKey, TYPE_CLOSE_HKEY);
+        break;
+    }
+    SetLastErrno(lastErr);
+
+    dbg_log("[resource]", "RegCloseKey: 0x%zX", hKey);
+    return lStatus;
 }
 
 __declspec(noinline)

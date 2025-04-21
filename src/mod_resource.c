@@ -1387,26 +1387,6 @@ HANDLE RT_CreateIoCompletionPort(
     return hPort;
 }
 
-// 0xDEF562502ECFC906, 0x3F5AA82CB3098A5E // RegCreateKeyA
-// 0x44B01D3112A46809, 0x45D6EE3EFCCE4368 // RegCreateKeyW
-// 0xE1FEFF278289A0C6, 0x190D4FE8AC872642 // RegCreateKeyExA
-// 0x94B8538578BDDBEE, 0xCC21BEDFFEB6BBDF // RegCreateKeyExW
-// 0x857AA6888A45F4C9, 0x4AFAFEEEC73E784C // RegOpenKeyA
-// 0x596B080727585709, 0xB6E5C5A7344C86EF // RegOpenKeyW
-// 0x189F0999A7259053, 0x4C99200BFC0E770B // RegOpenKeyExA
-// 0xC11E19BF67DF5A0F, 0x9CC21D811EA014ED // RegOpenKeyExW
-// 0xD73DC3457F3F2267, 0xDE79CCC293884D1C // RegCloseKey
-
-// 0x953DDEB4, 0xBD4C7C1F // RegCreateKeyA
-// 0x49E44B92, 0xEAD232CB // RegCreateKeyW
-// 0x32BDE294, 0x3489A92B // RegCreateKeyExA
-// 0x5F5EC82E, 0x2205AD9E // RegCreateKeyExW
-// 0x5F3B549C, 0x588ACE35 // RegOpenKeyA
-// 0xFE6E3A60, 0x1F3C45C5 // RegOpenKeyW
-// 0xBE726FAA, 0xEAD2E08B // RegOpenKeyExA
-// 0x4668AB03, 0xC1931B55 // RegOpenKeyExW
-// 0xB63BD7A6, 0x614CB75F // RegCloseKey
-
 __declspec(noinline)
 LSTATUS RT_RegCreateKeyA(HKEY hKey, LPCSTR lpSubKey, HKEY* phkResult)
 {
@@ -1489,7 +1469,42 @@ LSTATUS RT_RegCreateKeyExA(
     DWORD dwOptions, REGSAM samDesired, POINTER lpSecurityAttributes,
     HKEY* phkResult, DWORD* lpdwDisposition
 ){
+    ResourceTracker* tracker = getTrackerPointer();
 
+    LSTATUS lStatus = ERROR_SUCCESS;
+    errno   lastErr = NO_ERROR;
+    for (;;)
+    {
+        RegCreateKeyExA_t RegCreateKeyExA;
+    #ifdef _WIN64
+        RegCreateKeyExA = FindAPI(0xE1FEFF278289A0C6, 0x190D4FE8AC872642);
+    #elif _WIN32
+        RegCreateKeyExA = FindAPI(0x32BDE294, 0x3489A92B);
+    #endif
+        if (RegCreateKeyExA == NULL)
+        {
+            lastErr = ERR_RESOURCE_API_NOT_FOUND;
+            break;
+        }
+        lStatus = RegCreateKeyExA(
+            hKey, lpSubKey, Reserved, lpClass, dwOptions, samDesired,
+            lpSecurityAttributes, phkResult, lpdwDisposition
+        );
+        if (lStatus != ERROR_SUCCESS)
+        {
+            break;
+        }
+        if (!addHandleMu(tracker, *phkResult, SRC_REG_CREATE_KEY_EX_A))
+        {
+            lastErr = ERR_RESOURCE_ADD_HKEY;
+            break;
+        }
+        break;
+    }
+    SetLastErrno(lastErr);
+
+    dbg_log("[resource]", "RegCreateKeyExA: 0x%zX", *phkResult);
+    return lStatus;
 }
 
 __declspec(noinline)
@@ -1498,7 +1513,42 @@ LSTATUS RT_RegCreateKeyExW(
     DWORD dwOptions, REGSAM samDesired, POINTER lpSecurityAttributes,
     HKEY* phkResult, DWORD* lpdwDisposition
 ){
+    ResourceTracker* tracker = getTrackerPointer();
 
+    LSTATUS lStatus = ERROR_SUCCESS;
+    errno   lastErr = NO_ERROR;
+    for (;;)
+    {
+        RegCreateKeyExW_t RegCreateKeyExW;
+    #ifdef _WIN64
+        RegCreateKeyExW = FindAPI(0x94B8538578BDDBEE, 0xCC21BEDFFEB6BBDF);
+    #elif _WIN32
+        RegCreateKeyExW = FindAPI(0x5F5EC82E, 0x2205AD9E);
+    #endif
+        if (RegCreateKeyExW == NULL)
+        {
+            lastErr = ERR_RESOURCE_API_NOT_FOUND;
+            break;
+        }
+        lStatus = RegCreateKeyExW(
+            hKey, lpSubKey, Reserved, lpClass, dwOptions, samDesired,
+            lpSecurityAttributes, phkResult, lpdwDisposition
+        );
+        if (lStatus != ERROR_SUCCESS)
+        {
+            break;
+        }
+        if (!addHandleMu(tracker, *phkResult, SRC_REG_CREATE_KEY_EX_W))
+        {
+            lastErr = ERR_RESOURCE_ADD_HKEY;
+            break;
+        }
+        break;
+    }
+    SetLastErrno(lastErr);
+
+    dbg_log("[resource]", "RegCreateKeyExW: 0x%zX", *phkResult);
+    return lStatus;
 }
 
 __declspec(noinline)

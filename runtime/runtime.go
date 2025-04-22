@@ -49,6 +49,7 @@ type RTStatus struct {
 	NumFiles          int64 `toml:"num_files"           json:"num_files"`
 	NumDirectories    int64 `toml:"num_directories"     json:"num_directories"`
 	NumIOCPs          int64 `toml:"num_iocps"           json:"num_iocps"`
+	NumKeys           int64 `toml:"num_keys"            json:"num_keys"`
 	NumSockets        int64 `toml:"num_sockets"         json:"num_sockets"`
 }
 

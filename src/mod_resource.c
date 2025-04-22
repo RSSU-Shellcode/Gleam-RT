@@ -41,8 +41,8 @@
 #define FUNC_REG_OPEN_KEY   (TYPE_CLOSE_KEY|0x00000200)
 
 #define FUNC_WSA_SOCKET (TYPE_CLOSE_SOCKET|0x00000100)
-#define FUNC_ACCEPT     (TYPE_CLOSE_SOCKET|0x00000200)
-#define FUNC_SOCKET     (TYPE_CLOSE_SOCKET|0x00000300)
+#define FUNC_SOCKET     (TYPE_CLOSE_SOCKET|0x00000200)
+#define FUNC_ACCEPT     (TYPE_CLOSE_SOCKET|0x00000300)
 
 // source of handles created by functions
 #define SRC_CREATE_MUTEX_A    (FUNC_CREATE_MUTEX|0x01)
@@ -88,8 +88,8 @@
 #define SRC_WSA_SOCKET_A (FUNC_WSA_SOCKET|0x01)
 #define SRC_WSA_SOCKET_W (FUNC_WSA_SOCKET|0x02)
 
-#define SRC_ACCEPT (FUNC_ACCEPT|0x01)
 #define SRC_SOCKET (FUNC_SOCKET|0x01)
+#define SRC_ACCEPT (FUNC_ACCEPT|0x01)
 
 // resource counters index
 #define CTR_WSA_STARTUP 0x0000
@@ -2258,7 +2258,6 @@ static bool setHandleLocker(HANDLE hObject, uint32 func, bool lock)
     return success;
 }
 
-// TODO add 
 __declspec(noinline)
 bool RT_GetStatus(RT_Status* status)
 {
@@ -2278,6 +2277,7 @@ bool RT_GetStatus(RT_Status* status)
     int64 numFiles   = 0;
     int64 numDirs    = 0;
     int64 numIOCPs   = 0;
+    int64 numKeys    = 0;
     int64 numSockets = 0;
 
     uint len = handles->Len;
@@ -2312,7 +2312,10 @@ bool RT_GetStatus(RT_Status* status)
         case FUNC_CREATE_IOCP:
             numIOCPs++;
             break;
-        case FUNC_WSA_SOCKET: case FUNC_ACCEPT: case FUNC_SOCKET:
+        case FUNC_REG_CREATE_KEY: case FUNC_REG_OPEN_KEY:
+            numKeys++;
+            break;
+        case FUNC_WSA_SOCKET: case FUNC_SOCKET: case FUNC_ACCEPT:
             numSockets++;
             break;
         }
@@ -2331,6 +2334,7 @@ bool RT_GetStatus(RT_Status* status)
     status->NumFiles          = numFiles;
     status->NumDirectories    = numDirs;
     status->NumIOCPs          = numIOCPs;
+    status->NumKeys           = numKeys;
     status->NumSockets        = numSockets;
     return true;
 }
@@ -2409,8 +2413,16 @@ errno RT_FreeAll()
 {
     ResourceTracker* tracker = getTrackerPointer();
 
-    
-
+    // try to find api
+    RegCloseKey_t RegCloseKey;
+    closesocket_t closesocket;
+#ifdef _WIN64
+    RegCloseKey = FindAPI(0x51D9FB4FF72F1963, 0xB0265320F46E2304);
+    closesocket = FindAPI(0xD9DD30B81F6B58FF, 0x35D911BB33B68FD1);
+#elif _WIN32
+    RegCloseKey = FindAPI(0x976649E4, 0xDCEADBCD);
+    closesocket = FindAPI(0x5E8F4EC0, 0x95F951E5);
+#endif
 
     // close all tracked handles
     List* handles = &tracker->Handles;
@@ -2446,10 +2458,24 @@ errno RT_FreeAll()
             }
             break;
         case TYPE_CLOSE_KEY:
-            // TODO find api
+            if (RegCloseKey == NULL)
+            {
+                break;
+            }
+            if (RegCloseKey(handle->handle) != ERROR_SUCCESS)
+            {
+                errno = ERR_RESOURCE_CLOSE_KEY;
+            }
             break;
         case TYPE_CLOSE_SOCKET:
-
+            if (closesocket == NULL)
+            {
+                break;
+            }
+            if (closesocket(handle->handle) != 0)
+            {
+                errno = ERR_RESOURCE_CLOSE_SOCKET;
+            }
             break;
         default:
             // must cover previous errno
@@ -2475,10 +2501,20 @@ errno RT_Clean()
 {
     ResourceTracker* tracker = getTrackerPointer();
 
-    errno err = NO_ERROR;
-    
+    // try to find api
+    RegCloseKey_t RegCloseKey;
+    closesocket_t closesocket;
+#ifdef _WIN64
+    RegCloseKey = FindAPI(0xC7AB3649E2BE8396, 0x28F0B94509382351);
+    closesocket = FindAPI(0x0941CD072727D858, 0x67DD2DFFFF2ED396);
+#elif _WIN32
+    RegCloseKey = FindAPI(0x6370BD08, 0xF9823D25);
+    closesocket = FindAPI(0x17C2486A, 0xC8ABB537);
+#endif
+
     // close all tracked handles
     List* handles = &tracker->Handles;
+    errno err     = NO_ERROR;
 
     uint len = handles->Len;
     uint idx = 0;
@@ -2504,10 +2540,24 @@ errno RT_Clean()
             }
             break;
         case TYPE_CLOSE_KEY:
-            // TODO find api
+            if (RegCloseKey == NULL)
+            {
+                break;
+            }
+            if (RegCloseKey(handle->handle) != ERROR_SUCCESS && err == NO_ERROR)
+            {
+                err = ERR_RESOURCE_CLOSE_KEY;
+            }
             break;
         case TYPE_CLOSE_SOCKET:
-
+            if (closesocket == NULL)
+            {
+                break;
+            }
+            if (closesocket(handle->handle) != 0 && err == NO_ERROR)
+            {
+                err = ERR_RESOURCE_CLOSE_SOCKET;
+            }
             break;
         default:
             // must cover previous errno

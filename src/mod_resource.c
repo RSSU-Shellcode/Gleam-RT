@@ -24,7 +24,7 @@
 // function types about release handle
 #define TYPE_CLOSE_HANDLE 0x01000000
 #define TYPE_FIND_CLOSE   0x02000000
-#define TYPE_CLOSE_HKEY   0x03000000
+#define TYPE_CLOSE_KEY    0x03000000
 #define TYPE_CLOSE_SOCKET 0x04000000
 
 // major function types
@@ -37,8 +37,8 @@
 
 #define FUNC_FIND_FIRST_FILE (TYPE_FIND_CLOSE|0x00000100)
 
-#define FUNC_REG_CREATE_KEY (TYPE_CLOSE_HKEY|0x00000100)
-#define FUNC_REG_OPEN_KEY   (TYPE_CLOSE_HKEY|0x00000200)
+#define FUNC_REG_CREATE_KEY (TYPE_CLOSE_KEY|0x00000100)
+#define FUNC_REG_OPEN_KEY   (TYPE_CLOSE_KEY|0x00000200)
 
 #define FUNC_WSA_SOCKET (TYPE_CLOSE_SOCKET|0x00000100)
 #define FUNC_ACCEPT     (TYPE_CLOSE_SOCKET|0x00000200)
@@ -1414,7 +1414,7 @@ LSTATUS RT_RegCreateKeyA(HKEY hKey, LPCSTR lpSubKey, HKEY* phkResult)
         }
         if (!addHandleMu(tracker, *phkResult, SRC_REG_CREATE_KEY_A))
         {
-            lastErr = ERR_RESOURCE_ADD_HKEY;
+            lastErr = ERR_RESOURCE_ADD_KEY;
             break;
         }
         break;
@@ -1452,7 +1452,7 @@ LSTATUS RT_RegCreateKeyW(HKEY hKey, LPCWSTR lpSubKey, HKEY* phkResult)
         }
         if (!addHandleMu(tracker, *phkResult, SRC_REG_CREATE_KEY_W))
         {
-            lastErr = ERR_RESOURCE_ADD_HKEY;
+            lastErr = ERR_RESOURCE_ADD_KEY;
             break;
         }
         break;
@@ -1496,7 +1496,7 @@ LSTATUS RT_RegCreateKeyExA(
         }
         if (!addHandleMu(tracker, *phkResult, SRC_REG_CREATE_KEY_EX_A))
         {
-            lastErr = ERR_RESOURCE_ADD_HKEY;
+            lastErr = ERR_RESOURCE_ADD_KEY;
             break;
         }
         break;
@@ -1540,7 +1540,7 @@ LSTATUS RT_RegCreateKeyExW(
         }
         if (!addHandleMu(tracker, *phkResult, SRC_REG_CREATE_KEY_EX_W))
         {
-            lastErr = ERR_RESOURCE_ADD_HKEY;
+            lastErr = ERR_RESOURCE_ADD_KEY;
             break;
         }
         break;
@@ -1578,7 +1578,7 @@ LSTATUS RT_RegOpenKeyA(HKEY hKey, LPCSTR lpSubKey, HKEY* phkResult)
         }
         if (!addHandleMu(tracker, *phkResult, SRC_REG_OPEN_KEY_A))
         {
-            lastErr = ERR_RESOURCE_ADD_HKEY;
+            lastErr = ERR_RESOURCE_ADD_KEY;
             break;
         }
         break;
@@ -1616,7 +1616,7 @@ LSTATUS RT_RegOpenKeyW(HKEY hKey, LPCWSTR lpSubKey, HKEY* phkResult)
         }
         if (!addHandleMu(tracker, *phkResult, SRC_REG_OPEN_KEY_W))
         {
-            lastErr = ERR_RESOURCE_ADD_HKEY;
+            lastErr = ERR_RESOURCE_ADD_KEY;
             break;
         }
         break;
@@ -1657,7 +1657,7 @@ LSTATUS RT_RegOpenKeyExA(
         }
         if (!addHandleMu(tracker, *phkResult, SRC_REG_OPEN_KEY_EX_A))
         {
-            lastErr = ERR_RESOURCE_ADD_HKEY;
+            lastErr = ERR_RESOURCE_ADD_KEY;
             break;
         }
         break;
@@ -1698,7 +1698,7 @@ LSTATUS RT_RegOpenKeyExW(
         }
         if (!addHandleMu(tracker, *phkResult, SRC_REG_OPEN_KEY_EX_W))
         {
-            lastErr = ERR_RESOURCE_ADD_HKEY;
+            lastErr = ERR_RESOURCE_ADD_KEY;
             break;
         }
         break;
@@ -1942,7 +1942,7 @@ LSTATUS RT_RegCloseKey(HKEY hKey)
         {
             break;
         }
-        delHandleMu(tracker, hKey, TYPE_CLOSE_HKEY);
+        delHandleMu(tracker, hKey, TYPE_CLOSE_KEY);
         break;
     }
     SetLastErrno(lastErr);
@@ -2014,7 +2014,30 @@ static bool addHandle(ResourceTracker* tracker, void* hObject, uint32 source)
     case TYPE_FIND_CLOSE:
         tracker->FindClose(hObject);
         break;
-        // TODO find api
+    case TYPE_CLOSE_KEY:
+        RegCloseKey_t RegCloseKey;
+    #ifdef _WIN64
+        RegCloseKey = FindAPI(0xB576E6CD0F49BDB2, 0xE696272D1E3E8FE4);
+    #elif _WIN32
+        RegCloseKey = FindAPI(0x19D4543D, 0xC129A3D6);
+    #endif
+        if (RegCloseKey != NULL)
+        {
+            RegCloseKey(hObject);
+        }
+        break;
+    case TYPE_CLOSE_SOCKET:
+        closesocket_t closesocket;
+    #ifdef _WIN64
+        closesocket = FindAPI(0xBCEC2D54FA2DA0C4, 0x14359928896948A4);
+    #elif _WIN32
+        closesocket = FindAPI(0x8B0243F7, 0x35CA08AD);
+    #endif
+        if (closesocket != NULL)
+        {
+            closesocket(hObject);
+        }
+        break;
     }
     return false;
 };
@@ -2422,7 +2445,7 @@ errno RT_FreeAll()
                 errno = ERR_RESOURCE_FIND_CLOSE;
             }
             break;
-        case TYPE_CLOSE_HKEY:
+        case TYPE_CLOSE_KEY:
             // TODO find api
             break;
         case TYPE_CLOSE_SOCKET:
@@ -2480,7 +2503,7 @@ errno RT_Clean()
                 err = ERR_RESOURCE_FIND_CLOSE;
             }
             break;
-        case TYPE_CLOSE_HKEY:
+        case TYPE_CLOSE_KEY:
             // TODO find api
             break;
         case TYPE_CLOSE_SOCKET:

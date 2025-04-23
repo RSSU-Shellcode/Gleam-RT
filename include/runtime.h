@@ -451,6 +451,10 @@ typedef struct {
     } Serialization;
 
     struct {
+        MemScan_t Scan;
+    } MemScanner;
+
+    struct {
         GetProcByName_t   GetProcByName;
         GetProcByHash_t   GetProcByHash;
         GetProcOriginal_t GetProcOriginal;

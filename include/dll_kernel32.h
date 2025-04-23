@@ -119,6 +119,17 @@ typedef struct {
 } SYSTEM_INFO;
 
 typedef struct {
+    PVOID  BaseAddress;
+    PVOID  AllocationBase;
+    DWORD  AllocationProtect;
+    WORD   PartitionId;
+    SIZE_T RegionSize;
+    DWORD  State;
+    DWORD  Protect;
+    DWORD  Type;
+} MEMORY_BASIC_INFORMATION;
+
+typedef struct {
     PVOID lpData;
     DWORD cbData;
     BYTE  cbOverhead;

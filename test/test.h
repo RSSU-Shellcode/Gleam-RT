@@ -17,6 +17,7 @@ bool TestRandom();
 bool TestCrypto();
 bool TestCompress();
 bool TestSerialize();
+bool TestMemScanner();
 
 bool TestInitRuntime();
 bool TestRuntime_Memory();
@@ -36,13 +37,14 @@ static unit tests[] =
 {
     { "InitRuntime", TestInitRuntime },
 
-    { "Lib_Memory", TestLibMemory },
-    { "Lib_String", TestLibString },
-    { "Lib_Match",  TestLibMatch  },
-    { "Random",     TestRandom    },
-    { "Crypto",     TestCrypto    },
-    { "Compress",   TestCompress  },
-    { "Serialize",  TestSerialize },
+    { "Lib_Memory",  TestLibMemory  },
+    { "Lib_String",  TestLibString  },
+    { "Lib_Match",   TestLibMatch   },
+    { "Random",      TestRandom     },
+    { "Crypto",      TestCrypto     },
+    { "Compress",    TestCompress   },
+    { "Serialize",   TestSerialize  },
+    { "Mem_Scanner", TestMemScanner },
 
     { "Runtime_Memory",    TestRuntime_Memory    },
     { "Runtime_Argument",  TestRuntime_Argument  },

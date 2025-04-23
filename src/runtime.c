@@ -10,6 +10,7 @@
 #include "crypto.h"
 #include "compress.h"
 #include "serialize.h"
+#include "mem_scanner.h"
 #include "win_api.h"
 #include "errno.h"
 #include "context.h"
@@ -384,6 +385,8 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     // serialization module
     module->Serialization.Serialize   = GetFuncAddr(&Serialize);
     module->Serialization.Unserialize = GetFuncAddr(&Unserialize);
+    // memory scanner
+    module->MemScanner.Scan = GetFuncAddr(&MemScan);
     // get procedure address
     module->Procedure.GetProcByName   = GetFuncAddr(&RT_GetProcAddressByName);
     module->Procedure.GetProcByHash   = GetFuncAddr(&RT_GetProcAddressByHash);

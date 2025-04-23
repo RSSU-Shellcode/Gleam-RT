@@ -155,6 +155,12 @@
     <ClCompile Include="..\src\serialize.c">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\mem_scanner.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mem_scanner_test.c">
+      <Filter>Test</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\crypto.h">
@@ -269,6 +275,9 @@
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="..\include\serialize.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\mem_scanner.h">
       <Filter>Header</Filter>
     </ClInclude>
   </ItemGroup>

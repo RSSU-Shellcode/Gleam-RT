@@ -199,6 +199,10 @@ type RuntimeM struct {
 		Unserialize uintptr
 	}
 
+	MemScanner struct {
+		Scan uintptr
+	}
+
 	Procedure struct {
 		GetProcByName   uintptr
 		GetProcByHash   uintptr

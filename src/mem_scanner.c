@@ -34,7 +34,7 @@ uint MemScan(byte* pattern, uintptr* results, uint maxItem)
 #endif
     if (VirtualQuery == NULL)
     {
-        SetLastErrno(ERR_MEMSCAN_NOT_FOUND_API);
+        SetLastErrno(ERR_MEM_SCANNER_NOT_FOUND_API);
         return (uint)(-1);
     }
 
@@ -44,7 +44,7 @@ uint MemScan(byte* pattern, uintptr* results, uint maxItem)
     uint numCond = parsePattern(pattern, condition);
     if (numCond == 0)
     {
-        SetLastErrno(ERR_MEMSCAN_INVALID_CONDITION);
+        SetLastErrno(ERR_MEM_SCANNER_INVALID_CONDITION);
         return (uint)(-1);
     }
 
@@ -79,7 +79,7 @@ uint MemScan(byte* pattern, uintptr* results, uint maxItem)
         // query memory region information
         if (VirtualQuery((LPCVOID)address, &mbi, sizeof(mbi)) == 0)
         {
-            SetLastErrno(ERR_MEMSCAN_VIRTUAL_QUERY);
+            // SetLastErrno(ERR_MEM_SCANNER_VIRTUAL_QUERY);
             return (uint)(-1);
         }
         if (mbi.RegionSize == 0)
@@ -100,14 +100,14 @@ uint MemScan(byte* pattern, uintptr* results, uint maxItem)
             {
                 return numResults;
             }
-            int64 s = (int64)(address + size) - (int64)addr;
-            if (s < (int64)condSize)
+            integer rem = (integer)(address + size) - (integer)addr;
+            if (rem < (integer)condSize)
             {
                 break;
             }
             if (canFast)
             {
-                integer idx = MatchBytes((byte*)addr, s, fastValue, condSize);
+                integer idx = MatchBytes((byte*)addr, rem, fastValue, condSize);
                 if (idx == -1)
                 {
                     break;

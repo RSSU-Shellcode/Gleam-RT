@@ -290,6 +290,8 @@ MemoryTracker_M* InitMemoryTracker(Context* context)
     module->Decrypt = GetFuncAddr(&MT_Decrypt);
     module->FreeAll = GetFuncAddr(&MT_FreeAll);
     module->Clean   = GetFuncAddr(&MT_Clean);
+    // data for sysmon
+    module->hMutex = tracker->hMutex;
     return module;
 }
 

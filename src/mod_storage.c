@@ -130,6 +130,8 @@ InMemoryStorage_M* InitInMemoryStorage(Context* context)
     module->Encrypt = GetFuncAddr(&IM_Encrypt);
     module->Decrypt = GetFuncAddr(&IM_Decrypt);
     module->Clean   = GetFuncAddr(&IM_Clean);
+    // data for sysmon
+    module->hMutex = storage->hMutex;
     return module;
 }
 

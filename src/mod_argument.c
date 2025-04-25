@@ -119,6 +119,8 @@ ArgumentStore_M* InitArgumentStore(Context* context)
     module->Encrypt = GetFuncAddr(&AS_Encrypt);
     module->Decrypt = GetFuncAddr(&AS_Decrypt);
     module->Clean   = GetFuncAddr(&AS_Clean);
+    // data for sysmon
+    module->hMutex = store->hMutex;
     return module;
 }
 

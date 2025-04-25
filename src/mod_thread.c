@@ -188,6 +188,8 @@ ThreadTracker_M* InitThreadTracker(Context* context)
     module->Resume  = GetFuncAddr(&TT_Resume);
     module->KillAll = GetFuncAddr(&TT_KillAll);
     module->Clean   = GetFuncAddr(&TT_Clean);
+    // data for sysmon
+    module->hMutex = tracker->hMutex;
     return module;
 }
 

@@ -151,6 +151,8 @@ LibraryTracker_M* InitLibraryTracker(Context* context)
     module->Decrypt = GetFuncAddr(&LT_Decrypt);
     module->FreeAll = GetFuncAddr(&LT_FreeAll);
     module->Clean   = GetFuncAddr(&LT_Clean);
+    // data for sysmon
+    module->hMutex = tracker->hMutex;
     return module;
 }
 

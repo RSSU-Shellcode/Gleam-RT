@@ -387,6 +387,8 @@ ResourceTracker_M* InitResourceTracker(Context* context)
     module->Decrypt = GetFuncAddr(&RT_Decrypt);
     module->FreeAll = GetFuncAddr(&RT_FreeAll);
     module->Clean   = GetFuncAddr(&RT_Clean);
+    // data for sysmon
+    module->hMutex = tracker->hMutex;
     return module;
 }
 

@@ -273,19 +273,13 @@ typedef bool   (*Unserialize_t)(void* serialized, void* data);
 // about memory scanner module
 // 
 // MemScan is used to scans data in the memory of the current process.
-// The return value is the number of results scanned.
+// The return value is the number of results scanned, if return -1,
+// use the GetLastErrno for get error code.
 //
 // example:
 //   uintptr results[10];
 //   MemScan("F1 F2 ?? A1", results, arrlen(results));
-
-#ifndef MEM_SCANNER_H
-
-#define ERR_MEMSCAN_NOT_FOUND_API 0x80000001
-#define ERR_MEMSCAN_VIRTUAL_QUERY 0x80000002
-
-#endif // MEM_SCANNER_H
-
+//
 typedef uint (*MemScan_t)(byte* pattern, uintptr* results, uint maxItem);
 
 // GetProcAddress, GetProcAddressByName and GetProcAddressByHash

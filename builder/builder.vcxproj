@@ -134,7 +134,7 @@
     <ClInclude Include="..\include\crypto.h" />
     <ClInclude Include="..\include\compress.h" />
     <ClInclude Include="..\include\serialize.h" />
-	<ClInclude Include="..\include\mem_scanner.h" />
+    <ClInclude Include="..\include\mem_scanner.h" />
     <ClInclude Include="..\include\pe_image.h" />
     <ClInclude Include="..\include\win_api.h" />
     <ClInclude Include="..\include\errno.h" />
@@ -149,6 +149,7 @@
     <ClInclude Include="..\include\win_file.h" />
     <ClInclude Include="..\include\win_http.h" />
     <ClInclude Include="..\include\win_crypto.h" />
+	<ClInclude Include="..\include\sysmon.h" />
     <ClInclude Include="..\include\runtime.h" />
     <ClInclude Include="..\include\shield.h" />
     <ClInclude Include="..\include\debug.h" />
@@ -166,7 +167,7 @@
     <ClCompile Include="..\src\crypto.c" />
     <ClCompile Include="..\src\compress.c" />
     <ClCompile Include="..\src\serialize.c" />
-	<ClCompile Include="..\src\mem_scanner.c" />
+    <ClCompile Include="..\src\mem_scanner.c" />
     <ClCompile Include="..\src\pe_image.c" />
     <ClCompile Include="..\src\win_api.c" />
     <ClCompile Include="..\src\errno.c" />
@@ -180,6 +181,7 @@
     <ClCompile Include="..\src\win_file.c" />
     <ClCompile Include="..\src\win_http.c" />
     <ClCompile Include="..\src\win_crypto.c" />
+	<ClCompile Include="..\src\sysmon.c" />
     <ClCompile Include="..\src\shield.c" />
   </ItemGroup>
   <ItemGroup>

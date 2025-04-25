@@ -47,6 +47,7 @@
     <ClInclude Include="..\include\win_file.h" />
     <ClInclude Include="..\include\win_http.h" />
     <ClInclude Include="..\include\win_crypto.h" />
+    <ClInclude Include="..\include\sysmon.h" />
     <ClInclude Include="..\include\runtime.h" />
     <ClInclude Include="..\include\shield.h" />
     <ClInclude Include="..\include\debug.h" />
@@ -60,7 +61,7 @@
     <ClCompile Include="src\crypto_test.c" />
     <ClCompile Include="src\compress_test.c" />
     <ClCompile Include="src\serialize_test.c" />
-	<ClCompile Include="src\mem_scanner_test.c" />
+    <ClCompile Include="src\mem_scanner_test.c" />
     <ClCompile Include="src\runtime_test.c" />
     <ClCompile Include="src\mod_library_test.c" />
     <ClCompile Include="src\mod_memory_test.c" />
@@ -72,6 +73,7 @@
     <ClCompile Include="src\win_file_test.c" />
     <ClCompile Include="src\win_http_test.c" />
     <ClCompile Include="src\win_crypto_test.c" />
+	<ClCompile Include="src\sysmon_test.c" />
     <ClCompile Include="..\src\runtime.c" />
     <ClCompile Include="..\src\lib_memory.c" />
     <ClCompile Include="..\src\lib_string.c" />
@@ -97,6 +99,7 @@
     <ClCompile Include="..\src\win_file.c" />
     <ClCompile Include="..\src\win_http.c" />
     <ClCompile Include="..\src\win_crypto.c" />
+    <ClCompile Include="..\src\sysmon.c" />
     <ClCompile Include="..\src\shield.c" />
     <ClCompile Include="..\src\debug.c" />
   </ItemGroup>

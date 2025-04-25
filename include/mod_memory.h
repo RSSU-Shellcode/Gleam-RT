@@ -85,6 +85,8 @@ typedef struct {
     MemDecrypt_t Decrypt;
     MemFreeAll_t FreeAll;
     MemClean_t   Clean;
+
+    HANDLE hMutex;
 } MemoryTracker_M;
 
 MemoryTracker_M* InitMemoryTracker(Context* context);

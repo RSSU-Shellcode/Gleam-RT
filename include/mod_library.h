@@ -44,6 +44,8 @@ typedef struct {
     LibDecrypt_t Decrypt;
     LibFreeAll_t FreeAll;
     LibClean_t   Clean;
+
+    HANDLE hMutex;
 } LibraryTracker_M;
 
 LibraryTracker_M* InitLibraryTracker(Context* context);

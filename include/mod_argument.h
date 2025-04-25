@@ -42,6 +42,8 @@ typedef struct {
     ArgEncrypt_t Encrypt;
     ArgDecrypt_t Decrypt;
     ArgClean_t   Clean;
+
+    HANDLE hMutex;
 } ArgumentStore_M;
 
 ArgumentStore_M* InitArgumentStore(Context* context);

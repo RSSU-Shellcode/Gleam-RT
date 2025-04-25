@@ -55,6 +55,8 @@ typedef struct {
     ThdResume_t  Resume;
     ThdKillAll_t KillAll;
     ThdClean_t   Clean;
+
+    HANDLE hMutex;
 } ThreadTracker_M;
 
 ThreadTracker_M* InitThreadTracker(Context* context);

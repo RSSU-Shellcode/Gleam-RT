@@ -97,6 +97,8 @@ typedef struct {
     ResDecrypt_t Decrypt;
     ResFreeAll_t FreeAll;
     ResClean_t   Clean;
+
+    HANDLE hMutex;
 } ResourceTracker_M;
 
 ResourceTracker_M* InitResourceTracker(Context* context);

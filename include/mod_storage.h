@@ -29,6 +29,8 @@ typedef struct {
     ImsEncrypt_t Encrypt;
     ImsDecrypt_t Decrypt;
     ImsClean_t   Clean;
+
+    HANDLE hMutex;
 } InMemoryStorage_M;
 
 InMemoryStorage_M* InitInMemoryStorage(Context* context);

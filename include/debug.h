@@ -16,6 +16,7 @@
     #define NAME_RT_IMS_MUTEX_GLOBAL NULL
     #define NAME_RT_WIN_HTTP_MUTEX   NULL
     #define NAME_RT_WIN_CRYPTO_MUTEX NULL
+    #define NAME_RT_SYSMON_MUTEX     NULL
 #else
 #ifdef _WIN64
     #define NAME_RT_MUTEX_GLOBAL     "x64_RT_Core_Global"
@@ -29,6 +30,7 @@
     #define NAME_RT_IMS_MUTEX_GLOBAL "x64_RT_IMS_Global"
     #define NAME_RT_WIN_HTTP_MUTEX   "x64_RT_WinHTTP"
     #define NAME_RT_WIN_CRYPTO_MUTEX "x64_RT_WinCrypto"
+    #define NAME_RT_SYSMON_MUTEX     "x64_RT_Sysmon"
 #elif _WIN32
     #define NAME_RT_MUTEX_GLOBAL     "x86_RT_Core_Global"
     #define NAME_RT_TIMER_SLEEPHR    "x86_RT_Core_SleepHR"
@@ -41,6 +43,7 @@
     #define NAME_RT_IMS_MUTEX_GLOBAL "x86_RT_IMS_Global"
     #define NAME_RT_WIN_HTTP_MUTEX   "x86_RT_WinHTTP"
     #define NAME_RT_WIN_CRYPTO_MUTEX "x86_RT_WinCrypto"
+    #define NAME_RT_SYSMON_MUTEX     "x86_RT_Sysmon"
 #endif
 #endif // RELEASE_MODE
 

@@ -51,6 +51,9 @@ static bool initSysmonEnvironment(Sysmon* sysmon, Context* context);
 static void eraseSysmonMethods(Context* context);
 static void cleanSysmon(Sysmon* sysmon);
 
+static void sm_watcher();
+static void sm_sleep(uint32 milliseconds);
+
 Sysmon_M* InitSysmon(Context* context)
 {
     // set structure address
@@ -184,7 +187,7 @@ __declspec(noinline)
 static bool initSysmonEnvironment(Sysmon* sysmon, Context* context)
 {
     // create global mutex
-    HANDLE hMutex = context->CreateMutexA(NULL, false, NAME_RT_SYSMON_MUTEX);
+    HANDLE hMutex = context->CreateMutexA(NULL, false, NAME_RT_SM_MUTEX_GLOBAL);
     if (hMutex == NULL)
     {
         return false;
@@ -243,8 +246,73 @@ static bool sm_unlock()
 }
 
 __declspec(noinline)
+static void sm_watcher()
+{
+    Sysmon* sysmon = getSysmonPointer();
+}
+
+__declspec(noinline)
+static void sm_sleep(uint32 milliseconds)
+{
+    Sysmon* sysmon = getSysmonPointer();
+
+    if (!sm_lock())
+    {
+        return;
+    }
+
+    CreateWaitableTimerA_t create = sysmon->CreateWaitableTimerA;
+    SetWaitableTimer_t     set    = sysmon->SetWaitableTimer;
+    WaitForSingleObject_t  wait   = sysmon->WaitForSingleObject;
+    CloseHandle_t          close  = sysmon->CloseHandle;
+
+    if (!sm_unlock())
+    {
+        return;
+    }
+
+    // simulate kernel32.Sleep
+    HANDLE hTimer = create(NULL, false, NAME_RT_TT_TIMER_SLEEP);
+    if (hTimer == NULL)
+    {
+        return;
+    }
+    for (;;)
+    {
+        if (milliseconds < 10)
+        {
+            milliseconds = 10;
+        }
+        int64 dueTime = -((int64)milliseconds * 1000 * 10);
+        if (!set(hTimer, &dueTime, 0, NULL, NULL, true))
+        {
+            break;
+        }
+        if (wait(hTimer, INFINITE) != WAIT_OBJECT_0)
+        {
+            break;
+        }
+        break;
+    }
+    close(hTimer);
+}
+
+__declspec(noinline)
 bool SM_GetStatus(SM_Status* status)
 {
+    Sysmon* sysmon = getSysmonPointer();
+
+    if (!sm_lock())
+    {
+        return false;
+    }
+
+    *status = sysmon->status;
+
+    if (!sm_unlock())
+    {
+        return false;
+    }
     return true;
 }
 
@@ -263,5 +331,23 @@ errno SM_Continue()
 __declspec(noinline)
 errno SM_Stop()
 {
-    return NO_ERROR;
+    Sysmon* sysmon = getSysmonPointer();
+
+    errno errno = NO_ERROR;
+
+    // close mutex
+    if (!sysmon->CloseHandle(sysmon->hMutex) && errno == NO_ERROR)
+    {
+        errno = ERR_SYSMON_CLOSE_MUTEX;
+    }
+
+    // recover instructions
+    if (sysmon->NotEraseInstruction)
+    {
+        if (!recoverSysmonPointer(sysmon) && errno == NO_ERROR)
+        {
+            errno = ERR_SYSMON_RECOVER_INST;
+        }
+    }
+    return errno;
 }

@@ -26,7 +26,7 @@ typedef struct {
 } Sysmon;
 
 // methods for user
-bool SM_GetStatus();
+bool SM_GetStatus(SM_Status* status);
 
 // methods for runtime
 errno SM_Pause();
@@ -40,6 +40,9 @@ errno SM_Stop();
     #define SYSMON_POINTER 0x7FABCDF1
 #endif
 static Sysmon* getSysmonPointer();
+
+static bool sm_lock();
+static bool sm_unlock();
 
 static bool initSysmonAPI(Sysmon* sysmon, Context* context);
 static bool updateSysmonPointer(Sysmon* sysmon);
@@ -94,7 +97,7 @@ Sysmon_M* InitSysmon(Context* context)
     method->Pause    = GetFuncAddr(&SM_Pause);
     method->Continue = GetFuncAddr(&SM_Continue);
     method->Stop     = GetFuncAddr(&SM_Stop);
-    return sysmon;
+    return method;
 }
 
 __declspec(noinline)
@@ -140,29 +143,125 @@ static bool initSysmonAPI(Sysmon* sysmon, Context* context)
 __declspec(noinline)
 static bool updateSysmonPointer(Sysmon* sysmon)
 {
-
+    bool success = false;
+    uintptr target = (uintptr)(GetFuncAddr(&getSysmonPointer));
+    for (uintptr i = 0; i < 64; i++)
+    {
+        uintptr* pointer = (uintptr*)(target);
+        if (*pointer != SYSMON_POINTER)
+        {
+            target++;
+            continue;
+        }
+        *pointer = (uintptr)sysmon;
+        success = true;
+        break;
+    }
+    return success;
 }
 
 __declspec(noinline)
 static bool recoverSysmonPointer(Sysmon* sysmon)
 {
-
+    bool success = false;
+    uintptr target = (uintptr)(GetFuncAddr(&getSysmonPointer));
+    for (uintptr i = 0; i < 64; i++)
+    {
+        uintptr* pointer = (uintptr*)(target);
+        if (*pointer != (uintptr)sysmon)
+        {
+            target++;
+            continue;
+        }
+        *pointer = SYSMON_POINTER;
+        success = true;
+        break;
+    }
+    return success;
 }
 
 __declspec(noinline)
 static bool initSysmonEnvironment(Sysmon* sysmon, Context* context)
 {
-
+    // create global mutex
+    HANDLE hMutex = context->CreateMutexA(NULL, false, NAME_RT_SYSMON_MUTEX);
+    if (hMutex == NULL)
+    {
+        return false;
+    }
+    sysmon->hMutex = hMutex;
+    return true;
 }
 
 __declspec(noinline)
 static void eraseSysmonMethods(Context* context)
 {
-
+    if (context->NotEraseInstruction)
+    {
+        return;
+    }
+    uintptr begin = (uintptr)(GetFuncAddr(&initSysmonAPI));
+    uintptr end   = (uintptr)(GetFuncAddr(&eraseSysmonMethods));
+    uintptr size  = end - begin;
+    RandBuffer((byte*)begin, (int64)size);
 }
 
 __declspec(noinline)
 static void cleanSysmon(Sysmon* sysmon)
 {
+    if (sysmon->CloseHandle != NULL && sysmon->hMutex != NULL)
+    {
+        sysmon->CloseHandle(sysmon->hMutex);
+    }
+}
 
+// updateSysmonPointer will replace hard encode address to the actual address.
+// Must disable compiler optimize, otherwise updateSysmonPointer will fail.
+#pragma optimize("", off)
+static Sysmon* getSysmonPointer()
+{
+    uintptr pointer = SYSMON_POINTER;
+    return (Sysmon*)(pointer);
+}
+#pragma optimize("", on)
+
+__declspec(noinline)
+static bool sm_lock()
+{
+    Sysmon* sysmon = getSysmonPointer();
+
+    DWORD event = sysmon->WaitForSingleObject(sysmon->hMutex, INFINITE);
+    return event == WAIT_OBJECT_0 || event == WAIT_ABANDONED;
+}
+
+__declspec(noinline)
+static bool sm_unlock()
+{
+    Sysmon* sysmon = getSysmonPointer();
+
+    return sysmon->ReleaseMutex(sysmon->hMutex);
+}
+
+__declspec(noinline)
+bool SM_GetStatus(SM_Status* status)
+{
+    return true;
+}
+
+__declspec(noinline)
+errno SM_Pause()
+{
+    return NO_ERROR;
+}
+
+__declspec(noinline)
+errno SM_Continue()
+{
+    return NO_ERROR;
+}
+
+__declspec(noinline)
+errno SM_Stop()
+{
+    return NO_ERROR;
 }

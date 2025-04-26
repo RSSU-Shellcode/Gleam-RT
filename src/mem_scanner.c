@@ -12,6 +12,8 @@
     #define END_ADDRESS 0xFFFFFFFF
 #endif
 
+#define MAX_NUM_CONDITION 64
+
 #define COND_TYPE_EXACT_VAL 0x01
 #define COND_TYPE_ARBITRARY 0x02
 
@@ -39,7 +41,7 @@ uint MemScan(byte* pattern, uintptr* results, uint maxItem)
     }
 
     // parse pattern to condition array
-    uint16 condition[32];
+    uint16 condition[MAX_NUM_CONDITION];
     mem_init(condition, sizeof(condition));
     uint numCond = parsePattern(pattern, condition);
     if (numCond == 0)
@@ -49,7 +51,7 @@ uint MemScan(byte* pattern, uintptr* results, uint maxItem)
     }
 
     // check can use fast mode
-    byte fastValue[32];
+    byte fastValue[MAX_NUM_CONDITION];
     mem_init(fastValue, sizeof(fastValue));
     bool canFast  = true;
     uint condSize = 0;
@@ -137,6 +139,10 @@ static uint parsePattern(byte* pattern, uint16* condition)
     bool arbitrary = false;
     for (;;)
     {
+        if (numCond >= MAX_NUM_CONDITION)
+        {
+            return 0;
+        }
         // parse first character
         byte pat = *pattern;
         if (pat == 0x00)

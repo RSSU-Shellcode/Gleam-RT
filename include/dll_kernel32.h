@@ -118,6 +118,8 @@ typedef struct {
     WORD    ProcessorRevision;
 } SYSTEM_INFO;
 
+#ifdef _WIN64
+
 typedef struct {
     PVOID  BaseAddress;
     PVOID  AllocationBase;
@@ -128,6 +130,20 @@ typedef struct {
     DWORD  Protect;
     DWORD  Type;
 } MEMORY_BASIC_INFORMATION;
+
+#elif _WIN32
+
+typedef struct {
+    PVOID  BaseAddress;
+    PVOID  AllocationBase;
+    DWORD  AllocationProtect;
+    SIZE_T RegionSize;
+    DWORD  State;
+    DWORD  Protect;
+    DWORD  Type;
+} MEMORY_BASIC_INFORMATION;
+
+#endif
 
 typedef struct {
     PVOID lpData;

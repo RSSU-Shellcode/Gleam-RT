@@ -27,6 +27,7 @@ bool TestRuntime_WinBase();
 bool TestRuntime_WinFile();
 bool TestRuntime_WinHTTP();
 bool TestRuntime_WinCrypto();
+bool TestRuntime_Sysmon();
 bool TestRuntime_Exit();
 #pragma warning(pop)
 
@@ -53,6 +54,7 @@ static unit tests[] =
     { "Runtime_WinFile",   TestRuntime_WinFile   },
     { "Runtime_WinHTTP",   TestRuntime_WinHTTP   },
     { "Runtime_WinCrypto", TestRuntime_WinCrypto },
+    { "Runtime_Sysmon",    TestRuntime_Sysmon    },
     { "Runtime_Exit",      TestRuntime_Exit      },
 };
 

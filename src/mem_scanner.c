@@ -6,12 +6,6 @@
 #include "errno.h"
 #include "mem_scanner.h"
 
-#ifdef _WIN64
-    #define END_ADDRESS 0xFFFFFFFFFFFFFFFF
-#elif _WIN32
-    #define END_ADDRESS 0xFFFFFFFF
-#endif
-
 #define MAX_NUM_CONDITION 64
 
 #define COND_TYPE_EXACT_VAL 0x01
@@ -28,13 +22,16 @@ static bool isRegionReadable(DWORD protect);
 
 uint MemScan(byte* pattern, uintptr* results, uint maxItem)
 {
-    VirtualQuery_t VirtualQuery;
+    GetSystemInfo_t GetSystemInfo;
+    VirtualQuery_t  VirtualQuery;
 #ifdef _WIN64
-    VirtualQuery = FindAPI(0x7E3FFDE2F6882D52, 0x118655CA8CAE6F48);
+    GetSystemInfo = FindAPI(0x4392322CEA817F1F, 0xE20A45B6346E8009);
+    VirtualQuery  = FindAPI(0x7E3FFDE2F6882D52, 0x118655CA8CAE6F48);
 #elif _WIN32
-    VirtualQuery = FindAPI(0x786F453F, 0x10579014);
+    GetSystemInfo = FindAPI(0x980274CF, 0xE3941931);
+    VirtualQuery  = FindAPI(0x786F453F, 0x10579014);
 #endif
-    if (VirtualQuery == NULL)
+    if (GetSystemInfo == NULL || VirtualQuery == NULL)
     {
         SetLastErrno(ERR_MEM_SCANNER_NOT_FOUND_API);
         return (uint)(-1);
@@ -72,16 +69,19 @@ uint MemScan(byte* pattern, uintptr* results, uint maxItem)
     }
 
     // scan memory region
+    SYSTEM_INFO sysInfo;
+    GetSystemInfo(&sysInfo);
+    uintptr address    = (uintptr)(sysInfo.MinimumApplicationAddress);
+    uintptr endAddress = (uintptr)(sysInfo.MaximumApplicationAddress);
     MEMORY_BASIC_INFORMATION mbi;
     mem_init(&mbi, sizeof(mbi));
-    uintptr address = 0;
     uint numResults = 0;
-    while (address < END_ADDRESS)
+    while (address < endAddress)
     {
         // query memory region information
         if (VirtualQuery((LPCVOID)address, &mbi, sizeof(mbi)) == 0)
         {
-            // SetLastErrno(ERR_MEM_SCANNER_VIRTUAL_QUERY);
+            SetLastErrno(ERR_MEM_SCANNER_VIRTUAL_QUERY);
             return (uint)(-1);
         }
         if (mbi.RegionSize == 0)
@@ -107,6 +107,7 @@ uint MemScan(byte* pattern, uintptr* results, uint maxItem)
             {
                 break;
             }
+            // integer offset;
             if (canFast)
             {
                 integer idx = MatchBytes((byte*)addr, rem, fastValue, condSize);
@@ -127,6 +128,7 @@ uint MemScan(byte* pattern, uintptr* results, uint maxItem)
             } else {
                 addr++;
             }
+            // move write result
         }
         address += size;
     }

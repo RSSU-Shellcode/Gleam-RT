@@ -48,10 +48,11 @@ uint MemScan(byte* pattern, uintptr* results, uint maxItem)
         return (uint)(-1);
     }
 
-    // check can use fast mode
+    // check is valid and can use fast mode
     byte fastValue[MAX_NUM_CONDITION];
     mem_init(fastValue, sizeof(fastValue));
-    bool canFast = true;
+    bool hasExact = false;
+    bool canFast  = true;
     for (uint i = 0; i < numCond; i++)
     {
         uint16 cond = condition[i];
@@ -60,7 +61,13 @@ uint MemScan(byte* pattern, uintptr* results, uint maxItem)
             canFast = false;
         } else {
             fastValue[i] = (byte)(cond & 0x00FF);
+            hasExact = true;
         }
+    }
+    if (!hasExact)
+    {
+        SetLastErrno(ERR_MEM_SCANNER_INVALID_CONDITION);
+        return (uint)(-1);
     }
 
     // scan memory region

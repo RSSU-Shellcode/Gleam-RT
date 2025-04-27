@@ -14,6 +14,7 @@
 #define PATTERN_TYPE_ARBITRARY 0xFE
 #define PATTERN_TYPE_INVALID   0xFF
 
+static uint scanRegion(uintptr addr, uint size, uint16* cond, uint num);
 static uint parsePattern(byte* pattern, uint16* condition);
 static byte charToValue(byte b);
 static bool isRegionReadable(DWORD protect);
@@ -50,22 +51,16 @@ uint MemScan(byte* pattern, uintptr* results, uint maxItem)
     // check can use fast mode
     byte fastValue[MAX_NUM_CONDITION];
     mem_init(fastValue, sizeof(fastValue));
-    bool canFast  = true;
-    uint condSize = 0;
-    for (uint i = 0; i < arrlen(condition); i++)
+    bool canFast = true;
+    for (uint i = 0; i < numCond; i++)
     {
         uint16 cond = condition[i];
-        if (cond == 0x0000)
-        {
-            break;
-        }
         if ((cond >> 8) == COND_TYPE_ARBITRARY)
         {
             canFast = false;
         } else {
-            fastValue[i] = cond & 0x00FF;
+            fastValue[i] = (byte)(cond & 0x00FF);
         }
-        condSize++;
     }
 
     // scan memory region
@@ -103,36 +98,75 @@ uint MemScan(byte* pattern, uintptr* results, uint maxItem)
                 return numResults;
             }
             integer rem = (integer)(address + size) - (integer)addr;
-            if (rem < (integer)condSize)
+            if (rem < (integer)numCond)
             {
                 break;
             }
-            // integer offset;
+            integer offset;
             if (canFast)
             {
-                integer idx = MatchBytes((byte*)addr, rem, fastValue, condSize);
-                if (idx == -1)
-                {
-                    break;
-                } else {
-                    uintptr result = addr + idx;
-                    // skip fake result from fastValue in the stack
-                    if ((byte*)result != fastValue)
-                    {
-                        *results = result;
-                        results++;
-                        numResults++;
-                    }
-                    addr = result + condSize;
-                }
+                offset = MatchBytes((byte*)addr, rem, fastValue, numCond);
             } else {
-                addr++;
+                offset = (integer)scanRegion(addr, rem, condition, numCond);
             }
-            // move write result
+            if (offset == -1)
+            {
+                break;
+            }
+            uintptr result = addr + offset;
+            // skip fake result from fastValue in the stack
+            if ((byte*)result != fastValue)
+            {
+                *results = result;
+                results++;
+                numResults++;
+            }
+            addr = result + numCond;
         }
         address += size;
     }
     return numResults;
+}
+
+static uint scanRegion(uintptr addr, uint size, uint16* condition, uint numCond)
+{
+    uintptr offset = 0;
+    for (;;)
+    {
+        if (size - offset < numCond)
+        {
+            break;
+        }
+        bool same = true;
+        uintptr address = addr + offset;
+        for (uint i = 0; i < numCond; i++)
+        {
+            uint16 cond = condition[i];
+            switch (cond >> 8)
+            {
+            case COND_TYPE_EXACT_VAL:
+                byte data = *(byte*)(address + i);
+                byte val  = (byte)(cond & 0x00FF);
+                same = data == val;
+                break;
+            case COND_TYPE_ARBITRARY:
+                break;
+            default:
+                panic(PANIC_UNREACHABLE_CODE);
+                break;
+            }
+            if (!same)
+            {
+                break;
+            }
+        }
+        if (same)
+        {
+            return offset;
+        }
+        offset++;
+    }
+    return (uint)(-1);
 }
 
 static uint parsePattern(byte* pattern, uint16* condition)

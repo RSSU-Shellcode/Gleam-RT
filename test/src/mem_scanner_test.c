@@ -30,18 +30,40 @@ bool TestMemScanner()
 static bool TestMemScan()
 {
     uintptr results[1000]; // "test"
+
+    // exact value
     uint num = MemScan("74 65 73 74", results, arrlen(results));
-    if (num == -1)
+    if (num == -1 || num == 0)
     {
         printf_s("failed to scan target data: 0x%X\n", GetLastErrno());
         return false;
     }
     printResults(results, num);
 
-    // "74 65 73 74 "
-    // "74 65 ?? 74"
-    // "?A"
-    // "A?"
+    // contains arbitrary value
+    num = MemScan("74 65 ?? 74", results, arrlen(results));
+    if (num == -1 || num == 0)
+    {
+        printf_s("failed to scan target data: 0x%X\n", GetLastErrno());
+        return false;
+    }
+    printResults(results, num);
+
+    byte* patterns[] = {
+        "74 65 A? 74",
+        "74 65 ?A 74",
+        "74 65 7474",
+        "74 65 7G",
+    };
+    for (int i = 0; i < arrlen(patterns); i++)
+    {
+        num = MemScan(patterns[i], results, arrlen(results));
+        if (num != -1 || GetLastErrno() != ERR_MEM_SCANNER_INVALID_CONDITION)
+        {
+            printf_s("unexcepted return value or errno\n");
+            return false;
+        }
+    }
 
     printf_s("test MemScan passed\n");
     return true;

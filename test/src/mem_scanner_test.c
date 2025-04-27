@@ -49,11 +49,13 @@ static bool TestMemScan()
     }
     printResults(results, num);
 
+    // invalid patterns
     byte* patterns[] = {
         "74 65 A? 74",
         "74 65 ?A 74",
         "74 65 7474",
         "74 65 7G",
+        "?? ?? ?? ??",
     };
     for (int i = 0; i < arrlen(patterns); i++)
     {
@@ -73,8 +75,7 @@ static void printResults(uintptr* results, uint num)
 {
     for (uint i = 0; i < num; i++)
     {
-        printf_s("%zu: 0x%zX\n", i, *results);
-        results++;
+        printf_s("%zu: 0x%zX\n", i, results[i]);
     }
     printf_s("num result: %zu\n", num);
 }

@@ -391,7 +391,9 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->Serialization.Serialize   = GetFuncAddr(&Serialize);
     module->Serialization.Unserialize = GetFuncAddr(&Unserialize);
     // memory scanner
-    module->MemScanner.Scan = GetFuncAddr(&MemScan);
+    module->MemScanner.ScanByValue   = GetFuncAddr(&MemScanByValue);
+    module->MemScanner.ScanByPattern = GetFuncAddr(&MemScanByPattern);
+    module->MemScanner.BinToPattern  = GetFuncAddr(&BinToPattern);
     // get procedure address
     module->Procedure.GetProcByName   = GetFuncAddr(&RT_GetProcAddressByName);
     module->Procedure.GetProcByHash   = GetFuncAddr(&RT_GetProcAddressByHash);

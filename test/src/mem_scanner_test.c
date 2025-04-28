@@ -5,7 +5,9 @@
 #include "mem_scanner.h"
 #include "test.h"
 
-static bool TestMemScan();
+static bool TestMemScanByValue();
+static bool TestMemScanByPattern();
+static bool TestBinToPattern();
 
 static void printResults(uintptr* results, uint num);
 
@@ -13,7 +15,9 @@ bool TestMemScanner()
 {
     test_t tests[] = 
     {
-        { TestMemScan },
+        { TestMemScanByValue   },
+        { TestMemScanByPattern },
+        { TestBinToPattern     },
     };
     for (int i = 0; i < arrlen(tests); i++)
     {
@@ -27,12 +31,27 @@ bool TestMemScanner()
     return true;
 }
 
-static bool TestMemScan()
+static bool TestMemScanByValue()
 {
-    uintptr results[1000]; // "test"
+    uintptr results[100];
+    uint num = MemScanByValue("test", 4, results, arrlen(results));
+    if (num == -1 || num == 0)
+    {
+        printf_s("failed to scan target data: 0x%X\n", GetLastErrno());
+        return false;
+    }
+    printResults(results, num);
+
+    printf_s("test MemScanByValue passed\n");
+    return true;
+}
+
+static bool TestMemScanByPattern()
+{
+    uintptr results[100]; // "test"
 
     // exact value
-    uint num = MemScan("74 65 73 74", results, arrlen(results));
+    uint num = MemScanByPattern("74 65 73 74", results, arrlen(results));
     if (num == -1 || num == 0)
     {
         printf_s("failed to scan target data: 0x%X\n", GetLastErrno());
@@ -41,7 +60,7 @@ static bool TestMemScan()
     printResults(results, num);
 
     // contains arbitrary value
-    num = MemScan("74 65 ?? 74", results, arrlen(results));
+    num = MemScanByPattern("74 65 ?? 74", results, arrlen(results));
     if (num == -1 || num == 0)
     {
         printf_s("failed to scan target data: 0x%X\n", GetLastErrno());
@@ -59,7 +78,7 @@ static bool TestMemScan()
     };
     for (int i = 0; i < arrlen(patterns); i++)
     {
-        num = MemScan(patterns[i], results, arrlen(results));
+        num = MemScanByPattern(patterns[i], results, arrlen(results));
         if (num != -1 || GetLastErrno() != ERR_MEM_SCANNER_INVALID_CONDITION)
         {
             printf_s("unexcepted return value or errno\n");
@@ -67,7 +86,29 @@ static bool TestMemScan()
         }
     }
 
-    printf_s("test MemScan passed\n");
+    printf_s("test MemScanByPattern passed\n");
+    return true;
+}
+
+static bool TestBinToPattern()
+{
+    byte pattern[32];
+    BinToPattern("test", 4, pattern);
+    if (strcmp_a(pattern, "74 65 73 74 ") != 0)
+    {
+        printf_s("invalid output pattern\n");
+        return false;
+    }
+
+    uint64 value = 0xABCDEF123456;
+    BinToPattern(&value, sizeof(value), pattern);
+    if (strcmp_a(pattern, "56 34 12 EF CD AB 00 00 ") != 0)
+    {
+        printf_s("invalid output pattern\n");
+        return false;
+    }
+
+    printf_s("test BinToPattern passed\n");
     return true;
 }
 

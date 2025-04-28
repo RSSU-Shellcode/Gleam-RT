@@ -17,11 +17,24 @@
 static uint scanRegion(uintptr addr, uint size, uint16* cond, uint num);
 static uint parsePattern(byte* pattern, uint16* condition);
 static byte charToValue(byte b);
+static byte valueToChar(byte b);
 static bool isRegionReadable(DWORD protect);
 
 #pragma optimize("t", on)
 
-uint MemScan(byte* pattern, uintptr* results, uint maxItem)
+uint MemScanByValue(void* value, uint size, uintptr* results, uint maxItem)
+{
+    if (size == 0 || size > MAX_NUM_CONDITION)
+    {
+        SetLastErrno(ERR_MEM_SCANNER_INVALID_VALUE);
+        return (uint)(-1);
+    }
+    byte pattern[MAX_NUM_CONDITION * 3 + 1];
+    BinToPattern(value, size, pattern);
+    return MemScanByPattern(pattern, results, maxItem);
+}
+
+uint MemScanByPattern(byte* pattern, uintptr* results, uint maxItem)
 {
     GetSystemInfo_t GetSystemInfo;
     VirtualQuery_t  VirtualQuery;
@@ -48,11 +61,11 @@ uint MemScan(byte* pattern, uintptr* results, uint maxItem)
         return (uint)(-1);
     }
 
-    // check is valid and can use fast mode
+    // check condition is valid and can use fast mode
     byte fastValue[MAX_NUM_CONDITION];
     mem_init(fastValue, sizeof(fastValue));
-    bool hasExact = false;
     bool canFast  = true;
+    bool hasExact = false;
     for (uint i = 0; i < numCond; i++)
     {
         uint16 cond = condition[i];
@@ -124,8 +137,7 @@ uint MemScan(byte* pattern, uintptr* results, uint maxItem)
             // skip fake result from fastValue in the stack
             if ((byte*)result != fastValue)
             {
-                *results = result;
-                results++;
+                results[numResults] = result;
                 numResults++;
             }
             addr = result + numCond;
@@ -228,10 +240,10 @@ static uint parsePattern(byte* pattern, uint16* condition)
         // generate the condition
         if (arbitrary)
         {
-            *condition = (COND_TYPE_ARBITRARY << 8) + 0;
+            condition[numCond] = (COND_TYPE_ARBITRARY << 8) + 0;
         } else {
             byte exactVal = val1 * 16 + val2;
-            *condition = (COND_TYPE_EXACT_VAL << 8) + exactVal;
+            condition[numCond] = (COND_TYPE_EXACT_VAL << 8) + exactVal;
         }
         numCond++;
         // parse the third character
@@ -249,9 +261,22 @@ static uint parsePattern(byte* pattern, uint16* condition)
         arbitrary = false;
         // update pointer
         pattern++;
-        condition++;
     }
     return numCond;
+}
+
+void BinToPattern(void* data, uint size, byte* pattern)
+{
+    byte* value = (byte*)data;
+    for (uint i = 0; i < size; i++)
+    {
+        byte b = value[i];
+        pattern[0] = valueToChar(b >> 4);
+        pattern[1] = valueToChar(b & 0x0F);
+        pattern[2] = ' ';
+        pattern += 3;
+    }
+    *pattern = 0x00;
 }
 
 static byte charToValue(byte b)
@@ -273,6 +298,15 @@ static byte charToValue(byte b)
         return PATTERN_TYPE_ARBITRARY;
     }
     return PATTERN_TYPE_INVALID;
+}
+
+static byte valueToChar(byte b)
+{
+    if (b >= 0 && b <= 9)
+    {
+        return '0' + b;
+    }
+    return 'A' + (b - 10);
 }
 
 static bool isRegionReadable(DWORD protect)

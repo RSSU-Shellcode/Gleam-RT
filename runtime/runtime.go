@@ -200,7 +200,9 @@ type RuntimeM struct {
 	}
 
 	MemScanner struct {
-		Scan uintptr
+		ScanByValue   uintptr
+		ScanByPattern uintptr
+		BinToPattern  uintptr
 	}
 
 	Procedure struct {

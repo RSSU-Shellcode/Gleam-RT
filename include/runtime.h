@@ -273,14 +273,19 @@ typedef bool   (*Unserialize_t)(void* serialized, void* data);
 // about memory scanner module
 // 
 // MemScan is used to scans data in the memory of the current process.
-// The return value is the number of results scanned, if return -1,
-// use the GetLastErrno for get error code.
-//
+// The return value is the number of results scanned, if failed to
+// scan, it will return -1, use the GetLastErrno for get error code.
+// 
+// [WARNING]
+// You need to manually exclude certain scan results, such as the "value"
+// stored in the stack as a argument for MemScanByValue.
+// 
 // example:
 //   uintptr results[10];
-//   MemScan("F1 F2 ?? A1", results, arrlen(results));
-//
-typedef uint (*MemScan_t)(byte* pattern, uintptr* results, uint maxItem);
+//   MemScanByPattern("F1 F2 ?? A1", results, arrlen(results));
+typedef uint (*MemScanByValue_t)(void* value, uint size, uintptr* results, uint maxItem);
+typedef uint (*MemScanByPattern_t)(byte* pattern, uintptr* results, uint maxItem);
+typedef void (*BinToPattern_t)(void* data, uint size, byte* pattern);
 
 // GetProcAddress, GetProcAddressByName and GetProcAddressByHash
 // are use Hash API module for implement original GetProcAddress.
@@ -445,7 +450,9 @@ typedef struct {
     } Serialization;
 
     struct {
-        MemScan_t Scan;
+        MemScanByValue_t   ScanByValue;
+        MemScanByPattern_t ScanByPattern;
+        BinToPattern_t     BinToPattern;
     } MemScanner;
 
     struct {

@@ -82,8 +82,8 @@ InMemoryStorage_M* InitInMemoryStorage(Context* context)
 {
     // set structure address
     uintptr address = context->MainMemPage;
-    uintptr storageAddr = address + 12000 + RandUintN(address, 128);
-    uintptr moduleAddr  = address + 13000 + RandUintN(address, 128);
+    uintptr storageAddr = address + 14000 + RandUintN(address, 128);
+    uintptr moduleAddr  = address + 15000 + RandUintN(address, 128);
     // initialize storage
     InMemoryStorage* storage = (InMemoryStorage*)storageAddr;
     mem_init(storage, sizeof(InMemoryStorage));

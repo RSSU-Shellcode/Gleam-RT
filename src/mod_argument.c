@@ -67,8 +67,8 @@ ArgumentStore_M* InitArgumentStore(Context* context)
 {
     // set structure address
     uintptr address = context->MainMemPage;
-    uintptr storeAddr  = address + 10000 + RandUintN(address, 128);
-    uintptr moduleAddr = address + 11000 + RandUintN(address, 128);
+    uintptr storeAddr  = address + 12000 + RandUintN(address, 128);
+    uintptr moduleAddr = address + 13000 + RandUintN(address, 128);
     // initialize store
     ArgumentStore* store = (ArgumentStore*)storeAddr;
     mem_init(store, sizeof(ArgumentStore));

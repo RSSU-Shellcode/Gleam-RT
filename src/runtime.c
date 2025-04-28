@@ -201,7 +201,7 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     // set structure address
     uintptr address = (uintptr)memPage;
     uintptr runtimeAddr = address + 1000 + RandUintN(address, 128);
-    uintptr moduleAddr  = address + 3000 + RandUintN(address, 128);
+    uintptr moduleAddr  = address + 2800 + RandUintN(address, 128);
     // initialize structure
     Runtime* runtime = (Runtime*)runtimeAddr;
     mem_init(runtime, sizeof(Runtime));

@@ -604,10 +604,10 @@ static bool addModule(LibraryTracker* tracker, HMODULE hModule)
         .counter = 0,
         .locked  = false,
     };
-    uint idx;
-    if (List_Find(modules, &mod, sizeof(mod.hModule), &idx))
+    uint index;
+    if (List_Find(modules, &mod, sizeof(mod.hModule), &index))
     {
-        module* module = List_Get(modules, idx);
+        module* module = List_Get(modules, index);
         module->counter++;
         return true;
     }
@@ -632,12 +632,12 @@ static bool delModule(LibraryTracker* tracker, HMODULE hModule)
     module mod = {
         .hModule = hModule,
     };
-    uint idx;
-    if (!List_Find(modules, &mod, sizeof(mod.hModule), &idx))
+    uint index;
+    if (!List_Find(modules, &mod, sizeof(mod.hModule), &index))
     {
         return false;
     }
-    module* module = List_Get(modules, idx);
+    module* module = List_Get(modules, index);
     module->counter--;
     // mark it is deleted and reserve space
     // for free the loaded DLL in reverse order
@@ -682,13 +682,13 @@ static bool setModuleLocker(HMODULE hModule, bool lock)
         module mod = {
             .hModule = hModule,
         };
-        uint idx;
-        if (!List_Find(modules, &mod, sizeof(mod.hModule), &idx))
+        uint index;
+        if (!List_Find(modules, &mod, sizeof(mod.hModule), &index))
         {
             break;
         }
         // set module locker
-        module* module = List_Get(modules, idx);
+        module* module = List_Get(modules, index);
         module->locked = lock;
         success = true;
         break;
@@ -859,8 +859,9 @@ errno LT_Clean()
     errno errno   = NO_ERROR;
     
     // free the loaded DLL in reverse order
+    uint len = modules->Len;
     uint idx = modules->Last;
-    for (uint num = 0; num < modules->Len; idx--)
+    for (uint num = 0; num < len; idx--)
     {
         module* module = List_Get(modules, idx);
         if (module->hModule == NULL)

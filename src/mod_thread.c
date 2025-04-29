@@ -117,6 +117,7 @@ static void eraseTrackerMethods(Context* context);
 static void cleanTracker(ThreadTracker* tracker);
 
 static void* camouflageStartAddress(void* address);
+static bool  getThread(ThreadTracker* tracker, DWORD threadID, thread** pThread);
 static bool  addThread(ThreadTracker* tracker, DWORD threadID, HANDLE hThread);
 static void  delThread(ThreadTracker* tracker, DWORD threadID);
 static bool  addTLSIndex(ThreadTracker* tracker, DWORD index);
@@ -373,8 +374,9 @@ static void cleanTracker(ThreadTracker* tracker)
 
     // close already tracked handles
     List* threads = &tracker->Threads;
+    uint len = threads->Len;
     uint idx = 0;
-    for (uint num = 0; num < threads->Len; idx++)
+    for (uint num = 0; num < len; idx++)
     {
         thread* thread = List_Get(threads, idx);
         if (thread->threadID == 0)
@@ -640,6 +642,15 @@ DWORD TT_SuspendThread(HANDLE hThread)
     DWORD count = tracker->SuspendThread(hThread);
     if (count != (DWORD)(-1))
     {
+        DWORD threadID = tracker->GetThreadID(hThread);
+        if (threadID != 0)
+        {
+            thread* thread;
+            if (getThread(tracker, threadID, &thread))
+            {
+                thread->numSuspend++;
+            }
+        }
         tracker->NumSuspend++;
     }
     dbg_log("[thread]", "SuspendThread: 0x%zX", hThread);
@@ -664,6 +675,15 @@ DWORD TT_ResumeThread(HANDLE hThread)
     DWORD count = tracker->ResumeThread(hThread);
     if (count != (DWORD)(-1))
     {
+        DWORD threadID = tracker->GetThreadID(hThread);
+        if (threadID != 0)
+        {
+            thread* thread;
+            if (getThread(tracker, threadID, &thread))
+            {
+                thread->numSuspend--;
+            }
+        }
         tracker->NumSuspend--;
     }
     dbg_log("[thread]", "ResumeThread: 0x%zX", hThread);
@@ -742,6 +762,21 @@ BOOL TT_TerminateThread(HANDLE hThread, DWORD dwExitCode)
     return tracker->TerminateThread(hThread, dwExitCode);
 }
 
+static bool getThread(ThreadTracker* tracker, DWORD threadID, thread** pThread)
+{
+    List* threads = &tracker->Threads;
+    thread thread = {
+        .threadID = threadID,
+    };
+    uint index;
+    if (!List_Find(threads, &thread, sizeof(thread.threadID), &index))
+    {
+        return false;
+    }
+    *pThread = List_Get(threads, index);
+    return true;
+}
+
 static bool addThread(ThreadTracker* tracker, DWORD threadID, HANDLE hThread)
 {
     // duplicate thread handle
@@ -772,12 +807,12 @@ static void delThread(ThreadTracker* tracker, DWORD threadID)
     thread thread = {
         .threadID = threadID,
     };
-    uint idx;
-    if (!List_Find(threads, &thread, sizeof(thread.threadID), &idx))
+    uint index;
+    if (!List_Find(threads, &thread, sizeof(thread.threadID), &index))
     {
         return;
     }
-    if (!List_Delete(threads, idx))
+    if (!List_Delete(threads, index))
     {
         return;
     }
@@ -982,13 +1017,13 @@ static bool setThreadLocker(DWORD id, bool lock)
         thread thd = {
             .threadID = id,
         };
-        uint idx;
-        if (!List_Find(threads, &thd, sizeof(thd.threadID), &idx))
+        uint index;
+        if (!List_Find(threads, &thd, sizeof(thd.threadID), &index))
         {
             break;
         }
         // set thread locker
-        thread* thread = List_Get(threads, idx);
+        thread* thread = List_Get(threads, index);
         thread->locked = lock;
         success = true;
         break;

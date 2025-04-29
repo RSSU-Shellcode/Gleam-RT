@@ -7,8 +7,8 @@
 #include "list_md.h"
 #include "random.h"
 #include "crypto.h"
-#include "pe_image.h"
 #include "win_api.h"
+#include "thread.h"
 #include "errno.h"
 #include "context.h"
 #include "mod_thread.h"
@@ -116,13 +116,12 @@ static bool initTrackerEnvironment(ThreadTracker* tracker, Context* context);
 static void eraseTrackerMethods(Context* context);
 static void cleanTracker(ThreadTracker* tracker);
 
-static void* camouflageStartAddress(void* address);
-static bool  getThread(ThreadTracker* tracker, DWORD threadID, thread** pThread);
-static bool  addThread(ThreadTracker* tracker, DWORD threadID, HANDLE hThread);
-static void  delThread(ThreadTracker* tracker, DWORD threadID);
-static bool  addTLSIndex(ThreadTracker* tracker, DWORD index);
-static void  delTLSIndex(ThreadTracker* tracker, DWORD index);
-static bool  setThreadLocker(DWORD threadID, bool lock);
+static bool getThread(ThreadTracker* tracker, DWORD threadID, thread** pThread);
+static bool addThread(ThreadTracker* tracker, DWORD threadID, HANDLE hThread);
+static void delThread(ThreadTracker* tracker, DWORD threadID);
+static bool addTLSIndex(ThreadTracker* tracker, DWORD index);
+static void delTLSIndex(ThreadTracker* tracker, DWORD index);
+static bool setThreadLocker(DWORD threadID, bool lock);
 
 ThreadTracker_M* InitThreadTracker(Context* context)
 {
@@ -434,9 +433,8 @@ HANDLE tt_createThread(
     {
         // create thread from camouflaged start address and pause it
         bool  resume   = (dwCreationFlags & 0xF) != CREATE_SUSPENDED;
-        void* fakeAddr = camouflageStartAddress(lpStartAddress);
+        void* fakeAddr = CamouflageStartAddress(lpStartAddress);
         dwCreationFlags |= CREATE_SUSPENDED;
-
         hThread = tracker->CreateThread(
             lpThreadAttributes, dwStackSize, fakeAddr,
             lpParameter, dwCreationFlags, &threadID
@@ -536,72 +534,6 @@ HANDLE tt_createThread(
         *lpThreadId = threadID;
     }
     return hThread;
-}
-
-static void* camouflageStartAddress(void* address)
-{
-#ifdef NOT_CAMOUFLAGE
-    return address;
-#endif // NOT_CAMOUFLAGE
-
-    // get current process module from PEB
-#ifdef _WIN64
-    uintptr peb = __readgsqword(96);
-    uintptr ldr = *(uintptr*)(peb + 24);
-    uintptr mod = *(uintptr*)(ldr + 32);
-#elif _WIN32
-    uintptr peb = __readfsdword(48);
-    uintptr ldr = *(uintptr*)(peb + 12);
-    uintptr mod = *(uintptr*)(ldr + 20);
-#endif
-    // get current process module address
-#ifdef _WIN64
-    uintptr modAddr = *(uintptr*)(mod + 32);
-#elif _WIN32
-    uintptr modAddr = *(uintptr*)(mod + 16);
-#endif
-    // parse module information
-    PE_Image image;
-    ParsePEImage((byte*)modAddr, &image);
-    // select a random start address
-    uintptr base  = modAddr + image.TextVirtualAddress;
-    uintptr begin = base + RandUintN((uint64)address, image.TextSizeOfRawData);
-    uintptr end   = base + image.TextSizeOfRawData;
-    for (uintptr addr = begin; addr < end; addr++)
-    {
-        byte b = *(byte*)addr; 
-        // skip special instructions
-        switch (b)
-        {
-        case 0x00: // NULL
-            continue;
-        case 0xCC: // int3
-            continue;
-        case 0xC3: // ret
-            continue;
-        case 0xC2: // ret n
-            continue;
-        default:
-            break;
-        }
-        // push 
-        if (b >= 0x50 && b <= 0x57)
-        {
-            return (void*)addr;
-        }
-        // mov
-        if (b >= 0x88 && b <= 0x8B)
-        {
-            return (void*)addr;
-        }
-        // mov register
-        if (b >= 0xB0 && b <= 0xBF)
-        {
-            return (void*)addr;
-        }
-    }
-    // if not found, return the random start address
-    return (void*)begin;
 }
 
 __declspec(noinline)
@@ -1136,8 +1068,10 @@ errno TT_Suspend()
             continue;
         }
         DWORD count = tracker->SuspendThread(thread->hThread);
-        if (count == (DWORD)(-1))
+        if (count != (DWORD)(-1))
         {
+            thread->numSuspend++;
+        } else {
             delThread(tracker, thread->threadID);
             errno = ERR_THREAD_SUSPEND;
         }
@@ -1205,8 +1139,10 @@ errno TT_Resume()
             continue;
         }
         DWORD count = tracker->ResumeThread(thread->hThread);
-        if (count == (DWORD)(-1))
+        if (count != (DWORD)(-1))
         {
+            thread->numSuspend--;
+        } else {
             delThread(tracker, thread->threadID);
             errno = ERR_THREAD_RESUME;
         }

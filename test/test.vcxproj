@@ -34,6 +34,7 @@
     <ClInclude Include="..\include\serialize.h" />
     <ClInclude Include="..\include\mem_scanner.h" />
     <ClInclude Include="..\include\pe_image.h" />
+	<ClInclude Include="..\include\thread.h" />
     <ClInclude Include="..\include\win_api.h" />
     <ClInclude Include="..\include\errno.h" />
     <ClInclude Include="..\include\context.h" />
@@ -73,7 +74,7 @@
     <ClCompile Include="src\win_file_test.c" />
     <ClCompile Include="src\win_http_test.c" />
     <ClCompile Include="src\win_crypto_test.c" />
-	<ClCompile Include="src\sysmon_test.c" />
+    <ClCompile Include="src\sysmon_test.c" />
     <ClCompile Include="..\src\runtime.c" />
     <ClCompile Include="..\src\lib_memory.c" />
     <ClCompile Include="..\src\lib_string.c" />
@@ -87,6 +88,7 @@
     <ClCompile Include="..\src\serialize.c" />
     <ClCompile Include="..\src\mem_scanner.c" />
     <ClCompile Include="..\src\pe_image.c" />
+	<ClCompile Include="..\src\thread.c" />
     <ClCompile Include="..\src\win_api.c" />
     <ClCompile Include="..\src\errno.c" />
     <ClCompile Include="..\src\mod_library.c" />

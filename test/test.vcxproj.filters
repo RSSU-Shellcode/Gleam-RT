@@ -167,6 +167,9 @@
     <ClCompile Include="src\sysmon_test.c">
       <Filter>Test</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\thread.c">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\crypto.h">
@@ -287,6 +290,9 @@
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="..\include\sysmon.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\thread.h">
       <Filter>Header</Filter>
     </ClInclude>
   </ItemGroup>

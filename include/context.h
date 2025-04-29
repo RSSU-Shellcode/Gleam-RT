@@ -17,6 +17,8 @@ typedef void  (*mt_free_t)(void* ptr);
 typedef uint  (*mt_msize_t)(void* ptr);
 typedef uint  (*mt_mcap_t)(void* ptr);
 
+typedef HANDLE (*NewThread_t)(void* address, void* parameter, bool track);
+
 typedef struct {
     // runtime options
     bool NotEraseInstruction;
@@ -58,6 +60,16 @@ typedef struct {
     mt_free_t    mt_free;
     mt_msize_t   mt_msize;
     mt_mcap_t    mt_mcap;
+
+    // for sysmon
+    HANDLE hMutex_LT;
+    HANDLE hMutex_MT;
+    HANDLE hMutex_TT;
+    HANDLE hMutex_RT;
+    HANDLE hMutex_AS;
+    HANDLE hMutex_IMS;
+
+    NewThread_t NewThread;
 } Context;
 
 #endif // CONTEXT_H

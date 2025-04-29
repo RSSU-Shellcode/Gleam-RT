@@ -678,11 +678,11 @@ static bool decommitPage(MemoryTracker* tracker, uintptr address, uint size)
     }
     // search memory regions list
     register List* regions = &tracker->Regions;
-    register uint  len     = regions->Len;
-    register uint  index   = 0;
-    for (uint num = 0; num < len; index++)
+    register uint len = regions->Len;
+    register uint idx = 0;
+    for (uint num = 0; num < len; idx++)
     {
-        memRegion* region = List_Get(regions, index);
+        memRegion* region = List_Get(regions, idx);
         if (region->address == 0)
         {
             continue;
@@ -705,13 +705,13 @@ static bool releasePage(MemoryTracker* tracker, uintptr address, uint size)
     }
     // search memory regions list
     register List* regions = &tracker->Regions;
-    register uint  len     = regions->Len;
-    register uint  index   = 0;
+    register uint len = regions->Len;
+    register uint idx = 0;
     register memRegion* region;
     bool found = false;
-    for (uint num = 0; num < len; index++)
+    for (uint num = 0; num < len; idx++)
     {
-        region = List_Get(regions, index);
+        region = List_Get(regions, idx);
         if (region->address == 0)
         {
             continue;
@@ -725,7 +725,7 @@ static bool releasePage(MemoryTracker* tracker, uintptr address, uint size)
         {
             return false;
         }
-        if (!List_Delete(regions, index))
+        if (!List_Delete(regions, idx))
         {
             return false;
         }
@@ -742,11 +742,11 @@ static bool deletePages(MemoryTracker* tracker, uintptr address, uint size)
     register uint pageSize = tracker->PageSize;
 
     register List* pages = &tracker->Pages;
-    register uint  len   = pages->Len;
-    register uint  index = 0;
-    for (uint num = 0; num < len; index++)
+    register uint len = pages->Len;
+    register uint idx = 0;
+    for (uint num = 0; num < len; idx++)
     {
-        memPage* page = List_Get(pages, index);
+        memPage* page = List_Get(pages, idx);
         if (page->address == 0)
         {
             continue;
@@ -757,7 +757,7 @@ static bool deletePages(MemoryTracker* tracker, uintptr address, uint size)
             continue;
         }
         // remove page in list
-        if (!List_Delete(pages, index))
+        if (!List_Delete(pages, idx))
         {
             return false;
         }
@@ -808,12 +808,12 @@ static void protectPage(uintptr address, uint size, uint32 protect)
     register uint pageSize = tracker->PageSize;
 
     register List* pages = &tracker->Pages;
-    register uint  len   = pages->Len;
-    register uint  index = 0;
+    register uint len = pages->Len;
+    register uint idx = 0;
     register memPage* page;
-    for (uint num = 0; num < len; index++)
+    for (uint num = 0; num < len; idx++)
     {
-        page = List_Get(pages, index);
+        page = List_Get(pages, idx);
         if (page->address == 0)
         {
             continue;
@@ -2427,10 +2427,11 @@ errno MT_Encrypt()
 
     // encrypt memory pages
     List* pages = &tracker->Pages;
-    uint  index = 0;
-    for (uint num = 0; num < pages->Len; index++)
+    uint len = pages->Len;
+    uint idx = 0;
+    for (uint num = 0; num < len; idx++)
     {
-        memPage* page = List_Get(pages, index);
+        memPage* page = List_Get(pages, idx);
         if (page->address == 0)
         {
             continue;
@@ -2515,10 +2516,11 @@ errno MT_Decrypt()
     // that some memory pages may be encrypted twice, like use
     // VirtualAlloc to allocate multiple times to the same address
     List* pages = &tracker->Pages;
-    uint  index = pages->Last;
-    for (uint num = 0; num < pages->Len; index--)
+    uint len = pages->Len;
+    uint idx = pages->Last;
+    for (uint num = 0; num < len; idx--)
     {
-        memPage* page = List_Get(pages, index);
+        memPage* page = List_Get(pages, idx);
         if (page->address == 0)
         {
             continue;
@@ -2903,8 +2905,9 @@ errno MT_Clean()
     errno errno   = NO_ERROR;
 
     // cover memory page data
+    uint len = pages->Len;
     uint idx = 0;
-    for (uint num = 0; num < pages->Len; idx++)
+    for (uint num = 0; num < len; idx++)
     {
         memPage* page = List_Get(pages, idx);
         if (page->address == 0)
@@ -2920,8 +2923,9 @@ errno MT_Clean()
     }
 
     // decommit memory pages
+    len = pages->Len;
     idx = 0;
-    for (uint num = 0; num < pages->Len; idx++)
+    for (uint num = 0; num < len; idx++)
     {
         memPage* page = List_Get(pages, idx);
         if (page->address == 0)
@@ -2936,8 +2940,9 @@ errno MT_Clean()
     }
 
     // release reserved memory region
+    len = pages->Len;
     idx = 0;
-    for (uint num = 0; num < regions->Len; idx++)
+    for (uint num = 0; num < len; idx++)
     {
         memRegion* region = List_Get(regions, idx);
         if (region->address == 0)
@@ -2982,8 +2987,9 @@ errno MT_Clean()
     }
 
     // release private heaps
+    len = heaps->Len;
     idx = 0;
-    for (uint num = 0; num < heaps->Len; idx++)
+    for (uint num = 0; num < len; idx++)
     {
         heapObject* heap = List_Get(heaps, idx);
         if (heap->hHeap == NULL)

@@ -13,11 +13,24 @@ typedef struct {
     // store options
     bool NotEraseInstruction;
 
-    CreateWaitableTimerA_t CreateWaitableTimerA;
-    SetWaitableTimer_t     SetWaitableTimer;
-    ReleaseMutex_t         ReleaseMutex;
-    WaitForSingleObject_t  WaitForSingleObject;
-    CloseHandle_t          CloseHandle;
+    CreateWaitableTimerA_t   CreateWaitableTimerA;
+    SetWaitableTimer_t       SetWaitableTimer;
+    SetEvent_t               SetEvent;
+    ReleaseMutex_t           ReleaseMutex;
+    WaitForSingleObject_t    WaitForSingleObject;
+    WaitForMultipleObjects_t WaitForMultipleObjects;
+    CloseHandle_t            CloseHandle;
+
+    // about watcher
+    HANDLE hEvent;
+    HANDLE hThread;
+
+    HANDLE hMutex_LT;
+    HANDLE hMutex_MT;
+    HANDLE hMutex_TT;
+    HANDLE hMutex_RT;
+    HANDLE hMutex_AS;
+    HANDLE hMutex_IMS;
 
     SM_Status status;
 
@@ -106,6 +119,7 @@ Sysmon_M* InitSysmon(Context* context)
 __declspec(noinline)
 static bool initSysmonAPI(Sysmon* sysmon, Context* context)
 {
+    // TODO remove it ???
     typedef struct { 
         uint hash; uint key; void* proc;
     } winapi;
@@ -133,9 +147,12 @@ static bool initSysmonAPI(Sysmon* sysmon, Context* context)
     sysmon->CreateWaitableTimerA = list[0x00].proc;
     sysmon->SetWaitableTimer     = list[0x01].proc;
 
-    sysmon->ReleaseMutex        = context->ReleaseMutex;
-    sysmon->WaitForSingleObject = context->WaitForSingleObject;
-    sysmon->CloseHandle         = context->CloseHandle;
+    sysmon->CreateWaitableTimerA = context->CreateWaitableTimerA;
+    sysmon->SetWaitableTimer     = context->SetWaitableTimer;
+    sysmon->SetEvent             = context->SetEvent;
+    sysmon->ReleaseMutex         = context->ReleaseMutex;
+    sysmon->WaitForSingleObject  = context->WaitForSingleObject;
+    sysmon->CloseHandle          = context->CloseHandle;
     return true;
 }
 
@@ -193,6 +210,27 @@ static bool initSysmonEnvironment(Sysmon* sysmon, Context* context)
         return false;
     }
     sysmon->hMutex = hMutex;
+    // create event for controller
+    HANDLE hEvent = context->CreateEventA(NULL, false, false, NAME_RT_SM_EVENT_CTRL);
+    if (hMutex == NULL)
+    {
+        return false;
+    }
+    sysmon->hEvent = hEvent;
+    // create thread for watcher
+    HANDLE hThread = context->NewThread(GetFuncAddr(&sm_watcher), NULL, false);
+    if (hThread == NULL)
+    {
+        return false;
+    }
+    sysmon->hThread = hThread;
+    // copy mutex from context
+    sysmon->hMutex_LT  = context->hMutex_LT;
+    sysmon->hMutex_MT  = context->hMutex_MT;
+    sysmon->hMutex_TT  = context->hMutex_TT;
+    sysmon->hMutex_RT  = context->hMutex_RT;
+    sysmon->hMutex_AS  = context->hMutex_AS;
+    sysmon->hMutex_IMS = context->hMutex_IMS;
     return true;
 }
 
@@ -215,6 +253,11 @@ static void cleanSysmon(Sysmon* sysmon)
     if (sysmon->CloseHandle != NULL && sysmon->hMutex != NULL)
     {
         sysmon->CloseHandle(sysmon->hMutex);
+    }
+    if (sysmon->CloseHandle != NULL && sysmon->hThread != NULL)
+    {
+
+        sysmon->CloseHandle(sysmon->hThread);
     }
 }
 
@@ -249,6 +292,14 @@ __declspec(noinline)
 static void sm_watcher()
 {
     Sysmon* sysmon = getSysmonPointer();
+
+    return;
+
+    for (;;)
+    {
+        sysmon->WaitForSingleObject(sysmon->hMutex, 1000);
+        sm_sleep(1000);
+    }
 }
 
 __declspec(noinline)

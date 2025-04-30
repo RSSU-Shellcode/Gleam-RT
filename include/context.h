@@ -40,18 +40,23 @@ typedef struct {
     rt_unlock_t unlock;
 
     // for initialize runtime submodules
-    LoadLibraryA_t          LoadLibraryA;
-    FreeLibrary_t           FreeLibrary;
-    VirtualAlloc_t          VirtualAlloc;
-    VirtualFree_t           VirtualFree;
-    VirtualProtect_t        VirtualProtect;
-    CreateMutexA_t          CreateMutexA;
-    ReleaseMutex_t          ReleaseMutex;
-    WaitForSingleObject_t   WaitForSingleObject;
-    FlushInstructionCache_t FlushInstructionCache;
-    DuplicateHandle_t       DuplicateHandle;
-    CloseHandle_t           CloseHandle;
-    Sleep_t                 Sleep;
+    LoadLibraryA_t           LoadLibraryA;
+    FreeLibrary_t            FreeLibrary;
+    VirtualAlloc_t           VirtualAlloc;
+    VirtualFree_t            VirtualFree;
+    VirtualProtect_t         VirtualProtect;
+    CreateMutexA_t           CreateMutexA;
+    ReleaseMutex_t           ReleaseMutex;
+    CreateEventA_t           CreateEventA;
+    SetEvent_t               SetEvent;
+    CreateWaitableTimerA_t   CreateWaitableTimerA;
+    SetWaitableTimer_t       SetWaitableTimer;
+    WaitForSingleObject_t    WaitForSingleObject;
+    WaitForMultipleObjects_t WaitForMultipleObjects;
+    FlushInstructionCache_t  FlushInstructionCache;
+    DuplicateHandle_t        DuplicateHandle;
+    CloseHandle_t            CloseHandle;
+    Sleep_t                  Sleep;
 
     // for initialize high-level modules
     mt_malloc_t  mt_malloc;

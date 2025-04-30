@@ -653,6 +653,11 @@ typedef DWORD (*WaitForSingleObject_t)
     HANDLE hHandle, DWORD dwMilliseconds
 );
 
+typedef DWORD (*WaitForMultipleObjects_t)
+(
+    DWORD nCount, HANDLE* lpHandles, BOOL bWaitAll, DWORD dwMilliseconds
+);
+
 typedef BOOL (*DuplicateHandle_t)
 (
     HANDLE hSourceProcessHandle, HANDLE hSourceHandle, HANDLE hTargetProcessHandle, 

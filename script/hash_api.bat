@@ -18,9 +18,12 @@ hash_api -fmt 64 -conc -func VirtualProtect
 hash_api -fmt 64 -conc -func FlushInstructionCache
 hash_api -fmt 64 -conc -func CreateMutexA
 hash_api -fmt 64 -conc -func ReleaseMutex
+hash_api -fmt 64 -conc -func CreateEventA
+hash_api -fmt 64 -conc -func SetEvent
 hash_api -fmt 64 -conc -func CreateWaitableTimerA
 hash_api -fmt 64 -conc -func SetWaitableTimer
 hash_api -fmt 64 -conc -func WaitForSingleObject
+hash_api -fmt 64 -conc -func WaitForMultipleObjects
 hash_api -fmt 64 -conc -func DuplicateHandle
 hash_api -fmt 64 -conc -func CloseHandle
 hash_api -fmt 64 -conc -func SetCurrentDirectoryA
@@ -234,9 +237,12 @@ hash_api -fmt 32 -conc -func VirtualProtect
 hash_api -fmt 32 -conc -func FlushInstructionCache
 hash_api -fmt 32 -conc -func CreateMutexA
 hash_api -fmt 32 -conc -func ReleaseMutex
+hash_api -fmt 32 -conc -func CreateEventA
+hash_api -fmt 32 -conc -func SetEvent
 hash_api -fmt 32 -conc -func CreateWaitableTimerA
 hash_api -fmt 32 -conc -func SetWaitableTimer
 hash_api -fmt 32 -conc -func WaitForSingleObject
+hash_api -fmt 32 -conc -func WaitForMultipleObjects
 hash_api -fmt 32 -conc -func DuplicateHandle
 hash_api -fmt 32 -conc -func CloseHandle
 hash_api -fmt 32 -conc -func SetCurrentDirectoryA

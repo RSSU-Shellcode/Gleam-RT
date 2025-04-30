@@ -213,8 +213,6 @@ static bool initTrackerAPI(ThreadTracker* tracker, Context* context)
         { 0xFB891A810F1ABF9A, 0x253BBD721EBD81F0 }, // TerminateThread
         { 0x2C36E30A5F0A762C, 0xFEB91119DD47EE23 }, // TlsAlloc
         { 0x93E44660BF1A6F09, 0x87B9005375387D3C }, // TlsFree
-        { 0xB792795AB6382758, 0x5C9EFDF4B328D22C }, // CreateWaitableTimerA
-        { 0x03CF410B2AD104B7, 0x4F5D3ECB5E4ECFBD }, // SetWaitableTimer
     };
 #elif _WIN32
     {
@@ -229,8 +227,6 @@ static bool initTrackerAPI(ThreadTracker* tracker, Context* context)
         { 0xBA134972, 0x295F9DD2 }, // TerminateThread
         { 0x8749FD07, 0x783A2597 }, // TlsAlloc
         { 0x0B8B8434, 0xAD091548 }, // TlsFree
-        { 0x86B42DFE, 0x10AA2250 }, // CreateWaitableTimerA
-        { 0x9B5031CA, 0x7CD98AEF }, // SetWaitableTimer
     };
 #endif
     for (int i = 0; i < arrlen(list); i++)
@@ -253,13 +249,13 @@ static bool initTrackerAPI(ThreadTracker* tracker, Context* context)
     tracker->TerminateThread      = list[0x08].proc;
     tracker->TlsAlloc             = list[0x09].proc;
     tracker->TlsFree              = list[0x0A].proc;
-    tracker->CreateWaitableTimerA = list[0x0B].proc;
-    tracker->SetWaitableTimer     = list[0x0C].proc;
 
-    tracker->ReleaseMutex        = context->ReleaseMutex;
-    tracker->WaitForSingleObject = context->WaitForSingleObject;
-    tracker->DuplicateHandle     = context->DuplicateHandle;
-    tracker->CloseHandle         = context->CloseHandle;
+    tracker->CreateWaitableTimerA = context->CreateWaitableTimerA;
+    tracker->SetWaitableTimer     = context->SetWaitableTimer;
+    tracker->ReleaseMutex         = context->ReleaseMutex;
+    tracker->WaitForSingleObject  = context->WaitForSingleObject;
+    tracker->DuplicateHandle      = context->DuplicateHandle;
+    tracker->CloseHandle          = context->CloseHandle;
     return true;
 }
 

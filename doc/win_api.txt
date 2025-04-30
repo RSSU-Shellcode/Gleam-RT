@@ -94,6 +94,7 @@ https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-setwait
 https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-sleep
 https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-sleepex
 https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-waitforsingleobject
+https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-waitformultipleobjects
 https://learn.microsoft.com/en-us/windows/win32/api/handleapi/nf-handleapi-duplicatehandle
 https://learn.microsoft.com/en-us/windows/win32/api/handleapi/nf-handleapi-closehandle
 https://learn.microsoft.com/en-us/windows/win32/api/stringapiset/nf-stringapiset-multibytetowidechar

@@ -47,25 +47,28 @@ typedef struct {
     Runtime_Opts Options;
 
     // API addresses
-    GetSystemInfo_t         GetSystemInfo;
-    LoadLibraryA_t          LoadLibraryA;
-    FreeLibrary_t           FreeLibrary;
-    GetProcAddress_t        GetProcAddress;
-    VirtualAlloc_t          VirtualAlloc;
-    VirtualFree_t           VirtualFree;
-    VirtualProtect_t        VirtualProtect;
-    FlushInstructionCache_t FlushInstructionCache;
-    CreateMutexA_t          CreateMutexA;
-    ReleaseMutex_t          ReleaseMutex;
-    CreateWaitableTimerA_t  CreateWaitableTimerA;
-    SetWaitableTimer_t      SetWaitableTimer;
-    WaitForSingleObject_t   WaitForSingleObject;
-    DuplicateHandle_t       DuplicateHandle;
-    CloseHandle_t           CloseHandle;
-    SetCurrentDirectoryA_t  SetCurrentDirectoryA;
-    SetCurrentDirectoryW_t  SetCurrentDirectoryW;
-    SleepEx_t               SleepEx;
-    ExitProcess_t           ExitProcess;
+    GetSystemInfo_t          GetSystemInfo;
+    LoadLibraryA_t           LoadLibraryA;
+    FreeLibrary_t            FreeLibrary;
+    GetProcAddress_t         GetProcAddress;
+    VirtualAlloc_t           VirtualAlloc;
+    VirtualFree_t            VirtualFree;
+    VirtualProtect_t         VirtualProtect;
+    FlushInstructionCache_t  FlushInstructionCache;
+    CreateMutexA_t           CreateMutexA;
+    ReleaseMutex_t           ReleaseMutex;
+    CreateEventA_t           CreateEventA;
+    SetEvent_t               SetEvent;
+    CreateWaitableTimerA_t   CreateWaitableTimerA;
+    SetWaitableTimer_t       SetWaitableTimer;
+    WaitForSingleObject_t    WaitForSingleObject;
+    WaitForMultipleObjects_t WaitForMultipleObjects;
+    DuplicateHandle_t        DuplicateHandle;
+    CloseHandle_t            CloseHandle;
+    SetCurrentDirectoryA_t   SetCurrentDirectoryA;
+    SetCurrentDirectoryW_t   SetCurrentDirectoryW;
+    SleepEx_t                SleepEx;
+    ExitProcess_t            ExitProcess;
 
     // runtime data
     void*  MainMemPage; // store all structures
@@ -478,9 +481,12 @@ static bool initRuntimeAPI(Runtime* runtime)
         { 0x8172B49F66E495BA, 0x8F0D0796223B56C2 }, // FlushInstructionCache
         { 0x31FE697F93D7510C, 0x77C8F05FE04ED22D }, // CreateMutexA
         { 0xEEFDEA7C0785B561, 0xA7B72CC8CD55C1D4 }, // ReleaseMutex
+        { 0x2E47C7EAD6A3CC9B, 0x7DCE77B96C9AC3ED }, // CreateEventA
+        { 0xF44F3BAA1B74B51B, 0xB560798C157FA915 }, // SetEvent
         { 0x6B664C7B54AA27A8, 0x666DC45A99BC8137 }, // CreateWaitableTimerA
         { 0x1C438D7C33D36592, 0xB8818ECC97728D1F }, // SetWaitableTimer
         { 0xA524CD56CF8DFF7F, 0x5519595458CD47C8 }, // WaitForSingleObject
+        { 0x5DC078FB29E0F74D, 0x4852E519305338B6 }, // WaitForMultipleObjects
         { 0xF7A5A49D19409FFC, 0x6F23FAA4C20FF4D3 }, // DuplicateHandle
         { 0xA25F7449D6939A01, 0x85D37F1D89B30D2E }, // CloseHandle
         { 0x94EC785163801E26, 0xCBF66516D38443F0 }, // SetCurrentDirectoryA
@@ -500,9 +506,12 @@ static bool initRuntimeAPI(Runtime* runtime)
         { 0x87A2CEE8, 0x42A3C1AF }, // FlushInstructionCache
         { 0x8F5BAED2, 0x43487DC7 }, // CreateMutexA
         { 0xFA42E55C, 0xEA9F1081 }, // ReleaseMutex
+        { 0xF064C9E7, 0x9268B16B }, // CreateEventA
+        { 0xAAD95915, 0x93DFC243 }, // SetEvent
         { 0xEA251494, 0xB8B82DF1 }, // CreateWaitableTimerA
         { 0x3F987BDE, 0x01C8C945 }, // SetWaitableTimer
         { 0xC21AB03D, 0xED3AAF22 }, // WaitForSingleObject
+        { 0xE106113F, 0x69239A3D }, // WaitForMultipleObjects
         { 0x0E7ED8B9, 0x025067E9 }, // DuplicateHandle
         { 0x60E108B2, 0x3C2DFF52 }, // CloseHandle
         { 0xBCCEAFB1, 0x99C565BD }, // SetCurrentDirectoryA
@@ -521,25 +530,28 @@ static bool initRuntimeAPI(Runtime* runtime)
         list[i].proc = proc;
     }
 
-    runtime->GetSystemInfo         = list[0x00].proc;
-    runtime->LoadLibraryA          = list[0x01].proc;
-    runtime->FreeLibrary           = list[0x02].proc;
-    runtime->GetProcAddress        = list[0x03].proc;
-    runtime->VirtualAlloc          = list[0x04].proc;
-    runtime->VirtualFree           = list[0x05].proc;
-    runtime->VirtualProtect        = list[0x06].proc;
-    runtime->FlushInstructionCache = list[0x07].proc;
-    runtime->CreateMutexA          = list[0x08].proc;
-    runtime->ReleaseMutex          = list[0x09].proc;
-    runtime->CreateWaitableTimerA  = list[0x0A].proc;
-    runtime->SetWaitableTimer      = list[0x0B].proc;
-    runtime->WaitForSingleObject   = list[0x0C].proc;
-    runtime->DuplicateHandle       = list[0x0D].proc;
-    runtime->CloseHandle           = list[0x0E].proc;
-    runtime->SetCurrentDirectoryA  = list[0x0F].proc;
-    runtime->SetCurrentDirectoryW  = list[0x10].proc;
-    runtime->SleepEx               = list[0x11].proc;
-    runtime->ExitProcess           = list[0x12].proc;
+    runtime->GetSystemInfo          = list[0x00].proc;
+    runtime->LoadLibraryA           = list[0x01].proc;
+    runtime->FreeLibrary            = list[0x02].proc;
+    runtime->GetProcAddress         = list[0x03].proc;
+    runtime->VirtualAlloc           = list[0x04].proc;
+    runtime->VirtualFree            = list[0x05].proc;
+    runtime->VirtualProtect         = list[0x06].proc;
+    runtime->FlushInstructionCache  = list[0x07].proc;
+    runtime->CreateMutexA           = list[0x08].proc;
+    runtime->ReleaseMutex           = list[0x09].proc;
+    runtime->CreateEventA           = list[0x0A].proc;
+    runtime->SetEvent               = list[0x0B].proc;
+    runtime->CreateWaitableTimerA   = list[0x0C].proc;
+    runtime->SetWaitableTimer       = list[0x0D].proc;
+    runtime->WaitForSingleObject    = list[0x0E].proc;
+    runtime->WaitForMultipleObjects = list[0x0F].proc;
+    runtime->DuplicateHandle        = list[0x10].proc;
+    runtime->CloseHandle            = list[0x11].proc;
+    runtime->SetCurrentDirectoryA   = list[0x12].proc;
+    runtime->SetCurrentDirectoryW   = list[0x13].proc;
+    runtime->SleepEx                = list[0x14].proc;
+    runtime->ExitProcess            = list[0x15].proc;
     return true;
 }
 
@@ -621,23 +633,27 @@ static errno initSubmodules(Runtime* runtime)
         .lock   = GetFuncAddr(&RT_lock_mods),
         .unlock = GetFuncAddr(&RT_unlock_mods),
 
-        .LoadLibraryA          = runtime->LoadLibraryA,
-        .FreeLibrary           = runtime->FreeLibrary,
-        .VirtualAlloc          = runtime->VirtualAlloc,
-        .VirtualFree           = runtime->VirtualFree,
-        .VirtualProtect        = runtime->VirtualProtect,
-        .CreateMutexA          = runtime->CreateMutexA,
-        .ReleaseMutex          = runtime->ReleaseMutex,
-        .WaitForSingleObject   = runtime->WaitForSingleObject,
-        .FlushInstructionCache = runtime->FlushInstructionCache,
-        .DuplicateHandle       = runtime->DuplicateHandle,
-        .CloseHandle           = runtime->CloseHandle,
-        .Sleep                 = GetFuncAddr(&RT_Sleep),
+        .LoadLibraryA           = runtime->LoadLibraryA,
+        .FreeLibrary            = runtime->FreeLibrary,
+        .VirtualAlloc           = runtime->VirtualAlloc,
+        .VirtualFree            = runtime->VirtualFree,
+        .VirtualProtect         = runtime->VirtualProtect,
+        .CreateMutexA           = runtime->CreateMutexA,
+        .ReleaseMutex           = runtime->ReleaseMutex,
+        .CreateEventA           = runtime->CreateEventA,
+        .SetEvent               = runtime->SetEvent,
+        .CreateWaitableTimerA   = runtime->CreateWaitableTimerA,
+        .SetWaitableTimer       = runtime->SetWaitableTimer,
+        .WaitForSingleObject    = runtime->WaitForSingleObject,
+        .WaitForMultipleObjects = runtime->WaitForMultipleObjects,
+        .FlushInstructionCache  = runtime->FlushInstructionCache,
+        .DuplicateHandle        = runtime->DuplicateHandle,
+        .CloseHandle            = runtime->CloseHandle,
+        .Sleep                  = GetFuncAddr(&RT_Sleep),
     };
 
-    typedef errno (*module_t)(Runtime* runtime, Context* context);
-
     // initialize runtime submodules
+    typedef errno (*module_t)(Runtime* runtime, Context* context);
     module_t submodules[] = 
     {
         GetFuncAddr(&initLibraryTracker),

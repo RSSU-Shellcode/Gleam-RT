@@ -45,6 +45,9 @@ typedef struct {
     VirtualAlloc_t           VirtualAlloc;
     VirtualFree_t            VirtualFree;
     VirtualProtect_t         VirtualProtect;
+    FlushInstructionCache_t  FlushInstructionCache;
+    SuspendThread_t          SuspendThread;
+    ResumeThread_t           ResumeThread;
     CreateMutexA_t           CreateMutexA;
     ReleaseMutex_t           ReleaseMutex;
     CreateEventA_t           CreateEventA;
@@ -53,7 +56,6 @@ typedef struct {
     SetWaitableTimer_t       SetWaitableTimer;
     WaitForSingleObject_t    WaitForSingleObject;
     WaitForMultipleObjects_t WaitForMultipleObjects;
-    FlushInstructionCache_t  FlushInstructionCache;
     DuplicateHandle_t        DuplicateHandle;
     CloseHandle_t            CloseHandle;
     Sleep_t                  Sleep;

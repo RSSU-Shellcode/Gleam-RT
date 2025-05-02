@@ -2461,12 +2461,18 @@ errno RT_FreeAll()
 
     // try to find api
     RegCloseKey_t RegCloseKey;
+    CancelIoEx_t  CancelIoEx;
+    shutdown_t    shutdown;
     closesocket_t closesocket;
 #ifdef _WIN64
     RegCloseKey = FindAPI(0x51D9FB4FF72F1963, 0xB0265320F46E2304);
+    CancelIoEx  = FindAPI(0x06F984CC96939FA7, 0xC97B2F6A0C3413D8);
+    shutdown    = FindAPI(0xAB64496EF237CCA4, 0x65EDF9B76AD9A688);
     closesocket = FindAPI(0xD9DD30B81F6B58FF, 0x35D911BB33B68FD1);
 #elif _WIN32
     RegCloseKey = FindAPI(0x976649E4, 0xDCEADBCD);
+    CancelIoEx  = FindAPI(0x492230DB, 0xF26FEB1B);
+    shutdown    = FindAPI(0x850FC0A9, 0x613BCDCB);
     closesocket = FindAPI(0x5E8F4EC0, 0x95F951E5);
 #endif
 
@@ -2518,6 +2524,12 @@ errno RT_FreeAll()
             {
                 break;
             }
+            // try to graceful shutdown
+            shutdown(handle->handle, SD_BOTH);
+            if (CancelIoEx != NULL) // must after Vista
+            {
+                CancelIoEx(handle->handle, NULL);
+            }
             if (closesocket(handle->handle) != 0)
             {
                 error = ERR_RESOURCE_CLOSE_SOCKET;
@@ -2553,12 +2565,18 @@ errno RT_Clean()
 
     // try to find api
     RegCloseKey_t RegCloseKey;
+    CancelIoEx_t  CancelIoEx;
+    shutdown_t    shutdown;
     closesocket_t closesocket;
 #ifdef _WIN64
     RegCloseKey = FindAPI(0xC7AB3649E2BE8396, 0x28F0B94509382351);
+    CancelIoEx  = FindAPI(0x06F984CC96939FA7, 0xC97B2F6A0C3413D8);
+    shutdown    = FindAPI(0xAB64496EF237CCA4, 0x65EDF9B76AD9A688);
     closesocket = FindAPI(0x0941CD072727D858, 0x67DD2DFFFF2ED396);
 #elif _WIN32
     RegCloseKey = FindAPI(0x6370BD08, 0xF9823D25);
+    CancelIoEx  = FindAPI(0x492230DB, 0xF26FEB1B);
+    shutdown    = FindAPI(0x850FC0A9, 0x613BCDCB);
     closesocket = FindAPI(0x17C2486A, 0xC8ABB537);
 #endif
 
@@ -2603,6 +2621,12 @@ errno RT_Clean()
             if (closesocket == NULL)
             {
                 break;
+            }
+            // try to graceful shutdown
+            shutdown(handle->handle, SD_BOTH);
+            if (CancelIoEx != NULL) // must after Vista
+            {
+                CancelIoEx(handle->handle, NULL);
             }
             if (closesocket(handle->handle) != 0 && err == NO_ERROR)
             {

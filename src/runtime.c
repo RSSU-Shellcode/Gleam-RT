@@ -1839,21 +1839,20 @@ errno RT_SleepHR(DWORD dwMilliseconds)
             error = ERR_RUNTIME_SET_WAITABLE_TIMER;
             break;
         }
-
-        error = hide(runtime);
-        if (error != NO_ERROR && !(error & ERR_FLAG_CAN_IGNORE))
+        errno err = hide(runtime);
+        if (err != NO_ERROR && error == NO_ERROR)
         {
-            break;
+            error = err;
         }
-        error = sleep(runtime, hTimer);
-        if (error != NO_ERROR && !(error & ERR_FLAG_CAN_IGNORE))
+        err = sleep(runtime, hTimer);
+        if (err != NO_ERROR && error == NO_ERROR)
         {
-            break;
+            error = err;
         }
-        error = recover(runtime);
-        if (error != NO_ERROR && !(error & ERR_FLAG_CAN_IGNORE))
+        err = recover(runtime);
+        if (err != NO_ERROR && error == NO_ERROR)
         {
-            break;
+            error = err;
         }
         break;
     }

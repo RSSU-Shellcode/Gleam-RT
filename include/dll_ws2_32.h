@@ -10,6 +10,10 @@
 #define WSASYSNOTREADY 10091
 #define WSAEINPROGRESS 10036
 
+#define SD_RECEIVE 0
+#define SD_SEND    1
+#define SD_BOTH    2
+
 typedef HANDLE SOCKET;
 
 typedef int (*WSAStartup_t)
@@ -39,6 +43,11 @@ typedef SOCKET (*socket_t)
 typedef SOCKET (*accept_t)
 (
     SOCKET s, POINTER addr, int* addrlen
+);
+
+typedef int (*shutdown_t)
+(
+    SOCKET s, int how
 );
 
 typedef int (*closesocket_t)

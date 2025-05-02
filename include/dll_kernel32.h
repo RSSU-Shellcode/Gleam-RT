@@ -687,4 +687,9 @@ typedef HANDLE (*CreateIoCompletionPort_t)
     DWORD NumberOfConcurrentThreads
 );
 
+typedef BOOL (*CancelIoEx_t)
+(
+    HANDLE hFile, POINTER lpOverlapped
+);
+
 #endif // DLL_KERNEL32_H

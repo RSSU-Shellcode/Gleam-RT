@@ -280,7 +280,7 @@ static void sm_watcher()
         switch (reason)
         {
         case SLEEP_REASON_TIMER:
-            // break;
+            break;
         case SLEEP_REASON_STOP_EVENT:
             return;
         default:
@@ -359,7 +359,7 @@ errno SM_Pause()
     }
 
     errno errno = NO_ERROR;
-    if (!sysmon->SuspendThread(sysmon->hThread))
+    if (sysmon->SuspendThread(sysmon->hThread) == (DWORD)(-1))
     {
         errno = GetLastErrno();
     }
@@ -382,7 +382,7 @@ errno SM_Continue()
     }
 
     errno errno = NO_ERROR;
-    if (!sysmon->ResumeThread(sysmon->hThread))
+    if (sysmon->ResumeThread(sysmon->hThread) == (DWORD)(-1))
     {
         errno = GetLastErrno();
     }

@@ -1376,6 +1376,10 @@ HANDLE RT_CreateIoCompletionPort(
         {
             break;
         }
+        if (ExistingCompletionPort != NULL)
+        {
+            break;
+        }
         if (!addHandleMu(tracker, hPort, SRC_CREATE_IOCP))
         {
             lastErr = ERR_RESOURCE_ADD_IOCP;
@@ -2428,7 +2432,7 @@ errno RT_FreeAll()
 
     // close all tracked handles
     List* handles = &tracker->Handles;
-    errno errno   = NO_ERROR;
+    errno error   = NO_ERROR;
 
     uint len = handles->Len;
     uint idx = 0;
@@ -2450,13 +2454,13 @@ errno RT_FreeAll()
         case TYPE_CLOSE_HANDLE:
             if (!tracker->CloseHandle(handle->handle))
             {
-                errno = ERR_RESOURCE_CLOSE_HANDLE;
+                error = ERR_RESOURCE_CLOSE_HANDLE;
             }
             break;
         case TYPE_FIND_CLOSE:
             if (!tracker->FindClose(handle->handle))
             {
-                errno = ERR_RESOURCE_FIND_CLOSE;
+                error = ERR_RESOURCE_FIND_CLOSE;
             }
             break;
         case TYPE_CLOSE_KEY:
@@ -2466,7 +2470,7 @@ errno RT_FreeAll()
             }
             if (RegCloseKey(handle->handle) != ERROR_SUCCESS)
             {
-                errno = ERR_RESOURCE_CLOSE_KEY;
+                error = ERR_RESOURCE_CLOSE_KEY;
             }
             break;
         case TYPE_CLOSE_SOCKET:
@@ -2476,26 +2480,30 @@ errno RT_FreeAll()
             }
             if (closesocket(handle->handle) != 0)
             {
-                errno = ERR_RESOURCE_CLOSE_SOCKET;
+                error = ERR_RESOURCE_CLOSE_SOCKET;
             }
             break;
         default:
             // must cover previous errno
-            errno = ERR_RESOURCE_INVALID_SRC_TYPE;
+            error = ERR_RESOURCE_INVALID_SRC_TYPE;
             break;
         }
         if (!List_Delete(handles, idx))
         {
-            errno = ERR_RESOURCE_DELETE_HANDLE;
+            error = ERR_RESOURCE_DELETE_HANDLE;
         }
         num++;
     }
 
     // about WSACleanup
-    errno = doWSACleanup(tracker);
+    errno err = doWSACleanup(tracker);
+    if (err != NO_ERROR)
+    {
+        error = err;
+    }
 
     dbg_log("[resource]", "handles: %zu", handles->Len);
-    return errno;
+    return error;
 }
 
 __declspec(noinline)

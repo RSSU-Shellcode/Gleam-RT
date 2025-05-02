@@ -53,6 +53,7 @@ https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-findfirst
 https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-findfirstfileexw
 https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-findclose
 https://learn.microsoft.com/en-us/windows/win32/fileio/createiocompletionport
+https://learn.microsoft.com/en-us/windows/win32/api/ioapiset/nf-ioapiset-cancelioex
 https://learn.microsoft.com/en-us/windows/win32/api/winreg/nf-winreg-regcreatekeya
 https://learn.microsoft.com/en-us/windows/win32/api/winreg/nf-winreg-regcreatekeyw
 https://learn.microsoft.com/en-us/windows/win32/api/winreg/nf-winreg-regcreatekeyexa
@@ -70,6 +71,7 @@ https://learn.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-accept
 https://learn.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-wsasocketa
 https://learn.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-wsasocketw
 https://learn.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-socket
+https://learn.microsoft.com/en-us/windows/win32/api/winsock/nf-winsock-shutdown
 https://learn.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-closesocket
 https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createmutexa
 https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createmutexw

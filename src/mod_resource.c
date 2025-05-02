@@ -1878,6 +1878,11 @@ BOOL RT_CloseHandle(HANDLE hObject)
 {
     ResourceTracker* tracker = getTrackerPointer();
 
+    if (!RT_Lock())
+    {
+        return false;
+    }
+
     BOOL  success = false;
     errno lastErr = NO_ERROR;
     for (;;)
@@ -1888,11 +1893,16 @@ BOOL RT_CloseHandle(HANDLE hObject)
         {
             break;
         }
-        delHandleMu(tracker, hObject, TYPE_CLOSE_HANDLE);
+        delHandle(tracker, hObject, TYPE_CLOSE_HANDLE);
         success = true;
         break;
     }
     SetLastErrno(lastErr);
+
+    if (!RT_Unlock())
+    {
+        return false;
+    }
 
     dbg_log("[resource]", "CloseHandle: 0x%zX", hObject);
     return success;
@@ -1902,6 +1912,11 @@ __declspec(noinline)
 BOOL RT_FindClose(HANDLE hFindFile)
 {
     ResourceTracker* tracker = getTrackerPointer();
+
+    if (!RT_Lock())
+    {
+        return false;
+    }
 
     BOOL  success = false;
     errno lastErr = NO_ERROR;
@@ -1913,11 +1928,16 @@ BOOL RT_FindClose(HANDLE hFindFile)
         {
             break;
         }
-        delHandleMu(tracker, hFindFile, TYPE_FIND_CLOSE);
+        delHandle(tracker, hFindFile, TYPE_FIND_CLOSE);
         success = true;
         break;
     }
     SetLastErrno(lastErr);
+
+    if (!RT_Unlock())
+    {
+        return false;
+    }
 
     dbg_log("[resource]", "FindClose: 0x%zX", hFindFile);
     return success;
@@ -1927,6 +1947,11 @@ __declspec(noinline)
 LSTATUS RT_RegCloseKey(HKEY hKey)
 {
     ResourceTracker* tracker = getTrackerPointer();
+
+    if (!RT_Lock())
+    {
+        return ERROR_SUCCESS;
+    }
 
     LSTATUS lStatus = ERROR_SUCCESS;
     errno   lastErr = NO_ERROR;
@@ -1948,10 +1973,15 @@ LSTATUS RT_RegCloseKey(HKEY hKey)
         {
             break;
         }
-        delHandleMu(tracker, hKey, TYPE_CLOSE_KEY);
+        delHandle(tracker, hKey, TYPE_CLOSE_KEY);
         break;
     }
     SetLastErrno(lastErr);
+
+    if (!RT_Unlock())
+    {
+        return ERROR_SUCCESS;
+    }
 
     dbg_log("[resource]", "RegCloseKey: 0x%zX", hKey);
     return lStatus;
@@ -1961,6 +1991,11 @@ __declspec(noinline)
 int RT_closesocket(SOCKET hSocket)
 {
     ResourceTracker* tracker = getTrackerPointer();
+
+    if (!RT_Lock())
+    {
+        return SOCKET_ERROR;
+    }
 
     BOOL  success = false;
     errno lastErr = NO_ERROR;
@@ -1983,7 +2018,7 @@ int RT_closesocket(SOCKET hSocket)
         {
             break;
         }
-        delHandleMu(tracker, hSocket, TYPE_CLOSE_SOCKET);
+        delHandle(tracker, hSocket, TYPE_CLOSE_SOCKET);
         success = true;
         break;
     }
@@ -1991,9 +2026,14 @@ int RT_closesocket(SOCKET hSocket)
 
     dbg_log("[resource]", "closesocket: 0x%zX", hSocket);
 
+    if (!RT_Unlock())
+    {
+        return SOCKET_ERROR;
+    }
+
     if (!success)
     {
-        return (int)SOCKET_ERROR;
+        return SOCKET_ERROR;
     }
     return 0;
 }

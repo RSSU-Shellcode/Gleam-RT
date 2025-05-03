@@ -71,8 +71,12 @@ static void eraseSysmonMethods(Context* context);
 static void cleanSysmon(Sysmon* sysmon);
 
 static void sm_watcher();
+static bool sm_watch();
 static uint sm_sleep(uint32 milliseconds);
 static bool sm_exit();
+static void sm_add_loop();
+static void sm_add_recover();
+static void sm_add_panic();
 
 Sysmon_M* InitSysmon(Context* context)
 {
@@ -259,18 +263,67 @@ static void sm_watcher()
 {
     for (;;)
     {
+        if (!sm_watch())
+        {
+            sm_add_recover();
+        }
+
+        if (!sm_watch())
+        {
+            sm_add_panic();
+        }
 
         uint reason = sm_sleep(1000 + RandIntN(0, 3000));
         switch (reason)
         {
         case SLEEP_REASON_TIMER:
+            sm_add_loop();
             break;
         case SLEEP_REASON_STOP_EVENT:
+            sm_add_loop();
+            return;
+        case SLEEP_REASON_FAILED:
             return;
         default:
-            return;
+            panic(PANIC_UNREACHABLE_CODE);
         }
     }
+}
+
+__declspec(noinline)
+static bool sm_watch()
+{
+    Sysmon* sysmon = getSysmonPointer();
+
+    HANDLE handles[] = {
+        sysmon->hMutex_LT,
+        sysmon->hMutex_MT,
+        sysmon->hMutex_TT,
+        sysmon->hMutex_RT,
+        sysmon->hMutex_AS,
+        sysmon->hMutex_IMS,
+    };
+    bool success = true;
+    for (int i = 0; i < arrlen(handles); i++)
+    {
+        DWORD timeout = (DWORD)(5000 + RandUintN(0, 10000));
+        switch (sysmon->WaitForSingleObject(handles[i], timeout))
+        {
+        case WAIT_OBJECT_0: case WAIT_ABANDONED:
+            break;
+        case WAIT_TIMEOUT: case WAIT_FAILED:
+            success = false;
+            break;
+        }
+    }
+    for (int i = arrlen(handles) - 1; i >= 0; i--)
+    {
+        if (!sysmon->ReleaseMutex(handles[i]))
+        {
+            success = false;
+        }
+    }
+    return success;
 }
 
 __declspec(noinline)
@@ -338,6 +391,57 @@ static bool sm_exit()
         return false;
     }
     return true;
+}
+
+static void sm_add_loop()
+{
+    Sysmon* sysmon = getSysmonPointer();
+
+    if (!SM_Lock())
+    {
+        return;
+    }
+
+    sysmon->status.NumLoop++;
+
+    if (!SM_Unlock())
+    {
+        return;
+    }
+}
+
+static void sm_add_recover()
+{
+    Sysmon* sysmon = getSysmonPointer();
+
+    if (!SM_Lock())
+    {
+        return;
+    }
+
+    sysmon->status.NumRecover++;
+
+    if (!SM_Unlock())
+    {
+        return;
+    }
+}
+
+static void sm_add_panic()
+{
+    Sysmon* sysmon = getSysmonPointer();
+
+    if (!SM_Lock())
+    {
+        return;
+    }
+
+    sysmon->status.NumPanic++;
+
+    if (!SM_Unlock())
+    {
+        return;
+    }
 }
 
 __declspec(noinline)

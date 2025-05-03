@@ -31,17 +31,18 @@ typedef struct {
     HANDLE hEvent;
     HANDLE hThread;
 
+    // protect data
+    HANDLE hMutex;
+
+    SM_Status status;
+
+    // copy from runtime submodules
     HANDLE hMutex_LT;
     HANDLE hMutex_MT;
     HANDLE hMutex_TT;
     HANDLE hMutex_RT;
     HANDLE hMutex_AS;
     HANDLE hMutex_IMS;
-
-    SM_Status status;
-
-    // protect data
-    HANDLE hMutex;
 } Sysmon;
 
 // methods for user
@@ -71,6 +72,7 @@ static void cleanSysmon(Sysmon* sysmon);
 
 static void sm_watcher();
 static uint sm_sleep(uint32 milliseconds);
+static bool sm_exit();
 
 Sysmon_M* InitSysmon(Context* context)
 {
@@ -236,11 +238,9 @@ static void cleanSysmon(Sysmon* sysmon)
     {
         sysmon->CloseHandle(sysmon->hMutex);
     }
-    // TODO
-    if (sysmon->CloseHandle != NULL && sysmon->hThread != NULL)
+    if (sysmon->hThread != NULL)
     {
-
-        sysmon->CloseHandle(sysmon->hThread);
+        sm_exit();
     }
 }
 
@@ -311,6 +311,33 @@ static uint sm_sleep(uint32 milliseconds)
     }
     sysmon->CloseHandle(hTimer);
     return reason;
+}
+
+__declspec(noinline)
+static bool sm_exit()
+{
+    Sysmon* sysmon = getSysmonPointer();
+
+    // send stop event to watcher
+    if (!sysmon->SetEvent(sysmon->hEvent))
+    {
+        return false;
+    }
+    // wait watcher thread exit
+    if (sysmon->WaitForSingleObject(sysmon->hThread, INFINITE) != WAIT_OBJECT_0)
+    {
+        return false;
+    }
+    // clean resource
+    if (!sysmon->CloseHandle(sysmon->hThread))
+    {
+        return false;
+    }
+    if (!sysmon->CloseHandle(sysmon->hEvent))
+    {
+        return false;
+    }
+    return true;
 }
 
 __declspec(noinline)
@@ -386,6 +413,12 @@ errno SM_Stop()
     if (!sysmon->CloseHandle(sysmon->hMutex) && errno == NO_ERROR)
     {
         errno = ERR_SYSMON_CLOSE_MUTEX;
+    }
+
+    // exit watcher thread
+    if (!sm_exit())
+    {
+        errno = ERR_SYSMON_EXIT_WATCHER;
     }
 
     // recover instructions

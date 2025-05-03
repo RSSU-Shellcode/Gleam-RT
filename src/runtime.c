@@ -1339,6 +1339,7 @@ errno RT_lock_mods()
     typedef bool (*submodule_t)();
     submodule_t submodules[] = 
     {
+        runtime->Sysmon->Lock,
         runtime->WinHTTP->Lock,
         runtime->LibraryTracker->Lock,
         runtime->MemoryTracker->Lock,
@@ -1349,6 +1350,7 @@ errno RT_lock_mods()
     };
     errno errnos[] = 
     {
+        ERR_RUNTIME_LOCK_SYSMON,
         ERR_RUNTIME_LOCK_WIN_HTTP,
         ERR_RUNTIME_LOCK_LIBRARY,
         ERR_RUNTIME_LOCK_MEMORY,
@@ -1382,6 +1384,7 @@ errno RT_unlock_mods()
         runtime->ArgumentStore->Unlock,
         runtime->InMemoryStorage->Unlock,
         runtime->WinHTTP->Unlock,
+        runtime->Sysmon->Unlock,
     };
     errno errnos[] = 
     {
@@ -1392,6 +1395,7 @@ errno RT_unlock_mods()
         ERR_RUNTIME_UNLOCK_ARGUMENT,
         ERR_RUNTIME_UNLOCK_STORAGE,
         ERR_RUNTIME_UNLOCK_WIN_HTTP,
+        ERR_RUNTIME_UNLOCK_SYSMON,
     };
     for (int i = 0; i < arrlen(submodules); i++)
     {
@@ -1840,19 +1844,28 @@ errno RT_SleepHR(DWORD dwMilliseconds)
             break;
         }
         errno err = hide(runtime);
-        if (err != NO_ERROR && error == NO_ERROR)
+        if (err != NO_ERROR)
         {
-            error = err;
+            if (!(err & ERR_FLAG_CAN_IGNORE) && error == NO_ERROR)
+            {
+                error = err;
+            }
         }
         err = sleep(runtime, hTimer);
-        if (err != NO_ERROR && error == NO_ERROR)
+        if (err != NO_ERROR)
         {
-            error = err;
+            if (!(err & ERR_FLAG_CAN_IGNORE) && error == NO_ERROR)
+            {
+                error = err;
+            }
         }
         err = recover(runtime);
-        if (err != NO_ERROR && error == NO_ERROR)
+        if (err != NO_ERROR)
         {
-            error = err;
+            if (!(err & ERR_FLAG_CAN_IGNORE) && error == NO_ERROR)
+            {
+                error = err;
+            }
         }
         break;
     }

@@ -26,6 +26,8 @@ typedef bool  (*ThdLock_t)();
 typedef bool  (*ThdUnlock_t)();
 typedef errno (*ThdSuspend_t)();
 typedef errno (*ThdResume_t)();
+typedef errno (*ThdRecover_t)();
+typedef errno (*ThdForceKill_t)();
 typedef errno (*ThdKillAll_t)();
 typedef errno (*ThdClean_t)();
 
@@ -49,12 +51,14 @@ typedef struct {
     ThdGetStatus_t    GetStatus;
     ThdKillAllMu_t    KillAllMu;
 
-    ThdLock_t    Lock;
-    ThdUnlock_t  Unlock;
-    ThdSuspend_t Suspend;
-    ThdResume_t  Resume;
-    ThdKillAll_t KillAll;
-    ThdClean_t   Clean;
+    ThdLock_t      Lock;
+    ThdUnlock_t    Unlock;
+    ThdSuspend_t   Suspend;
+    ThdResume_t    Resume;
+    ThdRecover_t   Recover;
+    ThdForceKill_t ForceKill;
+    ThdKillAll_t   KillAll;
+    ThdClean_t     Clean;
 
     HANDLE hMutex;
 } ThreadTracker_M;

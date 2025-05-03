@@ -1992,11 +1992,6 @@ int RT_closesocket(SOCKET hSocket)
 {
     ResourceTracker* tracker = getTrackerPointer();
 
-    if (!RT_Lock())
-    {
-        return SOCKET_ERROR;
-    }
-
     BOOL  success = false;
     errno lastErr = NO_ERROR;
     for (;;)
@@ -2018,18 +2013,13 @@ int RT_closesocket(SOCKET hSocket)
         {
             break;
         }
-        delHandle(tracker, hSocket, TYPE_CLOSE_SOCKET);
+        delHandleMu(tracker, hSocket, TYPE_CLOSE_SOCKET);
         success = true;
         break;
     }
     SetLastErrno(lastErr);
 
     dbg_log("[resource]", "closesocket: 0x%zX", hSocket);
-
-    if (!RT_Unlock())
-    {
-        return SOCKET_ERROR;
-    }
 
     if (!success)
     {
@@ -2520,6 +2510,7 @@ errno RT_FreeAll()
             }
             break;
         case TYPE_CLOSE_SOCKET:
+            break;
             if (closesocket == NULL)
             {
                 break;
@@ -2536,7 +2527,6 @@ errno RT_FreeAll()
             }
             break;
         default:
-            // must cover previous errno
             error = ERR_RESOURCE_INVALID_SRC_TYPE;
             break;
         }
@@ -2548,11 +2538,11 @@ errno RT_FreeAll()
     }
 
     // about WSACleanup
-    errno err = doWSACleanup(tracker);
-    if (err != NO_ERROR)
-    {
-        error = err;
-    }
+    // errno err = doWSACleanup(tracker);
+    // if (err != NO_ERROR)
+    // {
+    //     error = err;
+    // }
 
     dbg_log("[resource]", "handles: %zu", handles->Len);
     return error;
@@ -2634,9 +2624,7 @@ errno RT_Clean()
             }
             break;
         default:
-            // must cover previous errno
-            err = ERR_RESOURCE_INVALID_SRC_TYPE;
-            break;
+            panic(PANIC_UNREACHABLE_CODE);
         }
         num++;
     }

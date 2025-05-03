@@ -13,6 +13,8 @@ typedef struct {
 
 typedef bool (*SMGetStatus_t)(SM_Status* status);
 
+typedef bool  (*SMLock_t)();
+typedef bool  (*SMUnlock_t)();
 typedef errno (*SMPause_t)();
 typedef errno (*SMContinue_t)();
 typedef errno (*SMStop_t)();
@@ -20,6 +22,8 @@ typedef errno (*SMStop_t)();
 typedef struct {
     SMGetStatus_t GetStatus;
 
+    SMLock_t     Lock;
+    SMUnlock_t   Unlock;
     SMPause_t    Pause;
     SMContinue_t Continue;
     SMStop_t     Stop;

@@ -93,6 +93,8 @@ bool  TT_Lock();
 bool  TT_Unlock();
 errno TT_Suspend();
 errno TT_Resume();
+errno TT_Recover();
+errno TT_ForceKill();
 errno TT_KillAll();
 errno TT_Clean();
 
@@ -182,12 +184,14 @@ ThreadTracker_M* InitThreadTracker(Context* context)
     module->GetStatus    = GetFuncAddr(&TT_GetStatus);
     module->KillAllMu    = GetFuncAddr(&TT_KillAllMu);
     // methods for runtime
-    module->Lock    = GetFuncAddr(&TT_Lock);
-    module->Unlock  = GetFuncAddr(&TT_Unlock);
-    module->Suspend = GetFuncAddr(&TT_Suspend);
-    module->Resume  = GetFuncAddr(&TT_Resume);
-    module->KillAll = GetFuncAddr(&TT_KillAll);
-    module->Clean   = GetFuncAddr(&TT_Clean);
+    module->Lock      = GetFuncAddr(&TT_Lock);
+    module->Unlock    = GetFuncAddr(&TT_Unlock);
+    module->Suspend   = GetFuncAddr(&TT_Suspend);
+    module->Resume    = GetFuncAddr(&TT_Resume);
+    module->Recover   = GetFuncAddr(&TT_Recover);
+    module->ForceKill = GetFuncAddr(&TT_ForceKill);
+    module->KillAll   = GetFuncAddr(&TT_KillAll);
+    module->Clean     = GetFuncAddr(&TT_Clean);
     // data for sysmon
     module->hMutex = tracker->hMutex;
     return module;
@@ -1143,6 +1147,98 @@ errno TT_Resume()
 
     dbg_log("[thread]", "threads:   %zu", tracker->Threads.Len);
     dbg_log("[thread]", "TLS slots: %zu", tracker->TLSIndex.Len);
+    return errno;
+}
+
+__declspec(noinline)
+errno TT_Recover()
+{
+    ThreadTracker* tracker = getTrackerPointer();
+
+    // try to lock
+    DWORD event = tracker->WaitForSingleObject(tracker->hMutex, 1000);
+    bool locked = event == WAIT_OBJECT_0 || event == WAIT_ABANDONED;
+
+    List* threads = &tracker->Threads;
+    errno errno = NO_ERROR;
+
+    uint len = threads->Len;
+    uint idx = 0;
+    for (uint num = 0; num < len; idx++)
+    {
+        thread* thread = List_Get(threads, idx);
+        if (thread->threadID == 0)
+        {
+            continue;
+        }
+        int32 numSuspend = thread->numSuspend;
+        if (numSuspend == 0)
+        {
+            num++;
+            continue;
+        }
+        for (int32 i = 0; i < numSuspend; i++)
+        {
+            DWORD count = tracker->ResumeThread(thread->hThread);
+            if (count == (DWORD)(-1))
+            {
+                errno = ERR_THREAD_RESUME;
+            }
+        }
+        num++;
+    }
+
+    if (locked)
+    {
+        tracker->ReleaseMutex(tracker->hMutex);
+    }
+    return errno;
+}
+
+__declspec(noinline)
+errno TT_ForceKill()
+{
+    ThreadTracker* tracker = getTrackerPointer();
+
+    // try to lock
+    DWORD event = tracker->WaitForSingleObject(tracker->hMutex, 1000);
+    bool locked = event == WAIT_OBJECT_0 || event == WAIT_ABANDONED;
+
+    List* threads = &tracker->Threads;
+    errno errno = NO_ERROR;
+
+    uint len = threads->Len;
+    uint idx = 0;
+    for (uint num = 0; num < len; idx++)
+    {
+        thread* thread = List_Get(threads, idx);
+        if (thread->threadID == 0)
+        {
+            continue;
+        }
+        if (!tracker->TerminateThread(thread->hThread, 0))
+        {
+            errno = ERR_THREAD_TERMINATE;
+        }
+        if (tracker->WaitForSingleObject(thread->hThread, 1000) != WAIT_OBJECT_0)
+        {
+            errno = ERR_THREAD_WAIT_TERMINATE;
+        }
+        if (!tracker->CloseHandle(thread->hThread))
+        {
+            errno = ERR_THREAD_CLOSE_HANDLE;
+        }
+        if (!List_Delete(threads, idx))
+        {
+            errno = ERR_THREAD_DELETE_THREAD;
+        }
+        num++;
+    }
+
+    if (locked)
+    {
+        tracker->ReleaseMutex(tracker->hMutex);
+    }
     return errno;
 }
 

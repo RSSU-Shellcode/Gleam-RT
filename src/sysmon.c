@@ -48,6 +48,8 @@ typedef struct {
 bool SM_GetStatus(SM_Status* status);
 
 // methods for runtime
+bool  SM_Lock();
+bool  SM_Unlock();
 errno SM_Pause();
 errno SM_Continue();
 errno SM_Stop();
@@ -59,9 +61,6 @@ errno SM_Stop();
     #define SYSMON_POINTER 0x7FABCDF1
 #endif
 static Sysmon* getSysmonPointer();
-
-static bool sm_lock();
-static bool sm_unlock();
 
 static bool initSysmonAPI(Sysmon* sysmon, Context* context);
 static bool updateSysmonPointer(Sysmon* sysmon);
@@ -116,6 +115,8 @@ Sysmon_M* InitSysmon(Context* context)
     // methods for user
     method->GetStatus = GetFuncAddr(&SM_GetStatus);
     // methods for runtime
+    method->Lock     = GetFuncAddr(&SM_Lock);
+    method->Unlock   = GetFuncAddr(&SM_Unlock);
     method->Pause    = GetFuncAddr(&SM_Pause);
     method->Continue = GetFuncAddr(&SM_Continue);
     method->Stop     = GetFuncAddr(&SM_Stop);
@@ -254,23 +255,6 @@ static Sysmon* getSysmonPointer()
 #pragma optimize("", on)
 
 __declspec(noinline)
-static bool sm_lock()
-{
-    Sysmon* sysmon = getSysmonPointer();
-
-    DWORD event = sysmon->WaitForSingleObject(sysmon->hMutex, INFINITE);
-    return event == WAIT_OBJECT_0 || event == WAIT_ABANDONED;
-}
-
-__declspec(noinline)
-static bool sm_unlock()
-{
-    Sysmon* sysmon = getSysmonPointer();
-
-    return sysmon->ReleaseMutex(sysmon->hMutex);
-}
-
-__declspec(noinline)
 static void sm_watcher()
 {
     for (;;)
@@ -334,14 +318,14 @@ bool SM_GetStatus(SM_Status* status)
 {
     Sysmon* sysmon = getSysmonPointer();
 
-    if (!sm_lock())
+    if (!SM_Lock())
     {
         return false;
     }
 
     *status = sysmon->status;
 
-    if (!sm_unlock())
+    if (!SM_Unlock())
     {
         return false;
     }
@@ -349,24 +333,31 @@ bool SM_GetStatus(SM_Status* status)
 }
 
 __declspec(noinline)
-errno SM_Pause()
+bool SM_Lock()
 {
     Sysmon* sysmon = getSysmonPointer();
 
-    if (!sm_lock())
-    {
-        return ERR_SYSMON_LOCK;
-    }
+    DWORD event = sysmon->WaitForSingleObject(sysmon->hMutex, INFINITE);
+    return event == WAIT_OBJECT_0 || event == WAIT_ABANDONED;
+}
+
+__declspec(noinline)
+bool SM_Unlock()
+{
+    Sysmon* sysmon = getSysmonPointer();
+
+    return sysmon->ReleaseMutex(sysmon->hMutex);
+}
+
+__declspec(noinline)
+errno SM_Pause()
+{
+    Sysmon* sysmon = getSysmonPointer();
 
     errno errno = NO_ERROR;
     if (sysmon->SuspendThread(sysmon->hThread) == (DWORD)(-1))
     {
         errno = GetLastErrno();
-    }
-
-    if (!sm_unlock())
-    {
-        return ERR_SYSMON_UNLOCK;
     }
     return errno;
 }
@@ -376,20 +367,10 @@ errno SM_Continue()
 {
     Sysmon* sysmon = getSysmonPointer();
 
-    if (!sm_lock())
-    {
-        return ERR_SYSMON_LOCK;
-    }
-
     errno errno = NO_ERROR;
     if (sysmon->ResumeThread(sysmon->hThread) == (DWORD)(-1))
     {
         errno = GetLastErrno();
-    }
-
-    if (!sm_unlock())
-    {
-        return ERR_SYSMON_UNLOCK;
     }
     return errno;
 }

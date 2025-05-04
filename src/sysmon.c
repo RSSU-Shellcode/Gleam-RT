@@ -9,9 +9,9 @@
 #include "sysmon.h"
 #include "debug.h"
 
-#define SLEEP_REASON_FAILED     0
-#define SLEEP_REASON_TIMER      1
-#define SLEEP_REASON_STOP_EVENT 2
+#define RESULT_FAILED     0
+#define RESULT_SUCCESS    1
+#define RESULT_STOP_EVENT 2
 
 typedef struct {
     // store options
@@ -43,6 +43,9 @@ typedef struct {
     HANDLE hMutex_RT;
     HANDLE hMutex_AS;
     HANDLE hMutex_IMS;
+
+    RecoverThreads_t   RecoverThreads;
+    ForceKillThreads_t ForceKillThreads;
 } Sysmon;
 
 // methods for user
@@ -219,6 +222,9 @@ static bool initSysmonEnvironment(Sysmon* sysmon, Context* context)
     sysmon->hMutex_RT  = context->hMutex_RT;
     sysmon->hMutex_AS  = context->hMutex_AS;
     sysmon->hMutex_IMS = context->hMutex_IMS;
+    // copy methods from context
+    sysmon->RecoverThreads   = context->RecoverThreads;
+    sysmon->ForceKillThreads = context->ForceKillThreads;
     return true;
 }
 
@@ -261,18 +267,31 @@ static Sysmon* getSysmonPointer()
 __declspec(noinline)
 static void sm_watcher()
 {
+    Sysmon* sysmon = getSysmonPointer();
+
     for (;;)
     {
         if (!sm_watch())
         {
-            sm_add_recover();
-        }
-
-        if (!sm_watch())
-        {
+            errno err = sysmon->RecoverThreads();
+            if (err != NO_ERROR)
+            {
+                dbg_log("[sysmon]", "occurred error when recover threads: 0x%X", err);
+            }
+            if (sm_watch())
+            {
+                sm_add_recover();
+                continue;
+            }
+            // if failed to recover, use force kill threads,
+            // then the Watchdog will restart program.
+            err = sysmon->ForceKillThreads();
+            if (err != NO_ERROR)
+            {
+                dbg_log("[sysmon]", "occurred error when kill threads: 0x%X", err);
+            }
             sm_add_panic();
         }
-
         uint reason = sm_sleep(1000 + RandIntN(0, 3000));
         switch (reason)
         {
@@ -331,11 +350,11 @@ static uint sm_sleep(uint32 milliseconds)
 {
     Sysmon* sysmon = getSysmonPointer();
 
-    uint reason = SLEEP_REASON_FAILED;
+    uint result = RESULT_FAILED;
     HANDLE hTimer = sysmon->CreateWaitableTimerA(NULL, false, NAME_RT_TT_TIMER_SLEEP);
     if (hTimer == NULL)
     {
-        return reason;
+        return result;
     }
     for (;;)
     {
@@ -352,10 +371,10 @@ static uint sm_sleep(uint32 milliseconds)
         switch (sysmon->WaitForMultipleObjects(2, objects, false, INFINITE))
         {
         case WAIT_OBJECT_0+0:
-            reason = SLEEP_REASON_TIMER;
+            result = RESULT_SUCCESS;
             break;
         case WAIT_OBJECT_0+1:
-            reason = SLEEP_REASON_STOP_EVENT;
+            result = RESULT_STOP_EVENT;
             break;
         default:
             break;
@@ -363,7 +382,7 @@ static uint sm_sleep(uint32 milliseconds)
         break;
     }
     sysmon->CloseHandle(hTimer);
-    return reason;
+    return result;
 }
 
 __declspec(noinline)
@@ -513,16 +532,16 @@ errno SM_Stop()
 
     errno errno = NO_ERROR;
 
-    // close mutex
-    if (!sysmon->CloseHandle(sysmon->hMutex) && errno == NO_ERROR)
-    {
-        errno = ERR_SYSMON_CLOSE_MUTEX;
-    }
-
     // exit watcher thread
     if (!sm_exit())
     {
         errno = ERR_SYSMON_EXIT_WATCHER;
+    }
+
+    // close mutex
+    if (!sysmon->CloseHandle(sysmon->hMutex) && errno == NO_ERROR)
+    {
+        errno = ERR_SYSMON_CLOSE_MUTEX;
     }
 
     // recover instructions

@@ -31,10 +31,12 @@ typedef struct {
     HANDLE hEvent;
     HANDLE hThread;
 
-    // protect data
+    // global mutex
     HANDLE hMutex;
 
+    // watcher status
     SM_Status status;
+    HANDLE    statusMu;
 
     // copy from runtime submodules
     HANDLE hMutex_LT;
@@ -76,6 +78,9 @@ static void cleanSysmon(Sysmon* sysmon);
 static void sm_watcher();
 static uint sm_watch();
 static uint sm_sleep(uint32 milliseconds);
+
+static bool sm_lock_status();
+static bool sm_unlock_status();
 static void sm_add_loop();
 static void sm_add_recover();
 static void sm_add_panic();
@@ -208,8 +213,15 @@ static bool initSysmonEnvironment(Sysmon* sysmon, Context* context)
         return false;
     }
     sysmon->hMutex = hMutex;
-    // create event for controller
-    HANDLE hEvent = context->CreateEventA(NULL, false, false, NAME_RT_SM_EVENT_CTRL);
+    // create status mutex
+    HANDLE statusMu = context->CreateMutexA(NULL, false, NAME_RT_SM_MUTEX_STATUS);
+    if (statusMu == NULL)
+    {
+        return false;
+    }
+    sysmon->statusMu = statusMu;
+    // create event for stop 
+    HANDLE hEvent = context->CreateEventA(NULL, false, false, NAME_RT_SM_EVENT_STOP);
     if (hMutex == NULL)
     {
         return false;
@@ -411,18 +423,35 @@ static uint sm_sleep(uint32 milliseconds)
 }
 
 __declspec(noinline)
+bool sm_lock_status()
+{
+    Sysmon* sysmon = getSysmonPointer();
+
+    DWORD event = sysmon->WaitForSingleObject(sysmon->statusMu, INFINITE);
+    return event == WAIT_OBJECT_0 || event == WAIT_ABANDONED;
+}
+
+__declspec(noinline)
+bool sm_unlock_status()
+{
+    Sysmon* sysmon = getSysmonPointer();
+
+    return sysmon->ReleaseMutex(sysmon->statusMu);
+}
+
+__declspec(noinline)
 static void sm_add_loop()
 {
     Sysmon* sysmon = getSysmonPointer();
 
-    if (!SM_Lock())
+    if (!sm_lock_status())
     {
         return;
     }
 
     sysmon->status.NumLoop++;
 
-    if (!SM_Unlock())
+    if (!sm_unlock_status())
     {
         return;
     }
@@ -433,14 +462,14 @@ static void sm_add_recover()
 {
     Sysmon* sysmon = getSysmonPointer();
 
-    if (!SM_Lock())
+    if (!sm_lock_status())
     {
         return;
     }
 
     sysmon->status.NumRecover++;
 
-    if (!SM_Unlock())
+    if (!sm_unlock_status())
     {
         return;
     }
@@ -451,14 +480,14 @@ static void sm_add_panic()
 {
     Sysmon* sysmon = getSysmonPointer();
 
-    if (!SM_Lock())
+    if (!sm_lock_status())
     {
         return;
     }
 
     sysmon->status.NumPanic++;
 
-    if (!SM_Unlock())
+    if (!sm_unlock_status())
     {
         return;
     }
@@ -474,7 +503,9 @@ bool SM_GetStatus(SM_Status* status)
         return false;
     }
 
+    sm_lock_status();
     *status = sysmon->status;
+    sm_unlock_status();
 
     if (!SM_Unlock())
     {
@@ -544,7 +575,7 @@ errno SM_Stop()
         errno = ERR_SYSMON_WAIT_EXIT;
     }
 
-    // clean resource
+    // clean resource about watcher
     if (!sysmon->CloseHandle(sysmon->hThread))
     {
         errno = ERR_SYSMON_CLOSE_THREAD;
@@ -558,6 +589,10 @@ errno SM_Stop()
     if (!sysmon->CloseHandle(sysmon->hMutex) && errno == NO_ERROR)
     {
         errno = ERR_SYSMON_CLOSE_MUTEX;
+    }
+    if (!sysmon->CloseHandle(sysmon->statusMu) && errno == NO_ERROR)
+    {
+        errno = ERR_SYSMON_CLOSE_STATUS;
     }
 
     // recover instructions

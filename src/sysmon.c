@@ -76,7 +76,6 @@ static void cleanSysmon(Sysmon* sysmon);
 static void sm_watcher();
 static uint sm_watch();
 static uint sm_sleep(uint32 milliseconds);
-static bool sm_exit();
 static void sm_add_loop();
 static void sm_add_recover();
 static void sm_add_panic();
@@ -119,6 +118,14 @@ Sysmon_M* InitSysmon(Context* context)
         SetLastErrno(errno);
         return NULL;
     }
+    // create thread for watcher
+    HANDLE hThread = context->NewThread(GetFuncAddr(&sm_watcher), NULL, false);
+    if (hThread == NULL)
+    {
+        SetLastErrno(ERR_SYSMON_START_WATCHER);
+        return NULL;
+    }
+    sysmon->hThread = hThread;
     // create methods for tracker
     Sysmon_M* method = (Sysmon_M*)methodAddr;
     // methods for user
@@ -208,13 +215,6 @@ static bool initSysmonEnvironment(Sysmon* sysmon, Context* context)
         return false;
     }
     sysmon->hEvent = hEvent;
-    // create thread for watcher
-    HANDLE hThread = context->NewThread(GetFuncAddr(&sm_watcher), NULL, false);
-    if (hThread == NULL)
-    {
-        return false;
-    }
-    sysmon->hThread = hThread;
     // copy mutex from context
     sysmon->hMutex_LT  = context->hMutex_LT;
     sysmon->hMutex_MT  = context->hMutex_MT;
@@ -244,13 +244,17 @@ static void eraseSysmonMethods(Context* context)
 __declspec(noinline)
 static void cleanSysmon(Sysmon* sysmon)
 {
-    if (sysmon->CloseHandle != NULL && sysmon->hMutex != NULL)
+    if (sysmon->CloseHandle == NULL)
+    {
+        return;
+    }
+    if (sysmon->hMutex != NULL)
     {
         sysmon->CloseHandle(sysmon->hMutex);
     }
-    if (sysmon->hThread != NULL)
+    if (sysmon->hEvent != NULL)
     {
-        sm_exit();
+        sysmon->CloseHandle(sysmon->hEvent);
     }
 }
 
@@ -407,33 +411,6 @@ static uint sm_sleep(uint32 milliseconds)
 }
 
 __declspec(noinline)
-static bool sm_exit()
-{
-    Sysmon* sysmon = getSysmonPointer();
-
-    // send stop event to watcher
-    if (!sysmon->SetEvent(sysmon->hEvent))
-    {
-        return false;
-    }
-    // wait watcher thread exit
-    if (sysmon->WaitForSingleObject(sysmon->hThread, INFINITE) != WAIT_OBJECT_0)
-    {
-        return false;
-    }
-    // clean resource
-    if (!sysmon->CloseHandle(sysmon->hThread))
-    {
-        return false;
-    }
-    if (!sysmon->CloseHandle(sysmon->hEvent))
-    {
-        return false;
-    }
-    return true;
-}
-
-__declspec(noinline)
 static void sm_add_loop()
 {
     Sysmon* sysmon = getSysmonPointer();
@@ -556,10 +533,25 @@ errno SM_Stop()
 
     errno errno = NO_ERROR;
 
-    // exit watcher thread
-    if (!sm_exit())
+    // send stop event to watcher
+    if (!sysmon->SetEvent(sysmon->hEvent))
     {
-        errno = ERR_SYSMON_EXIT_WATCHER;
+        errno = ERR_SYSMON_SEND_EVENT;
+    }
+    // wait watcher thread exit
+    if (sysmon->WaitForSingleObject(sysmon->hThread, INFINITE) != WAIT_OBJECT_0)
+    {
+        errno = ERR_SYSMON_WAIT_EXIT;
+    }
+
+    // clean resource
+    if (!sysmon->CloseHandle(sysmon->hThread))
+    {
+        errno = ERR_SYSMON_CLOSE_THREAD;
+    }
+    if (!sysmon->CloseHandle(sysmon->hEvent))
+    {
+        errno = ERR_SYSMON_CLOSE_EVENT;
     }
 
     // close mutex

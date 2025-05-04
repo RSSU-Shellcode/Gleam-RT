@@ -1211,8 +1211,8 @@ void* RT_malloc(uint size)
     }
     // ensure the size is a multiple of memory page size.
     // it also for prevent track the special page size.
-    uint memSize = ((size / runtime->PageSize) + 1) * runtime->PageSize;
-    void* addr = runtime->VirtualAlloc(NULL, memSize, MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
+    uint pageSize = (((size + 16) / runtime->PageSize) + 1) * runtime->PageSize;
+    void* addr = runtime->VirtualAlloc(NULL, pageSize, MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
     if (addr == NULL)
     {
         return NULL;
@@ -1224,7 +1224,7 @@ void* RT_malloc(uint size)
     // record user input size
     mem_copy(address, &size, sizeof(size));
     // record buffer capacity
-    uint cap = memSize - 16;
+    uint cap = pageSize - 16;
     mem_copy(address + sizeof(size), &cap, sizeof(cap));
     dbg_log("[runtime]", "malloc size: %zu", size);
     return (void*)(address + 16);

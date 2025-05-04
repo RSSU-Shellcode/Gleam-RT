@@ -18,6 +18,8 @@ typedef uint  (*mt_msize_t)(void* ptr);
 typedef uint  (*mt_mcap_t)(void* ptr);
 
 typedef HANDLE (*NewThread_t)(void* address, void* parameter, bool track);
+typedef errno  (*RecoverThreads_t)();
+typedef errno  (*ForceKillThreads_t)();
 
 typedef struct {
     // runtime options
@@ -68,7 +70,7 @@ typedef struct {
     mt_msize_t   mt_msize;
     mt_mcap_t    mt_mcap;
 
-    // for sysmon
+    // for initialize sysmon
     HANDLE hMutex_LT;
     HANDLE hMutex_MT;
     HANDLE hMutex_TT;
@@ -76,7 +78,9 @@ typedef struct {
     HANDLE hMutex_AS;
     HANDLE hMutex_IMS;
 
-    NewThread_t NewThread;
+    NewThread_t        NewThread;
+    RecoverThreads_t   RecoverThreads;
+    ForceKillThreads_t ForceKillThreads;
 } Context;
 
 #endif // CONTEXT_H

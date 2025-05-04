@@ -74,7 +74,7 @@ static void eraseSysmonMethods(Context* context);
 static void cleanSysmon(Sysmon* sysmon);
 
 static void sm_watcher();
-static bool sm_watch();
+static uint sm_watch();
 static uint sm_sleep(uint32 milliseconds);
 static bool sm_exit();
 static void sm_add_loop();
@@ -271,37 +271,53 @@ static void sm_watcher()
 
     for (;;)
     {
-        if (!sm_watch())
+        switch (sm_watch())
         {
+        case RESULT_SUCCESS:
+            break;
+        case RESULT_STOP_EVENT:
+            return;
+        case RESULT_FAILED:
             errno err = sysmon->RecoverThreads();
             if (err != NO_ERROR)
             {
                 dbg_log("[sysmon]", "occurred error when recover threads: 0x%X", err);
             }
-            if (sm_watch())
+            if (sm_sleep(1000 + RandIntN(0, 3000)) == RESULT_STOP_EVENT)
             {
+                return;
+            }
+            switch (sm_watch())
+            {
+            case RESULT_SUCCESS:
                 sm_add_recover();
-                continue;
+                break;
+            case RESULT_STOP_EVENT:
+                return;
+            case RESULT_FAILED:
+                // if failed to recover, use force kill threads,
+                // then the Watchdog will restart program.
+                err = sysmon->ForceKillThreads();
+                if (err != NO_ERROR)
+                {
+                    dbg_log("[sysmon]", "occurred error when kill threads: 0x%X", err);
+                }
+                sm_add_panic();
+            default:
+                panic(PANIC_UNREACHABLE_CODE);
             }
-            // if failed to recover, use force kill threads,
-            // then the Watchdog will restart program.
-            err = sysmon->ForceKillThreads();
-            if (err != NO_ERROR)
-            {
-                dbg_log("[sysmon]", "occurred error when kill threads: 0x%X", err);
-            }
-            sm_add_panic();
+        default:
+            panic(PANIC_UNREACHABLE_CODE);
         }
-        uint reason = sm_sleep(1000 + RandIntN(0, 3000));
-        switch (reason)
+        switch (sm_sleep(1000 + RandIntN(0, 3000)))
         {
-        case SLEEP_REASON_TIMER:
+        case RESULT_SUCCESS:
             sm_add_loop();
             break;
-        case SLEEP_REASON_STOP_EVENT:
+        case RESULT_STOP_EVENT:
             sm_add_loop();
             return;
-        case SLEEP_REASON_FAILED:
+        case RESULT_FAILED:
             return;
         default:
             panic(PANIC_UNREACHABLE_CODE);
@@ -310,28 +326,29 @@ static void sm_watcher()
 }
 
 __declspec(noinline)
-static bool sm_watch()
+static uint sm_watch()
 {
     Sysmon* sysmon = getSysmonPointer();
 
     HANDLE handles[] = {
-        sysmon->hMutex_LT,
-        sysmon->hMutex_MT,
-        sysmon->hMutex_TT,
-        sysmon->hMutex_RT,
-        sysmon->hMutex_AS,
-        sysmon->hMutex_IMS,
+        sysmon->hMutex_LT, sysmon->hMutex_MT, sysmon->hMutex_TT,
+        sysmon->hMutex_RT, sysmon->hMutex_AS, sysmon->hMutex_IMS,
     };
-    bool success = true;
+    uint result  = RESULT_SUCCESS;
+    bool stopped = false;
     for (int i = 0; i < arrlen(handles); i++)
     {
-        DWORD timeout = (DWORD)(5000 + RandUintN(0, 10000));
-        switch (sysmon->WaitForSingleObject(handles[i], timeout))
+        HANDLE objects[] = { handles[i], sysmon->hEvent };
+        DWORD  timeout   = (DWORD)(5000 + RandUintN(0, 10000));
+        switch (sysmon->WaitForMultipleObjects(2, objects, false, timeout))
         {
-        case WAIT_OBJECT_0: case WAIT_ABANDONED:
+        case WAIT_OBJECT_0+0: case WAIT_ABANDONED+0:
             break;
-        case WAIT_TIMEOUT: case WAIT_FAILED:
-            success = false;
+        case WAIT_OBJECT_0+1:
+            stopped = true;
+            break;
+        default:
+            result = RESULT_FAILED;
             break;
         }
     }
@@ -339,10 +356,14 @@ static bool sm_watch()
     {
         if (!sysmon->ReleaseMutex(handles[i]))
         {
-            success = false;
+            result = RESULT_FAILED;
         }
     }
-    return success;
+    if (stopped)
+    {
+        return RESULT_STOP_EVENT;
+    }
+    return result;
 }
 
 __declspec(noinline)
@@ -412,6 +433,7 @@ static bool sm_exit()
     return true;
 }
 
+__declspec(noinline)
 static void sm_add_loop()
 {
     Sysmon* sysmon = getSysmonPointer();
@@ -429,6 +451,7 @@ static void sm_add_loop()
     }
 }
 
+__declspec(noinline)
 static void sm_add_recover()
 {
     Sysmon* sysmon = getSysmonPointer();
@@ -446,6 +469,7 @@ static void sm_add_recover()
     }
 }
 
+__declspec(noinline)
 static void sm_add_panic()
 {
     Sysmon* sysmon = getSysmonPointer();

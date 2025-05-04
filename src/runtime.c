@@ -714,8 +714,10 @@ static errno initSubmodules(Runtime* runtime)
     context.hMutex_RT  = runtime->ResourceTracker->hMutex;
     context.hMutex_AS  = runtime->ArgumentStore->hMutex;
     context.hMutex_IMS = runtime->InMemoryStorage->hMutex;
-    context.NewThread  = runtime->ThreadTracker->New;
-
+    context.NewThread        = runtime->ThreadTracker->New;
+    context.RecoverThreads   = runtime->ThreadTracker->Recover;
+    context.ForceKillThreads = runtime->ThreadTracker->ForceKill;
+    
     // initialize reliability modules
     module_t rel_modules[] = 
     {

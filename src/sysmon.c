@@ -220,8 +220,8 @@ static bool initSysmonEnvironment(Sysmon* sysmon, Context* context)
         return false;
     }
     sysmon->statusMu = statusMu;
-    // create event for stop 
-    HANDLE hEvent = context->CreateEventA(NULL, false, false, NAME_RT_SM_EVENT_STOP);
+    // create event for stop watcher
+    HANDLE hEvent = context->CreateEventA(NULL, true, false, NAME_RT_SM_EVENT_STOP);
     if (hMutex == NULL)
     {
         return false;
@@ -294,6 +294,10 @@ static void sm_watcher()
         case RESULT_STOP_EVENT:
             return;
         case RESULT_FAILED:
+            // for trigger debugger
+        #ifndef RELEASE_MODE
+            sysmon->CloseHandle((HANDLE)(0x19999999));
+        #endif
             errno err = sysmon->RecoverThreads();
             if (err != NO_ERROR)
             {

@@ -70,6 +70,7 @@ func TestRuntime(t *testing.T) {
 		spew.Dump(metrics)
 		require.Equal(t, int64(1), metrics.Memory.NumRegions)
 		require.Equal(t, int64(3), metrics.Memory.NumPages)
+		require.NotZero(t, metrics.Sysmon.NumNormal)
 
 		ret, _, en := syscall.SyscallN(Runtime.Memory.Free, mem)
 		if ret != 1 {
@@ -81,6 +82,7 @@ func TestRuntime(t *testing.T) {
 		spew.Dump(metrics)
 		require.Zero(t, metrics.Memory.NumRegions)
 		require.Zero(t, metrics.Memory.NumPages)
+		require.NotZero(t, metrics.Sysmon.NumNormal)
 	})
 
 	t.Run("Cleanup", func(t *testing.T) {
@@ -96,6 +98,7 @@ func TestRuntime(t *testing.T) {
 		require.NoError(t, err)
 		require.Zero(t, metrics.Memory.NumRegions)
 		require.Zero(t, metrics.Memory.NumPages)
+		require.NotZero(t, metrics.Sysmon.NumNormal)
 	})
 
 	err = Runtime.Exit()

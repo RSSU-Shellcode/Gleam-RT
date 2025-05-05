@@ -2087,6 +2087,10 @@ errno RT_Metrics(Runtime_Metrics* metrics)
     {
         errno = ERR_RUNTIME_GET_STATUS_RESOURCE;
     }
+    if (!runtime->Sysmon->GetStatus(&metrics->Sysmon))
+    {
+        errno = ERR_RUNTIME_GET_STATUS_SYSMON;
+    }
 
     if (!rt_unlock())
     {

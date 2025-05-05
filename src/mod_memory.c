@@ -2142,7 +2142,7 @@ void* MT_MemAlloc(uint size)
     }
     // ensure the size is a multiple of memory page size.
     // it also for prevent track the special page size.
-    uint pageSize = ((size / tracker->PageSize) + 1) * tracker->PageSize;
+    uint pageSize = (((size + 16) / tracker->PageSize) + 1) * tracker->PageSize;
     void* addr = MT_VirtualAlloc(NULL, pageSize, MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
     if (addr == NULL)
     {

@@ -53,12 +53,20 @@ type RTStatus struct {
 	NumSockets        int64 `toml:"num_sockets"         json:"num_sockets"`
 }
 
-// Metrics contains status about core modules.
+// SMStatus contains status about sysmon.
+type SMStatus struct {
+	NumNormal  int64 `toml:"num_normal"  json:"num_normal"`
+	NumRecover int64 `toml:"num_recover" json:"num_recover"`
+	NumPanic   int64 `toml:"num_panic"   json:"num_panic"`
+}
+
+// Metrics contains status about runtime submodules.
 type Metrics struct {
 	Library  LTStatus `toml:"library"  json:"library"`
 	Memory   MTStatus `toml:"memory"   json:"memory"`
 	Thread   TTStatus `toml:"thread"   json:"thread"`
 	Resource RTStatus `toml:"resource" json:"resource"`
+	Sysmon   SMStatus `toml:"sysmon"   json:"sysmon"`
 }
 
 // Options contains options about initialize runtime.

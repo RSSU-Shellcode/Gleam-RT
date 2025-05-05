@@ -6,7 +6,7 @@
 #include "context.h"
 
 typedef struct {
-    int64 NumLoop;
+    int64 NumNormal;
     int64 NumRecover;
     int64 NumPanic;
 } SM_Status;

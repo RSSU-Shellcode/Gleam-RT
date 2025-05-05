@@ -9,6 +9,11 @@ import (
 	"unsafe"
 )
 
+const (
+	null    = 0
+	noError = 0
+)
+
 type errno struct {
 	method string
 	errno  uintptr
@@ -239,7 +244,7 @@ type RuntimeM struct {
 // Each shellcode instance can only initialize once.
 func InitRuntime(addr uintptr, opts *Options) (*RuntimeM, error) {
 	ret, _, err := syscall.SyscallN(addr, uintptr(unsafe.Pointer(opts))) // #nosec
-	if ret == 0 {
+	if ret == null {
 		return nil, fmt.Errorf("failed to initialize runtime: 0x%X", err)
 	}
 	return (*RuntimeM)(unsafe.Pointer(ret)), nil // #nosec
@@ -248,7 +253,7 @@ func InitRuntime(addr uintptr, opts *Options) (*RuntimeM, error) {
 // Sleep is used to sleep and hide runtime.
 func (rt *RuntimeM) Sleep(d time.Duration) error {
 	ret, _, _ := syscall.SyscallN(rt.Core.Sleep, uintptr(d.Milliseconds()))
-	if ret != 0 {
+	if ret != noError {
 		return &errno{method: "Core.Sleep", errno: ret}
 	}
 	return nil
@@ -258,7 +263,7 @@ func (rt *RuntimeM) Sleep(d time.Duration) error {
 func (rt *RuntimeM) Metrics() (*Metrics, error) {
 	metrics := Metrics{}
 	ret, _, _ := syscall.SyscallN(rt.Core.Metrics, uintptr(unsafe.Pointer(&metrics))) // #nosec
-	if ret != 0 {
+	if ret != noError {
 		return nil, &errno{method: "Core.Metrics", errno: ret}
 	}
 	return &metrics, nil
@@ -267,7 +272,7 @@ func (rt *RuntimeM) Metrics() (*Metrics, error) {
 // Cleanup is used to clean all tracked object except locked.
 func (rt *RuntimeM) Cleanup() error {
 	ret, _, _ := syscall.SyscallN(rt.Core.Cleanup) // #nosec
-	if ret != 0 {
+	if ret != noError {
 		return &errno{method: "Core.Cleanup", errno: ret}
 	}
 	return nil
@@ -276,7 +281,7 @@ func (rt *RuntimeM) Cleanup() error {
 // Exit is used to exit runtime.
 func (rt *RuntimeM) Exit() error {
 	ret, _, _ := syscall.SyscallN(rt.Core.Exit) // #nosec
-	if ret != 0 {
+	if ret != noError {
 		return &errno{method: "Core.Exit", errno: ret}
 	}
 	return nil

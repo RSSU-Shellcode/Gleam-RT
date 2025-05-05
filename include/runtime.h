@@ -296,6 +296,15 @@ typedef void* (*GetProcByName_t)(HMODULE hModule, LPCSTR lpProcName, bool hook);
 typedef void* (*GetProcByHash_t)(uint hash, uint key, bool hook);
 typedef void* (*GetProcOriginal_t)(HMODULE hModule, LPCSTR lpProcName);
 
+// about sysmon
+#ifndef SYSMON_H
+typedef struct {
+    int64 NumNormal;
+    int64 NumRecover;
+    int64 NumPanic;
+} SM_Status;
+#endif // SYSMON_H
+
 // about runtime core methods
 //
 // It is NOT recommended use "Hide" and "Recover", these functions
@@ -310,6 +319,7 @@ typedef struct {
     MT_Status Memory;
     TT_Status Thread;
     RT_Status Resource;
+    SM_Status Sysmon;
 } Runtime_Metrics;
 
 typedef errno (*SleepHR_t)(uint32 milliseconds);

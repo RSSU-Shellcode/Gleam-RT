@@ -81,7 +81,7 @@ static uint sm_sleep(uint32 milliseconds);
 
 static bool sm_lock_status();
 static bool sm_unlock_status();
-static void sm_add_loop();
+static void sm_add_normal();
 static void sm_add_recover();
 static void sm_add_panic();
 
@@ -290,6 +290,7 @@ static void sm_watcher()
         switch (sm_watch())
         {
         case RESULT_SUCCESS:
+            sm_add_normal();
             break;
         case RESULT_STOP_EVENT:
             return;
@@ -332,12 +333,11 @@ static void sm_watcher()
         switch (sm_sleep(1000 + RandIntN(0, 3000)))
         {
         case RESULT_SUCCESS:
-            sm_add_loop();
             break;
         case RESULT_STOP_EVENT:
-            sm_add_loop();
             return;
         case RESULT_FAILED:
+            dbg_log("[sysmon]", "occurred error when sleep: 0x%X", GetLastErrno());
             return;
         default:
             panic(PANIC_UNREACHABLE_CODE);
@@ -444,7 +444,7 @@ bool sm_unlock_status()
 }
 
 __declspec(noinline)
-static void sm_add_loop()
+static void sm_add_normal()
 {
     Sysmon* sysmon = getSysmonPointer();
 
@@ -453,7 +453,7 @@ static void sm_add_loop()
         return;
     }
 
-    sysmon->status.NumLoop++;
+    sysmon->status.NumNormal++;
 
     if (!sm_unlock_status())
     {

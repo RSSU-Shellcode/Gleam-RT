@@ -295,10 +295,6 @@ static void sm_watcher()
         case RESULT_STOP_EVENT:
             return;
         case RESULT_FAILED:
-            // for trigger debugger
-        #ifndef RELEASE_MODE
-            sysmon->CloseHandle((HANDLE)(0x19999999));
-        #endif
             errno err = sysmon->RecoverThreads();
             if (err != NO_ERROR)
             {
@@ -324,9 +320,11 @@ static void sm_watcher()
                     dbg_log("[sysmon]", "occurred error when kill threads: 0x%X", err);
                 }
                 sm_add_panic();
+                break;
             default:
                 panic(PANIC_UNREACHABLE_CODE);
             }
+            break;
         default:
             panic(PANIC_UNREACHABLE_CODE);
         }

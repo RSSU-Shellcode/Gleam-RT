@@ -26,19 +26,19 @@ int __cdecl main()
     uint bannerLen = (uint)16 + BANNER_END_SIZE + maxNameLen + 16;
 
     // run unit tests
-    bool fail = false;
+    bool failed = false;
     for (int i = 0; i < arrlen(tests); i++)
     {
         printBannerBegin(tests[i].Name, bannerLen);
         bool pass = tests[i].Test();
         if (!pass)
         {
-            fail = true;
+            failed = true;
         }
         printBannerEnd(tests[i].Name, bannerLen, pass);
     }
 
-    if (fail)
+    if (failed)
     {
         printf_s("Failed to test\n");
         return 1;

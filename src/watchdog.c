@@ -112,3 +112,124 @@ Watchdog_M* InitWatchdog(Context* context)
     }
 
 }
+
+static bool initWatchdogAPI(Watchdog* watchdog, Context* context)
+{
+    watchdog->SuspendThread          = context->SuspendThread;
+    watchdog->ResumeThread           = context->ResumeThread;
+    watchdog->CreateWaitableTimerA   = context->CreateWaitableTimerA;
+    watchdog->SetWaitableTimer       = context->SetWaitableTimer;
+    watchdog->SetEvent               = context->SetEvent;
+    watchdog->ReleaseMutex           = context->ReleaseMutex;
+    watchdog->WaitForSingleObject    = context->WaitForSingleObject;
+    watchdog->WaitForMultipleObjects = context->WaitForMultipleObjects;
+    watchdog->CloseHandle            = context->CloseHandle;
+    return true;
+}
+
+// CANNOT merge updateSysmonPointer and recoverSysmonPointer
+// to one function with two arguments, otherwise the compiler
+// will generate the incorrect instructions.
+
+static bool updateWatchdogPointer(Watchdog* watchdog)
+{
+    bool success = false;
+    uintptr target = (uintptr)(GetFuncAddr(&getWatchdogPointer));
+    for (uintptr i = 0; i < 64; i++)
+    {
+        uintptr* pointer = (uintptr*)(target);
+        if (*pointer != WATCHDOG_POINTER)
+        {
+            target++;
+            continue;
+        }
+        *pointer = (uintptr)watchdog;
+        success = true;
+        break;
+    }
+    return success;
+}
+
+static bool recoverWatchdogPointer(Watchdog* watchdog)
+{
+    bool success = false;
+    uintptr target = (uintptr)(GetFuncAddr(&getWatchdogPointer));
+    for (uintptr i = 0; i < 64; i++)
+    {
+        uintptr* pointer = (uintptr*)(target);
+        if (*pointer != (uintptr)watchdog)
+        {
+            target++;
+            continue;
+        }
+        *pointer = WATCHDOG_POINTER;
+        success = true;
+        break;
+    }
+    return success;
+}
+
+static bool initWatchdogEnvironment(Watchdog* watchdog, Context* context)
+{
+    // create global mutex
+    HANDLE hMutex = context->CreateMutexA(NULL, false, NAME_RT_WD_MUTEX_GLOBAL);
+    if (hMutex == NULL)
+    {
+        return false;
+    }
+    watchdog->hMutex = hMutex;
+    // create status mutex
+    HANDLE statusMu = context->CreateMutexA(NULL, false, NAME_RT_WD_MUTEX_STATUS);
+    if (statusMu == NULL)
+    {
+        return false;
+    }
+    watchdog->statusMu = statusMu;
+    // create event for stop watcher
+    HANDLE hEvent = context->CreateEventA(NULL, true, false, NAME_RT_WD_EVENT_STOP);
+    if (hMutex == NULL)
+    {
+        return false;
+    }
+    watchdog->hEvent = hEvent;
+    return true;
+}
+
+static void eraseWatchdogMethods(Context* context)
+{
+    if (context->NotEraseInstruction)
+    {
+        return;
+    }
+    uintptr begin = (uintptr)(GetFuncAddr(&initWatchdogAPI));
+    uintptr end   = (uintptr)(GetFuncAddr(&eraseWatchdogMethods));
+    uintptr size  = end - begin;
+    RandBuffer((byte*)begin, (int64)size);
+}
+
+static void cleanWatchdog(Watchdog* watchdog)
+{
+    if (watchdog->CloseHandle == NULL)
+    {
+        return;
+    }
+    if (watchdog->hMutex != NULL)
+    {
+        watchdog->CloseHandle(watchdog->hMutex);
+    }
+    if (watchdog->hEvent != NULL)
+    {
+        watchdog->CloseHandle(watchdog->hEvent);
+    }
+}
+
+// updateWatchdogPointer will replace hard encode address to the actual address.
+// Must disable compiler optimize, otherwise updateWatchdogPointer will fail.
+#pragma optimize("", off)
+static Watchdog* getWatchdogPointer()
+{
+    uintptr pointer = WATCHDOG_POINTER;
+    return (Watchdog*)(pointer);
+}
+#pragma optimize("", on)
+

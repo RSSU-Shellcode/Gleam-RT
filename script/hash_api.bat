@@ -46,6 +46,7 @@ echo [Runtime Methods]
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -func GetProcAddressByName
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -func GetProcAddressByHash
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -func GetProcAddressOriginal
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -func GetMetrics
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -func ExitProcess
 echo.
 
@@ -269,6 +270,7 @@ echo [Runtime Methods]
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -func GetProcAddressByName
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -func GetProcAddressByHash
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -func GetProcAddressOriginal
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -func GetMetrics
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -func ExitProcess
 echo.
 

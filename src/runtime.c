@@ -118,7 +118,7 @@ void  RT_ExitProcess(UINT uExitCode);
 errno RT_SleepHR(DWORD dwMilliseconds);
 errno RT_Hide();
 errno RT_Recover();
-errno RT_Metrics(Runtime_Metrics* metrics);
+errno RT_GetMetrics(Runtime_Metrics* metrics);
 errno RT_Cleanup();
 errno RT_Exit();
 
@@ -407,7 +407,7 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->Core.Sleep   = GetFuncAddr(&RT_SleepHR);
     module->Core.Hide    = GetFuncAddr(&RT_Hide);
     module->Core.Recover = GetFuncAddr(&RT_Recover);
-    module->Core.Metrics = GetFuncAddr(&RT_Metrics);
+    module->Core.Metrics = GetFuncAddr(&RT_GetMetrics);
     module->Core.Cleanup = GetFuncAddr(&RT_Cleanup);
     module->Core.Exit    = GetFuncAddr(&RT_Exit);
     // runtime core data
@@ -1568,6 +1568,7 @@ static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
         { 0x52187F62F4945F79, 0xF442C1ADABF51271, GetFuncAddr(&RT_GetProcAddressByName)   },
         { 0x2FCD603A5673973E, 0x6444A5D4745B752F, GetFuncAddr(&RT_GetProcAddressByHash)   },
         { 0x5DB9AA507EF01975, 0x93507B2BB7467F2A, GetFuncAddr(&RT_GetProcAddressOriginal) },
+        { 0xD62177702E6E3171, 0x8A5337A2E4975565, GetFuncAddr(&RT_GetMetrics)             },
         { 0x08AE916CC0D36CFE, 0x0C38FF56F889D412, GetFuncAddr(&RT_ExitProcess)            },
         { 0xFFEEAA421CDF46F9, 0x0F45E2D1E152442A, AS->GetValue   }, // AS_GetValue
         { 0x9D3BD80CE0C033C5, 0x765B0D75B2CD552F, AS->GetPointer }, // AS_GetPointer
@@ -1584,6 +1585,7 @@ static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
         { 0x7E1AF33A, 0xEEE22443, GetFuncAddr(&RT_GetProcAddressByName)   },
         { 0xA1AAE17C, 0xECCF6C34, GetFuncAddr(&RT_GetProcAddressByHash)   },
         { 0x6046265E, 0x6ADAF8C8, GetFuncAddr(&RT_GetProcAddressOriginal) },
+        { 0x6934B251, 0x593FB181, GetFuncAddr(&RT_GetMetrics)             },
         { 0x12FF4CA2, 0xF64D1260, GetFuncAddr(&RT_ExitProcess)            },
         { 0x2C862E1B, 0xABE0C2CD, AS->GetValue   }, // AS_GetValue
         { 0xC3EBBD09, 0x5E0F8C56, AS->GetPointer }, // AS_GetPointer
@@ -2061,7 +2063,7 @@ errno RT_Recover()
 }
 
 __declspec(noinline)
-errno RT_Metrics(Runtime_Metrics* metrics)
+errno RT_GetMetrics(Runtime_Metrics* metrics)
 {
     Runtime* runtime = getRuntimePointer();
 

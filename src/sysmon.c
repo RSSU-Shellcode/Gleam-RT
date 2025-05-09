@@ -390,7 +390,7 @@ static uint sm_sleep(uint32 milliseconds)
     Sysmon* sysmon = getSysmonPointer();
 
     uint result = RESULT_FAILED;
-    HANDLE hTimer = sysmon->CreateWaitableTimerA(NULL, false, NAME_RT_TT_TIMER_SLEEP);
+    HANDLE hTimer = sysmon->CreateWaitableTimerA(NULL, false, NAME_RT_SM_TIMER_SLEEP);
     if (hTimer == NULL)
     {
         return result;

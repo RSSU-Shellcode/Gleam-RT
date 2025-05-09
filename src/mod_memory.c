@@ -2778,6 +2778,7 @@ errno MT_FreeAll()
     }
 
     // decommit memory pages
+    len = pages->Len;
     idx = 0;
     for (uint num = 0; num < len; idx++)
     {
@@ -2940,7 +2941,7 @@ errno MT_Clean()
     }
 
     // release reserved memory region
-    len = pages->Len;
+    len = regions->Len;
     idx = 0;
     for (uint num = 0; num < len; idx++)
     {

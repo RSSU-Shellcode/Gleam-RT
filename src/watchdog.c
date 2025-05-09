@@ -110,7 +110,21 @@ Watchdog_M* InitWatchdog(Context* context)
         SetLastErrno(errno);
         return NULL;
     }
-
+    // create methods for tracker
+    Watchdog_M* method = (Watchdog_M*)methodAddr;
+    // methods for user
+    method->Kick       = GetFuncAddr(&WD_Kick);
+    method->Enable     = GetFuncAddr(&WD_Enable);
+    method->Disable    = GetFuncAddr(&WD_Disable);
+    method->SetHandler = GetFuncAddr(&WD_SetHandler);
+    method->GetStatus  = GetFuncAddr(&WD_GetStatus);
+    // methods for runtime
+    method->Lock     = GetFuncAddr(&WD_Lock);
+    method->Unlock   = GetFuncAddr(&WD_Unlock);
+    method->Pause    = GetFuncAddr(&WD_Pause);
+    method->Continue = GetFuncAddr(&WD_Continue);
+    method->Stop     = GetFuncAddr(&WD_Stop);
+    return method;
 }
 
 static bool initWatchdogAPI(Watchdog* watchdog, Context* context)
@@ -233,3 +247,98 @@ static Watchdog* getWatchdogPointer()
 }
 #pragma optimize("", on)
 
+__declspec(noinline)
+static void wd_watcher()
+{
+
+}
+
+__declspec(noinline)
+static uint wd_sleep(uint32 milliseconds)
+{
+
+}
+
+__declspec(noinline)
+static bool wd_lock_status()
+{
+
+}
+
+__declspec(noinline)
+static bool wd_unlock_status()
+{
+
+}
+
+__declspec(noinline)
+static void wd_add_kick()
+{
+
+}
+
+__declspec(noinline)
+static void wd_add_reset()
+{
+
+}
+
+__declspec(noinline)
+void WD_Kick()
+{
+
+}
+
+__declspec(noinline)
+void WD_Enable()
+{
+
+}
+
+__declspec(noinline)
+void WD_Disable()
+{
+
+}
+
+__declspec(noinline)
+void WD_SetHandler(WDHandler_t handler)
+{
+
+}
+
+__declspec(noinline)
+bool WD_GetStatus(WD_Status* status)
+{
+
+}
+
+__declspec(noinline)
+bool WD_Lock()
+{
+
+}
+
+__declspec(noinline)
+bool WD_Unlock()
+{
+
+}
+
+__declspec(noinline)
+errno WD_Pause()
+{
+
+}
+
+__declspec(noinline)
+errno WD_Continue()
+{
+
+}
+
+__declspec(noinline)
+errno WD_Stop()
+{
+
+}

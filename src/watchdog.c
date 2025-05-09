@@ -9,6 +9,10 @@
 #include "watchdog.h"
 #include "debug.h"
 
+#define RESULT_FAILED     0
+#define RESULT_SUCCESS    1
+#define RESULT_STOP_EVENT 2
+
 typedef struct {
     // store options
     bool NotEraseInstruction;
@@ -18,10 +22,13 @@ typedef struct {
     CreateWaitableTimerA_t   CreateWaitableTimerA;
     SetWaitableTimer_t       SetWaitableTimer;
     SetEvent_t               SetEvent;
+    ResetEvent_t             ResetEvent;
     ReleaseMutex_t           ReleaseMutex;
     WaitForSingleObject_t    WaitForSingleObject;
     WaitForMultipleObjects_t WaitForMultipleObjects;
     CloseHandle_t            CloseHandle;
+
+    WDHandler_t handler;
 
     // about watcher
     HANDLE hEvent;
@@ -129,6 +136,30 @@ Watchdog_M* InitWatchdog(Context* context)
 
 static bool initWatchdogAPI(Watchdog* watchdog, Context* context)
 {
+    typedef struct { 
+        uint hash; uint key; void* proc;
+    } winapi;
+    winapi list[] =
+#ifdef _WIN64
+    {
+        { 0xA6F25F2ADD9B1353, 0x8B729F0C74C2C45F }, // ResetEvent
+    };
+#elif _WIN32
+    {
+        { 0xD60A0046, 0x4292DD1E }, // ResetEvent
+    };
+#endif
+    for (int i = 0; i < arrlen(list); i++)
+    {
+        void* proc = FindAPI(list[i].hash, list[i].key);
+        if (proc == NULL)
+        {
+            return false;
+        }
+        list[i].proc = proc;
+    }
+    watchdog->ResetEvent = list[0x00].proc;
+
     watchdog->SuspendThread          = context->SuspendThread;
     watchdog->ResumeThread           = context->ResumeThread;
     watchdog->CreateWaitableTimerA   = context->CreateWaitableTimerA;
@@ -141,7 +172,7 @@ static bool initWatchdogAPI(Watchdog* watchdog, Context* context)
     return true;
 }
 
-// CANNOT merge updateSysmonPointer and recoverSysmonPointer
+// CANNOT merge updateWatchdogPointer and recoverWatchdogPointer
 // to one function with two arguments, otherwise the compiler
 // will generate the incorrect instructions.
 
@@ -256,31 +287,94 @@ static void wd_watcher()
 __declspec(noinline)
 static uint wd_sleep(uint32 milliseconds)
 {
+    Watchdog* watchdog = getWatchdogPointer();
 
+    uint result = RESULT_FAILED;
+    HANDLE hTimer = watchdog->CreateWaitableTimerA(NULL, false, NAME_RT_WD_TIMER_SLEEP);
+    if (hTimer == NULL)
+    {
+        return result;
+    }
+    for (;;)
+    {
+        if (milliseconds < 10)
+        {
+            milliseconds = 10;
+        }
+        int64 dueTime = -((int64)milliseconds * 1000 * 10);
+        if (!watchdog->SetWaitableTimer(hTimer, &dueTime, 0, NULL, NULL, true))
+        {
+            break;
+        }
+        HANDLE objects[] = { hTimer, watchdog->hEvent };
+        switch (watchdog->WaitForMultipleObjects(2, objects, false, INFINITE))
+        {
+        case WAIT_OBJECT_0+0:
+            result = RESULT_SUCCESS;
+            break;
+        case WAIT_OBJECT_0+1:
+            result = RESULT_STOP_EVENT;
+            break;
+        default:
+            break;
+        }
+        break;
+    }
+    watchdog->CloseHandle(hTimer);
+    return result;
 }
 
 __declspec(noinline)
 static bool wd_lock_status()
 {
+    Watchdog* watchdog = getWatchdogPointer();
 
+    DWORD event = watchdog->WaitForSingleObject(watchdog->statusMu, INFINITE);
+    return event == WAIT_OBJECT_0 || event == WAIT_ABANDONED;
 }
 
 __declspec(noinline)
 static bool wd_unlock_status()
 {
+    Watchdog* watchdog = getWatchdogPointer();
 
+    return watchdog->ReleaseMutex(watchdog->statusMu);
 }
 
 __declspec(noinline)
 static void wd_add_kick()
 {
+    Watchdog* watchdog = getWatchdogPointer();
 
+    if (!wd_lock_status())
+    {
+        return;
+    }
+
+    watchdog->status.NumKick++;
+
+    if (!wd_unlock_status())
+    {
+        return;
+    }
 }
 
 __declspec(noinline)
 static void wd_add_reset()
 {
+    Watchdog* watchdog = getWatchdogPointer();
 
+    if (!wd_lock_status())
+    {
+        return;
+    }
+
+    watchdog->status.NumReset++;
+
+    if (!wd_unlock_status())
+    {
+        return;
+    }
 }
 
 __declspec(noinline)
@@ -292,19 +386,37 @@ void WD_Kick()
 __declspec(noinline)
 void WD_Enable()
 {
+    if (!WD_Lock())
+    {
+        return;
+    }
 
+    if (!WD_Unlock())
+    {
+        return;
+    }
 }
 
 __declspec(noinline)
 void WD_Disable()
 {
+    if (!WD_Lock())
+    {
+        return;
+    }
 
+    if (!WD_Unlock())
+    {
+        return;
+    }
 }
 
 __declspec(noinline)
 void WD_SetHandler(WDHandler_t handler)
 {
+    Watchdog* watchdog = getWatchdogPointer();
 
+    watchdog->handler = handler;
 }
 
 __declspec(noinline)
@@ -316,13 +428,18 @@ bool WD_GetStatus(WD_Status* status)
 __declspec(noinline)
 bool WD_Lock()
 {
+    Watchdog* watchdog = getWatchdogPointer();
 
+    DWORD event = watchdog->WaitForSingleObject(watchdog->hMutex, INFINITE);
+    return event == WAIT_OBJECT_0 || event == WAIT_ABANDONED;
 }
 
 __declspec(noinline)
 bool WD_Unlock()
 {
+    Watchdog* watchdog = getWatchdogPointer();
 
+    return watchdog->ReleaseMutex(watchdog->hMutex);
 }
 
 __declspec(noinline)

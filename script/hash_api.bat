@@ -224,9 +224,8 @@ hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptSignHashA
 hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptVerifySignatureA
 echo.
 
-echo [Sysmon]
-hash_api -fmt 64 -conc -func CreateWaitableTimerA
-hash_api -fmt 64 -conc -func SetWaitableTimer
+echo [Watchdog]
+hash_api -fmt 64 -conc -func ResetEvent
 echo.
 
 echo ------------------------x86------------------------
@@ -448,9 +447,8 @@ hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptSignHashA
 hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptVerifySignatureA
 echo.
 
-echo [Sysmon]
-hash_api -fmt 32 -conc -func CreateWaitableTimerA
-hash_api -fmt 32 -conc -func SetWaitableTimer
+echo [Watchdog]
+hash_api -fmt 32 -conc -func ResetEvent
 echo.
 
 pause

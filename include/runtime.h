@@ -305,6 +305,25 @@ typedef struct {
 } SM_Status;
 #endif // SYSMON_H
 
+typedef bool (*SMGetStatus_t)(SM_Status* status);
+
+// about watchdog
+#ifndef WATCHDOG_H
+typedef struct {
+    int64 NumKick;
+    int64 NumNormal;
+    int64 NumReset;
+} WD_Status;
+#endif // WATCHDOG_H
+
+typedef void (*WDHandler_t)();
+
+typedef errno (*WDKick_t)();
+typedef errno (*WDEnable_t)();
+typedef errno (*WDDisable_t)();
+typedef void  (*WDSetHandler_t)(WDHandler_t handler);
+typedef bool  (*WDGetStatus_t)(WD_Status* status);
+
 // about runtime core methods
 //
 // It is NOT recommended use "Hide" and "Recover", these functions
@@ -320,6 +339,7 @@ typedef struct {
     TT_Status Thread;
     RT_Status Resource;
     SM_Status Sysmon;
+    WD_Status Watchdog;
 } Runtime_Metrics;
 
 typedef errno (*SleepHR_t)(uint32 milliseconds);
@@ -470,6 +490,18 @@ typedef struct {
         GetProcByHash_t   GetProcByHash;
         GetProcOriginal_t GetProcOriginal;
     } Procedure;
+
+    struct {
+        SMGetStatus_t Status;
+    } Sysmon;
+
+    struct {
+        WDKick_t       Kick;
+        WDEnable_t     Enable;
+        WDDisable_t    Disable;
+        WDSetHandler_t SetHandler;
+        WDGetStatus_t  Status;
+    } Watchdog;
 
     struct {
         SleepHR_t Sleep;

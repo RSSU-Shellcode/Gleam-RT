@@ -567,22 +567,23 @@ errno SM_Stop()
     errno errno = NO_ERROR;
 
     // send stop event to watcher
-    if (!sysmon->SetEvent(sysmon->hEvent))
+    if (sysmon->SetEvent(sysmon->hEvent))
     {
+        // wait watcher thread exit
+        if (sysmon->WaitForSingleObject(sysmon->hThread, 1000) != WAIT_OBJECT_0)
+        {
+            errno = ERR_SYSMON_WAIT_THREAD;
+        }
+    } else {
         errno = ERR_SYSMON_SEND_EVENT;
-    }
-    // wait watcher thread exit
-    if (sysmon->WaitForSingleObject(sysmon->hThread, INFINITE) != WAIT_OBJECT_0)
-    {
-        errno = ERR_SYSMON_WAIT_EXIT;
     }
 
     // clean resource about watcher
-    if (!sysmon->CloseHandle(sysmon->hThread))
+    if (!sysmon->CloseHandle(sysmon->hThread) && errno == NO_ERROR)
     {
         errno = ERR_SYSMON_CLOSE_THREAD;
     }
-    if (!sysmon->CloseHandle(sysmon->hEvent))
+    if (!sysmon->CloseHandle(sysmon->hEvent) && errno == NO_ERROR)
     {
         errno = ERR_SYSMON_CLOSE_EVENT;
     }

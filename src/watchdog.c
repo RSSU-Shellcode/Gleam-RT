@@ -43,11 +43,11 @@ typedef struct {
 } Watchdog;
 
 // methods for user
-void WD_Kick();
-void WD_Enable();
-void WD_Disable();
-void WD_SetHandler(WDHandler_t handler);
-bool WD_GetStatus(WD_Status* status);
+errno WD_Kick();
+errno WD_Enable();
+errno WD_Disable();
+void  WD_SetHandler(WDHandler_t handler);
+bool  WD_GetStatus(WD_Status* status);
 
 // methods for runtime
 bool  WD_Lock();
@@ -71,8 +71,9 @@ static bool initWatchdogEnvironment(Watchdog* watchdog, Context* context);
 static void eraseWatchdogMethods(Context* context);
 static void cleanWatchdog(Watchdog* watchdog);
 
-static void wd_watcher();
-static uint wd_sleep(uint32 milliseconds);
+static void  wd_watcher();
+static uint  wd_sleep(uint32 milliseconds);
+static errno wd_stop();
 
 static bool wd_lock_status();
 static bool wd_unlock_status();
@@ -263,6 +264,10 @@ static void cleanWatchdog(Watchdog* watchdog)
     {
         watchdog->CloseHandle(watchdog->hMutex);
     }
+    if (watchdog->statusMu != NULL)
+    {
+        watchdog->CloseHandle(watchdog->statusMu);
+    }
     if (watchdog->hEvent != NULL)
     {
         watchdog->CloseHandle(watchdog->hEvent);
@@ -323,6 +328,42 @@ static uint wd_sleep(uint32 milliseconds)
     }
     watchdog->CloseHandle(hTimer);
     return result;
+}
+
+__declspec(noinline)
+static errno wd_stop()
+{
+    Watchdog* watchdog = getWatchdogPointer();
+
+    if (watchdog->hThread == NULL)
+    {
+        return NO_ERROR;
+    }
+
+    errno errno = NO_ERROR;
+
+    // send stop event to watcher
+    if (watchdog->SetEvent(watchdog->hEvent))
+    {
+        // wait watcher thread exit
+        if (watchdog->WaitForSingleObject(watchdog->hThread, 1000) != WAIT_OBJECT_0)
+        {
+            errno = ERR_WATCHDOG_WAIT_THREAD;
+        }
+    } else {
+        errno = ERR_WATCHDOG_SEND_EVENT;
+    }
+
+    // clean resource about watcher
+    if (!watchdog->CloseHandle(watchdog->hThread) && errno == NO_ERROR)
+    {
+        errno = ERR_WATCHDOG_CLOSE_THREAD;
+    }
+    if (!watchdog->ResetEvent(watchdog->hEvent) && errno == NO_ERROR)
+    {
+        errno = ERR_WATCHDOG_RESET_EVENT;
+    }
+    return errno;
 }
 
 __declspec(noinline)
@@ -397,47 +438,65 @@ static void wd_add_reset()
 }
 
 __declspec(noinline)
-void WD_Kick()
+errno WD_Kick()
 {
     if (!WD_Lock())
     {
-        return;
+        return ERR_WATCHDOG_LOCK;
     }
 
     wd_add_kick();
 
     if (!WD_Unlock())
     {
-        return;
+        return ERR_WATCHDOG_UNLOCK;
     }
+    return NO_ERROR;
 }
 
 __declspec(noinline)
-void WD_Enable()
+errno WD_Enable()
 {
+    Watchdog* watchdog = getWatchdogPointer();
+
     if (!WD_Lock())
     {
-        return;
+        return ERR_WATCHDOG_LOCK;
+    }
+
+    errno errno = NO_ERROR;
+    for (;;)
+    {
+        if (watchdog->hThread != NULL)
+        {
+            break;
+        }
+
+        break;
     }
 
     if (!WD_Unlock())
     {
-        return;
+        return ERR_WATCHDOG_UNLOCK;
     }
+    return errno;
 }
 
 __declspec(noinline)
-void WD_Disable()
+errno WD_Disable()
 {
     if (!WD_Lock())
     {
-        return;
+        return ERR_WATCHDOG_LOCK;
     }
+
+    errno errno = wd_stop();
 
     if (!WD_Unlock())
     {
-        return;
+        return ERR_WATCHDOG_UNLOCK;
     }
+    return errno;
 }
 
 __declspec(noinline)
@@ -491,13 +550,15 @@ errno WD_Pause()
 {
     Watchdog* watchdog = getWatchdogPointer();
 
-    errno errno = NO_ERROR;
-    if (watchdog->hThread != NULL)
+    if (watchdog->hThread == NULL)
     {
-        if (watchdog->SuspendThread(watchdog->hThread) == (DWORD)(-1))
-        {
-            errno = GetLastErrno();
-        }
+        return NO_ERROR;
+    }
+
+    errno errno = NO_ERROR;
+    if (watchdog->SuspendThread(watchdog->hThread) == (DWORD)(-1))
+    {
+        errno = GetLastErrno();
     }
     return errno;
 }
@@ -507,13 +568,15 @@ errno WD_Continue()
 {
     Watchdog* watchdog = getWatchdogPointer();
 
-    errno errno = NO_ERROR;
-    if (watchdog->hThread != NULL)
+    if (watchdog->hThread == NULL)
     {
-        if (watchdog->ResumeThread(watchdog->hThread) == (DWORD)(-1))
-        {
-            errno = GetLastErrno();
-        }
+        return NO_ERROR;
+    }
+
+    errno errno = NO_ERROR;
+    if (watchdog->ResumeThread(watchdog->hThread) == (DWORD)(-1))
+    {
+        errno = GetLastErrno();
     }
     return errno;
 }
@@ -523,10 +586,10 @@ errno WD_Stop()
 {
     Watchdog* watchdog = getWatchdogPointer();
 
-    errno errno = NO_ERROR;
+    errno errno = wd_stop();
 
     // clean resource about watcher
-    if (!watchdog->CloseHandle(watchdog->hEvent))
+    if (!watchdog->CloseHandle(watchdog->hEvent) && errno == NO_ERROR)
     {
         errno = ERR_WATCHDOG_CLOSE_EVENT;
     }

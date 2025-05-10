@@ -77,6 +77,7 @@ static uint wd_sleep(uint32 milliseconds);
 static bool wd_lock_status();
 static bool wd_unlock_status();
 static void wd_add_kick();
+static void wd_add_normal();
 static void wd_add_reset();
 
 Watchdog_M* InitWatchdog(Context* context)
@@ -360,6 +361,24 @@ static void wd_add_kick()
 }
 
 __declspec(noinline)
+static void wd_add_normal()
+{
+    Watchdog* watchdog = getWatchdogPointer();
+
+    if (!wd_lock_status())
+    {
+        return;
+    }
+
+    watchdog->status.NumNormal++;
+
+    if (!wd_unlock_status())
+    {
+        return;
+    }
+}
+
+__declspec(noinline)
 static void wd_add_reset()
 {
     Watchdog* watchdog = getWatchdogPointer();
@@ -380,7 +399,17 @@ static void wd_add_reset()
 __declspec(noinline)
 void WD_Kick()
 {
+    if (!WD_Lock())
+    {
+        return;
+    }
 
+    wd_add_kick();
+
+    if (!WD_Unlock())
+    {
+        return;
+    }
 }
 
 __declspec(noinline)
@@ -422,7 +451,22 @@ void WD_SetHandler(WDHandler_t handler)
 __declspec(noinline)
 bool WD_GetStatus(WD_Status* status)
 {
+    Watchdog* watchdog = getWatchdogPointer();
 
+    if (!WD_Lock())
+    {
+        return false;
+    }
+
+    wd_lock_status();
+    *status = watchdog->status;
+    wd_unlock_status();
+
+    if (!WD_Unlock())
+    {
+        return false;
+    }
+    return true;
 }
 
 __declspec(noinline)
@@ -445,17 +489,65 @@ bool WD_Unlock()
 __declspec(noinline)
 errno WD_Pause()
 {
+    Watchdog* watchdog = getWatchdogPointer();
 
+    errno errno = NO_ERROR;
+    if (watchdog->hThread != NULL)
+    {
+        if (watchdog->SuspendThread(watchdog->hThread) == (DWORD)(-1))
+        {
+            errno = GetLastErrno();
+        }
+    }
+    return errno;
 }
 
 __declspec(noinline)
 errno WD_Continue()
 {
+    Watchdog* watchdog = getWatchdogPointer();
 
+    errno errno = NO_ERROR;
+    if (watchdog->hThread != NULL)
+    {
+        if (watchdog->ResumeThread(watchdog->hThread) == (DWORD)(-1))
+        {
+            errno = GetLastErrno();
+        }
+    }
+    return errno;
 }
 
 __declspec(noinline)
 errno WD_Stop()
 {
+    Watchdog* watchdog = getWatchdogPointer();
 
+    errno errno = NO_ERROR;
+
+    // clean resource about watcher
+    if (!watchdog->CloseHandle(watchdog->hEvent))
+    {
+        errno = ERR_WATCHDOG_CLOSE_EVENT;
+    }
+
+    // close mutex
+    if (!watchdog->CloseHandle(watchdog->hMutex) && errno == NO_ERROR)
+    {
+        errno = ERR_WATCHDOG_CLOSE_MUTEX;
+    }
+    if (!watchdog->CloseHandle(watchdog->statusMu) && errno == NO_ERROR)
+    {
+        errno = ERR_WATCHDOG_CLOSE_STATUS;
+    }
+
+    // recover instructions
+    if (watchdog->NotEraseInstruction)
+    {
+        if (!recoverWatchdogPointer(watchdog) && errno == NO_ERROR)
+        {
+            errno = ERR_WATCHDOG_RECOVER_INST;
+        }
+    }
+    return errno;
 }

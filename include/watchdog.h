@@ -15,11 +15,11 @@ typedef struct {
 
 typedef void (*WDHandler_t)();
 
-typedef void (*WDKick_t)();
-typedef void (*WDEnable_t)();
-typedef void (*WDDisable_t)();
-typedef void (*WDSetHandler_t)(WDHandler_t handler);
-typedef bool (*WDGetStatus_t)(WD_Status* status);
+typedef errno (*WDKick_t)();
+typedef errno (*WDEnable_t)();
+typedef errno (*WDDisable_t)();
+typedef void  (*WDSetHandler_t)(WDHandler_t handler);
+typedef bool  (*WDGetStatus_t)(WD_Status* status);
 
 typedef bool  (*WDLock_t)();
 typedef bool  (*WDUnlock_t)();

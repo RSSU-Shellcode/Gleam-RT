@@ -20,6 +20,7 @@ typedef uint  (*mt_mcap_t)(void* ptr);
 typedef HANDLE (*NewThread_t)(void* address, void* parameter, bool track);
 typedef errno  (*RecoverThreads_t)();
 typedef errno  (*ForceKillThreads_t)();
+typedef errno  (*Cleanup_t)();
 
 typedef struct {
     // runtime options
@@ -81,6 +82,7 @@ typedef struct {
     NewThread_t        NewThread;
     RecoverThreads_t   RecoverThreads;
     ForceKillThreads_t ForceKillThreads;
+    Cleanup_t          Cleanup;
 } Context;
 
 #endif // CONTEXT_H

@@ -717,7 +717,8 @@ static errno initSubmodules(Runtime* runtime)
     context.NewThread        = runtime->ThreadTracker->New;
     context.RecoverThreads   = runtime->ThreadTracker->Recover;
     context.ForceKillThreads = runtime->ThreadTracker->ForceKill;
-    
+    context.Cleanup          = GetFuncAddr(&RT_Cleanup);
+
     // initialize reliability modules
     module_t rel_modules[] = 
     {

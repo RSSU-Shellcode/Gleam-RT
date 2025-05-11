@@ -27,17 +27,6 @@ typedef struct {
     WaitForMultipleObjects_t WaitForMultipleObjects;
     CloseHandle_t            CloseHandle;
 
-    // about watcher
-    HANDLE hEvent;
-    HANDLE hThread;
-
-    // global mutex
-    HANDLE hMutex;
-
-    // watcher status
-    SM_Status status;
-    HANDLE    statusMu;
-
     // copy from runtime submodules
     HANDLE hMutex_LT;
     HANDLE hMutex_MT;
@@ -48,6 +37,17 @@ typedef struct {
 
     RecoverThreads_t   RecoverThreads;
     ForceKillThreads_t ForceKillThreads;
+
+    // global mutex
+    HANDLE hMutex;
+
+    // about watcher
+    HANDLE hEvent;
+    HANDLE hThread;
+
+    // sysmon status
+    SM_Status status;
+    HANDLE    statusMu;
 } Sysmon;
 
 // methods for user
@@ -75,7 +75,7 @@ static bool initSysmonEnvironment(Sysmon* sysmon, Context* context);
 static void eraseSysmonMethods(Context* context);
 static void cleanSysmon(Sysmon* sysmon);
 
-static void sm_watcher();
+static uint sm_watcher();
 static uint sm_watch();
 static uint sm_sleep(uint32 milliseconds);
 
@@ -285,7 +285,7 @@ static Sysmon* getSysmonPointer()
 #pragma optimize("", on)
 
 __declspec(noinline)
-static void sm_watcher()
+static uint sm_watcher()
 {
     Sysmon* sysmon = getSysmonPointer();
 
@@ -297,7 +297,7 @@ static void sm_watcher()
             sm_add_normal();
             break;
         case RESULT_STOP_EVENT:
-            return;
+            return 0;
         case RESULT_FAILED:
             errno err = sysmon->RecoverThreads();
             if (err != NO_ERROR)
@@ -306,7 +306,7 @@ static void sm_watcher()
             }
             if (sm_sleep(1000 + RandIntN(0, 3000)) == RESULT_STOP_EVENT)
             {
-                return;
+                return 0;
             }
             switch (sm_watch())
             {
@@ -314,7 +314,7 @@ static void sm_watcher()
                 sm_add_recover();
                 break;
             case RESULT_STOP_EVENT:
-                return;
+                return 0;
             case RESULT_FAILED:
                 // if failed to recover, use force kill threads,
                 // then the Watchdog will restart program.
@@ -337,10 +337,10 @@ static void sm_watcher()
         case RESULT_SUCCESS:
             break;
         case RESULT_STOP_EVENT:
-            return;
+            return 0;
         case RESULT_FAILED:
             dbg_log("[sysmon]", "occurred error when sleep: 0x%X", GetLastErrno());
-            return;
+            return 1;
         default:
             panic(PANIC_UNREACHABLE_CODE);
         }

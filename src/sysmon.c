@@ -264,6 +264,10 @@ static void cleanSysmon(Sysmon* sysmon)
     {
         sysmon->CloseHandle(sysmon->hMutex);
     }
+    if (sysmon->statusMu != NULL)
+    {
+        sysmon->CloseHandle(sysmon->statusMu);
+    }
     if (sysmon->hEvent != NULL)
     {
         sysmon->CloseHandle(sysmon->hEvent);

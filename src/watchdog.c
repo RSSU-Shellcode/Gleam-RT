@@ -28,14 +28,19 @@ typedef struct {
     WaitForMultipleObjects_t WaitForMultipleObjects;
     CloseHandle_t            CloseHandle;
 
+    // copy from runtime submodules
+    NewThread_t        NewThread;
+    ForceKillThreads_t ForceKillThreads;
+
+    // reset handler
     WDHandler_t handler;
+
+    // global mutex
+    HANDLE hMutex;
 
     // about watcher
     HANDLE hEvent;
     HANDLE hThread;
-
-    // global mutex
-    HANDLE hMutex;
 
     // watchdog status
     WD_Status status;
@@ -239,6 +244,9 @@ static bool initWatchdogEnvironment(Watchdog* watchdog, Context* context)
         return false;
     }
     watchdog->hEvent = hEvent;
+    // copy method from context
+    watchdog->NewThread        = context->NewThread;
+    watchdog->ForceKillThreads = context->ForceKillThreads;
     return true;
 }
 
@@ -471,7 +479,19 @@ errno WD_Enable()
         {
             break;
         }
-
+        if (watchdog->handler == NULL)
+        {
+            errno = ERR_WATCHDOG_EMPTY_HANDLER;
+            break;
+        }
+        void* addr = GetFuncAddr(&wd_watcher);
+        HANDLE hThread = watchdog->NewThread(addr, NULL, false);
+        if (hThread == NULL)
+        {
+            errno = ERR_WATCHDOG_START_WATCHER;
+            break;
+        }
+        watchdog->hThread = hThread;
         break;
     }
 

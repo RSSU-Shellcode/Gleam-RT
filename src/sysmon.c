@@ -37,6 +37,7 @@ typedef struct {
 
     RecoverThreads_t   RecoverThreads;
     ForceKillThreads_t ForceKillThreads;
+    Cleanup_t          Cleanup;
 
     // global mutex
     HANDLE hMutex;
@@ -237,6 +238,7 @@ static bool initSysmonEnvironment(Sysmon* sysmon, Context* context)
     // copy methods from context
     sysmon->RecoverThreads   = context->RecoverThreads;
     sysmon->ForceKillThreads = context->ForceKillThreads;
+    sysmon->Cleanup          = context->Cleanup;
     return true;
 }
 
@@ -323,6 +325,11 @@ static uint sm_watcher()
                 {
                     dbg_log("[sysmon]", "occurred error when kill threads: 0x%X", err);
                 }
+                err = sysmon->Cleanup();
+                if (err != NO_ERROR)
+                {
+                    dbg_log("[sysmon]", "occurred error when cleanup: 0x%X", err);
+                }
                 sm_add_panic();
                 break;
             default:
@@ -365,6 +372,10 @@ static uint sm_watch()
         switch (sysmon->WaitForMultipleObjects(2, objects, false, timeout))
         {
         case WAIT_OBJECT_0+0: case WAIT_ABANDONED+0:
+            if (!sysmon->ReleaseMutex(handles[i]))
+            {
+                result = RESULT_FAILED;
+            }
             break;
         case WAIT_OBJECT_0+1:
             stopped = true;
@@ -372,13 +383,6 @@ static uint sm_watch()
         default:
             result = RESULT_FAILED;
             break;
-        }
-    }
-    for (int i = arrlen(handles) - 1; i >= 0; i--)
-    {
-        if (!sysmon->ReleaseMutex(handles[i]))
-        {
-            result = RESULT_FAILED;
         }
     }
     if (stopped)

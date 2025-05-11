@@ -65,6 +65,13 @@ type SMStatus struct {
 	NumPanic   int64 `toml:"num_panic"   json:"num_panic"`
 }
 
+// WDStatus contains status about watchdog.
+type WDStatus struct {
+	NumKick   int64 `toml:"num_kick"   json:"num_kick"`
+	NumNormal int64 `toml:"num_normal" json:"num_normal"`
+	NumReset  int64 `toml:"num_reset"  json:"num_reset"`
+}
+
 // Metrics contains status about runtime submodules.
 type Metrics struct {
 	Library  LTStatus `toml:"library"  json:"library"`
@@ -72,6 +79,7 @@ type Metrics struct {
 	Thread   TTStatus `toml:"thread"   json:"thread"`
 	Resource RTStatus `toml:"resource" json:"resource"`
 	Sysmon   SMStatus `toml:"sysmon"   json:"sysmon"`
+	Watchdog WDStatus `toml:"watchdog" json:"watchdog"`
 }
 
 // Options contains options about initialize runtime.
@@ -222,6 +230,18 @@ type RuntimeM struct {
 		GetProcByName   uintptr
 		GetProcByHash   uintptr
 		GetProcOriginal uintptr
+	}
+
+	Sysmon struct {
+		Status uintptr
+	}
+
+	Watchdog struct {
+		Kick       uintptr
+		Enable     uintptr
+		Disable    uintptr
+		SetHandler uintptr
+		Status     uintptr
 	}
 
 	Core struct {

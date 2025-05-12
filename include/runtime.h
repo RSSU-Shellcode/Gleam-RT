@@ -305,7 +305,9 @@ typedef struct {
 } SM_Status;
 #endif // SYSMON_H
 
-typedef bool (*SMGetStatus_t)(SM_Status* status);
+typedef bool  (*SMGetStatus_t)(SM_Status* status);
+typedef errno (*SMPause_t)();
+typedef errno (*SMContinue_t)();
 
 // about watchdog
 #ifndef WATCHDOG_H
@@ -323,6 +325,8 @@ typedef errno (*WDEnable_t)();
 typedef errno (*WDDisable_t)();
 typedef void  (*WDSetHandler_t)(WDHandler_t handler);
 typedef bool  (*WDGetStatus_t)(WD_Status* status);
+typedef errno (*WDPause_t)();
+typedef errno (*WDContinue_t)();
 
 // about runtime core methods
 //
@@ -493,6 +497,8 @@ typedef struct {
 
     struct {
         SMGetStatus_t Status;
+        SMPause_t     Pause;
+        SMContinue_t  Continue;
     } Sysmon;
 
     struct {
@@ -501,6 +507,8 @@ typedef struct {
         WDDisable_t    Disable;
         WDSetHandler_t SetHandler;
         WDGetStatus_t  Status;
+        WDPause_t      Pause;
+        WDContinue_t   Continue;
     } Watchdog;
 
     struct {

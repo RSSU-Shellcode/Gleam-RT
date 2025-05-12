@@ -31,6 +31,7 @@ typedef struct {
     // copy from runtime submodules
     NewThread_t        NewThread;
     ForceKillThreads_t ForceKillThreads;
+    Cleanup_t          Cleanup;
 
     // reset handler
     WDHandler_t handler;
@@ -76,7 +77,8 @@ static bool initWatchdogEnvironment(Watchdog* watchdog, Context* context);
 static void eraseWatchdogMethods(Context* context);
 static void cleanWatchdog(Watchdog* watchdog);
 
-static void  wd_watcher();
+static uint  wd_watcher();
+static int64 wd_get_kick();
 static uint  wd_sleep(uint32 milliseconds);
 static errno wd_stop();
 
@@ -247,6 +249,7 @@ static bool initWatchdogEnvironment(Watchdog* watchdog, Context* context)
     // copy method from context
     watchdog->NewThread        = context->NewThread;
     watchdog->ForceKillThreads = context->ForceKillThreads;
+    watchdog->Cleanup          = context->Cleanup;
     return true;
 }
 
@@ -293,9 +296,70 @@ static Watchdog* getWatchdogPointer()
 #pragma optimize("", on)
 
 __declspec(noinline)
-static void wd_watcher()
+static uint wd_watcher()
 {
+    Watchdog* watchdog = getWatchdogPointer();
 
+    int64 numKick = 0;
+    int32 numFail = 0;
+    for (;;)
+    {
+        int64 num = wd_get_kick();
+        if (num > numKick)
+        {
+            numKick = num;
+        } else {
+            numFail++;
+        }
+        if (numFail > 3)
+        {
+            errno err = watchdog->ForceKillThreads();
+            if (err != NO_ERROR)
+            {
+                dbg_log("[watchdog]", "occurred error when kill threads: 0x%X", err);
+            }
+            err = watchdog->Cleanup();
+            if (err != NO_ERROR)
+            {
+                dbg_log("[watchdog]", "occurred error when cleanup: 0x%X", err);
+            }
+            watchdog->NewThread(watchdog->handler, NULL, true);
+            numFail = 0;
+            wd_add_reset();
+        }
+        switch (wd_sleep(1000 + RandIntN(0, 3000)))
+        {
+        case RESULT_SUCCESS:
+            wd_add_normal();
+            break;
+        case RESULT_STOP_EVENT:
+            return 0;
+        case RESULT_FAILED:
+            dbg_log("[watchdog]", "occurred error when sleep: 0x%X", GetLastErrno());
+            return 1;
+        default:
+            panic(PANIC_UNREACHABLE_CODE);
+        }
+    }
+}
+
+__declspec(noinline)
+static int64 wd_get_kick()
+{
+    Watchdog* watchdog = getWatchdogPointer();
+
+    if (!wd_lock_status())
+    {
+        return 0;
+    }
+
+    int64 num = watchdog->status.NumKick;
+
+    if (!wd_unlock_status())
+    {
+        return 0;
+    }
+    return num;
 }
 
 __declspec(noinline)

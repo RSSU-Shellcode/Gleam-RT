@@ -233,7 +233,9 @@ type RuntimeM struct {
 	}
 
 	Sysmon struct {
-		Status uintptr
+		Status   uintptr
+		Pause    uintptr
+		Continue uintptr
 	}
 
 	Watchdog struct {
@@ -242,6 +244,8 @@ type RuntimeM struct {
 		Disable    uintptr
 		SetHandler uintptr
 		Status     uintptr
+		Pause      uintptr
+		Continue   uintptr
 	}
 
 	Core struct {

@@ -396,13 +396,17 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->Procedure.GetProcByHash   = GetFuncAddr(&RT_GetProcAddressByHash);
     module->Procedure.GetProcOriginal = GetFuncAddr(&RT_GetProcAddressOriginal);
     // sysmon
-    module->Sysmon.Status = runtime->Sysmon->GetStatus;
+    module->Sysmon.Status   = runtime->Sysmon->GetStatus;
+    module->Sysmon.Pause    = runtime->Sysmon->Pause;
+    module->Sysmon.Continue = runtime->Sysmon->Continue;
     // watchdog
     module->Watchdog.Kick       = runtime->Watchdog->Kick;
     module->Watchdog.Enable     = runtime->Watchdog->Enable;
     module->Watchdog.Disable    = runtime->Watchdog->Disable;
     module->Watchdog.SetHandler = runtime->Watchdog->SetHandler;
     module->Watchdog.Status     = runtime->Watchdog->GetStatus;
+    module->Watchdog.Pause      = runtime->Watchdog->Pause;
+    module->Watchdog.Continue   = runtime->Watchdog->Continue;
     // runtime core methods
     module->Core.Sleep   = GetFuncAddr(&RT_SleepHR);
     module->Core.Hide    = GetFuncAddr(&RT_Hide);

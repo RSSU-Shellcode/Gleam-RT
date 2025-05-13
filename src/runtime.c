@@ -1577,6 +1577,8 @@ static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
 
     ArgumentStore_M*   AS = runtime->ArgumentStore;
     InMemoryStorage_M* IS = runtime->InMemoryStorage;
+    Sysmon_M*          SM = runtime->Sysmon;
+    Watchdog_M*        WD = runtime->Watchdog;
 
     typedef struct {
         uint hash; uint key; void* method;
@@ -1598,6 +1600,14 @@ static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
         { 0x1AFF08C4BE4D98F6, 0x0A4B9FCC81A591B0, IS->GetPointer }, // IMS_GetPointer 
         { 0xEA25919E9BCC040C, 0x8E6D5D80012FC665, IS->Delete     }, // IMS_Delete 
         { 0x1BA69F89ED463649, 0xE15C2CBCC46E7A66, IS->DeleteAll  }, // IMS_DeleteAll
+        { 0xF3B6024681093DD5, 0x8A4F057EB2B878D3, SM->Pause      }, // SM_Pause
+        { 0x75495038B0B8322E, 0x03BA221EE9B63523, SM->Continue   }, // SM_Continue
+        { 0x27705F378D67270F, 0x5F784CEB6DD22A88, WD->Kick       }, // WD_Kick
+        { 0x56C76C6D80155880, 0x38015A203A50013D, WD->Enable     }, // WD_Enable
+        { 0xCA62EA167C0442FF, 0xB6F95AC81FA59FE4, WD->Disable    }, // WD_Disable
+        { 0x721E29CC7D8E395D, 0x88DC82B0B05F3A68, WD->SetHandler }, // WD_SetHandler
+        { 0x034117670A83BC01, 0xF36711E08F36413D, WD->Pause      }, // WD_Pause
+        { 0x8506246FC54CCCF0, 0x4E6D6097C74EE234, WD->Continue   }, // WD_Continue
     };
 #elif _WIN32
     {
@@ -1615,6 +1625,14 @@ static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
         { 0xE3247E50, 0xB8733B89, IS->GetPointer }, // IMS_GetPointer 
         { 0x1957C984, 0x0765E67F, IS->Delete     }, // IMS_Delete 
         { 0x42A377C5, 0x55FBD86A, IS->DeleteAll  }, // IMS_DeleteAll
+        { 0xA2F2FA18, 0x5CDE26F9, SM->Pause      }, // SM_Pause
+        { 0x810F6775, 0x64DDA7D3, SM->Continue   }, // SM_Continue
+        { 0xE68A4515, 0x3E562DF5, WD->Kick       }, // WD_Kick
+        { 0xA54C595A, 0x3E9DAA06, WD->Enable     }, // WD_Enable
+        { 0x3C40E457, 0x9C592EEF, WD->Disable    }, // WD_Disable
+        { 0x66FA5593, 0x971784F7, WD->SetHandler }, // WD_SetHandler
+        { 0x8D59F449, 0xB264C7AC, WD->Pause      }, // WD_Pause
+        { 0x497BF5E1, 0xBB40615A, WD->Continue   }, // WD_Continue
     };
 #endif
     for (int i = 0; i < arrlen(methods); i++)

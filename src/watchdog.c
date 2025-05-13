@@ -308,6 +308,7 @@ static uint wd_watcher()
         if (num > numKick)
         {
             numKick = num;
+            numFail = 0;
         } else {
             numFail++;
         }
@@ -435,6 +436,9 @@ static errno wd_stop()
     {
         errno = ERR_WATCHDOG_RESET_EVENT;
     }
+
+    // reset watcher thread status
+    watchdog->hThread = NULL;
     return errno;
 }
 

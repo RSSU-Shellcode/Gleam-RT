@@ -224,8 +224,19 @@ hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptSignHashA
 hash_api -fmt 64 -conc -mod "advapi32.dll" -func CryptVerifySignatureA
 echo.
 
-echo [Watchdog]
+echo [Sysmon Module]
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -func SM_Pause
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -func SM_Continue
+echo.
+
+echo [Watchdog Module]
 hash_api -fmt 64 -conc -func ResetEvent
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -func WD_Kick
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -func WD_Enable
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -func WD_Disable
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -func WD_SetHandler
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -func WD_Pause
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -func WD_Continue
 echo.
 
 echo ------------------------x86------------------------
@@ -447,8 +458,19 @@ hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptSignHashA
 hash_api -fmt 32 -conc -mod "advapi32.dll" -func CryptVerifySignatureA
 echo.
 
-echo [Watchdog]
+echo [Sysmon Module]
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -func SM_Pause
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -func SM_Continue
+echo.
+
+echo [Watchdog Module]
 hash_api -fmt 32 -conc -func ResetEvent
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -func WD_Kick
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -func WD_Enable
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -func WD_Disable
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -func WD_SetHandler
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -func WD_Pause
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -func WD_Continue
 echo.
 
 pause

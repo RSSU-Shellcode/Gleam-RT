@@ -291,55 +291,56 @@ static uint sm_watcher()
 {
     Sysmon* sysmon = getSysmonPointer();
 
+    int numFail = 0;
     for (;;)
     {
         switch (sm_watch())
         {
         case RESULT_SUCCESS:
+            numFail = 0;
             sm_add_normal();
             break;
         case RESULT_STOP_EVENT:
             return 0;
         case RESULT_FAILED:
+            numFail++;
+            break;
+        default:
+            panic(PANIC_UNREACHABLE_CODE);
+        }
+
+        switch (numFail)
+        {
+        case 0:
+            break;
+        case 1:
             errno err = sysmon->RecoverThreads();
             if (err != NO_ERROR)
             {
                 dbg_log("[sysmon]", "occurred error when recover threads: 0x%X", err);
             }
-            if (sm_sleep(1000 + RandIntN(0, 3000)) == RESULT_STOP_EVENT)
+            sm_add_recover();
+            break;
+        case 2:
+            // if failed to recover, use force kill threads,
+            // then the Watchdog will restart program.
+            err = sysmon->ForceKillThreads();
+            if (err != NO_ERROR)
             {
-                return 0;
+                dbg_log("[sysmon]", "occurred error when kill threads: 0x%X", err);
             }
-            switch (sm_watch())
+            err = sysmon->Cleanup();
+            if (err != NO_ERROR)
             {
-            case RESULT_SUCCESS:
-                sm_add_recover();
-                break;
-            case RESULT_STOP_EVENT:
-                return 0;
-            case RESULT_FAILED:
-                // if failed to recover, use force kill threads,
-                // then the Watchdog will restart program.
-                err = sysmon->ForceKillThreads();
-                if (err != NO_ERROR)
-                {
-                    dbg_log("[sysmon]", "occurred error when kill threads: 0x%X", err);
-                }
-                err = sysmon->Cleanup();
-                if (err != NO_ERROR)
-                {
-                    dbg_log("[sysmon]", "occurred error when cleanup: 0x%X", err);
-                }
-                sm_add_panic();
-                break;
-            default:
-                panic(PANIC_UNREACHABLE_CODE);
+                dbg_log("[sysmon]", "occurred error when cleanup: 0x%X", err);
             }
+            sm_add_panic();
             break;
         default:
-            panic(PANIC_UNREACHABLE_CODE);
+            break;
         }
-        switch (sm_sleep(1000 + RandIntN(0, 3000)))
+
+        switch (sm_sleep(2000 + RandIntN(0, 3000)))
         {
         case RESULT_SUCCESS:
             break;

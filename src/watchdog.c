@@ -29,9 +29,9 @@ typedef struct {
     CloseHandle_t            CloseHandle;
 
     // copy from runtime submodules
-    NewThread_t        NewThread;
-    ForceKillThreads_t ForceKillThreads;
-    Cleanup_t          Cleanup;
+    TT_NewThread_t        TT_NewThread;
+    TT_ForceKillThreads_t TT_ForceKillThreads;
+    RT_Cleanup_t          RT_Cleanup;
 
     // reset handler
     WDHandler_t handler;
@@ -247,9 +247,9 @@ static bool initWatchdogEnvironment(Watchdog* watchdog, Context* context)
     }
     watchdog->hEvent = hEvent;
     // copy method from context
-    watchdog->NewThread        = context->NewThread;
-    watchdog->ForceKillThreads = context->ForceKillThreads;
-    watchdog->Cleanup          = context->Cleanup;
+    watchdog->TT_NewThread        = context->TT_NewThread;
+    watchdog->TT_ForceKillThreads = context->TT_ForceKillThreads;
+    watchdog->RT_Cleanup          = context->RT_Cleanup;
     return true;
 }
 
@@ -315,12 +315,12 @@ static uint wd_watcher()
         }
         if (numFail > 3)
         {
-            errno err = watchdog->ForceKillThreads();
+            errno err = watchdog->TT_ForceKillThreads();
             if (err != NO_ERROR)
             {
                 dbg_log("[watchdog]", "occurred error when kill threads: 0x%X", err);
             }
-            err = watchdog->Cleanup();
+            err = watchdog->RT_Cleanup();
             if (err != NO_ERROR)
             {
                 dbg_log("[watchdog]", "occurred error when cleanup: 0x%X", err);
@@ -553,7 +553,7 @@ errno WD_Enable()
             break;
         }
         void* addr = GetFuncAddr(&wd_watcher);
-        HANDLE hThread = watchdog->NewThread(addr, NULL, false);
+        HANDLE hThread = watchdog->TT_NewThread(addr, NULL, false);
         if (hThread == NULL)
         {
             errno = ERR_WATCHDOG_START_WATCHER;

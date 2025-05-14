@@ -35,9 +35,11 @@ typedef struct {
     HANDLE hMutex_AS;
     HANDLE hMutex_IMS;
 
-    RecoverThreads_t   RecoverThreads;
-    ForceKillThreads_t ForceKillThreads;
-    Cleanup_t          Cleanup;
+    TT_RecoverThreads_t   TT_RecoverThreads;
+    TT_ForceKillThreads_t TT_ForceKillThreads;
+
+    RT_Cleanup_t RT_Cleanup;
+    RT_Exit_t    RT_Exit;
 
     // global mutex
     HANDLE hMutex;
@@ -125,7 +127,8 @@ Sysmon_M* InitSysmon(Context* context)
         return NULL;
     }
     // create thread for watcher
-    HANDLE hThread = context->NewThread(GetFuncAddr(&sm_watcher), NULL, false);
+    void* addr = GetFuncAddr(&sm_watcher);
+    HANDLE hThread = context->TT_NewThread(addr, NULL, false);
     if (hThread == NULL)
     {
         SetLastErrno(ERR_SYSMON_START_WATCHER);
@@ -236,9 +239,10 @@ static bool initSysmonEnvironment(Sysmon* sysmon, Context* context)
     sysmon->hMutex_AS  = context->hMutex_AS;
     sysmon->hMutex_IMS = context->hMutex_IMS;
     // copy methods from context
-    sysmon->RecoverThreads   = context->RecoverThreads;
-    sysmon->ForceKillThreads = context->ForceKillThreads;
-    sysmon->Cleanup          = context->Cleanup;
+    sysmon->TT_RecoverThreads   = context->TT_RecoverThreads;
+    sysmon->TT_ForceKillThreads = context->TT_ForceKillThreads;
+    sysmon->RT_Cleanup = context->RT_Cleanup;
+    sysmon->RT_Exit    = context->RT_Exit;
     return true;
 }
 
@@ -298,7 +302,6 @@ static uint sm_watcher()
         {
         case RESULT_SUCCESS:
             numFail = 0;
-            sm_add_normal();
             break;
         case RESULT_STOP_EVENT:
             return 0;
@@ -312,9 +315,13 @@ static uint sm_watcher()
         switch (numFail)
         {
         case 0:
+            sm_add_normal();
             break;
         case 1:
-            errno err = sysmon->RecoverThreads();
+            // if timeout, try to recover threads first.
+            // In Go programs, threads are occasionally 
+            // suspended incorrectly, causing deadlocks.
+            errno err = sysmon->TT_RecoverThreads();
             if (err != NO_ERROR)
             {
                 dbg_log("[sysmon]", "occurred error when recover threads: 0x%X", err);
@@ -324,12 +331,12 @@ static uint sm_watcher()
         case 2:
             // if failed to recover, use force kill threads,
             // then the Watchdog will restart program.
-            err = sysmon->ForceKillThreads();
+            err = sysmon->TT_ForceKillThreads();
             if (err != NO_ERROR)
             {
                 dbg_log("[sysmon]", "occurred error when kill threads: 0x%X", err);
             }
-            err = sysmon->Cleanup();
+            err = sysmon->RT_Cleanup();
             if (err != NO_ERROR)
             {
                 dbg_log("[sysmon]", "occurred error when cleanup: 0x%X", err);
@@ -337,6 +344,9 @@ static uint sm_watcher()
             sm_add_panic();
             break;
         default:
+            // if failed to reset program or watchdog 
+            // is disabled, exit runtime.
+            sysmon->RT_Exit();
             break;
         }
 

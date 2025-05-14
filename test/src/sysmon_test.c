@@ -54,7 +54,7 @@ static bool TestSysmon_Pause()
     if (errno != NO_ERROR)
     {
         printf_s("failed to pause sysmon: 0x%X\n", errno);
-        return true;
+        return false;
     }
 
     printf_s("test Sysmon_Pause passed\n");
@@ -67,7 +67,7 @@ static bool TestSysmon_Continue()
     if (errno != NO_ERROR)
     {
         printf_s("failed to continue sysmon: 0x%X\n", errno);
-        return true;
+        return false;
     }
 
     printf_s("test Sysmon_Continue passed\n");

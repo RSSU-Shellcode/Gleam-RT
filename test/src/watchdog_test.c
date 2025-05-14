@@ -11,6 +11,8 @@ static HANDLE hEvent = NULL;
 static void reset_handler();
 
 static bool TestWatchdog_Watcher();
+static bool TestWatchdog_Enable();
+static bool TestWatchdog_Disable();
 static bool TestWatchdog_GetStatus();
 static bool TestWatchdog_Pause();
 static bool TestWatchdog_Continue();
@@ -19,6 +21,8 @@ bool TestRuntime_Watchdog()
 {
     test_t tests[] = {
         { TestWatchdog_Watcher   },
+        { TestWatchdog_Enable    },
+        { TestWatchdog_Disable   },
         { TestWatchdog_GetStatus },
         { TestWatchdog_Pause     },
         { TestWatchdog_Continue  },
@@ -84,6 +88,32 @@ static void reset_handler()
 
     printf_s("failed to set event\n");
     panic(PANIC_UNREACHABLE_CODE);
+}
+
+static bool TestWatchdog_Enable()
+{
+    errno errno = runtime->Watchdog.Enable();
+    if (errno != NO_ERROR)
+    {
+        printf_s("failed to enable watchdog: 0x%X\n", errno);
+        return false;
+    }
+
+    printf_s("test TestWatchdog_Enable passed\n");
+    return true;
+}
+
+static bool TestWatchdog_Disable()
+{
+    errno errno = runtime->Watchdog.Disable();
+    if (errno != NO_ERROR)
+    {
+        printf_s("failed to disable watchdog: 0x%X\n", errno);
+        return false;
+    }
+
+    printf_s("test TestWatchdog_Disable passed\n");
+    return true;
 }
 
 static bool TestWatchdog_GetStatus()

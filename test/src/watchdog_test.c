@@ -1,8 +1,14 @@
 #include <stdio.h>
 #include "c_types.h"
+#include "win_types.h"
+#include "dll_kernel32.h"
 #include "lib_memory.h"
+#include "hash_api.h"
 #include "watchdog.h"
 #include "test.h"
+
+static HANDLE hEvent = NULL;
+static void reset_handler();
 
 static bool TestWatchdog_Watcher();
 static bool TestWatchdog_GetStatus();
@@ -31,8 +37,53 @@ bool TestRuntime_Watchdog()
 
 static bool TestWatchdog_Watcher()
 {
+    CreateEventA_t        CreateEventA        = FindAPI_A("kernel32.dll", "CreateEventA");
+    WaitForSingleObject_t WaitForSingleObject = FindAPI_A("kernel32.dll", "WaitForSingleObject");
+
+    hEvent = CreateEventA(NULL, true, false, NULL);
+    if (hEvent == NULL)
+    {
+        printf_s("failed to create event: 0x%X\n", GetLastErrno());
+        return false;
+    }
+    runtime->Watchdog.SetHandler(&reset_handler);
+
+    errno errno = runtime->Watchdog.Enable();
+    if (errno != NO_ERROR)
+    {
+        printf_s("failed to enable watchdog: 0x%X\n", errno);
+        return false;
+    }
+
+    for (int i = 0; i < 3; i++)
+    {
+        printf_s("kick watchdog\n");
+        runtime->Watchdog.Kick();
+        runtime->Thread.Sleep(1000);
+    }
+
+    if (WaitForSingleObject(hEvent, INFINITE) != WAIT_OBJECT_0)
+    {
+        printf_s("failed to wait watchdog reset: 0x%X\n", GetLastErrno());
+        return false;
+    }
+
     printf_s("test Watchdog_Watcher passed\n");
     return true;
+}
+
+static void reset_handler()
+{
+    printf_s("----watchdog reset----\n");
+
+    SetEvent_t SetEvent = FindAPI_A("kernel32.dll", "SetEvent");
+    if (SetEvent(hEvent))
+    {
+        return;
+    }
+
+    printf_s("failed to set event\n");
+    panic(PANIC_UNREACHABLE_CODE);
 }
 
 static bool TestWatchdog_GetStatus()
@@ -46,11 +97,21 @@ static bool TestWatchdog_GetStatus()
         return false;
     }
 
-    // if (status.NumNormal < 1)
-    // {
-    //     printf_s("invalid the number of normal\n");
-    //     return false;
-    // }
+    if (status.NumKick != 3)
+    {
+        printf_s("invalid the number of kick\n");
+        return false;
+    }
+    if (status.NumNormal < 1)
+    {
+        printf_s("invalid the number of normal\n");
+        return false;
+    }
+    if (status.NumReset != 1)
+    {
+        printf_s("invalid the number of reset\n");
+        return false;
+    }
 
     printf_s("test TestWatchdog_GetStatus passed\n");
     return true;
@@ -62,7 +123,7 @@ static bool TestWatchdog_Pause()
     if (errno != NO_ERROR)
     {
         printf_s("failed to pause watchdog: 0x%X\n", errno);
-        return true;
+        return false;
     }
 
     printf_s("test Watchdog_Pause passed\n");
@@ -75,7 +136,7 @@ static bool TestWatchdog_Continue()
     if (errno != NO_ERROR)
     {
         printf_s("failed to continue watchdog: 0x%X\n", errno);
-        return true;
+        return false;
     }
 
     printf_s("test Watchdog_Continue passed\n");

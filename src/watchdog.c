@@ -309,6 +309,7 @@ static uint wd_watcher()
         {
             numKick = num;
             numFail = 0;
+            wd_add_normal();
         } else {
             numFail++;
         }
@@ -324,14 +325,13 @@ static uint wd_watcher()
             {
                 dbg_log("[watchdog]", "occurred error when cleanup: 0x%X", err);
             }
-            watchdog->NewThread(watchdog->handler, NULL, true);
+            watchdog->handler();
             numFail = 0;
             wd_add_reset();
         }
-        switch (wd_sleep(1000 + RandIntN(0, 3000)))
+        switch (wd_sleep(1000 + RandIntN(0, 2000)))
         {
         case RESULT_SUCCESS:
-            wd_add_normal();
             break;
         case RESULT_STOP_EVENT:
             return 0;

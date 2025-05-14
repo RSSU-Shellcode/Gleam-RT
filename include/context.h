@@ -17,10 +17,12 @@ typedef void  (*mt_free_t)(void* ptr);
 typedef uint  (*mt_msize_t)(void* ptr);
 typedef uint  (*mt_mcap_t)(void* ptr);
 
-typedef HANDLE (*NewThread_t)(void* address, void* parameter, bool track);
-typedef errno  (*RecoverThreads_t)();
-typedef errno  (*ForceKillThreads_t)();
-typedef errno  (*Cleanup_t)();
+typedef HANDLE (*TT_NewThread_t)(void* address, void* parameter, bool track);
+typedef errno  (*TT_RecoverThreads_t)();
+typedef errno  (*TT_ForceKillThreads_t)();
+
+typedef errno (*RT_Cleanup_t)();
+typedef errno (*RT_Exit_t)();
 
 typedef struct {
     // runtime options
@@ -71,7 +73,7 @@ typedef struct {
     mt_msize_t   mt_msize;
     mt_mcap_t    mt_mcap;
 
-    // for initialize sysmon
+    // for initialize sysmon and watchdog
     HANDLE hMutex_LT;
     HANDLE hMutex_MT;
     HANDLE hMutex_TT;
@@ -79,10 +81,12 @@ typedef struct {
     HANDLE hMutex_AS;
     HANDLE hMutex_IMS;
 
-    NewThread_t        NewThread;
-    RecoverThreads_t   RecoverThreads;
-    ForceKillThreads_t ForceKillThreads;
-    Cleanup_t          Cleanup;
+    TT_NewThread_t        TT_NewThread;
+    TT_RecoverThreads_t   TT_RecoverThreads;
+    TT_ForceKillThreads_t TT_ForceKillThreads;
+
+    RT_Cleanup_t RT_Cleanup;
+    RT_Exit_t    RT_Exit;
 } Context;
 
 #endif // CONTEXT_H

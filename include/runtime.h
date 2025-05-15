@@ -323,6 +323,7 @@ typedef void (*WDHandler_t)();
 typedef errno (*WDKick_t)();
 typedef errno (*WDEnable_t)();
 typedef errno (*WDDisable_t)();
+typedef bool  (*WDIsEnabled_t)();
 typedef void  (*WDSetHandler_t)(WDHandler_t handler);
 typedef bool  (*WDGetStatus_t)(WD_Status* status);
 typedef errno (*WDPause_t)();
@@ -505,6 +506,7 @@ typedef struct {
         WDKick_t       Kick;
         WDEnable_t     Enable;
         WDDisable_t    Disable;
+        WDIsEnabled_t  IsEnabled;
         WDSetHandler_t SetHandler;
         WDGetStatus_t  Status;
         WDPause_t      Pause;

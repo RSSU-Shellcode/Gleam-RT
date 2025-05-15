@@ -24,6 +24,8 @@ typedef errno  (*TT_ForceKillThreads_t)();
 typedef errno (*RT_Cleanup_t)();
 typedef errno (*RT_Exit_t)();
 
+typedef bool (*WD_IsEnabled_t)();
+
 typedef struct {
     // runtime options
     bool NotEraseInstruction;
@@ -87,6 +89,8 @@ typedef struct {
 
     RT_Cleanup_t RT_Cleanup;
     RT_Exit_t    RT_Exit;
+
+    WD_IsEnabled_t WD_IsEnabled;
 } Context;
 
 #endif // CONTEXT_H

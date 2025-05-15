@@ -242,6 +242,7 @@ type RuntimeM struct {
 		Kick       uintptr
 		Enable     uintptr
 		Disable    uintptr
+		IsEnabled  uintptr
 		SetHandler uintptr
 		Status     uintptr
 		Pause      uintptr

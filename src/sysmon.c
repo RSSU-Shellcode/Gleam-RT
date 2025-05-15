@@ -37,9 +37,9 @@ typedef struct {
 
     TT_RecoverThreads_t   TT_RecoverThreads;
     TT_ForceKillThreads_t TT_ForceKillThreads;
-
-    RT_Cleanup_t RT_Cleanup;
-    RT_Exit_t    RT_Exit;
+    RT_Cleanup_t          RT_Cleanup;
+    RT_Exit_t             RT_Exit;
+    WD_IsEnabled_t        WD_IsEnabled;
 
     // global mutex
     HANDLE hMutex;
@@ -241,8 +241,9 @@ static bool initSysmonEnvironment(Sysmon* sysmon, Context* context)
     // copy methods from context
     sysmon->TT_RecoverThreads   = context->TT_RecoverThreads;
     sysmon->TT_ForceKillThreads = context->TT_ForceKillThreads;
-    sysmon->RT_Cleanup = context->RT_Cleanup;
-    sysmon->RT_Exit    = context->RT_Exit;
+    sysmon->RT_Cleanup          = context->RT_Cleanup;
+    sysmon->RT_Exit             = context->RT_Exit;
+    sysmon->WD_IsEnabled        = context->WD_IsEnabled;
     return true;
 }
 
@@ -329,6 +330,11 @@ static uint sm_watcher()
             sm_add_recover();
             break;
         case 2:
+            if (!sysmon->WD_IsEnabled())
+            {
+                sysmon->RT_Exit();
+                break;
+            }
             // if failed to recover, use force kill threads,
             // then the Watchdog will restart program.
             err = sysmon->TT_ForceKillThreads();

@@ -52,6 +52,7 @@ typedef struct {
 errno WD_Kick();
 errno WD_Enable();
 errno WD_Disable();
+bool  WD_IsEnabled();
 void  WD_SetHandler(WDHandler_t handler);
 bool  WD_GetStatus(WD_Status* status);
 
@@ -132,6 +133,7 @@ Watchdog_M* InitWatchdog(Context* context)
     method->Kick       = GetFuncAddr(&WD_Kick);
     method->Enable     = GetFuncAddr(&WD_Enable);
     method->Disable    = GetFuncAddr(&WD_Disable);
+    method->IsEnabled  = GetFuncAddr(&WD_IsEnabled);
     method->SetHandler = GetFuncAddr(&WD_SetHandler);
     method->GetStatus  = GetFuncAddr(&WD_GetStatus);
     // methods for runtime
@@ -419,7 +421,7 @@ static errno wd_stop()
     if (watchdog->SetEvent(watchdog->hEvent))
     {
         // wait watcher thread exit
-        if (watchdog->WaitForSingleObject(watchdog->hThread, 1000) != WAIT_OBJECT_0)
+        if (watchdog->WaitForSingleObject(watchdog->hThread, 3000) != WAIT_OBJECT_0)
         {
             errno = ERR_WATCHDOG_WAIT_THREAD;
         }
@@ -585,6 +587,25 @@ errno WD_Disable()
         return ERR_WATCHDOG_UNLOCK;
     }
     return errno;
+}
+
+__declspec(noinline)
+bool WD_IsEnabled()
+{
+    Watchdog* watchdog = getWatchdogPointer();
+
+    if (!WD_Lock())
+    {
+        return false;
+    }
+
+    bool enabled = watchdog->hThread != NULL;
+
+    if (!WD_Unlock())
+    {
+        return false;
+    }
+    return enabled;
 }
 
 __declspec(noinline)

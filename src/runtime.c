@@ -173,6 +173,7 @@ static bool  flushInstructionCache(Runtime* runtime);
 static void  eraseArgumentStub(Runtime* runtime);
 static void  eraseRuntimeMethods(Runtime* runtime);
 static errno cleanRuntime(Runtime* runtime);
+static errno closeHandles(Runtime* runtime);
 
 static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName);
 static void* getIATHook(Runtime* runtime, void* proc);
@@ -182,9 +183,10 @@ static errno sleep(Runtime* runtime, HANDLE hTimer);
 static errno hide(Runtime* runtime);
 static errno recover(Runtime* runtime);
 
-static errno closeHandles(Runtime* runtime);
-static void  eraseMemory(uintptr address, uintptr size);
-static void  rt_epilogue();
+static bool df_WD_IsEnabled();
+
+static void eraseMemory(uintptr address, uintptr size);
+static void rt_epilogue();
 
 Runtime_M* InitRuntime(Runtime_Opts* opts)
 {
@@ -403,6 +405,7 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->Watchdog.Kick       = runtime->Watchdog->Kick;
     module->Watchdog.Enable     = runtime->Watchdog->Enable;
     module->Watchdog.Disable    = runtime->Watchdog->Disable;
+    module->Watchdog.IsEnabled  = runtime->Watchdog->IsEnabled;
     module->Watchdog.SetHandler = runtime->Watchdog->SetHandler;
     module->Watchdog.Status     = runtime->Watchdog->GetStatus;
     module->Watchdog.Pause      = runtime->Watchdog->Pause;
@@ -725,6 +728,8 @@ static errno initSubmodules(Runtime* runtime)
 
     context.RT_Cleanup = GetFuncAddr(&RT_Cleanup);
     context.RT_Exit    = GetFuncAddr(&RT_Exit);
+
+    context.WD_IsEnabled = GetFuncAddr(&df_WD_IsEnabled);
 
     // initialize reliability modules
     module_t rel_modules[] = 
@@ -1212,6 +1217,14 @@ static bool rt_unlock()
     Runtime* runtime = getRuntimePointer();
 
     return runtime->ReleaseMutex(runtime->hMutex);
+}
+
+__declspec(noinline)
+static bool df_WD_IsEnabled()
+{
+    Runtime* runtime = getRuntimePointer();
+
+    return runtime->Watchdog->IsEnabled();
 }
 
 // +---------+----------+-------------+

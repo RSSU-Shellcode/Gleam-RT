@@ -2510,7 +2510,6 @@ errno RT_FreeAll()
             }
             break;
         case TYPE_CLOSE_SOCKET:
-            break;
             if (closesocket == NULL)
             {
                 break;
@@ -2538,11 +2537,11 @@ errno RT_FreeAll()
     }
 
     // about WSACleanup
-    // errno err = doWSACleanup(tracker);
-    // if (err != NO_ERROR)
-    // {
-    //     error = err;
-    // }
+    errno err = doWSACleanup(tracker);
+    if (err != NO_ERROR)
+    {
+        error = err;
+    }
 
     dbg_log("[resource]", "handles: %zu", handles->Len);
     return error;

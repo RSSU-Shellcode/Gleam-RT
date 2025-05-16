@@ -1621,6 +1621,7 @@ static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
         { 0x27705F378D67270F, 0x5F784CEB6DD22A88, WD->Kick       }, // WD_Kick
         { 0x56C76C6D80155880, 0x38015A203A50013D, WD->Enable     }, // WD_Enable
         { 0xCA62EA167C0442FF, 0xB6F95AC81FA59FE4, WD->Disable    }, // WD_Disable
+        { 0x0BBA048AD476FD54, 0x7DC59077939139F9, WD->IsEnabled  }, // WD_IsEnabled
         { 0x721E29CC7D8E395D, 0x88DC82B0B05F3A68, WD->SetHandler }, // WD_SetHandler
         { 0x034117670A83BC01, 0xF36711E08F36413D, WD->Pause      }, // WD_Pause
         { 0x8506246FC54CCCF0, 0x4E6D6097C74EE234, WD->Continue   }, // WD_Continue
@@ -1646,6 +1647,7 @@ static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
         { 0xE68A4515, 0x3E562DF5, WD->Kick       }, // WD_Kick
         { 0xA54C595A, 0x3E9DAA06, WD->Enable     }, // WD_Enable
         { 0x3C40E457, 0x9C592EEF, WD->Disable    }, // WD_Disable
+        { 0x648CFAD9, 0xB1808551, WD->IsEnabled  }, // WD_IsEnabled
         { 0x66FA5593, 0x971784F7, WD->SetHandler }, // WD_SetHandler
         { 0x8D59F449, 0xB264C7AC, WD->Pause      }, // WD_Pause
         { 0x497BF5E1, 0xBB40615A, WD->Continue   }, // WD_Continue

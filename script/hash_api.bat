@@ -234,6 +234,7 @@ hash_api -fmt 64 -conc -func ResetEvent
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -func WD_Kick
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -func WD_Enable
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -func WD_Disable
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -func WD_IsEnabled
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -func WD_SetHandler
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -func WD_Pause
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -func WD_Continue
@@ -468,6 +469,7 @@ hash_api -fmt 32 -conc -func ResetEvent
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -func WD_Kick
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -func WD_Enable
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -func WD_Disable
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -func WD_IsEnabled
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -func WD_SetHandler
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -func WD_Pause
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -func WD_Continue

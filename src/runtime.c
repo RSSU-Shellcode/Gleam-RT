@@ -1371,38 +1371,33 @@ errno RT_lock_mods()
 {
     Runtime* runtime = getRuntimePointer();
 
-    typedef bool (*submodule_t)();
-    submodule_t submodules[] = 
+    typedef bool (*lock_t)();
+    typedef struct { 
+        lock_t lock; errno errno;
+    } submodule_t;
+
+    submodule_t list[] = 
     {
-        runtime->Watchdog->Lock,
-        runtime->Sysmon->Lock,
-        runtime->WinHTTP->Lock,
-        runtime->LibraryTracker->Lock,
-        runtime->MemoryTracker->Lock,
-        runtime->ResourceTracker->Lock,
-        runtime->ArgumentStore->Lock,
-        runtime->InMemoryStorage->Lock,
-        runtime->ThreadTracker->Lock,
+        { runtime->Watchdog->Lock,        ERR_RUNTIME_LOCK_WATCHDOG },
+        { runtime->Sysmon->Lock,          ERR_RUNTIME_LOCK_SYSMON   },
+        { runtime->WinHTTP->Lock,         ERR_RUNTIME_LOCK_WIN_HTTP },
+        { runtime->LibraryTracker->Lock,  ERR_RUNTIME_LOCK_LIBRARY  },
+        { runtime->MemoryTracker->Lock,   ERR_RUNTIME_LOCK_MEMORY   },
+        { runtime->ResourceTracker->Lock, ERR_RUNTIME_LOCK_RESOURCE },
+        { runtime->ArgumentStore->Lock,   ERR_RUNTIME_LOCK_ARGUMENT },
+        { runtime->InMemoryStorage->Lock, ERR_RUNTIME_LOCK_STORAGE  },
+        { runtime->ThreadTracker->Lock,   ERR_RUNTIME_LOCK_THREAD   },
     };
-    errno errnos[] = 
+
+    errno errno = NO_ERROR;
+    for (int i = 0; i < arrlen(list); i++)
     {
-        ERR_RUNTIME_LOCK_SYSMON,
-        ERR_RUNTIME_LOCK_WIN_HTTP,
-        ERR_RUNTIME_LOCK_LIBRARY,
-        ERR_RUNTIME_LOCK_MEMORY,
-        ERR_RUNTIME_LOCK_RESOURCE,
-        ERR_RUNTIME_LOCK_ARGUMENT,
-        ERR_RUNTIME_LOCK_STORAGE,
-        ERR_RUNTIME_LOCK_THREAD,
-    };
-    for (int i = 0; i < arrlen(submodules); i++)
-    {
-        if (!submodules[i]())
+        if (!list[i].lock() && errno == NO_ERROR)
         {
-            return errnos[i];
+            errno = list[i].errno;
         }
     }
-    return NO_ERROR;
+    return errno;
 }
 
 __declspec(noinline)
@@ -1410,38 +1405,33 @@ errno RT_unlock_mods()
 {
     Runtime* runtime = getRuntimePointer();
 
-    typedef bool (*submodule_t)();
-    submodule_t submodules[] = 
+    typedef bool (*unlock_t)();
+    typedef struct { 
+        unlock_t unlock; errno errno;
+    } submodule_t;
+
+    submodule_t list[] = 
     {
-        runtime->ThreadTracker->Unlock,
-        runtime->LibraryTracker->Unlock,
-        runtime->MemoryTracker->Unlock,
-        runtime->ResourceTracker->Unlock,
-        runtime->ArgumentStore->Unlock,
-        runtime->InMemoryStorage->Unlock,
-        runtime->WinHTTP->Unlock,
-        runtime->Sysmon->Unlock,
-        runtime->Watchdog->Unlock,
+        { runtime->ThreadTracker->Unlock,   ERR_RUNTIME_UNLOCK_THREAD   },
+        { runtime->LibraryTracker->Unlock,  ERR_RUNTIME_UNLOCK_LIBRARY  },
+        { runtime->MemoryTracker->Unlock,   ERR_RUNTIME_UNLOCK_MEMORY   },
+        { runtime->ResourceTracker->Unlock, ERR_RUNTIME_UNLOCK_RESOURCE },
+        { runtime->ArgumentStore->Unlock,   ERR_RUNTIME_UNLOCK_ARGUMENT },
+        { runtime->InMemoryStorage->Unlock, ERR_RUNTIME_UNLOCK_STORAGE  },
+        { runtime->WinHTTP->Unlock,         ERR_RUNTIME_UNLOCK_WIN_HTTP },
+        { runtime->Sysmon->Unlock,          ERR_RUNTIME_UNLOCK_SYSMON   },
+        { runtime->Watchdog->Unlock,        ERR_RUNTIME_UNLOCK_WATCHDOG },
     };
-    errno errnos[] = 
+
+    errno errno = NO_ERROR;
+    for (int i = 0; i < arrlen(list); i++)
     {
-        ERR_RUNTIME_UNLOCK_THREAD,
-        ERR_RUNTIME_UNLOCK_LIBRARY,
-        ERR_RUNTIME_UNLOCK_MEMORY,
-        ERR_RUNTIME_UNLOCK_RESOURCE,
-        ERR_RUNTIME_UNLOCK_ARGUMENT,
-        ERR_RUNTIME_UNLOCK_STORAGE,
-        ERR_RUNTIME_UNLOCK_WIN_HTTP,
-        ERR_RUNTIME_UNLOCK_SYSMON,
-    };
-    for (int i = 0; i < arrlen(submodules); i++)
-    {
-        if (!submodules[i]())
+        if (!list[i].unlock() && errno == NO_ERROR)
         {
-            return errnos[i];
+            errno = list[i].errno;
         }
     }
-    return NO_ERROR;
+    return errno;
 }
 
 __declspec(noinline)
@@ -2245,10 +2235,7 @@ errno RT_Exit()
     typedef errno (*submodule_t)();
     submodule_t submodules[] = 
     {
-        // stop watchdog
         runtime->Watchdog->Stop,
-
-        // stop system monitor
         runtime->Sysmon->Stop,
 
         // kill all threads

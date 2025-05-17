@@ -2234,6 +2234,33 @@ int RT_WSACleanup()
     return retVal;
 }
 
+static errno doWSACleanup(ResourceTracker* tracker)
+{
+#ifdef _WIN64
+    WSACleanup_t WSACleanup = FindAPI(0x2D5ED79692C593E4, 0xF65130FCB6DB3FD4);
+#elif _WIN32
+    WSACleanup_t WSACleanup = FindAPI(0x59F727E0, 0x156A74C5);
+#endif
+    if (WSACleanup == NULL)
+    {
+        return NO_ERROR;
+    }
+
+    errno errno = NO_ERROR;
+    int64 counter = tracker->Counters[CTR_WSA_STARTUP];
+    for (int64 i = 0; i < counter; i++)
+    {
+        if (WSACleanup() != 0)
+        {
+            errno = ERR_RESOURCE_WSA_CLEANUP;
+        }
+    }
+
+    // reset counter
+    tracker->Counters[CTR_WSA_STARTUP] = 0;
+    return errno;
+}
+
 __declspec(noinline)
 bool RT_LockMutex(HANDLE hMutex)
 {
@@ -2515,11 +2542,11 @@ errno RT_FreeAll()
                 break;
             }
             // try to graceful shutdown
-            shutdown(handle->handle, SD_BOTH);
             if (CancelIoEx != NULL) // must after Vista
             {
                 CancelIoEx(handle->handle, NULL);
             }
+            shutdown(handle->handle, SD_BOTH);
             if (closesocket(handle->handle) != 0)
             {
                 error = ERR_RESOURCE_CLOSE_SOCKET;
@@ -2571,7 +2598,7 @@ errno RT_Clean()
 
     // close all tracked handles
     List* handles = &tracker->Handles;
-    errno err     = NO_ERROR;
+    errno error   = NO_ERROR;
 
     uint len = handles->Len;
     uint idx = 0;
@@ -2585,15 +2612,15 @@ errno RT_Clean()
         switch (handle->source & TYPE_MASK)
         {
         case TYPE_CLOSE_HANDLE:
-            if (!tracker->CloseHandle(handle->handle) && err == NO_ERROR)
+            if (!tracker->CloseHandle(handle->handle) && error == NO_ERROR)
             {
-                err = ERR_RESOURCE_CLOSE_HANDLE;
+                error = ERR_RESOURCE_CLOSE_HANDLE;
             }
             break;
         case TYPE_FIND_CLOSE:
-            if (!tracker->FindClose(handle->handle) && err == NO_ERROR)
+            if (!tracker->FindClose(handle->handle) && error == NO_ERROR)
             {
-                err = ERR_RESOURCE_FIND_CLOSE;
+                error = ERR_RESOURCE_FIND_CLOSE;
             }
             break;
         case TYPE_CLOSE_KEY:
@@ -2601,9 +2628,9 @@ errno RT_Clean()
             {
                 break;
             }
-            if (RegCloseKey(handle->handle) != ERROR_SUCCESS && err == NO_ERROR)
+            if (RegCloseKey(handle->handle) != ERROR_SUCCESS && error == NO_ERROR)
             {
-                err = ERR_RESOURCE_CLOSE_KEY;
+                error = ERR_RESOURCE_CLOSE_KEY;
             }
             break;
         case TYPE_CLOSE_SOCKET:
@@ -2612,14 +2639,14 @@ errno RT_Clean()
                 break;
             }
             // try to graceful shutdown
-            shutdown(handle->handle, SD_BOTH);
             if (CancelIoEx != NULL) // must after Vista
             {
                 CancelIoEx(handle->handle, NULL);
             }
-            if (closesocket(handle->handle) != 0 && err == NO_ERROR)
+            shutdown(handle->handle, SD_BOTH);
+            if (closesocket(handle->handle) != 0 && error == NO_ERROR)
             {
-                err = ERR_RESOURCE_CLOSE_SOCKET;
+                error = ERR_RESOURCE_CLOSE_SOCKET;
             }
             break;
         default:
@@ -2628,62 +2655,35 @@ errno RT_Clean()
         num++;
     }
 
-    // clean handle list
-    RandBuffer(handles->Data, List_Size(handles));
-    if (!List_Free(handles) && err == NO_ERROR)
+    // about WSACleanup
+    errno err = doWSACleanup(tracker);
+    if (err != NO_ERROR && error == NO_ERROR)
     {
-        err = ERR_RESOURCE_FREE_HANDLE_LIST;
+        error = err;
     }
 
-    // about WSACleanup
-    errno ewc = doWSACleanup(tracker);
-    if (ewc != NO_ERROR && err == NO_ERROR)
+    // clean handle list
+    RandBuffer(handles->Data, List_Size(handles));
+    if (!List_Free(handles) && error == NO_ERROR)
     {
-        err = ewc;
+        error = ERR_RESOURCE_FREE_HANDLE_LIST;
     }
 
     // close mutex
-    if (!tracker->CloseHandle(tracker->hMutex) && err == NO_ERROR)
+    if (!tracker->CloseHandle(tracker->hMutex) && error == NO_ERROR)
     {
-        err = ERR_RESOURCE_CLOSE_MUTEX;
+        error = ERR_RESOURCE_CLOSE_MUTEX;
     }
 
     // recover instructions
     if (tracker->NotEraseInstruction)
     {
-        if (!recoverTrackerPointer(tracker) && err == NO_ERROR)
+        if (!recoverTrackerPointer(tracker) && error == NO_ERROR)
         {
-            err = ERR_RESOURCE_RECOVER_INST;
+            error = ERR_RESOURCE_RECOVER_INST;
         }
     }
 
     dbg_log("[resource]", "handles: %zu", handles->Len);
-    return err;
-}
-
-static errno doWSACleanup(ResourceTracker* tracker)
-{
-#ifdef _WIN64
-    WSACleanup_t WSACleanup = FindAPI(0x2D5ED79692C593E4, 0xF65130FCB6DB3FD4);
-#elif _WIN32
-    WSACleanup_t WSACleanup = FindAPI(0x59F727E0, 0x156A74C5);
-#endif
-    if (WSACleanup == NULL)
-    {
-        return NO_ERROR;
-    }
-
-    errno errno = NO_ERROR;
-    int64 counter = tracker->Counters[CTR_WSA_STARTUP];
-    for (int64 i = 0; i < counter; i++)
-    {
-        if (WSACleanup() != 0)
-        {
-            errno = ERR_RESOURCE_WSA_CLEANUP;
-        }
-    }
-
-    // reset counter
-    tracker->Counters[CTR_WSA_STARTUP] = 0;
-    return errno;
+    return error;
 }

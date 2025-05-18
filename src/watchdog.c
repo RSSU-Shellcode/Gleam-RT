@@ -28,6 +28,10 @@ typedef struct {
     WaitForMultipleObjects_t WaitForMultipleObjects;
     CloseHandle_t            CloseHandle;
 
+    // copy from runtime methods
+    rt_try_lock_mods_t   RT_TryLockMods;
+    rt_try_unlock_mods_t RT_TryUnlockMods;
+
     // copy from runtime submodules
     TT_NewThread_t        TT_NewThread;
     TT_ForceKillThreads_t TT_ForceKillThreads;
@@ -249,6 +253,9 @@ static bool initWatchdogEnvironment(Watchdog* watchdog, Context* context)
         return false;
     }
     watchdog->hEvent = hEvent;
+    // copy runtime methods
+    watchdog->RT_TryLockMods   = context->try_lock_mods;
+    watchdog->RT_TryUnlockMods = context->try_unlock_mods;
     // copy method from context
     watchdog->TT_NewThread        = context->TT_NewThread;
     watchdog->TT_ForceKillThreads = context->TT_ForceKillThreads;
@@ -317,13 +324,19 @@ static uint wd_watcher()
         } else {
             numFail++;
         }
+
         if (numFail == 3)
         {
+            // if program dead, use force kill threads,
+            // then the Watchdog will call reset handler.
+            watchdog->RT_TryLockMods();
             errno err = watchdog->TT_ForceKillThreads();
             if (err != NO_ERROR)
             {
                 dbg_log("[watchdog]", "occurred error when kill threads: 0x%X", err);
             }
+            watchdog->RT_TryUnlockMods();
+            // cleanup runtime tracked resource
             err = watchdog->RT_Cleanup();
             if (err != NO_ERROR)
             {
@@ -332,11 +345,12 @@ static uint wd_watcher()
             watchdog->handler();
             wd_add_reset();
         }
-        if (numFail == 6)
+        if (numFail > 6)
         {
             watchdog->RT_Exit();
             return 2;
         }
+
         switch (wd_sleep(1000 + RandIntN(0, 2000)))
         {
         case RESULT_SUCCESS:

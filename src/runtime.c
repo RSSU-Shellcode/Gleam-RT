@@ -82,6 +82,10 @@ typedef struct {
     // IAT hooks about GetProcAddress
     Hook IATHooks[66];
 
+    // for try to lock submodules mutex
+    HANDLE ModMutexHandle[6];
+    bool   ModMutexStatus[6];
+
     // runtime submodules
     LibraryTracker_M*  LibraryTracker;
     MemoryTracker_M*   MemoryTracker;
@@ -134,6 +138,8 @@ uint  RT_mcap(void* ptr);
 
 errno RT_lock_mods();
 errno RT_unlock_mods();
+void  RT_try_lock_mods();
+void  RT_try_unlock_mods();
 
 // hard encoded address in getRuntimePointer for replacement
 #ifdef _WIN64
@@ -645,8 +651,10 @@ static errno initSubmodules(Runtime* runtime)
         .msize   = GetFuncAddr(&RT_msize),
         .mcap    = GetFuncAddr(&RT_mcap),
 
-        .lock   = GetFuncAddr(&RT_lock_mods),
-        .unlock = GetFuncAddr(&RT_unlock_mods),
+        .lock_mods       = GetFuncAddr(&RT_lock_mods),
+        .unlock_mods     = GetFuncAddr(&RT_unlock_mods),
+        .try_lock_mods   = GetFuncAddr(&RT_try_lock_mods),
+        .try_unlock_mods = GetFuncAddr(&RT_try_unlock_mods),
 
         .LoadLibraryA           = runtime->LoadLibraryA,
         .FreeLibrary            = runtime->FreeLibrary,
@@ -745,6 +753,14 @@ static errno initSubmodules(Runtime* runtime)
             return errno;
         }
     }
+
+    // copy mutex handle for runtime
+    runtime->ModMutexHandle[0] = runtime->LibraryTracker->hMutex;
+    runtime->ModMutexHandle[1] = runtime->MemoryTracker->hMutex;
+    runtime->ModMutexHandle[2] = runtime->ThreadTracker->hMutex;
+    runtime->ModMutexHandle[3] = runtime->ResourceTracker->hMutex;
+    runtime->ModMutexHandle[4] = runtime->ArgumentStore->hMutex;
+    runtime->ModMutexHandle[5] = runtime->InMemoryStorage->hMutex;
 
     // clean useless API functions in runtime structure
     RandBuffer((byte*)(&runtime->GetSystemInfo), sizeof(uintptr));
@@ -1432,6 +1448,37 @@ errno RT_unlock_mods()
         }
     }
     return errno;
+}
+
+__declspec(noinline)
+void RT_try_lock_mods()
+{
+    Runtime* runtime = getRuntimePointer();
+
+    for (int i = 0; i < arrlen(runtime->ModMutexHandle); i++)
+    {
+        DWORD event = runtime->WaitForSingleObject(runtime->ModMutexHandle[i], 3000);
+        if (event == WAIT_OBJECT_0 || event == WAIT_ABANDONED)
+        {
+            runtime->ModMutexStatus[i] = true;
+        } else {
+            runtime->ModMutexStatus[i] = false;
+        }
+    }
+}
+
+__declspec(noinline)
+void RT_try_unlock_mods()
+{
+    Runtime* runtime = getRuntimePointer();
+
+    for (int i = arrlen(runtime->ModMutexHandle) - 1; i >= 0; i--)
+    {
+        if (runtime->ModMutexStatus[i])
+        {
+            runtime->ReleaseMutex(runtime->ModMutexHandle[i]);
+        }
+    }
 }
 
 __declspec(noinline)

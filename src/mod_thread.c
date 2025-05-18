@@ -45,8 +45,8 @@ typedef struct {
     CloseHandle_t          CloseHandle;
 
     // runtime methods
-    rt_lock_t   RT_Lock;
-    rt_unlock_t RT_Unlock;
+    rt_lock_mods_t   RT_LockMods;
+    rt_unlock_mods_t RT_UnlockMods;
 
     // protect data
     HANDLE hMutex;
@@ -340,8 +340,8 @@ static bool initTrackerEnvironment(ThreadTracker* tracker, Context* context)
         }
     }
     // copy runtime methods
-    tracker->RT_Lock   = context->lock;
-    tracker->RT_Unlock = context->unlock;
+    tracker->RT_LockMods   = context->lock_mods;
+    tracker->RT_UnlockMods = context->unlock_mods;
     return true;
 }
 
@@ -562,7 +562,7 @@ DWORD TT_SuspendThread(HANDLE hThread)
 {
     ThreadTracker* tracker = getTrackerPointer();
 
-    if (tracker->RT_Lock() != NO_ERROR)
+    if (tracker->RT_LockMods() != NO_ERROR)
     {
         return (DWORD)(-1);
     }
@@ -583,7 +583,7 @@ DWORD TT_SuspendThread(HANDLE hThread)
     }
     dbg_log("[thread]", "SuspendThread: 0x%zX", hThread);
 
-    if (tracker->RT_Unlock() != NO_ERROR)
+    if (tracker->RT_UnlockMods() != NO_ERROR)
     {
         return (DWORD)(-1);
     }
@@ -595,7 +595,7 @@ DWORD TT_ResumeThread(HANDLE hThread)
 {
     ThreadTracker* tracker = getTrackerPointer();
 
-    if (tracker->RT_Lock() != NO_ERROR)
+    if (tracker->RT_LockMods() != NO_ERROR)
     {
         return (DWORD)(-1);
     }
@@ -616,7 +616,7 @@ DWORD TT_ResumeThread(HANDLE hThread)
     }
     dbg_log("[thread]", "ResumeThread: 0x%zX", hThread);
 
-    if (tracker->RT_Unlock() != NO_ERROR)
+    if (tracker->RT_UnlockMods() != NO_ERROR)
     {
         return (DWORD)(-1);
     }
@@ -628,7 +628,7 @@ BOOL TT_GetThreadContext(HANDLE hThread, CONTEXT* lpContext)
 {
     ThreadTracker* tracker = getTrackerPointer();
 
-    if (tracker->RT_Lock() != NO_ERROR)
+    if (tracker->RT_LockMods() != NO_ERROR)
     {
         return false;
     }
@@ -637,7 +637,7 @@ BOOL TT_GetThreadContext(HANDLE hThread, CONTEXT* lpContext)
 
     dbg_log("[thread]", "GetThreadContext: 0x%zX", hThread);
 
-    if (tracker->RT_Unlock() != NO_ERROR)
+    if (tracker->RT_UnlockMods() != NO_ERROR)
     {
         return false;
     }
@@ -649,7 +649,7 @@ BOOL TT_SetThreadContext(HANDLE hThread, CONTEXT* lpContext)
 {
     ThreadTracker* tracker = getTrackerPointer();
 
-    if (tracker->RT_Lock() != NO_ERROR)
+    if (tracker->RT_LockMods() != NO_ERROR)
     {
         return false;
     }
@@ -658,7 +658,7 @@ BOOL TT_SetThreadContext(HANDLE hThread, CONTEXT* lpContext)
 
     dbg_log("[thread]", "SetThreadContext: 0x%zX", hThread);
 
-    if (tracker->RT_Unlock() != NO_ERROR)
+    if (tracker->RT_UnlockMods() != NO_ERROR)
     {
         return false;
     }
@@ -670,7 +670,7 @@ BOOL TT_TerminateThread(HANDLE hThread, DWORD dwExitCode)
 {
     ThreadTracker* tracker = getTrackerPointer();
 
-    if (tracker->RT_Lock() != NO_ERROR)
+    if (tracker->RT_LockMods() != NO_ERROR)
     {
         return false;
     }
@@ -683,7 +683,7 @@ BOOL TT_TerminateThread(HANDLE hThread, DWORD dwExitCode)
 
     dbg_log("[thread]", "TerminateThread: %d", threadID);
 
-    if (tracker->RT_Unlock() != NO_ERROR)
+    if (tracker->RT_UnlockMods() != NO_ERROR)
     {
         return false;
     }
@@ -995,13 +995,13 @@ bool TT_KillAllMu()
     errno lastErr = NO_ERROR;
     for (;;)
     {
-        lastErr = tracker->RT_Lock();
+        lastErr = tracker->RT_LockMods();
         if (lastErr != NO_ERROR)
         {
             break;
         }
         lastErr = TT_KillAll();
-        errno err = tracker->RT_Unlock();
+        errno err = tracker->RT_UnlockMods();
         if (err != NO_ERROR && lastErr == NO_ERROR)
         {
             lastErr = err;
@@ -1200,10 +1200,6 @@ errno TT_ForceKill()
 {
     ThreadTracker* tracker = getTrackerPointer();
 
-    // try to lock
-    DWORD event = tracker->WaitForSingleObject(tracker->hMutex, 1000);
-    bool locked = event == WAIT_OBJECT_0 || event == WAIT_ABANDONED;
-
     List* threads = &tracker->Threads;
     errno errno = NO_ERROR;
 
@@ -1233,11 +1229,6 @@ errno TT_ForceKill()
             errno = ERR_THREAD_DELETE_THREAD;
         }
         num++;
-    }
-
-    if (locked)
-    {
-        tracker->ReleaseMutex(tracker->hMutex);
     }
     return errno;
 }

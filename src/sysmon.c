@@ -27,6 +27,10 @@ typedef struct {
     WaitForMultipleObjects_t WaitForMultipleObjects;
     CloseHandle_t            CloseHandle;
 
+    // copy from runtime methods
+    rt_try_lock_mods_t   RT_TryLockMods;
+    rt_try_unlock_mods_t RT_TryUnlockMods;
+
     // copy from runtime submodules
     HANDLE hMutex_LT;
     HANDLE hMutex_MT;
@@ -231,6 +235,9 @@ static bool initSysmonEnvironment(Sysmon* sysmon, Context* context)
         return false;
     }
     sysmon->hEvent = hEvent;
+    // copy runtime methods
+    sysmon->RT_TryLockMods   = context->try_lock_mods;
+    sysmon->RT_TryUnlockMods = context->try_unlock_mods;
     // copy mutex from context
     sysmon->hMutex_LT  = context->hMutex_LT;
     sysmon->hMutex_MT  = context->hMutex_MT;
@@ -337,11 +344,14 @@ static uint sm_watcher()
             }
             // if failed to recover, use force kill threads,
             // then the Watchdog will restart program.
+            sysmon->RT_TryLockMods();
             err = sysmon->TT_ForceKillThreads();
             if (err != NO_ERROR)
             {
                 dbg_log("[sysmon]", "occurred error when kill threads: 0x%X", err);
             }
+            sysmon->RT_TryUnlockMods();
+            // cleanup runtime tracked resource
             err = sysmon->RT_Cleanup();
             if (err != NO_ERROR)
             {

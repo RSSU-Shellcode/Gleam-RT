@@ -7,8 +7,10 @@
 #include "lib_memory.h"
 #include "errno.h"
 
-typedef errno (*rt_lock_t)();
-typedef errno (*rt_unlock_t)();
+typedef errno (*rt_lock_mods_t)();
+typedef errno (*rt_unlock_mods_t)();
+typedef void  (*rt_try_lock_mods_t)();
+typedef void  (*rt_try_unlock_mods_t)();
 
 typedef void* (*mt_malloc_t)(uint size);
 typedef void* (*mt_calloc_t)(uint num, uint size);
@@ -43,8 +45,11 @@ typedef struct {
     msize_t   msize;
     mcap_t    mcap;
 
-    rt_lock_t   lock;
-    rt_unlock_t unlock;
+    // runtime lock submodules
+    rt_lock_mods_t       lock_mods;
+    rt_unlock_mods_t     unlock_mods;
+    rt_try_lock_mods_t   try_lock_mods;
+    rt_try_unlock_mods_t try_unlock_mods;
 
     // for initialize runtime submodules
     LoadLibraryA_t           LoadLibraryA;

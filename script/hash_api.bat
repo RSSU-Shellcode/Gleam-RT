@@ -18,6 +18,7 @@ hash_api -fmt 64 -conc -func VirtualProtect
 hash_api -fmt 64 -conc -func FlushInstructionCache
 hash_api -fmt 64 -conc -func SuspendThread
 hash_api -fmt 64 -conc -func ResumeThread
+hash_api -fmt 64 -conc -func ExitThread
 hash_api -fmt 64 -conc -func CreateMutexA
 hash_api -fmt 64 -conc -func ReleaseMutex
 hash_api -fmt 64 -conc -func CreateEventA
@@ -253,6 +254,7 @@ hash_api -fmt 32 -conc -func VirtualProtect
 hash_api -fmt 32 -conc -func FlushInstructionCache
 hash_api -fmt 32 -conc -func SuspendThread
 hash_api -fmt 32 -conc -func ResumeThread
+hash_api -fmt 32 -conc -func ExitThread
 hash_api -fmt 32 -conc -func CreateMutexA
 hash_api -fmt 32 -conc -func ReleaseMutex
 hash_api -fmt 32 -conc -func CreateEventA

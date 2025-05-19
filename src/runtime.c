@@ -58,6 +58,7 @@ typedef struct {
     FlushInstructionCache_t  FlushInstructionCache;
     SuspendThread_t          SuspendThread;
     ResumeThread_t           ResumeThread;
+    ExitThread_t             ExitThread;
     CreateMutexA_t           CreateMutexA;
     ReleaseMutex_t           ReleaseMutex;
     CreateEventA_t           CreateEventA;
@@ -127,6 +128,7 @@ errno RT_Recover();
 errno RT_GetMetrics(Runtime_Metrics* metrics);
 errno RT_Cleanup();
 errno RT_Exit();
+void  RT_Stop();
 
 // internal methods for Runtime submodules
 void* RT_malloc(uint size);
@@ -190,6 +192,8 @@ static errno hide(Runtime* runtime);
 static errno recover(Runtime* runtime);
 
 static bool df_WD_IsEnabled();
+
+static errno stop(bool exitThread);
 
 static void eraseMemory(uintptr address, uintptr size);
 static void rt_epilogue();
@@ -423,6 +427,7 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->Core.Metrics = GetFuncAddr(&RT_GetMetrics);
     module->Core.Cleanup = GetFuncAddr(&RT_Cleanup);
     module->Core.Exit    = GetFuncAddr(&RT_Exit);
+    module->Core.Stop    = GetFuncAddr(&RT_Stop);
     // runtime core data
     module->Data.Mutex = runtime->hMutex;
     // [THE END OF THE WORLD] :(
@@ -496,6 +501,7 @@ static bool initRuntimeAPI(Runtime* runtime)
         { 0x8172B49F66E495BA, 0x8F0D0796223B56C2 }, // FlushInstructionCache
         { 0x3A4D5132CF0D20D8, 0x89E05A81B86A26AE }, // SuspendThread
         { 0xB1917786CE5B5A94, 0x6BC3328C112C6DDA }, // ResumeThread
+        { 0x91238A1B4E365AB0, 0x6C621931AE641330 }, // ExitThread
         { 0x31FE697F93D7510C, 0x77C8F05FE04ED22D }, // CreateMutexA
         { 0xEEFDEA7C0785B561, 0xA7B72CC8CD55C1D4 }, // ReleaseMutex
         { 0x2E47C7EAD6A3CC9B, 0x7DCE77B96C9AC3ED }, // CreateEventA
@@ -523,6 +529,7 @@ static bool initRuntimeAPI(Runtime* runtime)
         { 0x87A2CEE8, 0x42A3C1AF }, // FlushInstructionCache
         { 0x26C71141, 0xF3C390BD }, // SuspendThread
         { 0x20FFDC31, 0x1D4EA347 }, // ResumeThread
+        { 0x1D1F85DD, 0x41A9BD17 }, // ExitThread
         { 0x8F5BAED2, 0x43487DC7 }, // CreateMutexA
         { 0xFA42E55C, 0xEA9F1081 }, // ReleaseMutex
         { 0xF064C9E7, 0x9268B16B }, // CreateEventA
@@ -559,20 +566,21 @@ static bool initRuntimeAPI(Runtime* runtime)
     runtime->FlushInstructionCache  = list[0x07].proc;
     runtime->SuspendThread          = list[0x08].proc;
     runtime->ResumeThread           = list[0x09].proc;
-    runtime->CreateMutexA           = list[0x0A].proc;
-    runtime->ReleaseMutex           = list[0x0B].proc;
-    runtime->CreateEventA           = list[0x0C].proc;
-    runtime->SetEvent               = list[0x0D].proc;
-    runtime->CreateWaitableTimerA   = list[0x0E].proc;
-    runtime->SetWaitableTimer       = list[0x0F].proc;
-    runtime->WaitForSingleObject    = list[0x10].proc;
-    runtime->WaitForMultipleObjects = list[0x11].proc;
-    runtime->DuplicateHandle        = list[0x12].proc;
-    runtime->CloseHandle            = list[0x13].proc;
-    runtime->SetCurrentDirectoryA   = list[0x14].proc;
-    runtime->SetCurrentDirectoryW   = list[0x15].proc;
-    runtime->SleepEx                = list[0x16].proc;
-    runtime->ExitProcess            = list[0x17].proc;
+    runtime->ExitThread             = list[0x0A].proc;
+    runtime->CreateMutexA           = list[0x0B].proc;
+    runtime->ReleaseMutex           = list[0x0C].proc;
+    runtime->CreateEventA           = list[0x0D].proc;
+    runtime->SetEvent               = list[0x0E].proc;
+    runtime->CreateWaitableTimerA   = list[0x0F].proc;
+    runtime->SetWaitableTimer       = list[0x10].proc;
+    runtime->WaitForSingleObject    = list[0x11].proc;
+    runtime->WaitForMultipleObjects = list[0x12].proc;
+    runtime->DuplicateHandle        = list[0x13].proc;
+    runtime->CloseHandle            = list[0x14].proc;
+    runtime->SetCurrentDirectoryA   = list[0x15].proc;
+    runtime->SetCurrentDirectoryW   = list[0x16].proc;
+    runtime->SleepEx                = list[0x17].proc;
+    runtime->ExitProcess            = list[0x18].proc;
     return true;
 }
 
@@ -664,6 +672,7 @@ static errno initSubmodules(Runtime* runtime)
         .FlushInstructionCache  = runtime->FlushInstructionCache,
         .SuspendThread          = runtime->SuspendThread,
         .ResumeThread           = runtime->ResumeThread,
+        .ExitThread             = runtime->ExitThread,
         .CreateMutexA           = runtime->CreateMutexA,
         .ReleaseMutex           = runtime->ReleaseMutex,
         .CreateEventA           = runtime->CreateEventA,
@@ -735,7 +744,7 @@ static errno initSubmodules(Runtime* runtime)
     context.TT_ForceKillThreads = runtime->ThreadTracker->ForceKill;
 
     context.RT_Cleanup = GetFuncAddr(&RT_Cleanup);
-    context.RT_Exit    = GetFuncAddr(&RT_Exit);
+    context.RT_Stop    = GetFuncAddr(&RT_Stop);
 
     context.WD_IsEnabled = GetFuncAddr(&df_WD_IsEnabled);
 
@@ -2257,6 +2266,18 @@ errno RT_Cleanup()
 __declspec(noinline)
 errno RT_Exit()
 {
+    return stop(false);
+}
+
+__declspec(noinline)
+void RT_Stop()
+{
+    stop(true);
+}
+
+__declspec(noinline)
+static errno stop(bool exitThread)
+{
     Runtime* runtime = getRuntimePointer();
 
     if (!rt_lock())
@@ -2375,8 +2396,16 @@ errno RT_Exit()
         }
     }
 
-    // clean stack that store cloned structure data 
+    // copy function address before erase memory
+    ExitThread_t ExitThread = runtime->ExitThread;
+
+    // clean stack about cloned structure data 
     eraseMemory((uintptr)(runtime), sizeof(Runtime));
+
+    if (exitThread)
+    {
+        ExitThread(0);
+    }
     return error;
 }
 

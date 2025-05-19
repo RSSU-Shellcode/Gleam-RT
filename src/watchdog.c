@@ -36,7 +36,7 @@ typedef struct {
     TT_NewThread_t        TT_NewThread;
     TT_ForceKillThreads_t TT_ForceKillThreads;
     RT_Cleanup_t          RT_Cleanup;
-    RT_Exit_t             RT_Exit;
+    RT_Stop_t             RT_Stop;
 
     // reset handler
     WDHandler_t handler;
@@ -260,7 +260,7 @@ static bool initWatchdogEnvironment(Watchdog* watchdog, Context* context)
     watchdog->TT_NewThread        = context->TT_NewThread;
     watchdog->TT_ForceKillThreads = context->TT_ForceKillThreads;
     watchdog->RT_Cleanup          = context->RT_Cleanup;
-    watchdog->RT_Exit             = context->RT_Exit;
+    watchdog->RT_Stop             = context->RT_Stop;
     return true;
 }
 
@@ -345,13 +345,14 @@ static uint wd_watcher()
             watchdog->handler();
             wd_add_reset();
         }
-        if (numFail > 6)
+
+        if (numFail >= 6)
         {
-            watchdog->RT_Exit();
+            watchdog->RT_Stop();
             return 2;
         }
 
-        switch (wd_sleep(1000 + RandIntN(0, 2000)))
+        switch (wd_sleep(3000 + RandIntN(0, 3000)))
         {
         case RESULT_SUCCESS:
             break;

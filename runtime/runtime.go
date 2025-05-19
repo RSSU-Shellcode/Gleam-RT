@@ -256,6 +256,7 @@ type RuntimeM struct {
 		Metrics uintptr
 		Cleanup uintptr
 		Exit    uintptr
+		Stop    uintptr
 	}
 
 	Data struct {

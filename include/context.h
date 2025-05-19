@@ -24,7 +24,7 @@ typedef errno  (*TT_RecoverThreads_t)();
 typedef errno  (*TT_ForceKillThreads_t)();
 
 typedef errno (*RT_Cleanup_t)();
-typedef errno (*RT_Exit_t)();
+typedef void  (*RT_Stop_t)();
 
 typedef bool (*WD_IsEnabled_t)();
 
@@ -60,6 +60,7 @@ typedef struct {
     FlushInstructionCache_t  FlushInstructionCache;
     SuspendThread_t          SuspendThread;
     ResumeThread_t           ResumeThread;
+    ExitThread_t             ExitThread;
     CreateMutexA_t           CreateMutexA;
     ReleaseMutex_t           ReleaseMutex;
     CreateEventA_t           CreateEventA;
@@ -93,7 +94,7 @@ typedef struct {
     TT_ForceKillThreads_t TT_ForceKillThreads;
 
     RT_Cleanup_t RT_Cleanup;
-    RT_Exit_t    RT_Exit;
+    RT_Stop_t    RT_Stop;
 
     WD_IsEnabled_t WD_IsEnabled;
 } Context;

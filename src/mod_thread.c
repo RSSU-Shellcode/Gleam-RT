@@ -207,7 +207,6 @@ static bool initTrackerAPI(ThreadTracker* tracker, Context* context)
 #ifdef _WIN64
     {
         { 0x430932D6A2AC04EA, 0x9AF52A6480DA3C93 }, // CreateThread
-        { 0x91238A1B4E365AB0, 0x6C621931AE641330 }, // ExitThread
         { 0x59361F47711B4B27, 0xB97411CC715D4940 }, // GetThreadContext
         { 0xFB9A4AF393D77518, 0xA0CA2E8823A27560 }, // SetThreadContext
         { 0x5133BE509803E44E, 0x20498B6AFFAED91B }, // GetThreadId
@@ -219,7 +218,6 @@ static bool initTrackerAPI(ThreadTracker* tracker, Context* context)
 #elif _WIN32
     {
         { 0xB9D69C9D, 0xCAB90EB6 }, // CreateThread
-        { 0x1D1F85DD, 0x41A9BD17 }, // ExitThread
         { 0x25EF3A63, 0xAFA67C4F }, // GetThreadContext
         { 0x2729A1C9, 0x3A57FF5D }, // SetThreadContext
         { 0xFE77EB3E, 0x81CB68B1 }, // GetThreadId
@@ -239,15 +237,15 @@ static bool initTrackerAPI(ThreadTracker* tracker, Context* context)
         list[i].proc = proc;
     }
     tracker->CreateThread         = list[0x00].proc;
-    tracker->ExitThread           = list[0x01].proc;
-    tracker->GetThreadContext     = list[0x02].proc;
-    tracker->SetThreadContext     = list[0x03].proc;
-    tracker->GetThreadID          = list[0x04].proc;
-    tracker->GetCurrentThreadID   = list[0x05].proc;
-    tracker->TerminateThread      = list[0x06].proc;
-    tracker->TlsAlloc             = list[0x07].proc;
-    tracker->TlsFree              = list[0x08].proc;
+    tracker->GetThreadContext     = list[0x01].proc;
+    tracker->SetThreadContext     = list[0x02].proc;
+    tracker->GetThreadID          = list[0x03].proc;
+    tracker->GetCurrentThreadID   = list[0x04].proc;
+    tracker->TerminateThread      = list[0x05].proc;
+    tracker->TlsAlloc             = list[0x06].proc;
+    tracker->TlsFree              = list[0x07].proc;
 
+    tracker->ExitThread           = context->ExitThread;
     tracker->SuspendThread        = context->SuspendThread;
     tracker->ResumeThread         = context->ResumeThread;
     tracker->CreateWaitableTimerA = context->CreateWaitableTimerA;

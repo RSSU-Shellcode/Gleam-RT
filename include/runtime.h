@@ -338,6 +338,7 @@ typedef errno (*WDContinue_t)();
 // SleepHR is used to call Hide, Sleep and Recover, usually it called by hook.
 // Cleanup is used to clean all tracked object except locked.
 // Exit is used to clean all tracked object and clean runtime self.
+// Stop is same as Exit, but it will exit current thread.
 typedef struct {
     LT_Status Library;
     MT_Status Memory;
@@ -347,12 +348,13 @@ typedef struct {
     WD_Status Watchdog;
 } Runtime_Metrics;
 
-typedef errno (*SleepHR_t)(uint32 milliseconds);
-typedef errno (*Hide_t)();
-typedef errno (*Recover_t)();
-typedef errno (*Metrics_t)(Runtime_Metrics* metrics);
-typedef errno (*Cleanup_t)();
-typedef errno (*Exit_t)();
+typedef errno (*RTSleepHR_t)(uint32 milliseconds);
+typedef errno (*RTHide_t)();
+typedef errno (*RTRecover_t)();
+typedef errno (*RTMetrics_t)(Runtime_Metrics* metrics);
+typedef errno (*RTCleanup_t)();
+typedef errno (*RTExit_t)();
+typedef void  (*RTStop_t)();
 
 // Runtime_M contains exported runtime methods.
 typedef struct {
@@ -514,12 +516,13 @@ typedef struct {
     } Watchdog;
 
     struct {
-        SleepHR_t Sleep;
-        Hide_t    Hide;
-        Recover_t Recover;
-        Metrics_t Metrics;
-        Cleanup_t Cleanup;
-        Exit_t    Exit;
+        RTSleepHR_t Sleep;
+        RTHide_t    Hide;
+        RTRecover_t Recover;
+        RTMetrics_t Metrics;
+        RTCleanup_t Cleanup;
+        RTExit_t    Exit;
+        RTStop_t    Stop;
     } Core;
 
     struct {

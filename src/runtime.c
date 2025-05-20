@@ -1760,8 +1760,10 @@ static void* getLazyAPIHook(Runtime* runtime, void* proc)
         { 0x46C76E87C13DF670, 0x37B6B54E4B2FBECC, RT->WSACleanup       },
         { 0x70D1185F52938D74, 0xF7E6BBBD8910788F, RT->WSASocketA       },
         { 0xC927D51029E597DD, 0x338682C6A8A05E96, RT->WSASocketW       },
+        { 0xF1EA805CB8A8ACE4, 0xE4971C112A64A0C4, RT->WSAIoctl         },
         { 0x4B3665285BC53DA0, 0x617201DEB1745A32, RT->socket           },
         { 0x5A633D63562D1F6A, 0xE4F5C861D2574114, RT->accept           },
+        { 0xBEF69AA1514C7525, 0x9615E0D5775EF14B, RT->shutdown         },
         { 0xEA43E78F0C2989E3, 0xF29E4A42BAC74CE8, RT->closesocket      },
     };
 #elif _WIN32
@@ -1789,8 +1791,10 @@ static void* getLazyAPIHook(Runtime* runtime, void* proc)
         { 0x175B553E, 0x541A996E, RT->WSACleanup       },
         { 0x2F782742, 0x3E840BCE, RT->WSASocketA       },
         { 0x4AF6596E, 0x56695630, RT->WSASocketW       },
+        { 0x2AEA7B3F, 0x5D833BF6, RT->WSAIoctl         },
         { 0xF01C85D5, 0xA4A6130C, RT->socket           },
         { 0xBADEAB08, 0xCF42DE35, RT->accept           },
+        { 0xE385390E, 0x66E21192, RT->shutdown         },
         { 0x55CC7BBE, 0x3CD9CFDC, RT->closesocket      },
     };
 #endif

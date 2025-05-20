@@ -1789,8 +1789,6 @@ int RT_WSAIoctl(
     LPVOID lpvOutBuffer, DWORD cbOutBuffer, DWORD* lpcbBytesReturned, 
     POINTER lpOverlapped, POINTER lpCompletionRoutine
 ){
-    ResourceTracker* tracker = getTrackerPointer();
-
     if (!RT_Lock())
     {
         return SOCKET_ERROR;
@@ -1798,8 +1796,34 @@ int RT_WSAIoctl(
 
     BOOL  success = false;
     errno lastErr = NO_ERROR;
+    for (;;)
+    {
+        WSAIoctl_t WSAIoctl;
+    #ifdef _WIN64
+        WSAIoctl = FindAPI(0x0B65FD2D1363C59C, 0xB3254437C88FD365);
+    #elif _WIN32
+        WSAIoctl = FindAPI(0x670B5A46, 0x9B886A3E);
+    #endif
+        if (WSAIoctl == NULL)
+        {
+            lastErr = ERR_RESOURCE_API_NOT_FOUND;
+            break;
+        }
+        int ret = WSAIoctl(
+            s, dwIoControlCode, lpvInBuffer, cbInBuffer, lpvOutBuffer,
+            cbOutBuffer, lpcbBytesReturned, lpOverlapped, lpCompletionRoutine
+        );
+        lastErr = GetLastErrno();
+        if (ret != 0)
+        {
+            break;
+        }
+        success = true;
+        break;
+    }
+    SetLastErrno(lastErr);
 
-
+    dbg_log("[resource]", "WSAIoctl: 0x%zX, 0x%d", s, dwIoControlCode);
 
     if (!RT_Unlock())
     {
@@ -1894,36 +1918,43 @@ SOCKET RT_accept(SOCKET s, POINTER addr, int* addrlen)
 __declspec(noinline)
 int RT_shutdown(SOCKET s, int how)
 {
-    ResourceTracker* tracker = getTrackerPointer();
+    if (!RT_Lock())
+    {
+        return SOCKET_ERROR;
+    }
 
     BOOL  success = false;
     errno lastErr = NO_ERROR;
     for (;;)
     {
-        closesocket_t closesocket;
+        shutdown_t shutdown;
     #ifdef _WIN64
-        closesocket = FindAPI(0x53A87D9CE52FEC49, 0xBBC0625CD7DA8E92);
+        shutdown = FindAPI(0x42DD4257D6989C17, 0x7D77B81F7CCE783A);
     #elif _WIN32
-        closesocket = FindAPI(0x224A8165, 0x524B8D52);
+        shutdown = FindAPI(0xE8BAC920, 0xD2DEFA8B);
     #endif
-        if (closesocket == NULL)
+        if (shutdown == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
             break;
         }
-        int ret = closesocket(hSocket);
+        int ret = shutdown(s, how);
         lastErr = GetLastErrno();
         if (ret != 0)
         {
             break;
         }
-        delHandleMu(tracker, hSocket, TYPE_CLOSE_SOCKET);
         success = true;
         break;
     }
     SetLastErrno(lastErr);
 
-    dbg_log("[resource]", "closesocket: 0x%zX", hSocket);
+    dbg_log("[resource]", "shutdown: 0x%zX", s);
+
+    if (!RT_Unlock())
+    {
+        return SOCKET_ERROR;
+    }
 
     if (!success)
     {

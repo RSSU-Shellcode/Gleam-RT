@@ -75,8 +75,10 @@ typedef struct {
 
     WSASocketA_t WSASocketA;
     WSASocketW_t WSASocketW;
+    WSAIoctl_t   WSAIoctl;
     socket_t     socket;
     accept_t     accept;
+    shutdown_t   shutdown;
 
     CloseHandle_t CloseHandle;
     FindClose_t   FindClose;

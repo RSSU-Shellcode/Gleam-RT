@@ -244,8 +244,14 @@ SOCKET RT_WSASocketA(
 SOCKET RT_WSASocketW(
     int af, int type, int protocol, POINTER lpProtocolInfo, POINTER g, DWORD dwFlags
 );
+int RT_WSAIoctl(
+    SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbInBuffer, 
+    LPVOID lpvOutBuffer, DWORD cbOutBuffer, DWORD* lpcbBytesReturned, 
+    POINTER lpOverlapped, POINTER lpCompletionRoutine
+);
 SOCKET RT_socket(int af, int type, int protocol);
 SOCKET RT_accept(SOCKET s, POINTER addr, int* addrlen);
+int    RT_shutdown(SOCKET s, int how);
 
 BOOL    RT_CloseHandle(HANDLE hObject);
 BOOL    RT_FindClose(HANDLE hFindFile);
@@ -367,8 +373,10 @@ ResourceTracker_M* InitResourceTracker(Context* context)
     module->RegOpenKeyExW          = GetFuncAddr(&RT_RegOpenKeyExW);
     module->WSASocketA             = GetFuncAddr(&RT_WSASocketA);
     module->WSASocketW             = GetFuncAddr(&RT_WSASocketW);
+    module->WSAIoctl               = GetFuncAddr(&RT_WSAIoctl);
     module->socket                 = GetFuncAddr(&RT_socket);
     module->accept                 = GetFuncAddr(&RT_accept);
+    module->shutdown               = GetFuncAddr(&RT_shutdown);
     module->CloseHandle            = GetFuncAddr(&RT_CloseHandle);
     module->FindClose              = GetFuncAddr(&RT_FindClose);
     module->RegCloseKey            = GetFuncAddr(&RT_RegCloseKey);
@@ -1115,11 +1123,6 @@ HANDLE RT_CreateFileA(
 ){
     ResourceTracker* tracker = getTrackerPointer();
 
-    if (!RT_Lock())
-    {
-        return INVALID_HANDLE_VALUE;
-    }
-
     HANDLE hFile   = INVALID_HANDLE_VALUE;
     errno  lastErr = NO_ERROR;
     for (;;)
@@ -1133,7 +1136,7 @@ HANDLE RT_CreateFileA(
         {
             break;
         }
-        if (!addHandle(tracker, hFile, SRC_CREATE_FILE_A))
+        if (!addHandleMu(tracker, hFile, SRC_CREATE_FILE_A))
         {
             lastErr = ERR_RESOURCE_ADD_FILE;
             break;
@@ -1143,11 +1146,6 @@ HANDLE RT_CreateFileA(
     SetLastErrno(lastErr);
 
     dbg_log("[resource]", "CreateFileA: %s", lpFileName);
-
-    if (!RT_Unlock())
-    {
-        return INVALID_HANDLE_VALUE;
-    }
     return hFile;
 };
 
@@ -1158,11 +1156,6 @@ HANDLE RT_CreateFileW(
     DWORD dwFlagsAndAttributes, HANDLE hTemplateFile
 ){
     ResourceTracker* tracker = getTrackerPointer();
-
-    if (!RT_Lock())
-    {
-        return INVALID_HANDLE_VALUE;
-    }
 
     HANDLE hFile   = INVALID_HANDLE_VALUE;
     errno  lastErr = NO_ERROR;
@@ -1177,7 +1170,7 @@ HANDLE RT_CreateFileW(
         {
             break;
         }
-        if (!addHandle(tracker, hFile, SRC_CREATE_FILE_W))
+        if (!addHandleMu(tracker, hFile, SRC_CREATE_FILE_W))
         {
             lastErr = ERR_RESOURCE_ADD_FILE;
             break;
@@ -1187,11 +1180,6 @@ HANDLE RT_CreateFileW(
     SetLastErrno(lastErr);
 
     dbg_log("[resource]", "CreateFileW: %ls", lpFileName);
-
-    if (!RT_Unlock())
-    {
-        return INVALID_HANDLE_VALUE;
-    }
     return hFile;
 };
 
@@ -1796,6 +1784,36 @@ SOCKET RT_WSASocketW(
 }
 
 __declspec(noinline)
+int RT_WSAIoctl(
+    SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbInBuffer, 
+    LPVOID lpvOutBuffer, DWORD cbOutBuffer, DWORD* lpcbBytesReturned, 
+    POINTER lpOverlapped, POINTER lpCompletionRoutine
+){
+    ResourceTracker* tracker = getTrackerPointer();
+
+    if (!RT_Lock())
+    {
+        return SOCKET_ERROR;
+    }
+
+    BOOL  success = false;
+    errno lastErr = NO_ERROR;
+
+
+
+    if (!RT_Unlock())
+    {
+        return SOCKET_ERROR;
+    }
+
+    if (!success)
+    {
+        return SOCKET_ERROR;
+    }
+    return 0;
+}
+
+__declspec(noinline)
 SOCKET RT_socket(int af, int type, int protocol)
 {
     ResourceTracker* tracker = getTrackerPointer();
@@ -1871,6 +1889,47 @@ SOCKET RT_accept(SOCKET s, POINTER addr, int* addrlen)
 
     dbg_log("[resource]", "accept: 0x%zX", hSocket);
     return hSocket;
+}
+
+__declspec(noinline)
+int RT_shutdown(SOCKET s, int how)
+{
+    ResourceTracker* tracker = getTrackerPointer();
+
+    BOOL  success = false;
+    errno lastErr = NO_ERROR;
+    for (;;)
+    {
+        closesocket_t closesocket;
+    #ifdef _WIN64
+        closesocket = FindAPI(0x53A87D9CE52FEC49, 0xBBC0625CD7DA8E92);
+    #elif _WIN32
+        closesocket = FindAPI(0x224A8165, 0x524B8D52);
+    #endif
+        if (closesocket == NULL)
+        {
+            lastErr = ERR_RESOURCE_API_NOT_FOUND;
+            break;
+        }
+        int ret = closesocket(hSocket);
+        lastErr = GetLastErrno();
+        if (ret != 0)
+        {
+            break;
+        }
+        delHandleMu(tracker, hSocket, TYPE_CLOSE_SOCKET);
+        success = true;
+        break;
+    }
+    SetLastErrno(lastErr);
+
+    dbg_log("[resource]", "closesocket: 0x%zX", hSocket);
+
+    if (!success)
+    {
+        return SOCKET_ERROR;
+    }
+    return 0;
 }
 
 __declspec(noinline)

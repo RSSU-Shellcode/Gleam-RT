@@ -154,6 +154,7 @@ hash_api -fmt 64 -conc -mod "ws2_32.dll" -func WSAStartup
 hash_api -fmt 64 -conc -mod "ws2_32.dll" -func WSACleanup
 hash_api -fmt 64 -conc -mod "ws2_32.dll" -func WSASocketA
 hash_api -fmt 64 -conc -mod "ws2_32.dll" -func WSASocketW
+hash_api -fmt 64 -conc -mod "ws2_32.dll" -func WSAIoctl
 hash_api -fmt 64 -conc -mod "ws2_32.dll" -func socket
 hash_api -fmt 64 -conc -mod "ws2_32.dll" -func accept
 hash_api -fmt 64 -conc -mod "ws2_32.dll" -func shutdown
@@ -390,6 +391,7 @@ hash_api -fmt 32 -conc -mod "ws2_32.dll" -func WSAStartup
 hash_api -fmt 32 -conc -mod "ws2_32.dll" -func WSACleanup
 hash_api -fmt 32 -conc -mod "ws2_32.dll" -func WSASocketA
 hash_api -fmt 32 -conc -mod "ws2_32.dll" -func WSASocketW
+hash_api -fmt 32 -conc -mod "ws2_32.dll" -func WSAIoctl
 hash_api -fmt 32 -conc -mod "ws2_32.dll" -func socket
 hash_api -fmt 32 -conc -mod "ws2_32.dll" -func accept
 hash_api -fmt 32 -conc -mod "ws2_32.dll" -func shutdown

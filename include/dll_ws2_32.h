@@ -35,6 +35,14 @@ typedef SOCKET (*WSASocketW_t)
     POINTER g, DWORD dwFlags
 );
 
+typedef int (*WSAIoctl_t)
+(
+    SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer,
+    DWORD cbInBuffer, LPVOID lpvOutBuffer, DWORD cbOutBuffer,
+    DWORD* lpcbBytesReturned, POINTER lpOverlapped,
+    POINTER lpCompletionRoutine
+);
+
 typedef SOCKET (*socket_t)
 (
     int af, int type, int protocol

@@ -2357,6 +2357,10 @@ static errno stop(bool exitThread)
     // must calculate address before erase instructions
     void* init = GetFuncAddr(&InitRuntime);
     void* addr = runtime->Options.BootInstAddress;
+    if (!exitThread)
+    {
+        addr = NULL;
+    }
     if (addr == NULL || (uintptr)addr > (uintptr)init)
     {
         addr = init;

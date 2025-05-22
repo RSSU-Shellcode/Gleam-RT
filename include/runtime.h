@@ -337,8 +337,13 @@ typedef errno (*WDContinue_t)();
 //
 // SleepHR is used to call Hide, Sleep and Recover, usually it called by hook.
 // Cleanup is used to clean all tracked object except locked.
-// Exit is used to clean all tracked object and clean runtime self.
-// Stop is same as Exit, but it will exit current thread.
+// 
+// Exit is used to clean all tracked object and clean runtime self,
+// it can only erase the instruction about the runtime self, 
+// caller need erase the other memory data about instance.
+// 
+// Stop is same as Exit, but it will exit current thread after exit,
+// it can erase the instruction from BootInstAddress to runtime epilogue.
 typedef struct {
     LT_Status Library;
     MT_Status Memory;
@@ -533,7 +538,7 @@ typedef struct {
 } Runtime_M;
 
 typedef struct {
-    // protect instructions like shellcode before Runtime,
+    // protect instructions like boot before Runtime,
     // if it is NULL, Runtime will only protect self.
     void* BootInstAddress;
 

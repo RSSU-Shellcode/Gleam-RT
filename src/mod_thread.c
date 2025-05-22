@@ -1043,7 +1043,7 @@ errno TT_Suspend()
     }
 
     List* threads = &tracker->Threads;
-    errno errno = NO_ERROR;
+    errno errno   = NO_ERROR;
 
     // suspend threads
     uint len = threads->Len;
@@ -1114,7 +1114,7 @@ errno TT_Resume()
     DecryptBuf(list->Data, List_Size(list), key, iv);
 
     List* threads = &tracker->Threads;
-    errno errno = NO_ERROR;
+    errno errno   = NO_ERROR;
 
     // resume threads
     uint len = threads->Len;
@@ -1158,7 +1158,7 @@ errno TT_Recover()
     bool locked = event == WAIT_OBJECT_0 || event == WAIT_ABANDONED;
 
     List* threads = &tracker->Threads;
-    errno errno = NO_ERROR;
+    errno errno   = NO_ERROR;
 
     uint len = threads->Len;
     uint idx = 0;
@@ -1199,10 +1199,27 @@ errno TT_ForceKill()
     ThreadTracker* tracker = getTrackerPointer();
 
     List* threads = &tracker->Threads;
-    errno errno = NO_ERROR;
+    errno errno   = NO_ERROR;
 
+    // suspend all threads before terminate
     uint len = threads->Len;
     uint idx = 0;
+    for (uint num = 0; num < len; idx++)
+    {
+        thread* thread = List_Get(threads, idx);
+        if (thread->threadID == 0)
+        {
+            continue;
+        }
+        DWORD count = tracker->SuspendThread(thread->hThread);
+        if (count == (DWORD)(-1))
+        {
+            errno = ERR_THREAD_SUSPEND;
+        }
+        num++;
+    }
+
+    idx = 0;
     for (uint num = 0; num < len; idx++)
     {
         thread* thread = List_Get(threads, idx);
@@ -1244,7 +1261,7 @@ errno TT_KillAll()
 
     List* threads  = &tracker->Threads;
     List* tlsIndex = &tracker->TLSIndex;
-    errno errno = NO_ERROR;
+    errno errno    = NO_ERROR;
 
     // suspend all threads before terminate
     uint len = threads->Len;
@@ -1354,7 +1371,7 @@ errno TT_Clean()
 
     List* threads  = &tracker->Threads;
     List* tlsIndex = &tracker->TLSIndex;
-    errno errno = NO_ERROR;
+    errno errno    = NO_ERROR;
 
     // suspend all threads before terminate
     uint len = threads->Len;

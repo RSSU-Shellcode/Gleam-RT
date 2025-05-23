@@ -311,7 +311,7 @@ static byte valueToChar(byte b)
 
 static bool isRegionReadable(DWORD protect)
 {
-    switch (protect)
+    switch (protect & 0xFF)
     {
     case PAGE_NOACCESS:
         return false;

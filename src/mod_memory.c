@@ -564,7 +564,7 @@ static bool allocPage(uintptr address, uint size, uint32 type, uint32 protect)
     {
         return true;
     }
-    switch (type&0xF000)
+    switch (type & 0xF000)
     {
     case MEM_COMMIT:
         return commitPage(tracker, address, size, protect);
@@ -659,7 +659,7 @@ static bool freePage(uintptr address, uint size, uint32 type)
 {
     MemoryTracker* tracker = getTrackerPointer();
 
-    switch (type&0xF000)
+    switch (type & 0xF000)
     {
     case MEM_DECOMMIT:
         return decommitPage(tracker, address, size);
@@ -2052,12 +2052,12 @@ static uint calcHeapMark(uint mark, uintptr addr, uint size)
 // avoid inadvertently using sensitive permissions.
 static uint32 replacePageProtect(uint32 protect)
 {
-    switch (protect&0xFF)
+    switch (protect & 0xFF)
     {
     case PAGE_NOACCESS:
-        return (protect&0xFFFFFF00)+PAGE_READONLY;
+        return (protect & 0xFFFFFF00)+PAGE_READONLY;
     case PAGE_EXECUTE:
-        return (protect&0xFFFFFF00)+PAGE_EXECUTE_READ;
+        return (protect & 0xFFFFFF00)+PAGE_EXECUTE_READ;
     default:
         return protect;
     }
@@ -2066,7 +2066,7 @@ static uint32 replacePageProtect(uint32 protect)
 __declspec(noinline)
 static bool isPageTypeTrackable(uint32 type)
 {
-    switch (type&0xF000)
+    switch (type & 0xF000)
     {
     case MEM_COMMIT:
         break;
@@ -2083,7 +2083,7 @@ static bool isPageTypeTrackable(uint32 type)
 __declspec(noinline)
 static bool isPageProtectWriteable(uint32 protect)
 {
-    switch (protect&0xFF)
+    switch (protect & 0xFF)
     {
     case PAGE_READWRITE:
         break;

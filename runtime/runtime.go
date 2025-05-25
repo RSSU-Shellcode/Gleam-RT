@@ -138,10 +138,18 @@ type RuntimeM struct {
 	}
 
 	Resource struct {
-		LockMutex   uintptr
-		UnlockMutex uintptr
-		Status      uintptr
-		FreeAll     uintptr
+		LockMutex           uintptr
+		UnlockMutex         uintptr
+		LockEvent           uintptr
+		UnlockEvent         uintptr
+		LockSemaphore       uintptr
+		UnlockSemaphore     uintptr
+		LockWaitableTimer   uintptr
+		UnlockWaitableTimer uintptr
+		LockFile            uintptr
+		UnlockFile          uintptr
+		Status              uintptr
+		FreeAll             uintptr
 	}
 
 	Argument struct {

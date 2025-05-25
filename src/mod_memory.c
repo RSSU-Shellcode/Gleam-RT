@@ -2055,9 +2055,9 @@ static uint32 replacePageProtect(uint32 protect)
     switch (protect & 0xFF)
     {
     case PAGE_NOACCESS:
-        return (protect & 0xFFFFFF00)+PAGE_READONLY;
+        return (protect & 0xFFFFFF00) + PAGE_READONLY;
     case PAGE_EXECUTE:
-        return (protect & 0xFFFFFF00)+PAGE_EXECUTE_READ;
+        return (protect & 0xFFFFFF00) + PAGE_EXECUTE_READ;
     default:
         return protect;
     }
@@ -2069,34 +2069,27 @@ static bool isPageTypeTrackable(uint32 type)
     switch (type & 0xF000)
     {
     case MEM_COMMIT:
-        break;
     case MEM_RESERVE:
-        break;
     case MEM_COMMIT|MEM_RESERVE:
-        break;
+        return true;
     default:
         return false;
     }
-    return true;
 }
 
 __declspec(noinline)
 static bool isPageProtectWriteable(uint32 protect)
 {
-    switch (protect & 0xFF)
+    switch (protect)
     {
     case PAGE_READWRITE:
-        break;
     case PAGE_WRITECOPY:
-        break;
     case PAGE_EXECUTE_READWRITE:
-        break;
     case PAGE_EXECUTE_WRITECOPY:
-        break;
+        return true;
     default:
         return false;
     }
-    return true;
 }
 
 // adjustPageProtect is used to make sure this page is writeable.

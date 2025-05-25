@@ -265,6 +265,14 @@ int RT_WSACleanup();
 // methods for user
 bool RT_LockMutex(HANDLE hMutex);
 bool RT_UnlockMutex(HANDLE hMutex);
+bool RT_LockEvent(HANDLE hEvent);
+bool RT_UnlockEvent(HANDLE hEvent);
+bool RT_LockSemaphore(HANDLE hSemaphore);
+bool RT_UnlockSemaphore(HANDLE hSemaphore);
+bool RT_LockWaitableTimer(HANDLE hTimer);
+bool RT_UnlockWaitableTimer(HANDLE hTimer);
+bool RT_LockFile(HANDLE hFile);
+bool RT_UnlockFile(HANDLE hFile);
 bool RT_GetStatus(RT_Status* status);
 bool RT_FreeAllMu();
 
@@ -384,10 +392,18 @@ ResourceTracker_M* InitResourceTracker(Context* context)
     module->WSAStartup             = GetFuncAddr(&RT_WSAStartup);
     module->WSACleanup             = GetFuncAddr(&RT_WSACleanup);
     // methods for user
-    module->LockMutex   = GetFuncAddr(&RT_LockMutex);
-    module->UnlockMutex = GetFuncAddr(&RT_UnlockMutex);
-    module->GetStatus   = GetFuncAddr(&RT_GetStatus);
-    module->FreeAllMu   = GetFuncAddr(&RT_FreeAllMu);
+    module->LockMutex           = GetFuncAddr(&RT_LockMutex);
+    module->UnlockMutex         = GetFuncAddr(&RT_UnlockMutex);
+    module->LockEvent           = GetFuncAddr(&RT_LockEvent);
+    module->UnlockEvent         = GetFuncAddr(&RT_UnlockEvent);
+    module->LockSemaphore       = GetFuncAddr(&RT_LockSemaphore);
+    module->UnlockSemaphore     = GetFuncAddr(&RT_UnlockSemaphore);
+    module->LockWaitableTimer   = GetFuncAddr(&RT_LockWaitableTimer);
+    module->UnlockWaitableTimer = GetFuncAddr(&RT_UnlockWaitableTimer);
+    module->LockFile            = GetFuncAddr(&RT_LockFile);
+    module->UnlockFile          = GetFuncAddr(&RT_UnlockFile);
+    module->GetStatus           = GetFuncAddr(&RT_GetStatus);
+    module->FreeAllMu           = GetFuncAddr(&RT_FreeAllMu);
     // methods for runtime
     module->Lock    = GetFuncAddr(&RT_Lock);
     module->Unlock  = GetFuncAddr(&RT_Unlock);
@@ -2364,6 +2380,70 @@ bool RT_UnlockMutex(HANDLE hMutex)
 {
     bool success = setHandleLocker(hMutex, FUNC_CREATE_MUTEX, false);
     dbg_log("[resource]", "unlock mutex: 0x%zX", hMutex);
+    return success;
+}
+
+__declspec(noinline)
+bool RT_LockEvent(HANDLE hEvent)
+{
+    bool success = setHandleLocker(hEvent, FUNC_CREATE_EVENT, true);
+    dbg_log("[resource]", "lock event: 0x%zX", hEvent);
+    return success;
+}
+
+__declspec(noinline)
+bool RT_UnlockEvent(HANDLE hEvent)
+{
+    bool success = setHandleLocker(hEvent, FUNC_CREATE_EVENT, false);
+    dbg_log("[resource]", "unlock event: 0x%zX", hEvent);
+    return success;
+}
+
+__declspec(noinline)
+bool RT_LockSemaphore(HANDLE hSemaphore)
+{
+    bool success = setHandleLocker(hSemaphore, FUNC_CREATE_SEMAPHORE, true);
+    dbg_log("[resource]", "lock semaphore: 0x%zX", hSemaphore);
+    return success;
+}
+
+__declspec(noinline)
+bool RT_UnlockSemaphore(HANDLE hSemaphore)
+{
+    bool success = setHandleLocker(hSemaphore, FUNC_CREATE_SEMAPHORE, false);
+    dbg_log("[resource]", "unlock semaphore: 0x%zX", hSemaphore);
+    return success;
+}
+
+__declspec(noinline)
+bool RT_LockWaitableTimer(HANDLE hTimer)
+{
+    bool success = setHandleLocker(hTimer, FUNC_CREATE_WAITABLE_TIMER, true);
+    dbg_log("[resource]", "lock timer: 0x%zX", hTimer);
+    return success;
+}
+
+__declspec(noinline)
+bool RT_UnlockWaitableTimer(HANDLE hTimer)
+{
+    bool success = setHandleLocker(hTimer, FUNC_CREATE_WAITABLE_TIMER, false);
+    dbg_log("[resource]", "unlock timer: 0x%zX", hTimer);
+    return success;
+}
+
+__declspec(noinline)
+bool RT_LockFile(HANDLE hFile)
+{
+    bool success = setHandleLocker(hFile, FUNC_CREATE_FILE, true);
+    dbg_log("[resource]", "lock file: 0x%zX", hFile);
+    return success;
+}
+
+__declspec(noinline)
+bool RT_UnlockFile(HANDLE hFile)
+{
+    bool success = setHandleLocker(hFile, FUNC_CREATE_FILE, false);
+    dbg_log("[resource]", "unlock file: 0x%zX", hFile);
     return success;
 }
 

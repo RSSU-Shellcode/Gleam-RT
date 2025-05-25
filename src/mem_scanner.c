@@ -311,22 +311,13 @@ static byte valueToChar(byte b)
 
 static bool isRegionReadable(DWORD protect)
 {
-    switch (protect & 0xFF)
+    switch (protect)
     {
-    case PAGE_NOACCESS:
-        return false;
     case PAGE_READONLY:
-        return true;
     case PAGE_READWRITE:
-        return true;
     case PAGE_WRITECOPY:
-        return true;
-    case PAGE_EXECUTE:
-        return false;
     case PAGE_EXECUTE_READ:
-        return true;
     case PAGE_EXECUTE_READWRITE:
-        return true;
     case PAGE_EXECUTE_WRITECOPY:
         return true;
     default:

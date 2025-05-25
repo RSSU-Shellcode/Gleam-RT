@@ -91,6 +91,14 @@ typedef struct {
 
 typedef bool (*ResLockMutex_t)(HANDLE hMutex);
 typedef bool (*ResUnlockMutex_t)(HANDLE hMutex);
+typedef bool (*ResLockEvent_t)(HANDLE hEvent);
+typedef bool (*ResUnlockEvent_t)(HANDLE hEvent);
+typedef bool (*ResLockSemaphore_t)(HANDLE hSemaphore);
+typedef bool (*ResUnlockSemaphore_t)(HANDLE hSemaphore);
+typedef bool (*ResLockWaitableTimer_t)(HANDLE hTimer);
+typedef bool (*ResUnlockWaitableTimer_t)(HANDLE hTimer);
+typedef bool (*ResLockFile_t)(HANDLE hFile);
+typedef bool (*ResUnlockFile_t)(HANDLE hFile);
 typedef bool (*ResGetStatus_t)(RT_Status* status);
 typedef bool (*ResFreeAllMu_t)();
 
@@ -409,10 +417,18 @@ typedef struct {
     } Thread;
 
     struct {
-        ResLockMutex_t   LockMutex;
-        ResUnlockMutex_t UnlockMutex;
-        ResGetStatus_t   Status;
-        ResFreeAllMu_t   FreeAll;
+        ResLockMutex_t           LockMutex;
+        ResUnlockMutex_t         UnlockMutex;
+        ResLockEvent_t           LockEvent;
+        ResUnlockEvent_t         UnlockEvent;
+        ResLockSemaphore_t       LockSemaphore;
+        ResUnlockSemaphore_t     UnlockSemaphore;
+        ResLockWaitableTimer_t   LockWaitableTimer;
+        ResUnlockWaitableTimer_t UnlockWaitableTimer;
+        ResLockFile_t            LockFile;
+        ResUnlockFile_t          UnlockFile;
+        ResGetStatus_t           Status;
+        ResFreeAllMu_t           FreeAll;
     } Resource;
 
     struct {

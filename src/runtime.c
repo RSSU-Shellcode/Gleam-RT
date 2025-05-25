@@ -340,10 +340,18 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->Thread.Status  = runtime->ThreadTracker->GetStatus;
     module->Thread.KillAll = runtime->ThreadTracker->KillAllMu;
     // resource tracker
-    module->Resource.LockMutex   = runtime->ResourceTracker->LockMutex;
-    module->Resource.UnlockMutex = runtime->ResourceTracker->UnlockMutex;
-    module->Resource.Status      = runtime->ResourceTracker->GetStatus;
-    module->Resource.FreeAll     = runtime->ResourceTracker->FreeAllMu;
+    module->Resource.LockMutex           = runtime->ResourceTracker->LockMutex;
+    module->Resource.UnlockMutex         = runtime->ResourceTracker->UnlockMutex;
+    module->Resource.LockEvent           = runtime->ResourceTracker->LockEvent;
+    module->Resource.UnlockEvent         = runtime->ResourceTracker->UnlockEvent;
+    module->Resource.LockSemaphore       = runtime->ResourceTracker->LockSemaphore;
+    module->Resource.UnlockSemaphore     = runtime->ResourceTracker->UnlockSemaphore;
+    module->Resource.LockWaitableTimer   = runtime->ResourceTracker->LockWaitableTimer;
+    module->Resource.UnlockWaitableTimer = runtime->ResourceTracker->UnlockWaitableTimer;
+    module->Resource.LockFile            = runtime->ResourceTracker->LockFile;
+    module->Resource.UnlockFile          = runtime->ResourceTracker->UnlockFile;
+    module->Resource.Status              = runtime->ResourceTracker->GetStatus;
+    module->Resource.FreeAll             = runtime->ResourceTracker->FreeAllMu;
     // argument store
     module->Argument.GetValue   = runtime->ArgumentStore->GetValue;
     module->Argument.GetPointer = runtime->ArgumentStore->GetPointer;

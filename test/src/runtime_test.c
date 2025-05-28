@@ -17,6 +17,8 @@ bool TestInitRuntime()
 {
     Runtime_Opts opts = {
         .BootInstAddress     = NULL,
+        .DisableSysmon       = false,
+        .DisableWatchdog     = false,
         .NotEraseInstruction = true,
         .NotAdjustProtect    = false,
         .TrackCurrentThread  = false,

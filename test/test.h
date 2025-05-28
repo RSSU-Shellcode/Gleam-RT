@@ -30,6 +30,7 @@ bool TestRuntime_WinCrypto();
 bool TestRuntime_Sysmon();
 bool TestRuntime_Watchdog();
 bool TestRuntime_Exit();
+bool TestRuntime_Options();
 #pragma warning(pop)
 
 typedef bool (*test_t)();
@@ -58,6 +59,7 @@ static unit tests[] =
     { "Runtime_Sysmon",    TestRuntime_Sysmon    },
     { "Runtime_Watchdog",  TestRuntime_Watchdog  },
     { "Runtime_Exit",      TestRuntime_Exit      },
+    { "Runtime_Options",   TestRuntime_Options   },
 };
 
 #endif // TEST_H

@@ -230,6 +230,8 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     {
         Runtime_Opts opt = {
             .BootInstAddress     = NULL,
+            .DisableSysmon       = false,
+            .DisableWatchdog     = false,
             .NotEraseInstruction = false,
             .NotAdjustProtect    = false,
             .TrackCurrentThread  = false,
@@ -654,6 +656,8 @@ static errno initSubmodules(Runtime* runtime)
 {
     // create context data for initialize other modules
     Context context = {
+        .DisableSysmon       = runtime->Options.DisableSysmon,
+        .DisableWatchdog     = runtime->Options.DisableWatchdog,
         .NotEraseInstruction = runtime->Options.NotEraseInstruction,
         .TrackCurrentThread  = runtime->Options.TrackCurrentThread,
 

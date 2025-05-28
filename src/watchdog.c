@@ -15,6 +15,7 @@
 
 typedef struct {
     // store options
+    bool DisableWatchdog;
     bool NotEraseInstruction;
 
     SuspendThread_t          SuspendThread;
@@ -104,6 +105,7 @@ Watchdog_M* InitWatchdog(Context* context)
     Watchdog* watchdog = (Watchdog*)watchdogAddr;
     mem_init(watchdog, sizeof(Watchdog));
     // store options
+    watchdog->DisableWatchdog     = context->DisableWatchdog;
     watchdog->NotEraseInstruction = context->NotEraseInstruction;
     errno errno = NO_ERROR;
     for (;;)
@@ -431,6 +433,11 @@ static errno wd_stop()
 {
     Watchdog* watchdog = getWatchdogPointer();
 
+    if (watchdog->DisableWatchdog)
+    {
+        return NO_ERROR;
+    }
+
     if (watchdog->hThread == NULL)
     {
         return NO_ERROR;
@@ -486,6 +493,11 @@ __declspec(noinline)
 static void wd_add_kick()
 {
     Watchdog* watchdog = getWatchdogPointer();
+
+    if (watchdog->DisableWatchdog)
+    {
+        return;
+    }
 
     if (!wd_lock_status())
     {
@@ -558,6 +570,11 @@ errno WD_Enable()
 {
     Watchdog* watchdog = getWatchdogPointer();
 
+    if (watchdog->DisableWatchdog)
+    {
+        return NO_ERROR;
+    }
+
     if (!WD_Lock())
     {
         return ERR_WATCHDOG_LOCK;
@@ -614,6 +631,11 @@ __declspec(noinline)
 bool WD_IsEnabled()
 {
     Watchdog* watchdog = getWatchdogPointer();
+
+    if (watchdog->DisableWatchdog)
+    {
+        return NO_ERROR;
+    }
 
     if (!WD_Lock())
     {
@@ -680,6 +702,11 @@ errno WD_Pause()
 {
     Watchdog* watchdog = getWatchdogPointer();
 
+    if (watchdog->DisableWatchdog)
+    {
+        return NO_ERROR;
+    }
+
     if (watchdog->hThread == NULL)
     {
         return NO_ERROR;
@@ -697,6 +724,11 @@ __declspec(noinline)
 errno WD_Continue()
 {
     Watchdog* watchdog = getWatchdogPointer();
+
+    if (watchdog->DisableWatchdog)
+    {
+        return NO_ERROR;
+    }
 
     if (watchdog->hThread == NULL)
     {

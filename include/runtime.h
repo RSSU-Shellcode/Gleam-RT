@@ -12,9 +12,11 @@
 #define OPTION_STUB_SIZE  64
 #define OPTION_STUB_MAGIC 0xFC
 
-#define OPT_OFFSET_NOT_ERASE_INSTRUCTION    1
-#define OPT_OFFSET_NOT_ADJUST_PROTECT       2
-#define OPT_OFFSET_NOT_TRACK_CURRENT_THREAD 3
+#define OPT_OFFSET_DISABLE_SYSMON        1
+#define OPT_OFFSET_DISABLE_WATCHDOG      2
+#define OPT_OFFSET_NOT_ERASE_INSTRUCTION 3
+#define OPT_OFFSET_NOT_ADJUST_PROTECT    4
+#define OPT_OFFSET_TRACK_CURRENT_THREAD  5
 
 // for generic shellcode development.
 
@@ -558,6 +560,13 @@ typedef struct {
     // if it is NULL, Runtime will only protect self.
     void* BootInstAddress;
 
+    // disable sysmon for implement single thread model.
+    bool DisableSysmon;
+
+    // disable watchdog for implement single thread model.
+    // it will overwrite the control from upper module.
+    bool DisableWatchdog;
+
     // not erase runtime instructions after call Runtime_M.Exit
     bool NotEraseInstruction;
 
@@ -565,6 +574,7 @@ typedef struct {
     bool NotAdjustProtect;
 
     // track current thread for test or debug mode.
+    // it maybe improve single thread model.
     bool TrackCurrentThread;
 } Runtime_Opts;
 

@@ -15,6 +15,7 @@
 
 typedef struct {
     // store options
+    bool DisableSysmon;
     bool NotEraseInstruction;
 
     SuspendThread_t          SuspendThread;
@@ -102,6 +103,7 @@ Sysmon_M* InitSysmon(Context* context)
     Sysmon* sysmon = (Sysmon*)sysmonAddr;
     mem_init(sysmon, sizeof(Sysmon));
     // store options
+    sysmon->DisableSysmon       = context->DisableSysmon;
     sysmon->NotEraseInstruction = context->NotEraseInstruction;
     errno errno = NO_ERROR;
     for (;;)
@@ -131,14 +133,17 @@ Sysmon_M* InitSysmon(Context* context)
         return NULL;
     }
     // create thread for watcher
-    void* addr = GetFuncAddr(&sm_watcher);
-    HANDLE hThread = context->TT_NewThread(addr, NULL, false);
-    if (hThread == NULL)
+    if (!context->DisableSysmon)
     {
-        SetLastErrno(ERR_SYSMON_START_WATCHER);
-        return NULL;
+        void* addr = GetFuncAddr(&sm_watcher);
+        HANDLE hThread = context->TT_NewThread(addr, NULL, false);
+        if (hThread == NULL)
+        {
+            SetLastErrno(ERR_SYSMON_START_WATCHER);
+            return NULL;
+        }
+        sysmon->hThread = hThread;
     }
-    sysmon->hThread = hThread;
     // create methods for tracker
     Sysmon_M* method = (Sysmon_M*)methodAddr;
     // methods for user
@@ -574,6 +579,11 @@ errno SM_Pause()
 {
     Sysmon* sysmon = getSysmonPointer();
 
+    if (sysmon->DisableSysmon)
+    {
+        return NO_ERROR;
+    }
+
     errno errno = NO_ERROR;
     if (sysmon->SuspendThread(sysmon->hThread) == (DWORD)(-1))
     {
@@ -586,6 +596,11 @@ __declspec(noinline)
 errno SM_Continue()
 {
     Sysmon* sysmon = getSysmonPointer();
+
+    if (sysmon->DisableSysmon)
+    {
+        return NO_ERROR;
+    }
 
     errno errno = NO_ERROR;
     if (sysmon->ResumeThread(sysmon->hThread) == (DWORD)(-1))
@@ -602,23 +617,27 @@ errno SM_Stop()
 
     errno errno = NO_ERROR;
 
-    // send stop event to watcher
-    if (sysmon->SetEvent(sysmon->hEvent))
+    if (!sysmon->DisableSysmon)
     {
-        // wait watcher thread exit
-        if (sysmon->WaitForSingleObject(sysmon->hThread, 1000) != WAIT_OBJECT_0)
+        // send stop event to watcher
+        if (sysmon->SetEvent(sysmon->hEvent))
         {
-            errno = ERR_SYSMON_WAIT_THREAD;
+            // wait watcher thread exit
+            if (sysmon->WaitForSingleObject(sysmon->hThread, 1000) != WAIT_OBJECT_0)
+            {
+                errno = ERR_SYSMON_WAIT_THREAD;
+            }
+        } else {
+            errno = ERR_SYSMON_SEND_EVENT;
         }
-    } else {
-        errno = ERR_SYSMON_SEND_EVENT;
+
+        if (!sysmon->CloseHandle(sysmon->hThread) && errno == NO_ERROR)
+        {
+            errno = ERR_SYSMON_CLOSE_THREAD;
+        }
     }
 
     // clean resource about watcher
-    if (!sysmon->CloseHandle(sysmon->hThread) && errno == NO_ERROR)
-    {
-        errno = ERR_SYSMON_CLOSE_THREAD;
-    }
     if (!sysmon->CloseHandle(sysmon->hEvent) && errno == NO_ERROR)
     {
         errno = ERR_SYSMON_CLOSE_EVENT;

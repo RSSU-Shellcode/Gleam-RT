@@ -80,3 +80,35 @@ static void* calcEpilogue()
     size += ARG_OFFSET_FIRST_ARG;
     return (void*)(stub + size);
 }
+
+bool TestRuntime_Options()
+{
+    Runtime_Opts opts = {
+        .BootInstAddress     = NULL,
+        .DisableSysmon       = true,
+        .DisableWatchdog     = true,
+        .NotEraseInstruction = true,
+        .NotAdjustProtect    = false,
+        .TrackCurrentThread  = false,
+    };
+#ifdef SHELLCODE_MODE
+    typedef Runtime_M* (*InitRuntime_t)(Runtime_Opts* opts);
+    InitRuntime_t initRuntime = copyShellcode();
+    runtime = initRuntime(&opts);
+#else
+    runtime = InitRuntime(&opts);
+#endif // SHELLCODE_MODE
+    if (runtime == NULL)
+    {
+        printf_s("failed to initialize runtime: 0x%X\n", GetLastErrno());
+        return false;
+    }
+
+    errno errno = runtime->Core.Sleep(1000);
+    if (errno != NO_ERROR)
+    {
+        printf_s("failed to sleep: 0x%X\n", errno);
+        return false;
+    }
+    return true;
+}

@@ -2329,14 +2329,13 @@ static bool setRegionLocker(uintptr address, bool lock)
     List* pages   = &tracker->Pages;
 
     // search memory regions list
+    memRegion* region = NULL;
     uint len = regions->Len;
     uint idx = 0;
-    // record region size and set locker
-    uint regionSize = 0;
     bool found = false;
     for (uint num = 0; num < len; idx++)
     {
-        memRegion* region = List_Get(regions, idx);
+        region = List_Get(regions, idx);
         if (region->address == 0)
         {
             continue;
@@ -2347,17 +2346,21 @@ static bool setRegionLocker(uintptr address, bool lock)
             continue;
         }
         region->locked = lock;
-        regionSize = region->size;
         found = true;
         break;
     }
-    if (!found || regionSize == 0)
+    if (!found || region == NULL)
     {
         return false;
     }
-
+    // skip rwx region
+    if (region->isRWX)
+    {
+        return true;
+    }
     // set memory page locker
-    uint pageSize = tracker->PageSize;
+    uint regionSize = region->size;
+    uint pageSize   = tracker->PageSize;
     len = pages->Len;
     idx = 0;
     found = false;
@@ -2869,6 +2872,32 @@ errno MT_FreeAll()
         num++;
     }
 
+    // cover RWX memory region data
+    len = regions->Len;
+    idx = 0;
+    for (uint num = 0; num < len; idx++)
+    {
+        memRegion* region = List_Get(regions, idx);
+        if (region->address == 0)
+        {
+            continue;
+        }
+        // skip locked memory region
+        if (region->locked)
+        {
+            num++;
+            continue;
+        }
+        if (!region->isRWX)
+        {
+            num++;
+            continue;
+        }
+        // cover memory region
+        RandBuffer((byte*)(region->address), region->size);
+        num++;
+    }
+
     // decommit memory pages
     len = pages->Len;
     idx = 0;
@@ -3012,6 +3041,26 @@ errno MT_Clean()
         {
             RandBuffer((byte*)(page->address), tracker->PageSize);
         }
+        num++;
+    }
+
+    // cover RWX memory region data
+    len = regions->Len;
+    idx = 0;
+    for (uint num = 0; num < len; idx++)
+    {
+        memRegion* region = List_Get(regions, idx);
+        if (region->address == 0)
+        {
+            continue;
+        }
+        if (!region->isRWX)
+        {
+            num++;
+            continue;
+        }
+        // cover memory region
+        RandBuffer((byte*)(region->address), region->size);
         num++;
     }
 

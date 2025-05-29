@@ -179,8 +179,8 @@ static bool reserveRegion(MemoryTracker* tracker, uintptr address, uint size);
 static bool commitPage(MemoryTracker* tracker, uintptr address, uint size, uint32 protect);
 static bool freePage(uintptr address, uint size, uint32 type);
 static bool decommitPage(MemoryTracker* tracker, uintptr address, uint size);
-static bool releasePage(MemoryTracker* tracker, uintptr address, uint size);
-static bool deletePages(MemoryTracker* tracker, uintptr address, uint size);
+static bool releaseRegion(MemoryTracker* tracker, uintptr address, uint size);
+static bool deletePage(MemoryTracker* tracker, uintptr address, uint size);
 static void protectPage(uintptr address, uint size, uint32 protect);
 static bool addHeapObject(MemoryTracker* tracker, HANDLE hHeap, uint32 options);
 static bool delHeapObject(MemoryTracker* tracker, HANDLE hHeap);
@@ -601,11 +601,11 @@ static bool commitPage(MemoryTracker* tracker, uintptr address, uint size, uint3
     {
         numPage++;
     }
+    register List* pages = &tracker->Pages;
     memPage page = {
         .protect = protect,
         .locked  = false,
     };
-    register List* pages = &tracker->Pages;
     for (uint i = 0; i < numPage; i++)
     {
         page.address = address + i * pageSize;
@@ -664,7 +664,7 @@ static bool freePage(uintptr address, uint size, uint32 type)
     case MEM_DECOMMIT:
         return decommitPage(tracker, address, size);
     case MEM_RELEASE:
-        return releasePage(tracker, address, size);
+        return releaseRegion(tracker, address, size);
     default:
         return false;
     }
@@ -674,7 +674,7 @@ static bool decommitPage(MemoryTracker* tracker, uintptr address, uint size)
 {
     if (size != 0)
     {
-        return deletePages(tracker, address, size);
+        return deletePage(tracker, address, size);
     }
     // search memory regions list
     register List* regions = &tracker->Regions;
@@ -692,12 +692,12 @@ static bool decommitPage(MemoryTracker* tracker, uintptr address, uint size)
             num++;
             continue;
         }
-        return deletePages(tracker, region->address, region->size);
+        return deletePage(tracker, region->address, region->size);
     }
     return false;
 }
 
-static bool releasePage(MemoryTracker* tracker, uintptr address, uint size)
+static bool releaseRegion(MemoryTracker* tracker, uintptr address, uint size)
 {
     if (size != 0)
     {
@@ -721,7 +721,7 @@ static bool releasePage(MemoryTracker* tracker, uintptr address, uint size)
             num++;
             continue;
         }
-        if (!deletePages(tracker, region->address, region->size))
+        if (!deletePage(tracker, region->address, region->size))
         {
             return false;
         }
@@ -737,11 +737,11 @@ static bool releasePage(MemoryTracker* tracker, uintptr address, uint size)
 }
 
 #pragma optimize("t", on)
-static bool deletePages(MemoryTracker* tracker, uintptr address, uint size)
+static bool deletePage(MemoryTracker* tracker, uintptr address, uint size)
 {
-    register uint pageSize = tracker->PageSize;
+    register uint  pageSize = tracker->PageSize;
+    register List* pages    = &tracker->Pages;
 
-    register List* pages = &tracker->Pages;
     register uint len = pages->Len;
     register uint idx = 0;
     for (uint num = 0; num < len; idx++)
@@ -805,9 +805,9 @@ static void protectPage(uintptr address, uint size, uint32 protect)
 {
     MemoryTracker* tracker = getTrackerPointer();
 
-    register uint pageSize = tracker->PageSize;
+    register uint  pageSize = tracker->PageSize;
+    register List* pages    = &tracker->Pages;
 
-    register List* pages = &tracker->Pages;
     register uint len = pages->Len;
     register uint idx = 0;
     register memPage* page;

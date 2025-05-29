@@ -634,7 +634,7 @@ bool WD_IsEnabled()
 
     if (watchdog->DisableWatchdog)
     {
-        return NO_ERROR;
+        return false;
     }
 
     if (!WD_Lock())

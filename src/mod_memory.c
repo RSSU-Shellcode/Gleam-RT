@@ -23,7 +23,12 @@
 typedef struct {
     uintptr address;
     uint    size;
+    bool    isRWX;
     bool    locked;
+
+    // only for rwx region
+    byte key[CRYPTO_KEY_SIZE];
+    byte iv [CRYPTO_IV_SIZE];
 } memRegion;
 
 typedef struct {
@@ -196,6 +201,8 @@ static bool   setRegionLocker(uintptr address, bool lock);
 static bool encryptPage(MemoryTracker* tracker, memPage* page);
 static bool decryptPage(MemoryTracker* tracker, memPage* page);
 static bool isEmptyPage(MemoryTracker* tracker, memPage* page);
+static bool encryptRWXRegion(MemoryTracker* tracker, memRegion* region);
+static bool decryptRWXRegion(MemoryTracker* tracker, memRegion* region);
 static void deriveKey(MemoryTracker* tracker, memPage* page, byte* key);
 static bool encryptHeapBlocks(HANDLE hHeap);
 static bool decryptHeapBlocks(HANDLE hHeap);
@@ -524,14 +531,39 @@ LPVOID MT_VirtualAlloc(LPVOID address, SIZE_T size, DWORD type, DWORD protect)
     bool success = false;
     for (;;)
     {
-        page = tracker->VirtualAlloc(address, size, type, protect);
-        if (page == NULL)
+        if (type == (MEM_COMMIT|MEM_RESERVE) && protect == PAGE_EXECUTE_READWRITE)
         {
-            break;
-        }
-        if (!allocPage((uintptr)page, size, type, protect))
-        {
-            break;
+            // for make the allocation type is Read+Write
+            page = tracker->VirtualAlloc(address, size, type, PAGE_READWRITE);
+            if (page == NULL)
+            {
+                break;
+            }
+            DWORD old;
+            if (!tracker->VirtualProtect(page, size, PAGE_EXECUTE_READWRITE, &old))
+            {
+                break;
+            }
+            memRegion region = {
+                .address = (uintptr)page,
+                .size    = size,
+                .isRWX   = true,
+                .locked  = false,
+            };
+            if (!List_Insert(&tracker->Regions, &region))
+            {
+                break;
+            }
+        } else {
+            page = tracker->VirtualAlloc(address, size, type, protect);
+            if (page == NULL)
+            {
+                break;
+            }
+            if (!allocPage((uintptr)page, size, type, protect))
+            {
+                break;
+            }
         }
         success = true;
         break;
@@ -586,6 +618,7 @@ static bool reserveRegion(MemoryTracker* tracker, uintptr address, uint size)
     memRegion region = {
         .address = address,
         .size    = size,
+        .isRWX   = false,
         .locked  = false,
     };
     return List_Insert(&tracker->Regions, &region);
@@ -2418,8 +2451,10 @@ errno MT_Encrypt()
 {
     MemoryTracker* tracker = getTrackerPointer();
 
+    List* pages   = &tracker->Pages;
+    List* regions = &tracker->Regions;
+
     // encrypt memory pages
-    List* pages = &tracker->Pages;
     uint len = pages->Len;
     uint idx = 0;
     for (uint num = 0; num < len; idx++)
@@ -2432,6 +2467,28 @@ errno MT_Encrypt()
         if (!encryptPage(tracker, page))
         {
             return ERR_MEMORY_ENCRYPT_PAGE;
+        }
+        num++;
+    }
+
+    // encrypt RWX memory regions
+    len = regions->Len;
+    idx = 0;
+    for (uint num = 0; num < len; idx++)
+    {
+        memRegion* region = List_Get(regions, idx);
+        if (region->address == 0)
+        {
+            continue;
+        }
+        if (!region->isRWX)
+        {
+            num++;
+            continue;
+        }
+        if (!encryptRWXRegion(tracker, region))
+        {
+            return ERR_MEMORY_ENCRYPT_REGION;
         }
         num++;
     }
@@ -2505,10 +2562,12 @@ errno MT_Decrypt()
     iv   = tracker->HeapsIV;
     DecryptBuf(list->Data, List_Size(list), key, iv);
 
+    List* pages   = &tracker->Pages;
+    List* regions = &tracker->Regions;
+
     // reverse order traversal is used to deal with the problem
     // that some memory pages may be encrypted twice, like use
     // VirtualAlloc to allocate multiple times to the same address
-    List* pages = &tracker->Pages;
     uint len = pages->Len;
     uint idx = pages->Last;
     for (uint num = 0; num < len; idx--)
@@ -2521,6 +2580,28 @@ errno MT_Decrypt()
         if (!decryptPage(tracker, page))
         {
             return ERR_MEMORY_DECRYPT_PAGE;
+        }
+        num++;
+    }
+
+    // decrypt RWX memory regions
+    len = regions->Len;
+    idx = 0;
+    for (uint num = 0; num < len; idx++)
+    {
+        memRegion* region = List_Get(regions, idx);
+        if (region->address == 0)
+        {
+            continue;
+        }
+        if (!region->isRWX)
+        {
+            num++;
+            continue;
+        }
+        if (!decryptRWXRegion(tracker, region))
+        {
+            return ERR_MEMORY_DECRYPT_REGION;
         }
         num++;
     }
@@ -2603,6 +2684,24 @@ static bool isEmptyPage(MemoryTracker* tracker, memPage* page)
         addr++;
     }
     return true;
+}
+
+static bool encryptRWXRegion(MemoryTracker* tracker, memRegion* region)
+{
+    RandBuffer(region->key, CRYPTO_KEY_SIZE);
+    RandBuffer(region->iv, CRYPTO_IV_SIZE);
+    void* addr = (void*)(region->address);
+    EncryptBuf(addr, region->size, region->key, region->iv);
+    DWORD old;
+    return tracker->VirtualProtect(addr, region->size, PAGE_READWRITE, &old);
+}
+
+static bool decryptRWXRegion(MemoryTracker* tracker, memRegion* region)
+{
+    void* addr = (void*)(region->address);
+    DecryptBuf(addr, region->size, region->key, region->iv);
+    DWORD old;
+    return tracker->VirtualProtect(addr, region->size, PAGE_EXECUTE_READWRITE, &old);
 }
 
 static void deriveKey(MemoryTracker* tracker, memPage* page, byte* key)

@@ -9,6 +9,13 @@
 #include "errno.h"
 
 // about runtime options at the shellcode tail.
+//
+// +------------+---------+---------+-----------+
+// | magic mark | option1 | option2 | option... |
+// +------------+---------+---------+-----------+
+// |    0xFC    |   var   |   var   |    var    |
+// +------------+---------+---------+-----------+
+
 #define OPTION_STUB_SIZE  64
 #define OPTION_STUB_MAGIC 0xFC
 
@@ -574,7 +581,7 @@ typedef struct {
     bool NotAdjustProtect;
 
     // track current thread for test or debug mode.
-    // it maybe improve single thread model.
+    // it maybe improved the single thread model.
     bool TrackCurrentThread;
 } Runtime_Opts;
 

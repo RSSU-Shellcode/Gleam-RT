@@ -4,9 +4,12 @@ package gleamrt
 
 import (
 	"fmt"
+	"runtime"
 	"syscall"
 	"time"
 	"unsafe"
+
+	"golang.org/x/sys/windows"
 
 	"github.com/RSSU-Shellcode/GRT-Develop/metric"
 )
@@ -220,22 +223,44 @@ type RuntimeM struct {
 }
 
 // NewRuntime is used to create runtime from initialized instance.
-func NewRuntime(addr uintptr) *RuntimeM {
-	return (*RuntimeM)(unsafe.Pointer(addr)) // #nosec
+func NewRuntime(ptr uintptr) *RuntimeM {
+	return (*RuntimeM)(unsafe.Pointer(ptr)) // #nosec
 }
 
 // InitRuntime is used to initialize runtime from shellcode instance.
 // Each shellcode instance can only initialize once.
 func InitRuntime(addr uintptr, opts *Options) (*RuntimeM, error) {
-	ret, _, err := syscall.SyscallN(addr, uintptr(unsafe.Pointer(opts))) // #nosec
-	if ret == null {
+	ptr, _, err := syscall.SyscallN(addr, uintptr(unsafe.Pointer(opts))) // #nosec
+	if ptr == null {
 		return nil, fmt.Errorf("failed to initialize runtime: 0x%X", err)
 	}
-	return NewRuntime(ret), nil
+	// copy memory for prevent runtime encrypt memory page when call runtime method
+	rt := *(NewRuntime(ptr))
+	return &rt, nil
+}
+
+func (rt *RuntimeM) lock() {
+	runtime.LockOSThread()
+	hMutex := windows.Handle(rt.Data.Mutex)
+	_, err := windows.WaitForSingleObject(hMutex, windows.INFINITE)
+	if err != nil {
+		panic(fmt.Sprintf("failed to lock runtime mutex: %s", err))
+	}
+}
+
+func (rt *RuntimeM) unlock() {
+	hMutex := windows.Handle(rt.Data.Mutex)
+	err := windows.ReleaseMutex(hMutex)
+	if err != nil {
+		panic(fmt.Sprintf("failed to release runtime mutex: %s", err))
+	}
+	runtime.UnlockOSThread()
 }
 
 // Sleep is used to sleep and hide runtime.
 func (rt *RuntimeM) Sleep(d time.Duration) error {
+	rt.lock()
+	defer rt.unlock()
 	ret, _, _ := syscall.SyscallN(rt.Core.Sleep, uintptr(d.Milliseconds()))
 	if ret != noError {
 		return &errno{method: "Core.Sleep", errno: ret}
@@ -245,6 +270,8 @@ func (rt *RuntimeM) Sleep(d time.Duration) error {
 
 // Metrics is used to get runtime metric about core modules.
 func (rt *RuntimeM) Metrics() (*metric.Metrics, error) {
+	rt.lock()
+	defer rt.unlock()
 	metrics := metric.Metrics{}
 	ret, _, _ := syscall.SyscallN(rt.Core.Metrics, uintptr(unsafe.Pointer(&metrics))) // #nosec
 	if ret != noError {
@@ -255,6 +282,8 @@ func (rt *RuntimeM) Metrics() (*metric.Metrics, error) {
 
 // Cleanup is used to clean all tracked object except locked.
 func (rt *RuntimeM) Cleanup() error {
+	rt.lock()
+	defer rt.unlock()
 	ret, _, _ := syscall.SyscallN(rt.Core.Cleanup) // #nosec
 	if ret != noError {
 		return &errno{method: "Core.Cleanup", errno: ret}
@@ -264,6 +293,8 @@ func (rt *RuntimeM) Cleanup() error {
 
 // Exit is used to exit runtime.
 func (rt *RuntimeM) Exit() error {
+	rt.lock()
+	// defer rt.unlock() runtime will close the mutex
 	ret, _, _ := syscall.SyscallN(rt.Core.Exit) // #nosec
 	if ret != noError {
 		return &errno{method: "Core.Exit", errno: ret}

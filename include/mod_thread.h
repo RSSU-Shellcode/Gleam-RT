@@ -36,6 +36,7 @@ typedef struct {
     ExitThread_t       ExitThread;
     SuspendThread_t    SuspendThread;
     ResumeThread_t     ResumeThread;
+    SwitchToThread_t   SwitchToThread;
     GetThreadContext_t GetThreadContext;
     SetThreadContext_t SetThreadContext;
     TerminateThread_t  TerminateThread;

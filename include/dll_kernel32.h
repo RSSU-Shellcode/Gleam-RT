@@ -428,6 +428,8 @@ typedef DWORD (*ResumeThread_t)
     HANDLE hThread
 );
 
+typedef BOOL (*SwitchToThread_t)();
+
 typedef BOOL (*GetThreadContext_t)
 (
     HANDLE hThread, CONTEXT* lpContext

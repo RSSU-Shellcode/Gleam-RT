@@ -80,12 +80,12 @@ typedef struct {
     uint32 PageSize;    // for memory management
     HANDLE hMutex;      // global method mutex
 
-    // IAT hooks about GetProcAddress
-    Hook IATHooks[66];
-
-    // for try to lock submodules mutex
+    // try to lock submodules mutex
     HANDLE ModMutexHandle[6];
     bool   ModMutexStatus[6];
+
+    // IAT hooks about GetProcAddress
+    Hook IATHooks[67];
 
     // runtime submodules
     LibraryTracker_M*  LibraryTracker;
@@ -969,6 +969,7 @@ static bool initIATHooks(Runtime* runtime)
         { 0xA6E10FF27A1085A8, 0x24815A68A9695B16, TT->ExitThread },
         { 0x82ACE4B5AAEB22F1, 0xF3132FCE3AC7AD87, TT->SuspendThread },
         { 0x226860209E13A99A, 0xE1BD9D8C64FAF97D, TT->ResumeThread },
+        { 0x2DF3BB1B89E466A7, 0x014F180F69884E1D, TT->SwitchToThread },
         { 0x374E149C710B1006, 0xE5D0E3FA417FA6CF, TT->GetThreadContext },
         { 0xCFE3FFD5F0023AE3, 0x9044E42F1C020CF5, TT->SetThreadContext },
         { 0x248E1CDD11AB444F, 0x195932EA70030929, TT->TerminateThread },
@@ -1038,6 +1039,7 @@ static bool initIATHooks(Runtime* runtime)
         { 0xED42C0F0, 0xC59EBA39, TT->ExitThread },
         { 0x133B00D5, 0x48E02627, TT->SuspendThread },
         { 0xA02B4251, 0x5287173F, TT->ResumeThread },
+        { 0xA2D64686, 0x2C567D1D, TT->SwitchToThread },
         { 0xCF0EC7B7, 0xBAC33715, TT->GetThreadContext },
         { 0xC59EF832, 0xEF75D2EA, TT->SetThreadContext },
         { 0x6EF0E2AA, 0xE014E29F, TT->TerminateThread },

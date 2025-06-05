@@ -30,6 +30,7 @@ typedef struct {
     ExitThread_t           ExitThread;
     SuspendThread_t        SuspendThread;
     ResumeThread_t         ResumeThread;
+    SwitchToThread_t       SwitchToThread;
     GetThreadContext_t     GetThreadContext;
     SetThreadContext_t     SetThreadContext;
     GetThreadID_t          GetThreadID;
@@ -73,6 +74,7 @@ HANDLE TT_CreateThread(
 void  TT_ExitThread(DWORD dwExitCode);
 DWORD TT_SuspendThread(HANDLE hThread);
 DWORD TT_ResumeThread(HANDLE hThread);
+BOOL  TT_SwitchToThread();
 BOOL  TT_GetThreadContext(HANDLE hThread, CONTEXT* lpContext);
 BOOL  TT_SetThreadContext(HANDLE hThread, CONTEXT* lpContext);
 BOOL  TT_TerminateThread(HANDLE hThread, DWORD dwExitCode);
@@ -170,6 +172,7 @@ ThreadTracker_M* InitThreadTracker(Context* context)
     module->ExitThread       = GetFuncAddr(&TT_ExitThread);
     module->SuspendThread    = GetFuncAddr(&TT_SuspendThread);
     module->ResumeThread     = GetFuncAddr(&TT_ResumeThread);
+    module->SwitchToThread   = GetFuncAddr(&TT_SwitchToThread);
     module->GetThreadContext = GetFuncAddr(&TT_GetThreadContext);
     module->SetThreadContext = GetFuncAddr(&TT_SetThreadContext);
     module->TerminateThread  = GetFuncAddr(&TT_TerminateThread);
@@ -207,6 +210,7 @@ static bool initTrackerAPI(ThreadTracker* tracker, Context* context)
 #ifdef _WIN64
     {
         { 0x430932D6A2AC04EA, 0x9AF52A6480DA3C93 }, // CreateThread
+        { 0x279874724CB6400F, 0x07A93EB12A02E6BE }, // SwitchToThread
         { 0x59361F47711B4B27, 0xB97411CC715D4940 }, // GetThreadContext
         { 0xFB9A4AF393D77518, 0xA0CA2E8823A27560 }, // SetThreadContext
         { 0x5133BE509803E44E, 0x20498B6AFFAED91B }, // GetThreadId
@@ -218,6 +222,7 @@ static bool initTrackerAPI(ThreadTracker* tracker, Context* context)
 #elif _WIN32
     {
         { 0xB9D69C9D, 0xCAB90EB6 }, // CreateThread
+        { 0xB6DC09AF, 0x56B36926 }, // SwitchToThread
         { 0x25EF3A63, 0xAFA67C4F }, // GetThreadContext
         { 0x2729A1C9, 0x3A57FF5D }, // SetThreadContext
         { 0xFE77EB3E, 0x81CB68B1 }, // GetThreadId
@@ -236,14 +241,15 @@ static bool initTrackerAPI(ThreadTracker* tracker, Context* context)
         }
         list[i].proc = proc;
     }
-    tracker->CreateThread         = list[0x00].proc;
-    tracker->GetThreadContext     = list[0x01].proc;
-    tracker->SetThreadContext     = list[0x02].proc;
-    tracker->GetThreadID          = list[0x03].proc;
-    tracker->GetCurrentThreadID   = list[0x04].proc;
-    tracker->TerminateThread      = list[0x05].proc;
-    tracker->TlsAlloc             = list[0x06].proc;
-    tracker->TlsFree              = list[0x07].proc;
+    tracker->CreateThread       = list[0x00].proc;
+    tracker->SwitchToThread     = list[0x01].proc;
+    tracker->GetThreadContext   = list[0x02].proc;
+    tracker->SetThreadContext   = list[0x03].proc;
+    tracker->GetThreadID        = list[0x04].proc;
+    tracker->GetCurrentThreadID = list[0x05].proc;
+    tracker->TerminateThread    = list[0x06].proc;
+    tracker->TlsAlloc           = list[0x07].proc;
+    tracker->TlsFree            = list[0x08].proc;
 
     tracker->ExitThread           = context->ExitThread;
     tracker->SuspendThread        = context->SuspendThread;
@@ -619,6 +625,26 @@ DWORD TT_ResumeThread(HANDLE hThread)
         return (DWORD)(-1);
     }
     return count;
+}
+
+__declspec(noinline)
+BOOL TT_SwitchToThread()
+{
+    ThreadTracker* tracker = getTrackerPointer();
+
+    if (tracker->RT_LockMods() != NO_ERROR)
+    {
+        return false;
+    }
+
+    BOOL success = tracker->SwitchToThread();
+    dbg_log("[thread]", "SwitchToThread");
+
+    if (tracker->RT_UnlockMods() != NO_ERROR)
+    {
+        return false;
+    }
+    return success;
 }
 
 __declspec(noinline)

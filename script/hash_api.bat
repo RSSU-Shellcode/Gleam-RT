@@ -103,6 +103,7 @@ hash_api -fmt 64 -conc -func CreateThread
 hash_api -fmt 64 -conc -func ExitThread
 hash_api -fmt 64 -conc -func SuspendThread
 hash_api -fmt 64 -conc -func ResumeThread
+hash_api -fmt 64 -conc -func SwitchToThread
 hash_api -fmt 64 -conc -func GetThreadContext
 hash_api -fmt 64 -conc -func SetThreadContext
 hash_api -fmt 64 -conc -func GetThreadId
@@ -340,6 +341,7 @@ hash_api -fmt 32 -conc -func CreateThread
 hash_api -fmt 32 -conc -func ExitThread
 hash_api -fmt 32 -conc -func SuspendThread
 hash_api -fmt 32 -conc -func ResumeThread
+hash_api -fmt 32 -conc -func SwitchToThread
 hash_api -fmt 32 -conc -func GetThreadContext
 hash_api -fmt 32 -conc -func SetThreadContext
 hash_api -fmt 32 -conc -func GetThreadId

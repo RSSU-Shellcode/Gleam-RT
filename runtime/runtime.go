@@ -223,8 +223,11 @@ type RuntimeM struct {
 }
 
 // NewRuntime is used to create runtime from initialized instance.
+// It will copy memory for prevent runtime encrypt memory page when
+// call runtime methods or call SleepHR.
 func NewRuntime(ptr uintptr) *RuntimeM {
-	return (*RuntimeM)(unsafe.Pointer(ptr)) // #nosec
+	rt := *(*RuntimeM)(unsafe.Pointer(ptr)) // #nosec
+	return &rt
 }
 
 // InitRuntime is used to initialize runtime from shellcode instance.
@@ -234,9 +237,7 @@ func InitRuntime(addr uintptr, opts *Options) (*RuntimeM, error) {
 	if ptr == null {
 		return nil, fmt.Errorf("failed to initialize runtime: 0x%X", err)
 	}
-	// copy memory for prevent runtime encrypt memory page when call runtime method
-	rt := *(NewRuntime(ptr))
-	return &rt, nil
+	return NewRuntime(ptr), nil
 }
 
 func (rt *RuntimeM) lock() {

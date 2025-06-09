@@ -37,11 +37,11 @@
 // +--------------+--------------------+-------------------+
 #define MAIN_MEM_PAGE_SIZE (8*4096)
 
-// about IAT hooks
+// about Windows API redirector
 typedef struct {
     void* Proc;
     void* Hook;
-} Hook;
+} API_RDR;
 
 typedef struct {
     // store options from argument
@@ -84,8 +84,8 @@ typedef struct {
     HANDLE ModMutexHandle[6];
     bool   ModMutexStatus[6];
 
-    // IAT hooks about GetProcAddress
-    Hook IATHooks[67];
+    // Windows API redirector about GetProcAddress
+    API_RDR Redirectors[67];
 
     // runtime submodules
     LibraryTracker_M*  LibraryTracker;
@@ -106,14 +106,14 @@ typedef struct {
     Watchdog_M* Watchdog;
 } Runtime;
 
-// export methods and IAT hooks about Runtime
+// export methods about Runtime
 void* RT_FindAPI(uint hash, uint key);
 void* RT_FindAPI_A(byte* module, byte* function);
 void* RT_FindAPI_W(uint16* module, byte* function);
 
 void* RT_GetProcAddress(HMODULE hModule, LPCSTR lpProcName);
-void* RT_GetProcAddressByName(HMODULE hModule, LPCSTR lpProcName, bool hook);
-void* RT_GetProcAddressByHash(uint hash, uint key, bool hook);
+void* RT_GetProcAddressByName(HMODULE hModule, LPCSTR lpProcName, bool redirect);
+void* RT_GetProcAddressByHash(uint hash, uint key, bool redirect);
 void* RT_GetProcAddressOriginal(HMODULE hModule, LPCSTR lpProcName);
 
 BOOL  RT_SetCurrentDirectoryA(LPSTR lpPathName);
@@ -176,7 +176,7 @@ static errno initWinHTTP(Runtime* runtime, Context* context);
 static errno initWinCrypto(Runtime* runtime, Context* context);
 static errno initSysmon(Runtime* runtime, Context* context);
 static errno initWatchdog(Runtime* runtime, Context* context);
-static bool  initIATHooks(Runtime* runtime);
+static bool  initAPIRedirector(Runtime* runtime);
 static bool  flushInstructionCache(Runtime* runtime);
 static void  eraseArgumentStub(Runtime* runtime);
 static void  eraseRuntimeMethods(Runtime* runtime);
@@ -184,8 +184,8 @@ static errno cleanRuntime(Runtime* runtime);
 static errno closeHandles(Runtime* runtime);
 
 static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName);
-static void* getIATHook(Runtime* runtime, void* proc);
-static void* getLazyAPIHook(Runtime* runtime, void* proc);
+static void* getAPIRedirector(Runtime* runtime, void* proc);
+static void* getLazyAPIRedirector(Runtime* runtime, void* proc);
 
 static errno sleep(Runtime* runtime, HANDLE hTimer);
 static errno hide(Runtime* runtime);
@@ -272,9 +272,9 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
         {
             break;
         }
-        if (!initIATHooks(runtime))
+        if (!initAPIRedirector(runtime))
         {
-            errno = ERR_RUNTIME_INIT_IAT_HOOKS;
+            errno = ERR_RUNTIME_INIT_API_REDIRECTOR;
             break;
         }
         break;
@@ -307,7 +307,7 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     }
     // create methods for Runtime
     Runtime_M* module = (Runtime_M*)moduleAddr;
-    // about hash api
+    // hash api
     module->HashAPI.FindAPI   = GetFuncAddr(&RT_FindAPI);
     module->HashAPI.FindAPI_A = GetFuncAddr(&RT_FindAPI_A);
     module->HashAPI.FindAPI_W = GetFuncAddr(&RT_FindAPI_W);
@@ -414,14 +414,13 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->MemScanner.ScanByPattern = GetFuncAddr(&MemScanByPattern);
     module->MemScanner.BinToPattern  = GetFuncAddr(&BinToPattern);
     // get procedure address
-    module->Procedure.GetProcByName   = GetFuncAddr(&RT_GetProcAddressByName);
-    module->Procedure.GetProcByHash   = GetFuncAddr(&RT_GetProcAddressByHash);
-    module->Procedure.GetProcOriginal = GetFuncAddr(&RT_GetProcAddressOriginal);
-    // sysmon
+    module->Procedure.GetProcByName = GetFuncAddr(&RT_GetProcAddressByName);
+    module->Procedure.GetProcByHash = GetFuncAddr(&RT_GetProcAddressByHash);
+    // about system monitor
     module->Sysmon.Status   = runtime->Sysmon->GetStatus;
     module->Sysmon.Pause    = runtime->Sysmon->Pause;
     module->Sysmon.Continue = runtime->Sysmon->Continue;
-    // watchdog
+    // about watchdog
     module->Watchdog.Kick       = runtime->Watchdog->Kick;
     module->Watchdog.Enable     = runtime->Watchdog->Enable;
     module->Watchdog.Disable    = runtime->Watchdog->Disable;
@@ -430,6 +429,11 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->Watchdog.Status     = runtime->Watchdog->GetStatus;
     module->Watchdog.Pause      = runtime->Watchdog->Pause;
     module->Watchdog.Continue   = runtime->Watchdog->Continue;
+    // {THE TRUTH OF THE WORLD} && [THE END OF THE WORLD] :(
+    module->Raw.GetProcAddress = GetFuncAddr(&RT_GetProcAddressOriginal);
+    module->Raw.ExitProcess    = GetFuncAddr(&RT_ExitProcess);
+    // runtime core data
+    module->Data.Mutex = runtime->hMutex;
     // runtime core methods
     module->Core.Sleep   = GetFuncAddr(&RT_SleepHR);
     module->Core.Hide    = GetFuncAddr(&RT_Hide);
@@ -438,10 +442,6 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->Core.Cleanup = GetFuncAddr(&RT_Cleanup);
     module->Core.Exit    = GetFuncAddr(&RT_Exit);
     module->Core.Stop    = GetFuncAddr(&RT_Stop);
-    // runtime core data
-    module->Data.Mutex = runtime->hMutex;
-    // [THE END OF THE WORLD] :(
-    module->ExitProcess = GetFuncAddr(&RT_ExitProcess);
     return module;
 }
 
@@ -921,7 +921,7 @@ static errno initWatchdog(Runtime* runtime, Context* context)
     return NO_ERROR;
 }
 
-static bool initIATHooks(Runtime* runtime)
+static bool initAPIRedirector(Runtime* runtime)
 {
     LibraryTracker_M*  LT = runtime->LibraryTracker;
     MemoryTracker_M*   MT = runtime->MemoryTracker;
@@ -1080,8 +1080,8 @@ static bool initIATHooks(Runtime* runtime)
         {
             return false;
         }
-        runtime->IATHooks[i].Proc = proc;
-        runtime->IATHooks[i].Hook = items[i].hook;
+        runtime->Redirectors[i].Proc = proc;
+        runtime->Redirectors[i].Hook = items[i].hook;
     }
     return true;
 }
@@ -1541,7 +1541,7 @@ void* RT_GetProcAddress(HMODULE hModule, LPCSTR lpProcName)
 }
 
 __declspec(noinline)
-void* RT_GetProcAddressByName(HMODULE hModule, LPCSTR lpProcName, bool hook)
+void* RT_GetProcAddressByName(HMODULE hModule, LPCSTR lpProcName, bool redirect)
 {
     Runtime* runtime = getRuntimePointer();
 
@@ -1591,7 +1591,7 @@ void* RT_GetProcAddressByName(HMODULE hModule, LPCSTR lpProcName, bool hook)
 #endif
     uint hash = HashAPI_W((uint16*)(module), (byte*)lpProcName, key);
     // try to find Windows API by hash
-    void* proc = RT_GetProcAddressByHash(hash, key, hook);
+    void* proc = RT_GetProcAddressByHash(hash, key, redirect);
     if (proc != NULL)
     {
         return proc;
@@ -1606,7 +1606,7 @@ void* RT_GetProcAddressByName(HMODULE hModule, LPCSTR lpProcName, bool hook)
 }
 
 __declspec(noinline)
-void* RT_GetProcAddressByHash(uint hash, uint key, bool hook)
+void* RT_GetProcAddressByHash(uint hash, uint key, bool redirect)
 {
     Runtime* runtime = getRuntimePointer();
 
@@ -1615,19 +1615,19 @@ void* RT_GetProcAddressByHash(uint hash, uint key, bool hook)
     {
         return NULL;
     }
-    if (!hook)
+    if (!redirect)
     {
         return proc;
     }
-    void* iatHook = getIATHook(runtime, proc);
-    if (iatHook != proc)
+    void* redirector = getAPIRedirector(runtime, proc);
+    if (redirector != proc)
     {
-        return iatHook;
+        return redirector;
     }
-    void* lazyHook = getLazyAPIHook(runtime, proc);
-    if (lazyHook != proc)
+    void* lazyRedirector = getLazyAPIRedirector(runtime, proc);
+    if (lazyRedirector != proc)
     {
-        return lazyHook;
+        return lazyRedirector;
     }
     return proc;
 }
@@ -1725,30 +1725,30 @@ static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
     return NULL;
 }
 
-static void* getIATHook(Runtime* runtime, void* proc)
+static void* getAPIRedirector(Runtime* runtime, void* proc)
 {
-    for (int i = 0; i < arrlen(runtime->IATHooks); i++)
+    for (int i = 0; i < arrlen(runtime->Redirectors); i++)
     {
-        if (proc != runtime->IATHooks[i].Proc)
+        if (proc != runtime->Redirectors[i].Proc)
         {
             continue;
         }
-        return runtime->IATHooks[i].Hook;
+        return runtime->Redirectors[i].Hook;
     }
     return proc;
 }
 
-// getLazyAPIHook is used to FindAPI after call LoadLibrary.
-// Hooks in initIATHooks() are all in kernel32.dll.
-static void* getLazyAPIHook(Runtime* runtime, void* proc)
+// getLazyAPIRedirector is used to FindAPI after call LoadLibrary.
+// Redirectors in initAPIRedirector() are all in kernel32.dll.
+static void* getLazyAPIRedirector(Runtime* runtime, void* proc)
 {
     MemoryTracker_M*   MT = runtime->MemoryTracker;
     ResourceTracker_M* RT = runtime->ResourceTracker;
 
     typedef struct {
         uint hash; uint key; void* hook;
-    } hook;
-    hook hooks[] =
+    } item;
+    item items[] =
 #ifdef _WIN64
     {
         { 0x4D084BEDB72AB139, 0x0C3B997786E5B372, MT->msvcrt_malloc    },
@@ -1812,13 +1812,13 @@ static void* getLazyAPIHook(Runtime* runtime, void* proc)
         { 0x55CC7BBE, 0x3CD9CFDC, RT->closesocket      },
     };
 #endif
-    for (int i = 0; i < arrlen(hooks); i++)
+    for (int i = 0; i < arrlen(items); i++)
     {
-        if (FindAPI(hooks[i].hash, hooks[i].key) != proc)
+        if (FindAPI(items[i].hash, items[i].key) != proc)
         {
             continue;
         }
-        return hooks[i].hook;
+        return items[i].hook;
     }
     return proc;
 }

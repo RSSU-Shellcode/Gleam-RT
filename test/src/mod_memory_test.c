@@ -221,7 +221,7 @@ static bool TestMemory_Heap()
     }
     runtime->Core.Sleep(10);
 
-    // compare the hook function address
+    // compare the redirected function address
     HeapAlloc_t   RtlAllocateHeap   = runtime->Library.GetProc(hNtdll, "RtlAllocateHeap");
     HeapReAlloc_t RtlReAllocateHeap = runtime->Library.GetProc(hNtdll, "RtlReAllocateHeap");
     HeapFree_t    RtlFreeHeap       = runtime->Library.GetProc(hNtdll, "RtlFreeHeap");

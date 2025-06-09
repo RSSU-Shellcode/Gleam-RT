@@ -145,7 +145,7 @@ typedef struct {
     int64 Counters[1];
 } ResourceTracker;
 
-// methods for IAT hooks
+// methods for API redirector
 HANDLE RT_CreateMutexA(POINTER lpMutexAttributes, BOOL bInitialOwner, LPCSTR lpName);
 HANDLE RT_CreateMutexW(POINTER lpMutexAttributes, BOOL bInitialOwner, LPCWSTR lpName);
 HANDLE RT_CreateMutexExA(
@@ -347,7 +347,7 @@ ResourceTracker_M* InitResourceTracker(Context* context)
     }
     // create methods for tracker
     ResourceTracker_M* module = (ResourceTracker_M*)moduleAddr;
-    // Windows API hooks
+    // methods for API redirector
     module->CreateMutexA           = GetFuncAddr(&RT_CreateMutexA);
     module->CreateMutexW           = GetFuncAddr(&RT_CreateMutexW);
     module->CreateMutexExA         = GetFuncAddr(&RT_CreateMutexExA);

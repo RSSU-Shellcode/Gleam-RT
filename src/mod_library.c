@@ -48,7 +48,7 @@ typedef struct {
     byte ModulesIV [CRYPTO_IV_SIZE];
 } LibraryTracker;
 
-// methods for IAT hooks
+// methods for API redirector
 HMODULE LT_LoadLibraryA(LPCSTR lpLibFileName);
 HMODULE LT_LoadLibraryW(LPCWSTR lpLibFileName);
 HMODULE LT_LoadLibraryExA(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags);
@@ -132,7 +132,7 @@ LibraryTracker_M* InitLibraryTracker(Context* context)
     }
     // create methods for tracker
     LibraryTracker_M* module = (LibraryTracker_M*)moduleAddr;
-    // Windows API hooks
+    // methods for API redirector
     module->LoadLibraryA             = GetFuncAddr(&LT_LoadLibraryA);
     module->LoadLibraryW             = GetFuncAddr(&LT_LoadLibraryW);
     module->LoadLibraryExA           = GetFuncAddr(&LT_LoadLibraryExA);

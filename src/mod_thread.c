@@ -66,7 +66,7 @@ typedef struct {
     byte TLSIndexIV [CRYPTO_IV_SIZE];
 } ThreadTracker;
 
-// methods for IAT hooks
+// methods for API redirector
 HANDLE TT_CreateThread(
     POINTER lpThreadAttributes, SIZE_T dwStackSize, POINTER lpStartAddress,
     LPVOID lpParameter, DWORD dwCreationFlags, DWORD* lpThreadId
@@ -167,7 +167,7 @@ ThreadTracker_M* InitThreadTracker(Context* context)
     }
     // create methods for tracker
     ThreadTracker_M* module = (ThreadTracker_M*)moduleAddr;
-    // Windows API hooks
+    // methods for API redirector
     module->CreateThread     = GetFuncAddr(&TT_CreateThread);
     module->ExitThread       = GetFuncAddr(&TT_ExitThread);
     module->SuspendThread    = GetFuncAddr(&TT_SuspendThread);

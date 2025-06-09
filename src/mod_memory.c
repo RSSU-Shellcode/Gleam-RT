@@ -112,7 +112,7 @@ typedef struct {
     byte HeapsIV [CRYPTO_IV_SIZE];
 } MemoryTracker;
 
-// methods for IAT hooks
+// methods for API redirector
 LPVOID MT_VirtualAlloc(LPVOID address, SIZE_T size, DWORD type, DWORD protect);
 BOOL   MT_VirtualFree(LPVOID address, SIZE_T size, DWORD type);
 BOOL   MT_VirtualProtect(LPVOID address, SIZE_T size, DWORD new, DWORD* old);
@@ -250,7 +250,7 @@ MemoryTracker_M* InitMemoryTracker(Context* context)
     }
     // create methods for tracker
     MemoryTracker_M* module = (MemoryTracker_M*)moduleAddr;
-    // Windows API hooks
+    // methods for API redirector
     module->VirtualAlloc   = GetFuncAddr(&MT_VirtualAlloc);
     module->VirtualFree    = GetFuncAddr(&MT_VirtualFree);
     module->VirtualProtect = GetFuncAddr(&MT_VirtualProtect);
@@ -267,13 +267,13 @@ MemoryTracker_M* InitMemoryTracker(Context* context)
     module->LocalAlloc     = GetFuncAddr(&MT_LocalAlloc);
     module->LocalReAlloc   = GetFuncAddr(&MT_LocalReAlloc);
     module->LocalFree      = GetFuncAddr(&MT_LocalFree);
-    // hooks for msvcrt.dll
+    // redirectors about msvcrt.dll
     module->msvcrt_malloc  = GetFuncAddr(&MT_msvcrt_malloc);
     module->msvcrt_calloc  = GetFuncAddr(&MT_msvcrt_calloc);
     module->msvcrt_realloc = GetFuncAddr(&MT_msvcrt_realloc);
     module->msvcrt_free    = GetFuncAddr(&MT_msvcrt_free);
     module->msvcrt_msize   = GetFuncAddr(&MT_msvcrt_msize);
-    // hooks for ucrtbase.dll
+    // redirectors about ucrtbase.dll
     module->ucrtbase_malloc  = GetFuncAddr(&MT_ucrtbase_malloc);
     module->ucrtbase_calloc  = GetFuncAddr(&MT_ucrtbase_calloc);
     module->ucrtbase_realloc = GetFuncAddr(&MT_ucrtbase_realloc);

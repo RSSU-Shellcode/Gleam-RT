@@ -183,9 +183,8 @@ type RuntimeM struct {
 	}
 
 	Procedure struct {
-		GetProcByName   uintptr
-		GetProcByHash   uintptr
-		GetProcOriginal uintptr
+		GetProcByName uintptr
+		GetProcByHash uintptr
 	}
 
 	Sysmon struct {
@@ -205,6 +204,15 @@ type RuntimeM struct {
 		Continue   uintptr
 	}
 
+	Raw struct {
+		GetProcAddress uintptr
+		ExitProcess    uintptr
+	}
+
+	Data struct {
+		Mutex uintptr
+	}
+
 	Core struct {
 		Sleep   uintptr
 		Hide    uintptr
@@ -214,12 +222,6 @@ type RuntimeM struct {
 		Exit    uintptr
 		Stop    uintptr
 	}
-
-	Data struct {
-		Mutex uintptr
-	}
-
-	ExitProcess uintptr
 }
 
 // NewRuntime is used to create runtime from initialized instance.

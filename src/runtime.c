@@ -2387,7 +2387,7 @@ static errno stop(bool exitThread)
     {
         if (!recoverRuntimePointer(stub) && error == NO_ERROR)
         {
-            error = ERR_RUNTIME_EXIT_RECOVER_INST;
+            error = ERR_RUNTIME_RECOVER_INST;
         }
     }
 

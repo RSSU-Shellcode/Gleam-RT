@@ -319,6 +319,12 @@ bool IMS_GetValue(int id, void* value, uint* size)
             lastErr = ERR_STORAGE_NOT_EXISTS;
             break;
         }
+        // only receive data size
+        if (value == NULL)
+        {
+            *size = item->size;
+            break;
+        }
         mem_copy(value, item->data, item->size);
         if (size != NULL)
         {

@@ -112,12 +112,14 @@ typedef bool (*ResGetStatus_t)(RT_Status* status);
 typedef bool (*ResFreeAllMu_t)();
 
 // about argument store
+// GetValue: if value is NULL, size must not NULL for receive argument size.
 typedef bool (*ArgGetValue_t)(uint32 id, void* value, uint32* size);
 typedef bool (*ArgGetPointer_t)(uint32 id, void** pointer, uint32* size);
 typedef bool (*ArgErase_t)(uint32 id);
 typedef void (*ArgEraseAll_t)();
 
 // about in-memory storage
+// GetValue: if value is NULL, size must not NULL for receive data size.
 typedef bool (*ImsSetValue_t)(int id, void* value, uint size);
 typedef bool (*ImsGetValue_t)(int id, void* value, uint* size);
 typedef bool (*ImsGetPointer_t)(int id, void** pointer, uint* size);

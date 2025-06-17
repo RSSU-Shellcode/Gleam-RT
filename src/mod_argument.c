@@ -321,6 +321,13 @@ bool AS_GetValue(uint32 id, void* value, uint32* size)
             addr += 4 + 4 + asz;
             continue;
         }
+        // only receive argument size
+        if (value == NULL)
+        {
+            *size = asz;
+            found = true;
+            break;
+        }
         // copy argument data to value pointer
         void* src = addr + 4 + 4;
         mem_copy(value, src, asz);

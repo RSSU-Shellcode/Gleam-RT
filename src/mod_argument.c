@@ -10,6 +10,12 @@
 #include "mod_argument.h"
 #include "debug.h"
 
+// +--------+----------+--------+----------+
+// | arg id | arg size | erased | arg data |
+// +--------+----------+--------+----------+
+// | uint32 |  uint32  |  bool  |   var    |
+// +--------+----------+--------+----------+
+
 typedef struct {
     // store options
     bool NotEraseInstruction;
@@ -181,7 +187,7 @@ static bool recoverStorePointer(ArgumentStore* store)
 
 static bool initStoreEnvironment(ArgumentStore* store, Context* context)
 {
-    // create mutex
+    // create global mutex
     HANDLE hMutex = context->CreateMutexA(NULL, false, NAME_RT_AS_MUTEX_GLOBAL);
     if (hMutex == NULL)
     {
@@ -197,23 +203,25 @@ static bool initStoreEnvironment(ArgumentStore* store, Context* context)
 static errno loadArguments(ArgumentStore* store, Context* context)
 {
     uintptr stub = (uintptr)(GetFuncAddr(&Argument_Stub));
-    byte*   addr = (byte*)(stub + ARG_OFFSET_FIRST_ARG);
+    byte*   arg  = (byte*)(stub + ARG_OFFSET_FIRST_ARG);
+    uint32  num  = *(uint32*)(stub + ARG_OFFSET_NUM_ARGS);
     uint32  size = *(uint32*)(stub + ARG_OFFSET_ARGS_SIZE);
     // allocate memory page for store them
-    uint32 memSize = ((size / context->PageSize) + 1) * context->PageSize;
+    uint32 memSize = (((size + num) / context->PageSize) + 1) * context->PageSize;
     memSize += (uint32)(1 + RandUintN(0, 16)) * context->PageSize;
-    void* mem = store->VirtualAlloc(NULL, memSize, MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
+    byte* mem = store->VirtualAlloc(NULL, memSize, MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
     if (mem == NULL)
     {
         return ERR_ARGUMENT_ALLOC_MEM;
     }
     store->Address = mem;
     store->Size    = memSize;
-    store->NumArgs = *(uint32*)(stub + ARG_OFFSET_NUM_ARGS);
+    store->NumArgs = num;
     // copy encrypted arguments to new memory page
-    mem_copy(mem, addr, size);
+    byte* offAddr = mem + num;
+    mem_copy(offAddr, arg, size);
     // decrypted arguments
-    byte* data = (byte*)mem;
+    byte* data = offAddr;
     byte* key  = (byte*)(stub + ARG_OFFSET_CRYPTO_KEY);
     uint32 last = *(uint32*)(key+0);
     uint32 ctr  = *(uint32*)(key+4);
@@ -237,6 +245,22 @@ static errno loadArguments(ArgumentStore* store, Context* context)
         last = XORShift32(last);
         // update address
         data++;
+    }
+    // shift argument for set erase flag
+    byte* addr = mem;
+    byte* args = offAddr;
+    bool  flag = false;
+    for (uint32 i = 0; i < store->NumArgs; i++)
+    {
+        uint32 aid = *(uint32*)(args);
+        uint32 asz = *(uint32*)(args + 4);
+        byte*  src = args + 4 + 4;
+        mem_copy(addr + 0, &aid, sizeof(aid));
+        mem_copy(addr + 4, &asz, sizeof(asz));
+        mem_copy(addr + 8, &flag, sizeof(flag));
+        mem_copy(addr + 9, src, asz);
+        addr += 4 + 4 + 1 + asz;
+        args += 4 + 4 + asz;
     }
     // erase argument stub after decrypt
     if (!context->NotEraseInstruction)
@@ -317,9 +341,14 @@ bool AS_GetValue(uint32 id, void* value, uint32* size)
         uint32 asz = *(uint32*)(addr + 4);
         if (aid != id)
         {
-            // skip argument id, size and data
-            addr += 4 + 4 + asz;
+            addr += 4 + 4 + 1 + asz;
             continue;
+        }
+        // check argument is erased
+        bool erased = *(bool*)(addr + 8);
+        if (erased)
+        {
+            break;
         }
         // only receive argument size
         if (value == NULL)
@@ -329,7 +358,7 @@ bool AS_GetValue(uint32 id, void* value, uint32* size)
             break;
         }
         // copy argument data to value pointer
-        void* src = addr + 4 + 4;
+        void* src = addr + 4 + 4 + 1;
         mem_copy(value, src, asz);
         // receive argument size
         if (size != NULL)
@@ -366,14 +395,19 @@ bool AS_GetPointer(uint32 id, void** pointer, uint32* size)
         uint32 asz = *(uint32*)(addr + 4);
         if (aid != id)
         {
-            // skip argument id, size and data
-            addr += 4 + 4 + asz;
+            addr += 4 + 4 + 1 + asz;
             continue;
+        }
+        // check argument is erased
+        bool erased = *(bool*)(addr + 8);
+        if (erased)
+        {
+            break;
         }
         // receive argument pointer
         if (asz != 0)
         {
-            *pointer = (void*)(addr + 4 + 4);
+            *pointer = (void*)(addr + 4 + 4 + 1);
         } else {
             *pointer = NULL;
         }
@@ -412,8 +446,7 @@ bool AS_Erase(uint32 id)
         uint32 asz = *(uint32*)(addr + 4);
         if (aid != id)
         {
-            // skip argument id, size and data
-            addr += 4 + 4 + asz;
+            addr += 4 + 4 + 1 + asz;
             continue;
         }
         // erase argument id and data

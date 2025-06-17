@@ -45,18 +45,18 @@ typedef struct {
 } InMemoryStorage;
 
 // methods for upper module
-bool IM_SetValue(int id, void* value, uint size);
-bool IM_GetValue(int id, void* value, uint* size);
-bool IM_GetPointer(int id, void** pointer, uint* size);
-bool IM_Delete(int id);
-bool IM_DeleteAll();
+bool IMS_SetValue(int id, void* value, uint size);
+bool IMS_GetValue(int id, void* value, uint* size);
+bool IMS_GetPointer(int id, void** pointer, uint* size);
+bool IMS_Delete(int id);
+bool IMS_DeleteAll();
 
 // methods for runtime
-bool  IM_Lock();
-bool  IM_Unlock();
-errno IM_Encrypt();
-errno IM_Decrypt();
-errno IM_Clean();
+bool  IMS_Lock();
+bool  IMS_Unlock();
+errno IMS_Encrypt();
+errno IMS_Decrypt();
+errno IMS_Clean();
 
 // hard encoded address in getStoragePointer for replacement
 #ifdef _WIN64
@@ -119,17 +119,17 @@ InMemoryStorage_M* InitInMemoryStorage(Context* context)
     // create methods for storage
     InMemoryStorage_M* module = (InMemoryStorage_M*)moduleAddr;
     // methods for upper module
-    module->SetValue   = GetFuncAddr(&IM_SetValue);
-    module->GetValue   = GetFuncAddr(&IM_GetValue);
-    module->GetPointer = GetFuncAddr(&IM_GetPointer);
-    module->Delete     = GetFuncAddr(&IM_Delete);
-    module->DeleteAll  = GetFuncAddr(&IM_DeleteAll);
+    module->SetValue   = GetFuncAddr(&IMS_SetValue);
+    module->GetValue   = GetFuncAddr(&IMS_GetValue);
+    module->GetPointer = GetFuncAddr(&IMS_GetPointer);
+    module->Delete     = GetFuncAddr(&IMS_Delete);
+    module->DeleteAll  = GetFuncAddr(&IMS_DeleteAll);
     // methods for runtime
-    module->Lock    = GetFuncAddr(&IM_Lock);
-    module->Unlock  = GetFuncAddr(&IM_Unlock);
-    module->Encrypt = GetFuncAddr(&IM_Encrypt);
-    module->Decrypt = GetFuncAddr(&IM_Decrypt);
-    module->Clean   = GetFuncAddr(&IM_Clean);
+    module->Lock    = GetFuncAddr(&IMS_Lock);
+    module->Unlock  = GetFuncAddr(&IMS_Unlock);
+    module->Encrypt = GetFuncAddr(&IMS_Encrypt);
+    module->Decrypt = GetFuncAddr(&IMS_Decrypt);
+    module->Clean   = GetFuncAddr(&IMS_Clean);
     // data for sysmon
     module->hMutex = storage->hMutex;
     return module;
@@ -251,9 +251,9 @@ static InMemoryStorage* getStoragePointer()
 
 // methods for upper module
 __declspec(noinline)
-bool IM_SetValue(int id, void* value, uint size)
+bool IMS_SetValue(int id, void* value, uint size)
 {
-    if (!IM_Lock())
+    if (!IMS_Lock())
     {
         return false;
     }
@@ -283,7 +283,7 @@ bool IM_SetValue(int id, void* value, uint size)
         break;
     }
 
-    if (!IM_Unlock())
+    if (!IMS_Unlock())
     {
         return false;
     }
@@ -297,9 +297,9 @@ bool IM_SetValue(int id, void* value, uint size)
 }
 
 __declspec(noinline)
-bool IM_GetValue(int id, void* value, uint* size)
+bool IMS_GetValue(int id, void* value, uint* size)
 {
-    if (!IM_Lock())
+    if (!IMS_Lock())
     {
         return false;
     }
@@ -327,7 +327,7 @@ bool IM_GetValue(int id, void* value, uint* size)
         break;
     }
 
-    if (!IM_Unlock())
+    if (!IMS_Unlock())
     {
         return false;
     }
@@ -341,9 +341,9 @@ bool IM_GetValue(int id, void* value, uint* size)
 }
 
 __declspec(noinline)
-bool IM_GetPointer(int id, void** pointer, uint* size)
+bool IMS_GetPointer(int id, void** pointer, uint* size)
 {
-    if (!IM_Lock())
+    if (!IMS_Lock())
     {
         return false;
     }
@@ -371,7 +371,7 @@ bool IM_GetPointer(int id, void** pointer, uint* size)
         break;
     }
 
-    if (!IM_Unlock())
+    if (!IMS_Unlock())
     {
         return false;
     }
@@ -385,9 +385,9 @@ bool IM_GetPointer(int id, void** pointer, uint* size)
 }
 
 __declspec(noinline)
-bool IM_Delete(int id)
+bool IMS_Delete(int id)
 {
-    if (!IM_Lock())
+    if (!IMS_Lock())
     {
         return false;
     }
@@ -409,7 +409,7 @@ bool IM_Delete(int id)
         break;
     }
 
-    if (!IM_Unlock())
+    if (!IMS_Unlock())
     {
         return false;
     }
@@ -423,11 +423,11 @@ bool IM_Delete(int id)
 }
 
 __declspec(noinline)
-bool IM_DeleteAll()
+bool IMS_DeleteAll()
 {
     InMemoryStorage* storage = getStoragePointer();
 
-    if (!IM_Lock())
+    if (!IMS_Lock())
     {
         return false;
     }
@@ -457,7 +457,7 @@ bool IM_DeleteAll()
         num++;
     }
 
-    if (!IM_Unlock())
+    if (!IMS_Unlock())
     {
         return false;
     }
@@ -609,7 +609,7 @@ static bool delItem(int id)
 }
 
 __declspec(noinline)
-bool IM_Lock()
+bool IMS_Lock()
 {
     InMemoryStorage* storage = getStoragePointer();
 
@@ -618,7 +618,7 @@ bool IM_Lock()
 }
 
 __declspec(noinline)
-bool IM_Unlock()
+bool IMS_Unlock()
 {
     InMemoryStorage* storage = getStoragePointer();
 
@@ -626,7 +626,7 @@ bool IM_Unlock()
 }
 
 __declspec(noinline)
-errno IM_Encrypt()
+errno IMS_Encrypt()
 {
     InMemoryStorage* storage = getStoragePointer();
 
@@ -660,7 +660,7 @@ errno IM_Encrypt()
 }
 
 __declspec(noinline)
-errno IM_Decrypt()
+errno IMS_Decrypt()
 {
     InMemoryStorage* storage = getStoragePointer();
 
@@ -690,7 +690,7 @@ errno IM_Decrypt()
 }
 
 __declspec(noinline)
-errno IM_Clean()
+errno IMS_Clean()
 {
     InMemoryStorage* storage = getStoragePointer();
 

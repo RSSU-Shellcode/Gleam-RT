@@ -93,6 +93,19 @@ static bool TestArgument_GetValue()
         return false;
     }
 
+    // only receive argument size
+    id = 0;
+    if (!runtime->Argument.GetValue(id, NULL, &size))
+    {
+        printf_s("failed to get argument size with id 0\n");
+        return false;
+    }
+    if (size != 4)
+    {
+        printf_s("argument 0 size is invalid\n");
+        return false;
+    }
+
     // not receive argument size
     id = 0;
     arg0 = 0;
@@ -224,6 +237,24 @@ static bool TestArgument_Erase()
     }
     printf_s("check erased argument 1\n");
 
+    // erase the same id twice
+    id = 1;
+    if (!runtime->Argument.Erase(id))
+    {
+        printf_s("failed to erase argument with id 1\n");
+        return false;
+    }
+    printf_s("erase argument 1 twice\n");
+
+    arg1 = NULL;
+    size = 0;
+    if (runtime->Argument.GetValue(id, NULL, &size))
+    {
+        printf_s("get argument with id 1\n");
+        return false;
+    }
+    printf_s("check erased argument 1\n");
+
     // check arguments around it
     id = 0;
     uint32* arg0 = NULL;
@@ -286,6 +317,29 @@ static bool TestArgument_EraseAll()
 
     id = 2;
     if (runtime->Argument.GetPointer(id, &arg0, &size))
+    {
+        printf_s("get argument with id 2\n");
+        return false;
+    }
+
+    runtime->Argument.EraseAll();
+    printf_s("erase all arguments twice\n");
+
+    if (runtime->Argument.GetValue(id, NULL, &size))
+    {
+        printf_s("get argument with id 0\n");
+        return false;
+    }
+
+    id = 1;
+    if (runtime->Argument.GetValue(id, NULL, &size))
+    {
+        printf_s("get argument with id 1\n");
+        return false;
+    }
+
+    id = 2;
+    if (runtime->Argument.GetValue(id, NULL, &size))
     {
         printf_s("get argument with id 2\n");
         return false;

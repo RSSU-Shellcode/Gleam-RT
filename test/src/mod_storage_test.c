@@ -84,6 +84,19 @@ static bool TestStorage_GetValue()
         return false;
     }
 
+    printf_s("only get value size\n");
+    size = 0;
+    if (!runtime->Storage.GetValue(id, NULL, &size))
+    {
+        printf_s("failed to get value with id 0: 0x%X\n", GetLastErrno());
+        return false;
+    }
+    if (size != sizeof(val))
+    {
+        printf_s("get value with incorrect size\n");
+        return false;
+    }
+
     printf_s("get value but not receive size\n");
     id   = 16;
     val  = 0;
@@ -167,16 +180,24 @@ static bool TestStorage_Delete()
         printf_s("delete value with incorrect id: 0x%X\n", GetLastErrno());
         return false;
     }
+
+    id = 16;
+    uint size = 0;
+    if (runtime->Storage.GetValue(id, NULL, &size))
+    {
+        printf_s("get value with id 16\n");
+        return false;
+    }
     return true;
 }
 
 static bool TestStorage_DeleteAll()
 {
-    int  id  = 2;
+    int  id  = 1;
     uint val = 1234;
     if (!runtime->Storage.SetValue(id, &val, sizeof(val)))
     {
-        printf_s("failed to set value with id 2: 0x%X\n", GetLastErrno());
+        printf_s("failed to set value with id 1: 0x%X\n", GetLastErrno());
         return false;
     }
     id  = 2;
@@ -199,6 +220,28 @@ static bool TestStorage_DeleteAll()
     if (!runtime->Storage.DeleteAll())
     {
         printf_s("failed to delete all values: 0x%X\n", GetLastErrno());
+        return false;
+    }
+
+    id = 1;
+    uint size = 0;
+    if (runtime->Storage.GetValue(id, NULL, &size))
+    {
+        printf_s("get value with id 1\n");
+        return false;
+    }
+
+    id = 2;
+    if (runtime->Storage.GetValue(id, NULL, &size))
+    {
+        printf_s("get value with id 2\n");
+        return false;
+    }
+
+    id = 4;
+    if (runtime->Storage.GetValue(id, NULL, &size))
+    {
+        printf_s("get value with id 4\n");
         return false;
     }
     return true;

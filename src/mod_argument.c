@@ -16,6 +16,8 @@
 // | uint32 |  uint32  |  bool  |   var    |
 // +--------+----------+--------+----------+
 
+#define OFFSET_ARGUMENT_DATA (4 + 4 + 1)
+
 typedef struct {
     // store options
     bool NotEraseInstruction;
@@ -259,7 +261,7 @@ static errno loadArguments(ArgumentStore* store, Context* context)
         mem_copy(addr + 4, &asz, sizeof(asz));
         mem_copy(addr + 8, &flag, sizeof(flag));
         mem_copy(addr + 9, src, asz);
-        addr += 4 + 4 + 1 + asz;
+        addr += OFFSET_ARGUMENT_DATA + asz;
         args += 4 + 4 + asz;
     }
     // erase argument stub after decrypt
@@ -341,7 +343,7 @@ bool AS_GetValue(uint32 id, void* value, uint32* size)
         uint32 asz = *(uint32*)(addr + 4);
         if (aid != id)
         {
-            addr += 4 + 4 + 1 + asz;
+            addr += OFFSET_ARGUMENT_DATA + asz;
             continue;
         }
         // check argument is erased
@@ -358,7 +360,7 @@ bool AS_GetValue(uint32 id, void* value, uint32* size)
             break;
         }
         // copy argument data to value pointer
-        void* src = addr + 4 + 4 + 1;
+        void* src = addr + OFFSET_ARGUMENT_DATA;
         mem_copy(value, src, asz);
         // receive argument size
         if (size != NULL)
@@ -395,7 +397,7 @@ bool AS_GetPointer(uint32 id, void** pointer, uint32* size)
         uint32 asz = *(uint32*)(addr + 4);
         if (aid != id)
         {
-            addr += 4 + 4 + 1 + asz;
+            addr += OFFSET_ARGUMENT_DATA + asz;
             continue;
         }
         // check argument is erased
@@ -407,7 +409,7 @@ bool AS_GetPointer(uint32 id, void** pointer, uint32* size)
         // receive argument pointer
         if (asz != 0)
         {
-            *pointer = (void*)(addr + 4 + 4 + 1);
+            *pointer = (void*)(addr + OFFSET_ARGUMENT_DATA);
         } else {
             *pointer = NULL;
         }
@@ -446,12 +448,20 @@ bool AS_Erase(uint32 id)
         uint32 asz = *(uint32*)(addr + 4);
         if (aid != id)
         {
-            addr += 4 + 4 + 1 + asz;
+            addr += OFFSET_ARGUMENT_DATA + asz;
             continue;
         }
-        // erase argument id and data
-        RandBuffer(addr, 4);
-        RandBuffer(addr + 4 + 4, (int64)asz);
+        // check argument is erased
+        bool erased = *(bool*)(addr + 8);
+        if (erased)
+        {
+            found = true;
+            break;
+        }
+        // write the erased flag
+        *(bool*)(addr + 4 + 4) = true;
+        // erase argument data
+        RandBuffer(addr + OFFSET_ARGUMENT_DATA, (int64)asz);
         found = true;
         break;
     }
@@ -477,10 +487,16 @@ void AS_EraseAll()
     for (uint32 i = 0; i < store->NumArgs; i++)
     {
         uint32 asz = *(uint32*)(addr + 4);
-        // erase argument id and data
-        RandBuffer(addr, 4);
-        RandBuffer(addr + 4 + 4, (int64)asz);
-        addr += 4 + 4 + asz;
+        // if not erased, overwrite it
+        bool erased = *(bool*)(addr + 8);
+        if (!erased)
+        {
+            // write the erased flag
+            *(bool*)(addr + 4 + 4) = true;
+            // erase argument data
+            RandBuffer(addr + OFFSET_ARGUMENT_DATA, (int64)asz);
+        }
+        addr += OFFSET_ARGUMENT_DATA + asz;
     }
 
     AS_Unlock();

@@ -73,9 +73,9 @@ bool TestStrlen_a()
 
 bool TestStrlen_w()
 {
-    UTF16 str = L"unicode";
+    UTF16 str = L"utf16";
 
-    if (strlen_w(str) != 7)
+    if (strlen_w(str) != 5)
     {
         printf_s("strlen_w return incorrect length\n");
         return false;

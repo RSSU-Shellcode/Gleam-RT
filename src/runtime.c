@@ -35,7 +35,7 @@
 // +--------------+--------------------+-------------------+
 // | runtime core | runtime submodules | high-level module |
 // +--------------+--------------------+-------------------+
-#define MAIN_MEM_PAGE_SIZE (8*4096)
+#define MAIN_MEM_PAGE_SIZE (32 * 1024)
 
 // about Windows API redirector
 typedef struct {
@@ -463,13 +463,15 @@ static bool isValidArgumentStub()
 static void* allocRuntimeMemPage()
 {
 #ifdef _WIN64
-    uint hash = 0xB6A1D0D4A275D4B6;
-    uint key  = 0x64CB4D66EC0BEFD9;
+    uint mHash = 0x7CCA6C542E19FE5E;
+    uint pHash = 0xAA8D188A1F0862DC;
+    uint hKey  = 0x6EDC8B580ACA6913;
 #elif _WIN32
-    uint hash = 0xC3DE112E;
-    uint key  = 0x8D9EA74F;
+    uint mHash = 0x67F47A59;
+    uint pHash = 0xA7CFDD6F;
+    uint hKey  = 0x0F2BB61F;
 #endif
-    VirtualAlloc_t virtualAlloc = FindAPI(hash, key);
+    VirtualAlloc_t virtualAlloc = FindAPI(mHash, pHash, hKey);
     if (virtualAlloc == NULL)
     {
         return NULL;
@@ -496,69 +498,69 @@ static void* calculateEpilogue()
 static bool initRuntimeAPI(Runtime* runtime)
 {
     typedef struct { 
-        uint hash; uint key; void* proc;
+        uint mHash; uint pHash; uint hKey; void* proc;
     } winapi;
     winapi list[] =
 #ifdef _WIN64
     {
-        { 0x2A9C7D79595F39B2, 0x11FB7144E3CF94BD }, // GetSystemInfo
-        { 0x92CC6AD999858810, 0x4D23806992FC0259 }, // LoadLibraryA
-        { 0x18AF23D87980A16C, 0xE3380ADD44CA22C7 }, // FreeLibrary
-        { 0x7C1C9D36D30E0B75, 0x1ACD25CE8A87875A }, // GetProcAddress
-        { 0x6AC498DF641A4FCB, 0xFF3BB21B9BA46CEA }, // VirtualAlloc
-        { 0xAC150252A6CA3960, 0x12EFAEA421D60C3E }, // VirtualFree
-        { 0xEA5B0C76C7946815, 0x8846C203C35DE586 }, // VirtualProtect
-        { 0x8172B49F66E495BA, 0x8F0D0796223B56C2 }, // FlushInstructionCache
-        { 0x3A4D5132CF0D20D8, 0x89E05A81B86A26AE }, // SuspendThread
-        { 0xB1917786CE5B5A94, 0x6BC3328C112C6DDA }, // ResumeThread
-        { 0x91238A1B4E365AB0, 0x6C621931AE641330 }, // ExitThread
-        { 0x31FE697F93D7510C, 0x77C8F05FE04ED22D }, // CreateMutexA
-        { 0xEEFDEA7C0785B561, 0xA7B72CC8CD55C1D4 }, // ReleaseMutex
-        { 0x2E47C7EAD6A3CC9B, 0x7DCE77B96C9AC3ED }, // CreateEventA
-        { 0xF44F3BAA1B74B51B, 0xB560798C157FA915 }, // SetEvent
-        { 0x6B664C7B54AA27A8, 0x666DC45A99BC8137 }, // CreateWaitableTimerA
-        { 0x1C438D7C33D36592, 0xB8818ECC97728D1F }, // SetWaitableTimer
-        { 0xA524CD56CF8DFF7F, 0x5519595458CD47C8 }, // WaitForSingleObject
-        { 0x5DC078FB29E0F74D, 0x4852E519305338B6 }, // WaitForMultipleObjects
-        { 0xF7A5A49D19409FFC, 0x6F23FAA4C20FF4D3 }, // DuplicateHandle
-        { 0xA25F7449D6939A01, 0x85D37F1D89B30D2E }, // CloseHandle
-        { 0x94EC785163801E26, 0xCBF66516D38443F0 }, // SetCurrentDirectoryA
-        { 0x7A6FB9987CB1DB85, 0xF6A56D0FD43D9096 }, // SetCurrentDirectoryW
-        { 0xC0B2A3A0E0136020, 0xFCD8552BA93BD07E }, // SleepEx
-        { 0xB8D0B91323A24997, 0xBC36CA6282477A43 }, // EXitProcess
+        { 0x81281D579CF95014, 0x86A86D57C8A841B1, 0x17525CC1E154BA98 }, // GetSystemInfo
+        { 0xE57ED03045CF8261, 0xB726BDCEE213B000, 0xBC41C33EE9102207 }, // LoadLibraryA
+        { 0x39040AAE82DF6A27, 0x715D0BA3A37704ED, 0xF5E8C64F2FD1E69A }, // FreeLibrary
+        { 0x8DEA92825258B43D, 0x1E1187BF74A001D9, 0x2457B30C5AFA694C }, // GetProcAddress
+        { 0x01D79EDD3081D078, 0x447B8E23EA19AFBF, 0xC733FDBD9B57119F }, // VirtualAlloc
+        { 0x103364F533A102DE, 0x66E51926BF5C2675, 0xE23E338B794BD214 }, // VirtualFree
+        { 0xE61F09814F6DB0F1, 0xE720DBF70F19D718, 0xFD32DE1953F12824 }, // VirtualProtect
+        { 0x2942F56B284BE6A0, 0x06172C4E43D310FB, 0xF2B7646EDF1ADF06 }, // FlushInstructionCache
+        { 0x83E845755EFA1E95, 0xFC8825DC3C55B265, 0xCCBCA1685F8E8AD6 }, // SuspendThread
+        { 0x392F3A38C3FA3EED, 0xB0CAB85785F06761, 0xF5EE69828D2BD6E1 }, // ResumeThread
+        { 0x8C967347E10E2345, 0x9AD093D6D3F3F010, 0xE78BBF9830AA8844 }, // ExitThread
+        { 0x4A7A5CA9B2E5DC14, 0x1201412A13AA4E6F, 0x7275A1F15DD85A1F }, // CreateMutexA
+        { 0x821C92139935AD25, 0x34B5B1C885933D84, 0xE2276FF8F3AD2105 }, // ReleaseMutex
+        { 0xF13C96BD3A704689, 0xEC2E1ED137A9FC13, 0x0AB8729A0AA907A5 }, // CreateEventA
+        { 0xE8FFF1BA649033AB, 0xB21BF291AD8FCA39, 0xFE54EB09C78288C7 }, // SetEvent
+        { 0x2231484832A86586, 0xE28EEE755182BA08, 0xD80628473A8AC9D2 }, // CreateWaitableTimerA
+        { 0xEFD2B93BE1E8CE28, 0x5EA44B4FC8403DDC, 0xEB2D517E67A9A193 }, // SetWaitableTimer
+        { 0x350460801951609A, 0x023C544BECCF303A, 0x70BE40CC74D98FA5 }, // WaitForSingleObject
+        { 0x1B2F1DFD8CC1DEE2, 0xAA914C97CF93C6C4, 0xEBD4EB0F98F02345 }, // WaitForMultipleObjects
+        { 0x903C6C0D3F5EA5B5, 0x8C0157728DBBDF00, 0x72A6D14AD23E4170 }, // DuplicateHandle
+        { 0x34F6DB7FD270DACD, 0xAD3CAC3CA6B3F85F, 0x3A69E267838CC49B }, // CloseHandle
+        { 0x9645F47C050C8970, 0x7958DD2E625BFB9A, 0x8D88DDA980B5423A }, // SetCurrentDirectoryA
+        { 0x2DA99CE4EAA5EBC5, 0x92705193BA8D0E4C, 0x0157A58CBD86F5CB }, // SetCurrentDirectoryW
+        { 0x45C00FCCD8608BF4, 0xFF59A6239E10D034, 0x259506B04B900790 }, // SleepEx
+        { 0xA42803533C850050, 0xAE626A54FB4B1EFE, 0xC74CD2670540D0E5 }, // ExitProcess
     };
 #elif _WIN32
     {
-        { 0xD7792A53, 0x6DDE32BA }, // GetSystemInfo
-        { 0xC4B3F4F2, 0x71C983EF }, // LoadLibraryA
-        { 0xBB6DAE22, 0xADCBE537 }, // FreeLibrary
-        { 0x1CE92A4E, 0xBFF4B241 }, // GetProcAddress
-        { 0xB47741D5, 0x8034C451 }, // VirtualAlloc
-        { 0xF76A2ADE, 0x4D8938BD }, // VirtualFree
-        { 0xB2AC456D, 0x2A690F63 }, // VirtualProtect
-        { 0x87A2CEE8, 0x42A3C1AF }, // FlushInstructionCache
-        { 0x26C71141, 0xF3C390BD }, // SuspendThread
-        { 0x20FFDC31, 0x1D4EA347 }, // ResumeThread
-        { 0x1D1F85DD, 0x41A9BD17 }, // ExitThread
-        { 0x8F5BAED2, 0x43487DC7 }, // CreateMutexA
-        { 0xFA42E55C, 0xEA9F1081 }, // ReleaseMutex
-        { 0xF064C9E7, 0x9268B16B }, // CreateEventA
-        { 0xAAD95915, 0x93DFC243 }, // SetEvent
-        { 0xEA251494, 0xB8B82DF1 }, // CreateWaitableTimerA
-        { 0x3F987BDE, 0x01C8C945 }, // SetWaitableTimer
-        { 0xC21AB03D, 0xED3AAF22 }, // WaitForSingleObject
-        { 0xE106113F, 0x69239A3D }, // WaitForMultipleObjects
-        { 0x0E7ED8B9, 0x025067E9 }, // DuplicateHandle
-        { 0x60E108B2, 0x3C2DFF52 }, // CloseHandle
-        { 0xBCCEAFB1, 0x99C565BD }, // SetCurrentDirectoryA
-        { 0x499657EA, 0x7D23F113 }, // SetCurrentDirectoryW
-        { 0xF1994D1A, 0xDFA78EB5 }, // SleepEx
-        { 0xB6CEC366, 0xA0CF5E10 }, // EXitProcess
+        { 0x48CAA960, 0x1BE725E8, 0x54FE3C56 }, // GetSystemInfo
+        { 0x4C088F20, 0x8A1A09AF, 0x639DAAE1 }, // LoadLibraryA
+        { 0x4FEEC1A5, 0x9DC3A7B5, 0x4C5DFFD2 }, // FreeLibrary
+        { 0xFFD5608B, 0x3E95C861, 0xB86AF953 }, // GetProcAddress
+        { 0xED38BE94, 0x2EC158C4, 0xB33593DB }, // VirtualAlloc
+        { 0x2E5F98A6, 0xBFAD008B, 0x086D5CBA }, // VirtualFree
+        { 0xA0D678CB, 0x684D4B46, 0xFEAE4785 }, // VirtualProtect
+        { 0x1EF0D6B9, 0xF3E223E4, 0x58D1C6E8 }, // FlushInstructionCache
+        { 0xE5E1E669, 0xBFE496D9, 0x144C6CFA }, // SuspendThread
+        { 0x87529AFE, 0xA848A36A, 0xF5703D40 }, // ResumeThread
+        { 0x075404B1, 0x01C3A55A, 0x543BD02E }, // ExitThread
+        { 0xAEF6CD4F, 0x7613A300, 0x2BE798B4 }, // CreateMutexA
+        { 0x566023B1, 0x71D96B6C, 0x44DC831F }, // ReleaseMutex
+        { 0x914613C6, 0x05E6B16C, 0x56C2B5B2 }, // CreateEventA
+        { 0x23C3DD82, 0xB6BDC3FE, 0x5EA25057 }, // SetEvent
+        { 0x587233C2, 0xCBE31C79, 0xB527BB80 }, // CreateWaitableTimerA
+        { 0x9ABC8C02, 0x174F7821, 0xAF05BDDE }, // SetWaitableTimer
+        { 0xDDF3C456, 0x8312BDD3, 0xD3DE42B6 }, // WaitForSingleObject
+        { 0x11612FF7, 0xCC00FC68, 0xC0A6D2E7 }, // WaitForMultipleObjects
+        { 0xA0D83F42, 0xC75C037E, 0xA87DF314 }, // DuplicateHandle
+        { 0x35F0E826, 0xD4D75A32, 0x585D80CF }, // CloseHandle
+        { 0xC029EB89, 0x2361ABF9, 0xBD82334D }, // SetCurrentDirectoryA
+        { 0xB3FC81E0, 0xD69E0B74, 0x2833ECFE }, // SetCurrentDirectoryW
+        { 0xA7424FD3, 0x35D0E695, 0x1FAAF404 }, // SleepEx
+        { 0xE715A750, 0xE9D3E889, 0x65A48058 }, // ExitProcess
     };
 #endif
     for (int i = 0; i < arrlen(list); i++)
     {
-        void* proc = FindAPI(list[i].hash, list[i].key);
+        void* proc = FindAPI(list[i].mHash, list[i].pHash, list[i].hKey);
         if (proc == NULL)
         {
             return false;
@@ -1671,10 +1673,10 @@ static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
         { 0x9D3BD80CE0C033C5, 0x765B0D75B2CD552F, AS->GetPointer }, // AS_GetPointer
         { 0x80E96A620E350D88, 0x15106DAD2D6BE9CD, AS->Erase      }, // AS_Erase
         { 0xE9C53880A18DDBC5, 0xAD4B424AD7107356, AS->EraseAll   }, // AS_EraseAll
-        { 0xA0A8E5B8C3DCFA51, 0xF17677C850F79009, IS->SetValue   }, // IMS_SetValue 
-        { 0x5568210A09021F99, 0x7E0F49707DAD80D9, IS->GetValue   }, // IMS_GetValue 
-        { 0x1AFF08C4BE4D98F6, 0x0A4B9FCC81A591B0, IS->GetPointer }, // IMS_GetPointer 
-        { 0xEA25919E9BCC040C, 0x8E6D5D80012FC665, IS->Delete     }, // IMS_Delete 
+        { 0xA0A8E5B8C3DCFA51, 0xF17677C850F79009, IS->SetValue   }, // IMS_SetValue
+        { 0x5568210A09021F99, 0x7E0F49707DAD80D9, IS->GetValue   }, // IMS_GetValue
+        { 0x1AFF08C4BE4D98F6, 0x0A4B9FCC81A591B0, IS->GetPointer }, // IMS_GetPointer
+        { 0xEA25919E9BCC040C, 0x8E6D5D80012FC665, IS->Delete     }, // IMS_Delete
         { 0x1BA69F89ED463649, 0xE15C2CBCC46E7A66, IS->DeleteAll  }, // IMS_DeleteAll
         { 0xF3B6024681093DD5, 0x8A4F057EB2B878D3, SM->Pause      }, // SM_Pause
         { 0x75495038B0B8322E, 0x03BA221EE9B63523, SM->Continue   }, // SM_Continue
@@ -1697,10 +1699,10 @@ static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
         { 0xC3EBBD09, 0x5E0F8C56, AS->GetPointer }, // AS_GetPointer
         { 0x1EFCD1B4, 0x637F5BB1, AS->Erase      }, // AS_Erase
         { 0xD02FEA75, 0x4665275D, AS->EraseAll   }, // AS_EraseAll
-        { 0x52BC6DA8, 0xBF3C9F7C, IS->SetValue   }, // IMS_SetValue 
-        { 0x26872151, 0x915877AF, IS->GetValue   }, // IMS_GetValue 
-        { 0xE3247E50, 0xB8733B89, IS->GetPointer }, // IMS_GetPointer 
-        { 0x1957C984, 0x0765E67F, IS->Delete     }, // IMS_Delete 
+        { 0x52BC6DA8, 0xBF3C9F7C, IS->SetValue   }, // IMS_SetValue
+        { 0x26872151, 0x915877AF, IS->GetValue   }, // IMS_GetValue
+        { 0xE3247E50, 0xB8733B89, IS->GetPointer }, // IMS_GetPointer
+        { 0x1957C984, 0x0765E67F, IS->Delete     }, // IMS_Delete
         { 0x42A377C5, 0x55FBD86A, IS->DeleteAll  }, // IMS_DeleteAll
         { 0xA2F2FA18, 0x5CDE26F9, SM->Pause      }, // SM_Pause
         { 0x810F6775, 0x64DDA7D3, SM->Continue   }, // SM_Continue

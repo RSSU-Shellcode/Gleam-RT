@@ -107,13 +107,13 @@ typedef struct {
 } Runtime;
 
 // export methods about Runtime
-void* RT_FindAPI(uint hash, uint key);
-void* RT_FindAPI_A(byte* module, byte* function);
-void* RT_FindAPI_W(uint16* module, byte* function);
+void* RT_FindAPI(uint module, uint procedure, uint key);
+void* RT_FindAPI_A(byte* module, byte* procedure);
+void* RT_FindAPI_W(uint16* module, byte* procedure);
 
 void* RT_GetProcAddress(HMODULE hModule, LPCSTR lpProcName);
 void* RT_GetProcAddressByName(HMODULE hModule, LPCSTR lpProcName, bool redirect);
-void* RT_GetProcAddressByHash(uint hash, uint key, bool redirect);
+void* RT_GetProcAddressByHash(uint mHash, uint pHash, uint hKey, bool redirect);
 void* RT_GetProcAddressOriginal(HMODULE hModule, LPCSTR lpProcName);
 
 BOOL  RT_SetCurrentDirectoryA(LPSTR lpPathName);
@@ -1507,33 +1507,35 @@ void RT_try_unlock_mods()
 }
 
 __declspec(noinline)
-void* RT_FindAPI(uint hash, uint key)
+void* RT_FindAPI(uint module, uint procedure, uint key)
 {
-    return RT_GetProcAddressByHash(hash, key, true);
+    return RT_GetProcAddressByHash(module, procedure, key, true);
 }
 
 __declspec(noinline)
-void* RT_FindAPI_A(byte* module, byte* function)
+void* RT_FindAPI_A(byte* module, byte* procedure)
 {                  
 #ifdef _WIN64
     uint key = 0xA6C1B1E79D26D1E7;
 #elif _WIN32
     uint key = 0x94645D8B;
 #endif
-    uint hash = HashAPI_A(module, function, key);
-    return RT_GetProcAddressByHash(hash, key, true);
+    uint mHash = CalcModHash_A(module, key);
+    uint pHash = CalcProcHash(procedure, key);
+    return RT_GetProcAddressByHash(mHash, pHash, key, true);
 }
 
 __declspec(noinline)
-void* RT_FindAPI_W(uint16* module, byte* function)
+void* RT_FindAPI_W(uint16* module, byte* procedure)
 {
 #ifdef _WIN64
     uint key = 0xA6C1B1E79D26D1E7;
 #elif _WIN32
     uint key = 0x94645D8B;
 #endif
-    uint hash = HashAPI_W(module, function, key);
-    return RT_GetProcAddressByHash(hash, key, true);
+    uint mHash = CalcModHash_W(module, key);
+    uint pHash = CalcProcHash(procedure, key);
+    return RT_GetProcAddressByHash(mHash, pHash, key, true);
 }
 
 __declspec(noinline)
@@ -1591,9 +1593,10 @@ void* RT_GetProcAddressByName(HMODULE hModule, LPCSTR lpProcName, bool redirect)
 #elif _WIN32
     uint key = 0x94645D8B;
 #endif
-    uint hash = HashAPI_W((uint16*)(module), (byte*)lpProcName, key);
+    uint mHash = CalcModHash_W((uint16*)(module), key);
+    uint pHash = CalcProcHash((byte*)lpProcName, key);
     // try to find Windows API by hash
-    void* proc = RT_GetProcAddressByHash(hash, key, redirect);
+    void* proc = RT_GetProcAddressByHash(mHash, pHash, key, redirect);
     if (proc != NULL)
     {
         return proc;
@@ -1608,11 +1611,11 @@ void* RT_GetProcAddressByName(HMODULE hModule, LPCSTR lpProcName, bool redirect)
 }
 
 __declspec(noinline)
-void* RT_GetProcAddressByHash(uint hash, uint key, bool redirect)
+void* RT_GetProcAddressByHash(uint mHash, uint pHash, uint hKey, bool redirect)
 {
     Runtime* runtime = getRuntimePointer();
 
-    void* proc = FindAPI(hash, key);
+    void* proc = FindAPI(mHash, pHash, hKey);
     if (proc == NULL)
     {
         return NULL;

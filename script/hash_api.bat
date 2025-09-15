@@ -35,12 +35,74 @@ hash_api -fmt 64 -conc -mod "kernel32.dll" -proc SleepEx
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc ExitProcess
 echo.
 
-echo [Runtime IAT Hooks]
+echo [API Redirector]
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc GetProcAddress
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc SetCurrentDirectoryA
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc SetCurrentDirectoryW
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc Sleep
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc SleepEx
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc LoadLibraryA
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc LoadLibraryW
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc LoadLibraryExA
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc LoadLibraryExW
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc FreeLibrary
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc FreeLibraryAndExitThread
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc VirtualAlloc
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc VirtualFree
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc VirtualProtect
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc VirtualQuery
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc HeapCreate
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc HeapDestroy
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc HeapAlloc
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc HeapReAlloc
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc HeapFree
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc HeapSize
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc GlobalAlloc
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc GlobalReAlloc
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc GlobalFree
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc LocalAlloc
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc LocalReAlloc
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc LocalFree
+hash_api -fmt 64 -conc -mod "ntdll.dll"	-proc RtlAllocateHeap
+hash_api -fmt 64 -conc -mod "ntdll.dll"	-proc RtlReAllocateHeap
+hash_api -fmt 64 -conc -mod "ntdll.dll"	-proc RtlFreeHeap
+hash_api -fmt 64 -conc -mod "ntdll.dll"	-proc RtlSizeHeap
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc CreateThread
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc ExitThread
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc SuspendThread
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc ResumeThread
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc SwitchToThread
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc GetThreadContext
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc SetThreadContext
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc TerminateThread
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc TlsAlloc
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc TlsFree
+hash_api -fmt 64 -conc -mod "ntdll.dll"	-proc RtlExitUserThread
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc CreateMutexA
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc CreateMutexW
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc CreateMutexExA
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc CreateMutexExW
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc CreateEventA
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc CreateEventW
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc CreateEventExA
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc CreateEventExW
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc CreateSemaphoreA
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc CreateSemaphoreW
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc CreateSemaphoreExA
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc CreateSemaphoreExW
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc CreateWaitableTimerA
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc CreateWaitableTimerW
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc CreateWaitableTimerExA
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc CreateWaitableTimerExW
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc CreateFileA
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc CreateFileW
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc FindFirstFileA
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc FindFirstFileW
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc FindFirstFileExA
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc FindFirstFileExW
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc CreateIoCompletionPort
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc CloseHandle
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc FindClose
 echo.
 
 echo [Runtime Methods]
@@ -273,12 +335,74 @@ hash_api -fmt 32 -conc -mod "kernel32.dll" -proc SleepEx
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc ExitProcess
 echo.
 
-echo [Runtime IAT Hooks]
+echo [API Redirector]
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc GetProcAddress
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc SetCurrentDirectoryA
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc SetCurrentDirectoryW
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc Sleep
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc SleepEx
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc LoadLibraryA
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc LoadLibraryW
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc LoadLibraryExA
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc LoadLibraryExW
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc FreeLibrary
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc FreeLibraryAndExitThread
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc VirtualAlloc
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc VirtualFree
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc VirtualProtect
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc VirtualQuery
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc HeapCreate
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc HeapDestroy
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc HeapAlloc
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc HeapReAlloc
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc HeapFree
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc HeapSize
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc GlobalAlloc
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc GlobalReAlloc
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc GlobalFree
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc LocalAlloc
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc LocalReAlloc
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc LocalFree
+hash_api -fmt 32 -conc -mod "ntdll.dll"	-proc RtlAllocateHeap
+hash_api -fmt 32 -conc -mod "ntdll.dll"	-proc RtlReAllocateHeap
+hash_api -fmt 32 -conc -mod "ntdll.dll"	-proc RtlFreeHeap
+hash_api -fmt 32 -conc -mod "ntdll.dll"	-proc RtlSizeHeap
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc CreateThread
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc ExitThread
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc SuspendThread
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc ResumeThread
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc SwitchToThread
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc GetThreadContext
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc SetThreadContext
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc TerminateThread
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc TlsAlloc
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc TlsFree
+hash_api -fmt 32 -conc -mod "ntdll.dll"	-proc RtlExitUserThread
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc CreateMutexA
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc CreateMutexW
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc CreateMutexExA
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc CreateMutexExW
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc CreateEventA
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc CreateEventW
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc CreateEventExA
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc CreateEventExW
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc CreateSemaphoreA
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc CreateSemaphoreW
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc CreateSemaphoreExA
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc CreateSemaphoreExW
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc CreateWaitableTimerA
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc CreateWaitableTimerW
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc CreateWaitableTimerExA
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc CreateWaitableTimerExW
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc CreateFileA
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc CreateFileW
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc FindFirstFileA
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc FindFirstFileW
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc FindFirstFileExA
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc FindFirstFileExW
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc CreateIoCompletionPort
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc CloseHandle
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc FindClose
 echo.
 
 echo [Runtime Methods]

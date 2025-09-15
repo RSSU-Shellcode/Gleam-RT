@@ -111,6 +111,24 @@ hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc GetProcAddressByHash
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc GetProcAddressOriginal
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc GetMetrics
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc ExitProcess
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc AS_GetValue
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc AS_GetPointer
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc AS_Erase
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc AS_EraseAll
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc IMS_SetValue
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc IMS_GetValue
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc IMS_GetPointer
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc IMS_Delete
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc IMS_DeleteAll
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc SM_Pause
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc SM_Continue
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc WD_Kick
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc WD_Enable
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc WD_Disable
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc WD_IsEnabled
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc WD_SetHandler
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc WD_Pause
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc WD_Continue
 echo.
 
 echo [Library Tracker]
@@ -225,21 +243,6 @@ hash_api -fmt 64 -conc -mod "ws2_32.dll" -proc closesocket
 hash_api -fmt 64 -conc -mod "mswsock.dll" -proc AcceptEx
 echo.
 
-echo [Argument Store]
-hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc AS_GetValue
-hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc AS_GetPointer
-hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc AS_Erase
-hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc AS_EraseAll
-echo.
-
-echo [In-Memory Storage]
-hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc IMS_SetValue
-hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc IMS_GetValue
-hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc IMS_GetPointer
-hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc IMS_Delete
-hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc IMS_DeleteAll
-echo.
-
 echo [WinBase Module]
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc MultiByteToWideChar
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc WideCharToMultiByte
@@ -289,20 +292,8 @@ hash_api -fmt 64 -conc -mod "advapi32.dll" -proc CryptSignHashA
 hash_api -fmt 64 -conc -mod "advapi32.dll" -proc CryptVerifySignatureA
 echo.
 
-echo [Sysmon Module]
-hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc SM_Pause
-hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc SM_Continue
-echo.
-
 echo [Watchdog Module]
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc ResetEvent
-hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc WD_Kick
-hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc WD_Enable
-hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc WD_Disable
-hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc WD_IsEnabled
-hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc WD_SetHandler
-hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc WD_Pause
-hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc WD_Continue
 echo.
 
 echo ------------------------x86------------------------
@@ -411,6 +402,24 @@ hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc GetProcAddressByHash
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc GetProcAddressOriginal
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc GetMetrics
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc ExitProcess
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc AS_GetValue
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc AS_GetPointer
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc AS_Erase
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc AS_EraseAll
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc IMS_SetValue
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc IMS_GetValue
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc IMS_GetPointer
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc IMS_Delete
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc IMS_DeleteAll
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc SM_Pause
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc SM_Continue
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc WD_Kick
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc WD_Enable
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc WD_Disable
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc WD_IsEnabled
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc WD_SetHandler
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc WD_Pause
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc WD_Continue
 echo.
 
 echo [Library Tracker]
@@ -525,21 +534,6 @@ hash_api -fmt 32 -conc -mod "ws2_32.dll" -proc closesocket
 hash_api -fmt 32 -conc -mod "mswsock.dll" -proc AcceptEx
 echo.
 
-echo [Argument Store]
-hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc AS_GetValue
-hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc AS_GetPointer
-hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc AS_Erase
-hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc AS_EraseAll
-echo.
-
-echo [In-Memory Storage]
-hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc IMS_SetValue
-hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc IMS_GetValue
-hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc IMS_GetPointer
-hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc IMS_Delete
-hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc IMS_DeleteAll
-echo.
-
 echo [WinBase Module]
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc MultiByteToWideChar
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc WideCharToMultiByte
@@ -589,20 +583,8 @@ hash_api -fmt 32 -conc -mod "advapi32.dll" -proc CryptSignHashA
 hash_api -fmt 32 -conc -mod "advapi32.dll" -proc CryptVerifySignatureA
 echo.
 
-echo [Sysmon Module]
-hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc SM_Pause
-hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc SM_Continue
-echo.
-
 echo [Watchdog Module]
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc ResetEvent
-hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc WD_Kick
-hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc WD_Enable
-hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc WD_Disable
-hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc WD_IsEnabled
-hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc WD_SetHandler
-hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc WD_Pause
-hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc WD_Continue
 echo.
 
 pause

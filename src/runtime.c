@@ -39,8 +39,8 @@
 
 // about Windows API redirector
 typedef struct {
-    void* Proc;
-    void* Hook;
+    void* src;
+    void* dst;
 } API_RDR;
 
 typedef struct {
@@ -931,159 +931,159 @@ static bool initAPIRedirector(Runtime* runtime)
     ResourceTracker_M* RT = runtime->ResourceTracker;
 
     typedef struct {
-        uint hash; uint key; void* hook;
+        uint mHash; uint pHash; uint hKey; void* api;
     } item;
     item items[] =
 #ifdef _WIN64
     {
-        { 0xCAA4843E1FC90287, 0x2F19F60181B5BFE3, GetFuncAddr(&RT_GetProcAddress) },
-        { 0x2619069D6D00AC17, 0xA12815DB2311C3C0, GetFuncAddr(&RT_SetCurrentDirectoryA) },
-        { 0x6A8F6B893B3E7468, 0x1C4D6ABB7E274A8A, GetFuncAddr(&RT_SetCurrentDirectoryW) },
-        { 0xCED5CC955152CD43, 0xAA22C83C068CB037, GetFuncAddr(&RT_SleepHR) }, // kernel32.Sleep
-        { 0xF8AFE6686E40E6E7, 0xE461B3ED286DAF92, GetFuncAddr(&RT_SleepEx) }, // kernel32.SleepEx
-        { 0xD823D640CA9D87C3, 0x15821AE3463EFBE8, LT->LoadLibraryA },
-        { 0xDE75B0371B7500C0, 0x2A1CF678FC737D0F, LT->LoadLibraryW },
-        { 0x448751B1385751E8, 0x3AE522A4E9435111, LT->LoadLibraryExA },
-        { 0x7539E619D8B4166E, 0xE52EE8B2C2D15D9B, LT->LoadLibraryExW },
-        { 0x80B0A97C97E9FE79, 0x675B0BA55C1758F9, LT->FreeLibrary },
-        { 0x66F288FB8CF6CADD, 0xC48D2119FF3ADC6A, LT->FreeLibraryAndExitThread },
-        { 0x18A3895F35B741C8, 0x96C9890F48D55E7E, MT->VirtualAlloc },
-        { 0xDB54AA6683574A8B, 0x3137DE2D71D3FF3E, MT->VirtualFree },
-        { 0xF5469C21B43D23E5, 0xF80028997F625A05, MT->VirtualProtect },
-        { 0xE9ECDC63F6D3DC53, 0x815C2FDFE640307E, MT->VirtualQuery },
-        { 0xFFDAAC40C9760BF6, 0x75E3BCA6D545E130, MT->HeapCreate },
-        { 0xF2B10CAD6B4626E6, 0x14D21E0224A81F33, MT->HeapDestroy },
-        { 0x2D5BD20546A9F7FF, 0xD1569863116D78AA, MT->HeapAlloc },
-        { 0x622C7DF56116553C, 0x4545A260B5B4EE4F, MT->HeapReAlloc },
-        { 0xEB6C5AC538D9CB88, 0x31C1AE2150C892FA, MT->HeapFree },
-        { 0xF07CA2BE1E1D44B0, 0xF5D1D9ACFCC34F21, MT->HeapSize },
-        { 0xDD0B1C33C5E8DE6B, 0x8E5C390C6FA06475, MT->GlobalAlloc },
-        { 0x96EA754ECF447CB9, 0xB041E8B71EC6E6AE, MT->GlobalReAlloc },
-        { 0x402039178195F587, 0x31AC6524EF5DB181, MT->GlobalFree },
-        { 0xD5213AB31B1D5943, 0xC33F3C38A13B501E, MT->LocalAlloc },
-        { 0x2E12831CCA966749, 0x4EAC960E9A01E99A, MT->LocalReAlloc },
-        { 0xC62EFD9A11EB91B7, 0x926374B4CE1B1737, MT->LocalFree },
-        { 0x1E8B0246BF18CA97, 0xC131B02374BDDB50, MT->HeapAlloc },   // ntdll.RtlAllocateHeap
-        { 0x3E96C8D55DF611FB, 0x9BD65CE3AABE9404, MT->HeapReAlloc }, // ntdll.RtlReAllocateHeap
-        { 0xCB9C04169B2FE6A6, 0xFE277A3C4C7E6B27, MT->HeapFree },    // ntdll.RtlFreeHeap
-        { 0x0AA12F40EDAD881E, 0x3C699B9AB31D2007, MT->HeapSize },    // ntdll.RtlSizeHeap
-        { 0x84AC57FA4D95DE2E, 0x5FF86AC14A334443, TT->CreateThread },
-        { 0xA6E10FF27A1085A8, 0x24815A68A9695B16, TT->ExitThread },
-        { 0x82ACE4B5AAEB22F1, 0xF3132FCE3AC7AD87, TT->SuspendThread },
-        { 0x226860209E13A99A, 0xE1BD9D8C64FAF97D, TT->ResumeThread },
-        { 0x2DF3BB1B89E466A7, 0x014F180F69884E1D, TT->SwitchToThread },
-        { 0x374E149C710B1006, 0xE5D0E3FA417FA6CF, TT->GetThreadContext },
-        { 0xCFE3FFD5F0023AE3, 0x9044E42F1C020CF5, TT->SetThreadContext },
-        { 0x248E1CDD11AB444F, 0x195932EA70030929, TT->TerminateThread },
-        { 0xFA78B22F20F4A6AE, 0xBE9C88DB7A69D0FA, TT->TlsAlloc },
-        { 0x04ACE48652C6FABB, 0x19401007C082388D, TT->TlsFree },
-        { 0xEE9B49D8A9AFB57E, 0xB241162E988541ED, TT->ExitThread }, // ntdll.RtlExitUserThread
-        { 0x58926BA5F71CBB5B, 0x1E1F604F6035248A, RT->CreateMutexA },
-        { 0x95A1D6B96343624E, 0xA7C4DE10EA2DA12F, RT->CreateMutexW },
-        { 0x9DE77A6C34487772, 0xBAB00DB945A579C8, RT->CreateMutexExA },
-        { 0x5984322FB6D59F14, 0xB66A181C81DBE8E2, RT->CreateMutexExW },
-        { 0x7875DE52EC02CD8B, 0xB95F39E380958D5E, RT->CreateEventA },
-        { 0xE116F3576A0D31F5, 0x3E535616ED1E31A4, RT->CreateEventW },
-        { 0xF2062F1867E52EA2, 0xC2946E76369763EA, RT->CreateEventExA },
-        { 0x3F8CC6B0D515045B, 0x94113899E7D963C8, RT->CreateEventExW },
-        { 0x6F0B68B7A35CA7F3, 0x2E4C8C1DA65EEE90, RT->CreateSemaphoreA },
-        { 0x05110AD1D211F776, 0xE4991237499AA3C6, RT->CreateSemaphoreW },
-        { 0x4FB9F7F3F0E2F362, 0x7446C8F3BF89FD93, RT->CreateSemaphoreExA },
-        { 0xC7892873869A1252, 0x05A561B8DF4D705B, RT->CreateSemaphoreExW },
-        { 0xEEAA2E22C8B204FF, 0x14B8510CB1CA2432, RT->CreateWaitableTimerA },
-        { 0x49698D9C89EB77D9, 0xE4F15FA3B48299CD, RT->CreateWaitableTimerW },
-        { 0x4E2E823834034B82, 0x65B10CE650DF86E9, RT->CreateWaitableTimerExA },
-        { 0xD4A475D82D61AA80, 0x289B9102E50F75E0, RT->CreateWaitableTimerExW },
-        { 0x94DAFAE03484102D, 0x300F881516DC2FF5, RT->CreateFileA },
-        { 0xC3D28B35396A90DA, 0x8BA6316E5F5DC86E, RT->CreateFileW },
-        { 0x4015A18370E27D65, 0xA5B47007B7B8DD26, RT->FindFirstFileA },
-        { 0x7C520EB61A85181B, 0x933C760F029EF1DD, RT->FindFirstFileW },
-        { 0xFB272B44E7E9CFC6, 0xB5F76233869E347D, RT->FindFirstFileExA },
-        { 0x1C30504D9D6BC5E5, 0xF5C232B8DEEC41C8, RT->FindFirstFileExW },
-        { 0x54FDF3852F96A11F, 0x239752D7D0A979E4, RT->CreateIoCompletionPort },
-        { 0x78AEE64CADBBC72F, 0x480A328AEFFB1A39, RT->CloseHandle },
-        { 0x3D3A73632A3BCEDA, 0x72E6CA3A0850F779, RT->FindClose },
+        { 0xFF4DA9811A24DD2A, 0xE6E26FB6E4FE59CE, 0x10BB9100F93D0F8B, GetFuncAddr(&RT_GetProcAddress) },
+        { 0xC1166F5480F32BFD, 0x12A3CA6BA34EAD87, 0x4DC32CDE85E16492, GetFuncAddr(&RT_SetCurrentDirectoryA) },
+        { 0xFBE4BC0513717538, 0x891F575DD3B8F3E6, 0x9D79D93FAB212FD8, GetFuncAddr(&RT_SetCurrentDirectoryW) },
+        { 0x6434DEA711176856, 0x0BB33DC44169CD1C, 0x962140866F051973, GetFuncAddr(&RT_SleepHR) }, // kernel32.Sleep
+        { 0xDF5822C48AE06E22, 0x0C095075F316AE39, 0x058807734232290F, GetFuncAddr(&RT_SleepEx) }, // kernel32.SleepEx
+        { 0x4DC42B3903DA99C6, 0xCA400801FF61A34E, 0xE1AC9F7852E1B05D, LT->LoadLibraryA },
+        { 0xFC7A7C50BCFD6225, 0xDBD45608DD3235FA, 0xFEC559962D6601D9, LT->LoadLibraryW },
+        { 0x7375B34705AE6800, 0xDD32124FBD682FB9, 0x049E6B412B5D442D, LT->LoadLibraryExA },
+        { 0x1896A460454253F3, 0x3FCC5C6C3F82C2BE, 0xAB0B4D9079E2A130, LT->LoadLibraryExW },
+        { 0x1496C27FE3608899, 0xB43C2134E4723CA2, 0xF1A7017F9F0C94F3, LT->FreeLibrary },
+        { 0xE80B5CBE037995D7, 0x2788C62E627713D4, 0x866469F01DBF6133, LT->FreeLibraryAndExitThread },
+        { 0xD7409B7A8292AA03, 0x66E9F2BA41E2A0C2, 0x1FA76CFBFF379502, MT->VirtualAlloc },
+        { 0xC8EE591299E0F9A2, 0x603E56ED7C1537F4, 0x52F1C8C0B584364E, MT->VirtualFree },
+        { 0x978351ED493CACDE, 0x3A1198A4675C5EC3, 0x4E8AAF5E5D075B4A, MT->VirtualProtect },
+        { 0x703806E0587E928B, 0xAA7548E17B62D7F8, 0xDCFEB1AF57895416, MT->VirtualQuery },
+        { 0xB01F1D8C667AABC3, 0x07DB7553F4BC04BE, 0xF982F021BF11141E, MT->HeapCreate },
+        { 0x6453FCEA8686D0B2, 0x8969C9C075773B1F, 0x539B4168D258E6D1, MT->HeapDestroy },
+        { 0x48A9D2FB20F58D7E, 0x91937D49AF9FFAB9, 0xFF298C980C1FA51C, MT->HeapAlloc },
+        { 0x431DA6E0CB500521, 0x27D5BFE5E7FEA339, 0xAB8CB329F8568805, MT->HeapReAlloc },
+        { 0xCCCAB3E4FFBC9243, 0xE36248C464C39491, 0x9A21FFFBDCCFCB53, MT->HeapFree },
+        { 0xB201A5400764FE9F, 0x9194EEFD9C18C50E, 0x7DDC64814D267471, MT->HeapSize },
+        { 0x6D994AD4EB52E6A3, 0x970FBBB0DC7425CC, 0xCCA0C65AC9CA766E, MT->GlobalAlloc },
+        { 0x53E8DBD868752C6A, 0xFF13BFC56EF8D89D, 0xBE039A649C308043, MT->GlobalReAlloc },
+        { 0xE83083D2D450DA12, 0x992429E01F37C2CB, 0x1DEC53513323DAF3, MT->GlobalFree },
+        { 0x72DF45871184EAF7, 0x64BDFC1946C13262, 0x0B6B7BAA8E332572, MT->LocalAlloc },
+        { 0x505894A74E77B8DD, 0xA31D116D5758AC8B, 0xF0B791821E236189, MT->LocalReAlloc },
+        { 0x43F1AF438F3E85A3, 0x287C7FAF838267FC, 0x9B059DD440D97436, MT->LocalFree },
+        { 0x3CCA726C479AD6EE, 0x3982604A64E78596, 0xD2E8220B9E91AB06, MT->HeapAlloc },   // ntdll.RtlAllocateHeap
+        { 0xAB07832BADB3A35C, 0xF739177359998320, 0x94BE3DC57A355EA9, MT->HeapReAlloc }, // ntdll.RtlReAllocateHeap
+        { 0x751B90853766930B, 0xB989CF296AEDD473, 0x98D91AD0B8459B8F, MT->HeapFree },    // ntdll.RtlFreeHeap
+        { 0x45BBAE8A1FCFB479, 0x3D50CA10768C5333, 0xE48E4568E8787962, MT->HeapSize },    // ntdll.RtlSizeHeap
+        { 0x7AE661DB0F788E5C, 0xB381DBCED8473B71, 0x69E41F98377E69D4, TT->CreateThread },
+        { 0xF73998C5A8F14826, 0x8B4E255AD410EAD7, 0x9B3C17E907A5484C, TT->ExitThread },
+        { 0x20BD6DCF83AFA005, 0xFB3FE4456FDDEE5F, 0x975665E2E638718B, TT->SuspendThread },
+        { 0x4D761AB490D8073A, 0x9685B1FA1A78AB3B, 0x3147A2CFAB9E8418, TT->ResumeThread },
+        { 0xF8CDF3A3B3344333, 0xF4043DBAE6716F9F, 0x292410324C701889, TT->SwitchToThread },
+        { 0x7FCCDBCBE7C33ADD, 0x13ABEAA649DA39A3, 0xB13709F7CAE53462, TT->GetThreadContext },
+        { 0xAD0FEDE61F0DCBB4, 0xF9200CC7DA05AB20, 0x4916730ED354C174, TT->SetThreadContext },
+        { 0x09A5E16541C6FFD5, 0xB92D0C6BFD17BF1B, 0x1D78909BB79BD1D5, TT->TerminateThread },
+        { 0x09A62B080D340D1B, 0x1478DA3E8F430166, 0xF94DDE91551E2590, TT->TlsAlloc },
+        { 0x57865BE523C6F35C, 0x67ED5FAFB746E8A1, 0xEB45D478BCF5D601, TT->TlsFree },
+        { 0xEB1473C837B3C707, 0x0F1F3A80639190F0, 0x5DDCB437BC0EB0B5, TT->ExitThread }, // ntdll.RtlExitUserThread
+        { 0x99C62FC1DAFA9048, 0x3530C7A2989E405E, 0x5C88A5AEFEF64834, RT->CreateMutexA },
+        { 0x225525D7E1D96BC1, 0x86944DBCCD5B7259, 0xEEE0821AAFA4CA21, RT->CreateMutexW },
+        { 0x64C8B5FAD0281FAE, 0x1F96D8316C44D1D4, 0xC7DA7E9547354011, RT->CreateMutexExA },
+        { 0x5E73458A1ACB6B6A, 0x84F3DC894B35A8DE, 0x0461DDB218E419CE, RT->CreateMutexExW },
+        { 0x65FDAF0179C614B8, 0x35C115CA65D648C4, 0xAA378A25AC9AB5E9, RT->CreateEventA },
+        { 0x21C2ABE21174C47A, 0xEA76EA9AC1F1684A, 0x613B893DE4586476, RT->CreateEventW },
+        { 0xC2F87FCE4482C4F7, 0xEB18086734568FCC, 0x02B4EE3ADC6A3FCA, RT->CreateEventExA },
+        { 0x48140C98E094E87C, 0x181AEEE9288159AF, 0x40C8A0F5488D4F54, RT->CreateEventExW },
+        { 0xF5F46006AC9C2B76, 0xA0B7DF1BA221BC91, 0xA2627AA845D4ADD3, RT->CreateSemaphoreA },
+        { 0x7AEAFF9C6927EBA1, 0xE3D01A901CABA296, 0x042F915AFC8193B3, RT->CreateSemaphoreW },
+        { 0x2F7D90634738CBE8, 0x6E639EF7EE6D9176, 0xDB929B6C60E18532, RT->CreateSemaphoreExA },
+        { 0x0640A74B0320C944, 0x5166B7C020880A94, 0xF71BCA9C7F743C9D, RT->CreateSemaphoreExW },
+        { 0x730DFCCA2AF4090A, 0x70CDEC5C504AE236, 0xB4F98E7A332755BC, RT->CreateWaitableTimerA },
+        { 0x064CC5AE35E819AA, 0xED30A4C7A7A29614, 0xE2DD88A002EB655D, RT->CreateWaitableTimerW },
+        { 0x1E67E2753BD78487, 0x9AF0CF492273B49C, 0x3944AB9D9A903991, RT->CreateWaitableTimerExA },
+        { 0xEDD5DF96E1FED57C, 0x6A5ECC6AC89B05A6, 0x9DCD84144BF41E29, RT->CreateWaitableTimerExW },
+        { 0x1D043CEA4558BA25, 0x8CCB1AEF14C033F5, 0xD4471E9865D53D00, RT->CreateFileA },
+        { 0x920DCCF0F5F7DA72, 0x0354305F3C1449E6, 0xB0226C18509E2B0A, RT->CreateFileW },
+        { 0xFECB303663463D17, 0x90F8CB9DC1CDF040, 0x661D3543C6070977, RT->FindFirstFileA },
+        { 0x43758302CFD0129F, 0x9C617D9F679966A9, 0x7C162B0964F1F869, RT->FindFirstFileW },
+        { 0x4B39DE018161DB6E, 0xCAA6B778974CC796, 0xD2B1B4DB48AEB5F4, RT->FindFirstFileExA },
+        { 0x2AF32F5D17A63DD4, 0xFB3E8E2D3D7BE252, 0x94F2667600F89324, RT->FindFirstFileExW },
+        { 0xAAFBF725D02B6277, 0xE7220B97A4CFC0DF, 0x81EAC7CC69BC5196, RT->CreateIoCompletionPort },
+        { 0xDEFDF1FADF466CDB, 0xD050B317F8B21AD5, 0xD625D5FF82F41F79, RT->CloseHandle },
+        { 0xD3B4923F11FD94BD, 0xCDB1197EBC4CE881, 0x1CA257168FA33339, RT->FindClose },
     };
 #elif _WIN32
     {
-        { 0x5E5065D4, 0x63CDAD01, GetFuncAddr(&RT_GetProcAddress) },
-        { 0x04A35C23, 0xF841E05C, GetFuncAddr(&RT_SetCurrentDirectoryA) },
-        { 0xCA170DA2, 0x73683646, GetFuncAddr(&RT_SetCurrentDirectoryW) },
-        { 0x705D4FAD, 0x94CF33BF, GetFuncAddr(&RT_SleepHR) }, // kernel32.Sleep
-        { 0x57601363, 0x0F03636B, GetFuncAddr(&RT_SleepEx) }, // kernel32.SleepEx
-        { 0x0149E478, 0x86A603D3, LT->LoadLibraryA },
-        { 0x90E21596, 0xEBEA7D19, LT->LoadLibraryW },
-        { 0xD6C482CE, 0xC6063014, LT->LoadLibraryExA },
-        { 0x158D5700, 0x24540418, LT->LoadLibraryExW },
-        { 0x5CDBC79F, 0xA1B99CF2, LT->FreeLibrary },
-        { 0x929869F4, 0x7D668185, LT->FreeLibraryAndExitThread },
-        { 0xD5B65767, 0xF3A27766, MT->VirtualAlloc },
-        { 0x4F0FC063, 0x182F3CC6, MT->VirtualFree },
-        { 0xEBD60441, 0x280A4A9F, MT->VirtualProtect },
-        { 0xD17B0461, 0xFB4E5DB5, MT->VirtualQuery },
-        { 0xDEBEFC7A, 0x5430728E, MT->HeapCreate },
-        { 0x939FB28D, 0x2A9F34C6, MT->HeapDestroy },
-        { 0x05810867, 0xF2ABDB50, MT->HeapAlloc },
-        { 0x7A3662A9, 0x71FAAA63, MT->HeapReAlloc },
-        { 0xDB3AEF73, 0x380DB39D, MT->HeapFree },
-        { 0x7CD7678E, 0x7004C8D0, MT->HeapSize },
-        { 0x7B033FBA, 0x35363CF6, MT->GlobalAlloc },
-        { 0x7DFE57A5, 0x8119A6D8, MT->GlobalReAlloc },
-        { 0x08756F00, 0x7111FC71, MT->GlobalFree },
-        { 0x2B3437C8, 0x7574CBE1, MT->LocalAlloc },
-        { 0x8F9470A1, 0xCC687C1A, MT->LocalReAlloc },
-        { 0xAA325FF1, 0x895CDAFC, MT->LocalFree },
-        { 0x92E5F4A5, 0xA3F5C520, MT->HeapAlloc },   // ntdll.RtlAllocateHeap
-        { 0x51FDFBBA, 0x4DBA4387, MT->HeapReAlloc }, // ntdll.RtlReAllocateHeap
-        { 0xD59A6BA8, 0x1B0A7768, MT->HeapFree },    // ntdll.RtlFreeHeap
-        { 0xEDFA2017, 0x9F4BDE59, MT->HeapSize },    // ntdll.RtlSizeHeap
-        { 0x20744CA1, 0x4FA1647D, TT->CreateThread },
-        { 0xED42C0F0, 0xC59EBA39, TT->ExitThread },
-        { 0x133B00D5, 0x48E02627, TT->SuspendThread },
-        { 0xA02B4251, 0x5287173F, TT->ResumeThread },
-        { 0xA2D64686, 0x2C567D1D, TT->SwitchToThread },
-        { 0xCF0EC7B7, 0xBAC33715, TT->GetThreadContext },
-        { 0xC59EF832, 0xEF75D2EA, TT->SetThreadContext },
-        { 0x6EF0E2AA, 0xE014E29F, TT->TerminateThread },
-        { 0x52598AD3, 0xD7C6183F, TT->TlsAlloc },
-        { 0x218DD96E, 0x05FED0A2, TT->TlsFree },
-        { 0x74B3E012, 0xA73A6B97, TT->ExitThread }, // ntdll.RtlExitUserThread
-        { 0xC6B5D6DD, 0x36010787, RT->CreateMutexA },
-        { 0x144D7209, 0xB789D747, RT->CreateMutexW },
-        { 0xC0EC3C8F, 0x39CECE0C, RT->CreateMutexExA },
-        { 0xBE884DDB, 0xD002896D, RT->CreateMutexExW },
-        { 0x5E43201A, 0xFE7C8A22, RT->CreateEventA },
-        { 0x15746F79, 0x83C4C211, RT->CreateEventW },
-        { 0x440B71AB, 0x3DE3CFE1, RT->CreateEventExA },
-        { 0x36A42610, 0x9E0E88E9, RT->CreateEventExW },
-        { 0xEAC02C34, 0xF929EBE7, RT->CreateSemaphoreA },
-        { 0xE2655818, 0x9430A61A, RT->CreateSemaphoreW },
-        { 0xDDD06BBB, 0xA89F7CAB, RT->CreateSemaphoreExA },
-        { 0x578BC255, 0xFB809D2C, RT->CreateSemaphoreExW },
-        { 0x53258B07, 0x9C27F3E5, RT->CreateWaitableTimerA },
-        { 0x6683BD06, 0x42CF3850, RT->CreateWaitableTimerW },
-        { 0xD1B81B9F, 0xD65A9635, RT->CreateWaitableTimerExA },
-        { 0xB925AC84, 0x564EE9F7, RT->CreateWaitableTimerExW },
-        { 0x79796D6E, 0x6DBBA55C, RT->CreateFileA },
-        { 0x0370C4B8, 0x76254EF3, RT->CreateFileW },
-        { 0x629ADDFA, 0x749D1CC9, RT->FindFirstFileA },
-        { 0x612273CD, 0x563EDF55, RT->FindFirstFileW },
-        { 0x8C692AD6, 0xB63ECE85, RT->FindFirstFileExA },
-        { 0xE52EE07C, 0x6C2F10B6, RT->FindFirstFileExW },
-        { 0x27E2A688, 0x121931EA, RT->CreateIoCompletionPort },
-        { 0xCB5BD447, 0x49A6FC78, RT->CloseHandle },
-        { 0x6CD807C4, 0x812C40E9, RT->FindClose },
+        { 0x75C01F83, 0xE7A45E2B, 0x1A710E4F, GetFuncAddr(&RT_GetProcAddress) },
+        { 0x6B13DC24, 0x53E41BF6, 0xFFB6599D, GetFuncAddr(&RT_SetCurrentDirectoryA) },
+        { 0x7C903CB0, 0xCAF08A95, 0xBB8B0575, GetFuncAddr(&RT_SetCurrentDirectoryW) },
+        { 0x536949F6, 0x6C9410A5, 0x82568B27, GetFuncAddr(&RT_SleepHR) }, // kernel32.Sleep
+        { 0x6B23E4B7, 0xBA37BAF4, 0x0257F540, GetFuncAddr(&RT_SleepEx) }, // kernel32.SleepEx
+        { 0xAE0F3CDC, 0xBF4F25FA, 0xA131C539, LT->LoadLibraryA },
+        { 0x056314A0, 0x55A90F7E, 0x5349346C, LT->LoadLibraryW },
+        { 0x10155272, 0xD2755464, 0x45CB6974, LT->LoadLibraryExA },
+        { 0xE83FAC7C, 0xE7E0555F, 0xD02A70FA, LT->LoadLibraryExW },
+        { 0xC6B49249, 0x7CF00FF3, 0x7E640DFE, LT->FreeLibrary },
+        { 0x6CB7C079, 0xDD1E6C19, 0x1E78E88B, LT->FreeLibraryAndExitThread },
+        { 0xB12814A3, 0x7F957F91, 0x920F498C, MT->VirtualAlloc },
+        { 0xB30913F5, 0xEEB6D179, 0x6BD6BE8F, MT->VirtualFree },
+        { 0x0F6EFC7B, 0x774CBC01, 0x3BEB1DF1, MT->VirtualProtect },
+        { 0x9ED03376, 0x5DBBA619, 0x8A536EBB, MT->VirtualQuery },
+        { 0x701E200B, 0xFAA011A1, 0xAC5B0514, MT->HeapCreate },
+        { 0xEF53D08B, 0x90745C68, 0x7384548D, MT->HeapDestroy },
+        { 0xF62559E9, 0x89B885C0, 0x0CBA79B5, MT->HeapAlloc },
+        { 0xABC1D166, 0x97530A92, 0xEF4E2221, MT->HeapReAlloc },
+        { 0xEB6DE792, 0x69AC5529, 0x9F0F87FB, MT->HeapFree },
+        { 0xD68F0BD7, 0xA9F4245F, 0xED73D3EF, MT->HeapSize },
+        { 0x612B3351, 0xE09ED8B6, 0x012810C6, MT->GlobalAlloc },
+        { 0x5755B294, 0x424951CC, 0x29D66E25, MT->GlobalReAlloc },
+        { 0x31CF7EA8, 0xCE2AD6ED, 0x7367D738, MT->GlobalFree },
+        { 0x00D8F488, 0x5827541B, 0x6F8715EE, MT->LocalAlloc },
+        { 0x1B89932A, 0x541A3F04, 0x02FA4395, MT->LocalReAlloc },
+        { 0x6FE61AEE, 0xEA812AF6, 0x383C2DD3, MT->LocalFree },
+        { 0x49F19F51, 0x228ABB50, 0x5B0571BF, MT->HeapAlloc },   // ntdll.RtlAllocateHeap
+        { 0x92FBC22D, 0xFE3F6DB3, 0x5A30B52A, MT->HeapReAlloc }, // ntdll.RtlReAllocateHeap
+        { 0x8071A3F9, 0x8C626652, 0x0AB58ABE, MT->HeapFree },    // ntdll.RtlFreeHeap
+        { 0x2319794C, 0x8D15D816, 0xCEB11EBF, MT->HeapSize },    // ntdll.RtlSizeHeap
+        { 0x180AA55F, 0x521C35F1, 0x5A388498, TT->CreateThread },
+        { 0x5F6414CA, 0x827087DB, 0x07E06220, TT->ExitThread },
+        { 0x0C4A7B00, 0xE64D2B70, 0xA796CEBC, TT->SuspendThread },
+        { 0x1FC3902D, 0x7DEAD8EA, 0x1DE3BC77, TT->ResumeThread },
+        { 0xA7AFFFE1, 0x21C2F6AD, 0x4725C481, TT->SwitchToThread },
+        { 0xC9BFAF22, 0xD306FEA3, 0xC72778A3, TT->GetThreadContext },
+        { 0x229AEC25, 0x7D98D610, 0x82904254, TT->SetThreadContext },
+        { 0x8C2FB5E2, 0x186C157F, 0xCDD4F7E1, TT->TerminateThread },
+        { 0xD7E2EA10, 0xCEC74DB0, 0x3E447291, TT->TlsAlloc },
+        { 0x76A15683, 0xC0C732AD, 0x535505D9, TT->TlsFree },
+        { 0x84240642, 0xA1CA7092, 0xF6578A0D, TT->ExitThread }, // ntdll.RtlExitUserThread
+        { 0x6B3F6DAC, 0x43853234, 0x54455751, RT->CreateMutexA },
+        { 0x55DC0D79, 0x785F6BF5, 0x3D6CBA5B, RT->CreateMutexW },
+        { 0xC0ADF2A0, 0x21E1899D, 0xAAFF7F26, RT->CreateMutexExA },
+        { 0xFD4A95C1, 0x87F78CD0, 0x0B1DBA2F, RT->CreateMutexExW },
+        { 0x6DCC244C, 0xCC2BAC5F, 0x4D514C21, RT->CreateEventA },
+        { 0x2C2D5A25, 0x8A86DD59, 0x6A4FA4CF, RT->CreateEventW },
+        { 0xE64C076A, 0xD4311E97, 0xD71810CE, RT->CreateEventExA },
+        { 0x395E0289, 0xAEE603B7, 0x0DF82E32, RT->CreateEventExW },
+        { 0xC9E40740, 0x623C96BC, 0xF0B6E24D, RT->CreateSemaphoreA },
+        { 0xF3DD5560, 0x4C95D8DF, 0x23839135, RT->CreateSemaphoreW },
+        { 0x6E2E92AA, 0x8ECEED49, 0xB91D8BFA, RT->CreateSemaphoreExA },
+        { 0x72C09E63, 0xB62A71B3, 0x2C269677, RT->CreateSemaphoreExW },
+        { 0x416EE6B3, 0x60DA6B28, 0x6AF9FCB6, RT->CreateWaitableTimerA },
+        { 0x6A3B2387, 0x36D3924E, 0xF22D3841, RT->CreateWaitableTimerW },
+        { 0xED2289F2, 0x3D1086F9, 0x7ADCB925, RT->CreateWaitableTimerExA },
+        { 0xB608ED94, 0x6FAF9FDA, 0x448DEED2, RT->CreateWaitableTimerExW },
+        { 0x49833F45, 0x28AF75DA, 0x9DC87AA2, RT->CreateFileA },
+        { 0x99F11002, 0x02C3BD06, 0x68E258F3, RT->CreateFileW },
+        { 0xEACF49CC, 0xDEE66AAD, 0x582829BB, RT->FindFirstFileA },
+        { 0x38D22305, 0x2CA21077, 0xEB734887, RT->FindFirstFileW },
+        { 0xA7384FD2, 0x19EC08BE, 0x236E1ADE, RT->FindFirstFileExA },
+        { 0x6D47C5C0, 0xCD54D722, 0xB3DD8291, RT->FindFirstFileExW },
+        { 0x574C1718, 0xA2973DEC, 0x68050AB3, RT->CreateIoCompletionPort },
+        { 0x0E06B653, 0x78265D27, 0x62FF3474, RT->CloseHandle },
+        { 0xCA74F49F, 0x56182478, 0xED040027, RT->FindClose },
     };
 #endif
     for (int i = 0; i < arrlen(items); i++)
     {
-        void* proc = FindAPI(items[i].hash, items[i].key);
+        void* proc = FindAPI(items[i].mHash, items[i].pHash, items[i].hKey);
         if (proc == NULL)
         {
             return false;
         }
-        runtime->Redirectors[i].Proc = proc;
-        runtime->Redirectors[i].Hook = items[i].hook;
+        runtime->Redirectors[i].src = proc;
+        runtime->Redirectors[i].dst = items[i].api;
     }
     return true;
 }
@@ -1731,11 +1731,11 @@ static void* getAPIRedirector(Runtime* runtime, void* proc)
 {
     for (int i = 0; i < arrlen(runtime->Redirectors); i++)
     {
-        if (proc != runtime->Redirectors[i].Proc)
+        if (proc != runtime->Redirectors[i].src)
         {
             continue;
         }
-        return runtime->Redirectors[i].Hook;
+        return runtime->Redirectors[i].dst;
     }
     return proc;
 }

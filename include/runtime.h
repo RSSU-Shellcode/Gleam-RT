@@ -315,7 +315,7 @@ typedef void (*BinToPattern_t)(void* data, uint size, byte* pattern);
 // 
 // These methods are used for API Redirector or common shellcode.
 typedef void* (*GetProcByName_t)(HMODULE hModule, LPCSTR lpProcName, bool redirect);
-typedef void* (*GetProcByHash_t)(uint hash, uint key, bool redirect);
+typedef void* (*GetProcByHash_t)(uint mHash, uint pHash, uint hKey, bool redirect);
 
 // about sysmon
 #ifndef SYSMON_H

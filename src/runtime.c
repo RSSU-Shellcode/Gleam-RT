@@ -47,6 +47,10 @@ typedef struct {
     // store options from argument
     Runtime_Opts Options;
 
+    // about environment
+    uintptr PEB;   // process environment block
+    uintptr IMOML; // InMemoryOrderModuleList address
+
     // API addresses
     GetSystemInfo_t          GetSystemInfo;
     LoadLibraryA_t           LoadLibraryA;
@@ -121,6 +125,10 @@ BOOL  RT_SetCurrentDirectoryW(LPWSTR lpPathName);
 void  RT_Sleep(DWORD dwMilliseconds);
 DWORD RT_SleepEx(DWORD dwMilliseconds, BOOL bAlertable);
 void  RT_ExitProcess(UINT uExitCode);
+
+uintptr RT_GetPEB();
+uintptr RT_GetTEB();
+uintptr RT_GetIMOML();
 
 errno RT_SleepHR(DWORD dwMilliseconds);
 errno RT_Hide();
@@ -239,6 +247,8 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
         opts = &opt;
     }
     runtime->Options = *opts;
+    // get InMemoryOrderModuleList address
+    runtime->IMOML = GetInMemoryOrderModuleList();
     // set runtime data
     runtime->MainMemPage = memPage;
     runtime->Epilogue    = calculateEpilogue();
@@ -432,6 +442,9 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     // {THE TRUTH OF THE WORLD} && [THE END OF THE WORLD] :(
     module->Raw.GetProcAddress = GetFuncAddr(&RT_GetProcAddressOriginal);
     module->Raw.ExitProcess    = GetFuncAddr(&RT_ExitProcess);
+    // about environment
+    module->Env.GetIMOML = GetFuncAddr(&RT_GetIMOML);
+
     // runtime core data
     module->Data.Mutex = runtime->hMutex;
     // runtime core methods
@@ -560,7 +573,7 @@ static bool initRuntimeAPI(Runtime* runtime)
 #endif
     for (int i = 0; i < arrlen(list); i++)
     {
-        void* proc = FindAPI(list[i].mHash, list[i].pHash, list[i].hKey);
+        void* proc = FindAPI_ML(runtime->IMOML, list[i].mHash, list[i].pHash, list[i].hKey);
         if (proc == NULL)
         {
             return false;
@@ -1077,7 +1090,7 @@ static bool initAPIRedirector(Runtime* runtime)
 #endif
     for (int i = 0; i < arrlen(items); i++)
     {
-        void* proc = FindAPI(items[i].mHash, items[i].pHash, items[i].hKey);
+        void* proc = FindAPI_ML(runtime->IMOML, items[i].mHash, items[i].pHash, items[i].hKey);
         if (proc == NULL)
         {
             return false;
@@ -1615,7 +1628,7 @@ void* RT_GetProcAddressByHash(uint mHash, uint pHash, uint hKey, bool redirect)
 {
     Runtime* runtime = getRuntimePointer();
 
-    void* proc = FindAPI(mHash, pHash, hKey);
+    void* proc = FindAPI_ML(runtime->IMOML, mHash, pHash, hKey);
     if (proc == NULL)
     {
         return NULL;
@@ -1647,7 +1660,7 @@ void* RT_GetProcAddressOriginal(HMODULE hModule, LPCSTR lpProcName)
 }
 #pragma optimize("", on)
 
-// getRuntimeMethods is used to obtain runtime internal methods, 
+// getRuntimeMethods is used to obtain runtime internal methods,
 // such as GetProcAddress, ExitProcess and submodule methods.
 // 
 // HMODULE hGleamRT = LoadLibraryA("GleamRT.dll");
@@ -1721,8 +1734,12 @@ static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
     for (int i = 0; i < arrlen(methods); i++)
     {
         uint mHash = CalcModHash_W((uint16*)(module), methods[i].hKey);
+        if (mHash != methods[i].mHash)
+        {
+            continue;
+        }
         uint pHash = CalcProcHash((byte*)lpProcName, methods[i].hKey);
-        if (mHash != methods[i].mHash || pHash != methods[i].pHash)
+        if (pHash != methods[i].pHash)
         {
             continue;
         }
@@ -1920,6 +1937,14 @@ void RT_ExitProcess(UINT uExitCode)
     Runtime* runtime = getRuntimePointer();
 
     runtime->ExitProcess(uExitCode);
+}
+
+__declspec(noinline)
+uintptr RT_GetIMOML()
+{
+    Runtime* runtime = getRuntimePointer();
+
+    return runtime->IMOML;
 }
 
 __declspec(noinline)

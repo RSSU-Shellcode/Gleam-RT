@@ -350,6 +350,11 @@ typedef bool  (*WDGetStatus_t)(WD_Status* status);
 typedef errno (*WDPause_t)();
 typedef errno (*WDContinue_t)();
 
+// about environment 
+typedef uintptr (*GetPEB_t)();   // get stored PEB address
+typedef uintptr (*GetTEB_t)();   // only a shortcut
+typedef uintptr (*GetIMOML_t)(); // get stored InMemoryOrderModuleList
+
 // about runtime core methods
 //
 // It is NOT recommended use "Hide" and "Recover", these functions
@@ -552,6 +557,12 @@ typedef struct {
         GetProcAddress_t GetProcAddress;
         ExitProcess_t    ExitProcess;
     } Raw;
+
+    struct {
+        GetPEB_t   GetPEB;
+        GetTEB_t   GetTEB;
+        GetIMOML_t GetIMOML;
+    } Env;
 
     struct {
         HANDLE Mutex;

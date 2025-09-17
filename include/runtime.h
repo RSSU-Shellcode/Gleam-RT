@@ -350,10 +350,13 @@ typedef bool  (*WDGetStatus_t)(WD_Status* status);
 typedef errno (*WDPause_t)();
 typedef errno (*WDContinue_t)();
 
-// about environment 
+// about process environment 
+//
+// These methods are used to ensure that __readgsqword or __readfsdword
+// is used only once, of course except GetTEB.
 typedef uintptr (*GetPEB_t)();   // get stored PEB address
 typedef uintptr (*GetTEB_t)();   // only a shortcut
-typedef uintptr (*GetIMOML_t)(); // get stored InMemoryOrderModuleList
+typedef uintptr (*GetIMOML_t)(); // get stored InMemoryOrderModuleList address
 
 // about runtime core methods
 //

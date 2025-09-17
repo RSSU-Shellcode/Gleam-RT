@@ -1669,15 +1669,15 @@ void* RT_GetProcAddressByHash(uint mHash, uint pHash, uint hKey, bool redirect)
     {
         return proc;
     }
-    void* redirector = getAPIRedirector(runtime, proc);
-    if (redirector != proc)
+    void* rdr = getAPIRedirector(runtime, proc);
+    if (rdr != NULL)
     {
-        return redirector;
+        return rdr;
     }
-    void* lazyRedirector = getLazyAPIRedirector(runtime, proc);
-    if (lazyRedirector != proc)
+    rdr = getLazyAPIRedirector(runtime, proc);
+    if (rdr != NULL)
     {
-        return lazyRedirector;
+        return rdr;
     }
     return proc;
 }
@@ -1785,13 +1785,14 @@ static void* getAPIRedirector(Runtime* runtime, void* proc)
 {
     for (int i = 0; i < arrlen(runtime->Redirectors); i++)
     {
-        if (proc != runtime->Redirectors[i].src)
+        API_RDR rdr = runtime->Redirectors[i];
+        if (rdr.src != proc)
         {
             continue;
         }
-        return runtime->Redirectors[i].dst;
+        return rdr.dst;
     }
-    return proc;
+    return NULL;
 }
 
 // getLazyAPIRedirector is used to FindAPI after call LoadLibrary.
@@ -1802,81 +1803,82 @@ static void* getLazyAPIRedirector(Runtime* runtime, void* proc)
     ResourceTracker_M* RT = runtime->ResourceTracker;
 
     typedef struct {
-        uint hash; uint key; void* hook;
-    } item;
-    item items[] =
+        uint mHash; uint pHash; uint hKey; void* api;
+    } rdr;
+    rdr list[] =
 #ifdef _WIN64
     {
-        { 0x4D084BEDB72AB139, 0x0C3B997786E5B372, MT->msvcrt_malloc    },
-        { 0x608A1F623962E67B, 0xABB120953420F49C, MT->msvcrt_calloc    },
-        { 0xCDE1ED75FE80407B, 0xC64B380372D117F2, MT->msvcrt_realloc   },
-        { 0xECC6F0177F0CCDE2, 0x43C1FCC7169E67D3, MT->msvcrt_free      },
-        { 0xDA453E9BB2309BF6, 0xB13F111E4C0EA643, MT->msvcrt_msize     },
-        { 0x53E4A1AC095BE0F6, 0xD152CAB732698100, MT->ucrtbase_malloc  },
-        { 0x78B916AE84F7B39A, 0x32CF4F009411A2FB, MT->ucrtbase_calloc  },
-        { 0x732F61E2A8E95DFC, 0x4A40B46C41B074F5, MT->ucrtbase_realloc },
-        { 0x8C9673E7033C926C, 0x0BED866A2B82FABD, MT->ucrtbase_free    },
-        { 0x765FF1E84D3CA299, 0x2B93B5CE54D15111, MT->ucrtbase_msize   },
-        { 0x1966C09405B7B97C, 0xE4F866A970ACC548, RT->RegCreateKeyA    },
-        { 0x8A6C2A2C11F6B6D4, 0x7AC26E49C4C11638, RT->RegCreateKeyW    },
-        { 0x365F51ABC40B66FD, 0x0DFF84B133E7C8CF, RT->RegCreateKeyExA  },
-        { 0x3FEC83E00139505F, 0x67C9D60648204217, RT->RegCreateKeyExW  },
-        { 0xDB53339053750CF0, 0xF9C6C0F8096D6056, RT->RegOpenKeyA      },
-        { 0x00EB18A34B112564, 0x61E501D20DE03290, RT->RegOpenKeyW      },
-        { 0x12E62A2C03A2046C, 0x6CE139A9DBA9F111, RT->RegOpenKeyExA    },
-        { 0xBF9FF93DDC15B920, 0x8DED808A2AD18CC0, RT->RegOpenKeyExW    },
-        { 0x975288736A8E49BA, 0x093EDFF1EFEDA89C, RT->RegCloseKey      },
-        { 0x7749934E33C18703, 0xCFB41E32B03DC637, RT->WSAStartup       },
-        { 0x46C76E87C13DF670, 0x37B6B54E4B2FBECC, RT->WSACleanup       },
-        { 0x70D1185F52938D74, 0xF7E6BBBD8910788F, RT->WSASocketA       },
-        { 0xC927D51029E597DD, 0x338682C6A8A05E96, RT->WSASocketW       },
-        { 0xF1EA805CB8A8ACE4, 0xE4971C112A64A0C4, RT->WSAIoctl         },
-        { 0x4B3665285BC53DA0, 0x617201DEB1745A32, RT->socket           },
-        { 0x5A633D63562D1F6A, 0xE4F5C861D2574114, RT->accept           },
-        { 0xBEF69AA1514C7525, 0x9615E0D5775EF14B, RT->shutdown         },
-        { 0xEA43E78F0C2989E3, 0xF29E4A42BAC74CE8, RT->closesocket      },
+        { 0x5254CA58A04C6861, 0x13B5CA12DD915BFF, 0x90E47B3ACA936DDF, MT->msvcrt_malloc    },
+        { 0x4F5F3C8E02424715, 0x2DE690AE65E7CA95, 0xF19FC35BA1098695, MT->msvcrt_calloc    },
+        { 0xAFB8889578B00466, 0xA8B9D01521BE59A8, 0x56797427ADC736F5, MT->msvcrt_realloc   },
+        { 0xE7C6D3E8F64212DB, 0xDCE3F452DF107F71, 0xB8A2CB36A709EF6F, MT->msvcrt_free      },
+        { 0xC1E9BA292B4AE7A4, 0x0C064C9575BCF15B, 0xC4999748966A9858, MT->msvcrt_msize     },
+        { 0xAA909AD9DB1B157E, 0xA5E606AF657B5E09, 0x5546D5EF6EBD88F4, MT->ucrtbase_malloc  },
+        { 0xE45A40568AD159B2, 0xDFAFAC2C1531A19D, 0xB25BA66565A7746C, MT->ucrtbase_calloc  },
+        { 0x79F4536182B35D04, 0x6FDB742B0500FBE3, 0x23CA792DFEE7E60B, MT->ucrtbase_realloc },
+        { 0xAED68A03A785FA47, 0xD5B8EA4569EA5C32, 0xDED2EB337D9116BC, MT->ucrtbase_free    },
+        { 0x03497789B54E7CA9, 0xFF4EE05FAFBAC456, 0x567A7168C11256EE, MT->ucrtbase_msize   },
+        { 0x625DD62ED359C958, 0x3091FBE2377A1176, 0x22A27DECEAF2266F, RT->RegCreateKeyA    },
+        { 0x7B698BFB22192AA3, 0xEA50E9DC003C8EA2, 0x950CD32D7E2121B8, RT->RegCreateKeyW    },
+        { 0x41F5B7D40FB03A4B, 0xC708FE55618EAE52, 0x51D5149B4857934B, RT->RegCreateKeyExA  },
+        { 0xB4C76DDCB73696B4, 0xA7A86DB8B2DD33B9, 0x98E110EE82D21BDD, RT->RegCreateKeyExW  },
+        { 0x36051AE7E56AAECE, 0x321942AA68DD9653, 0x0F536179870DF295, RT->RegOpenKeyA      },
+        { 0x3385B5A869495B06, 0x5805A4074843E065, 0xD47A4EC8E0FF8E99, RT->RegOpenKeyW      },
+        { 0x6EA9DF91C3CDCE6B, 0xA212700247963F1E, 0xF7B9272CA7F2B111, RT->RegOpenKeyExA    },
+        { 0x7E7F92C8D608D302, 0xC3AFBAD56325AAF8, 0x2FF2F4B325AB0D60, RT->RegOpenKeyExW    },
+        { 0xD178185E7C76C08B, 0x4374BF609B14CECE, 0x847060A18FB337BC, RT->RegCloseKey      },
+        { 0x43915A5C5D2EEFAD, 0x2C190CCAB8AF60EE, 0xC5BEBEF2DB5B6ADB, RT->WSAStartup       },
+        { 0x9E03289691D1AC6D, 0x64663633D27E11B2, 0x70ACEA9F645A4CAD, RT->WSACleanup       },
+        { 0x10BE0476CCD0949A, 0x65AB8A1BB8C93451, 0x5094B7750A4EEF9D, RT->WSASocketA       },
+        { 0x991A160A43356D61, 0x4A5AD3FA8260D517, 0xE9AC8B5A6007860D, RT->WSASocketW       },
+        { 0x6D3AE16372B1A0DB, 0x0F9CD5C024047F6F, 0xAAC7634A7F85F581, RT->WSAIoctl         },
+        { 0x7736E0C240C9B448, 0xE69F48EBE315D71D, 0x71CF1A836E0A477C, RT->socket           },
+        { 0x5BAFA015C25A8294, 0xF9276424913FC0E2, 0xC2D98F6758BE8E93, RT->accept           },
+        { 0x4317E765A5C19858, 0x8AF7DA94AE27ADFB, 0xC9BE98972D22AFA7, RT->shutdown         },
+        { 0x0F5B6F87DA763249, 0x8C1307AA01358E71, 0xC24A6EE00FDC1A9E, RT->closesocket      },
     };
 #elif _WIN32
     {
-        { 0xD15ACBB7, 0x2881CB25, MT->msvcrt_malloc    },
-        { 0xD34DACA0, 0xD69C094E, MT->msvcrt_calloc    },
-        { 0x644CBC49, 0x332496CD, MT->msvcrt_realloc   },
-        { 0xDFACD52A, 0xE56FB206, MT->msvcrt_free      },
-        { 0xB15ED11C, 0xEB107AD8, MT->msvcrt_msize     },
-        { 0xD475868A, 0x9A240ADB, MT->ucrtbase_malloc  },
-        { 0xC407B737, 0xBBA2D057, MT->ucrtbase_calloc  },
-        { 0xE8B6449C, 0x1AABE77E, MT->ucrtbase_realloc },
-        { 0xCBF17F60, 0x205DDE4D, MT->ucrtbase_free    },
-        { 0x203FE479, 0xDE2A742F, MT->ucrtbase_msize   },
-        { 0x9C6B3457, 0x2607CFAF, RT->RegCreateKeyA    },
-        { 0xA18D8C65, 0xE013A7BA, RT->RegCreateKeyW    },
-        { 0xCAD128AF, 0xE06CC8A6, RT->RegCreateKeyExA  },
-        { 0xE9F74DAD, 0x7EEF10E2, RT->RegCreateKeyExW  },
-        { 0xF742EF97, 0x1C66DAB4, RT->RegOpenKeyA      },
-        { 0xB3DEDAEF, 0xC4C5B589, RT->RegOpenKeyW      },
-        { 0x913E7524, 0xFE552230, RT->RegOpenKeyExA    },
-        { 0x128D959B, 0xC497CDB6, RT->RegOpenKeyExW    },
-        { 0xDD1D9709, 0x6F3AA8E2, RT->RegCloseKey      },
-        { 0xE487BC0B, 0x283C1684, RT->WSAStartup       },
-        { 0x175B553E, 0x541A996E, RT->WSACleanup       },
-        { 0x2F782742, 0x3E840BCE, RT->WSASocketA       },
-        { 0x4AF6596E, 0x56695630, RT->WSASocketW       },
-        { 0x2AEA7B3F, 0x5D833BF6, RT->WSAIoctl         },
-        { 0xF01C85D5, 0xA4A6130C, RT->socket           },
-        { 0xBADEAB08, 0xCF42DE35, RT->accept           },
-        { 0xE385390E, 0x66E21192, RT->shutdown         },
-        { 0x55CC7BBE, 0x3CD9CFDC, RT->closesocket      },
+        { 0x779E8E68, 0xC28F9C78, 0x742FAD69, MT->msvcrt_malloc    },
+        { 0xF72036C1, 0xA187A89D, 0x0A468719, MT->msvcrt_calloc    },
+        { 0x51F6F0AF, 0xD8427F9B, 0x161B5A2A, MT->msvcrt_realloc   },
+        { 0xC0AE317A, 0xB2CBF2E1, 0x3A6F2FEF, MT->msvcrt_free      },
+        { 0x470C76A8, 0x985FAB1A, 0x6A95FAA9, MT->msvcrt_msize     },
+        { 0xBF0F01E4, 0x840E093C, 0xA7A90445, MT->ucrtbase_malloc  },
+        { 0xB00F91E3, 0xAD87A573, 0x8B4E88EB, MT->ucrtbase_calloc  },
+        { 0xCD03B519, 0xF4D21253, 0x51493B49, MT->ucrtbase_realloc },
+        { 0x493A8A6C, 0xA862B408, 0x24314545, MT->ucrtbase_free    },
+        { 0x2017A8CC, 0xD163E2C6, 0xFCB661CE, MT->ucrtbase_msize   },
+        { 0x22355E5D, 0xE1A90917, 0xADE97876, RT->RegCreateKeyA    },
+        { 0x07F34B77, 0xC766F647, 0x45557C5C, RT->RegCreateKeyW    },
+        { 0x5E5746DB, 0xCA92BD13, 0xA3360B59, RT->RegCreateKeyExA  },
+        { 0x83D55FB4, 0x98C92D4A, 0x69B59766, RT->RegCreateKeyExW  },
+        { 0x6A9426C0, 0x53C33F65, 0x13ECFAA3, RT->RegOpenKeyA      },
+        { 0x63DE6FAA, 0x1A6BBB07, 0x033261DF, RT->RegOpenKeyW      },
+        { 0xF3B62990, 0x95170248, 0x181E2275, RT->RegOpenKeyExA    },
+        { 0x84BCAAAF, 0x261D837D, 0xFA0FFFDA, RT->RegOpenKeyExW    },
+        { 0x18E3E426, 0x901A72E3, 0x24A3A166, RT->RegCloseKey      },
+        { 0x131590EA, 0x18C9638C, 0x60893AC1, RT->WSAStartup       },
+        { 0xB3174609, 0x28E27407, 0xE9139041, RT->WSACleanup       },
+        { 0x0B305DC1, 0xD03A3A72, 0x4AE762DC, RT->WSASocketA       },
+        { 0x4A6DD610, 0x13DB0032, 0xF7657ED7, RT->WSASocketW       },
+        { 0xE4A294EC, 0x86DBB084, 0x151427B4, RT->WSAIoctl         },
+        { 0xB23F6E3E, 0xAF3DA115, 0xC156AB6D, RT->socket           },
+        { 0x31ABD834, 0xDE2BAF2B, 0x19EB6D1E, RT->accept           },
+        { 0x9BAB4EBA, 0x494E2BD1, 0x101223CE, RT->shutdown         },
+        { 0x209A93DA, 0x6008F821, 0x6A713103, RT->closesocket      },
     };
 #endif
-    for (int i = 0; i < arrlen(items); i++)
+    for (int i = 0; i < arrlen(list); i++)
     {
-        if (FindAPI(items[i].hash, items[i].key) != proc)
+        rdr item = list[i]; 
+        if (FindAPI_ML(runtime->IMOML, item.mHash, item.pHash, item.hKey) != proc)
         {
             continue;
         }
-        return items[i].hook;
+        return item.api;
     }
-    return proc;
+    return NULL;
 }
 
 __declspec(noinline)

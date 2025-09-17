@@ -160,27 +160,28 @@ __declspec(noinline)
 static bool initTrackerAPI(LibraryTracker* tracker, Context* context)
 {
     typedef struct { 
-        uint hash; uint key; void* proc;
+        uint mHash; uint pHash; uint hKey; void* proc;
     } winapi;
     winapi list[] =
 #ifdef _WIN64
     {
-        { 0x214DF62A80434DBF, 0xEB0FDC717FC827A5 }, // LoadLibraryW
-        { 0x2F6B12D80C0B77BC, 0xDB036D7FA710BE44 }, // LoadLibraryExA
-        { 0xC9297DE7F8C97F1C, 0x580EBCC7C3411C35 }, // LoadLibraryExW
-        { 0x0708BC7E2C7DA370, 0x39B9AC22BC408886 }, // FreeLibraryAndExitThread
+        { 0xC0B237101193F480, 0x808C2FF22B2D9D78, 0xA68CAAECA3134551 }, // LoadLibraryW
+        { 0x3A0F934DE2C8403B, 0xDFF7EC3F5E560E0A, 0x38F2FD039BF9CA9E }, // LoadLibraryExA
+        { 0xF8A45EBD33103931, 0xDA92307872988E4D, 0xA7B682E33EBE53C4 }, // LoadLibraryExW
+        { 0xBEEDD34783B7006B, 0xCF29FE8E7DEFE800, 0x489EA897EC9610DD }, // FreeLibraryAndExitThread
     };
 #elif _WIN32
     {
-        { 0xCE3D1172, 0x0FB89CC3 }, // LoadLibraryW
-        { 0x46B4638A, 0x213466F9 }, // LoadLibraryExA
-        { 0xDBB0F0FE, 0x516334AA }, // LoadLibraryExW
-        { 0x7730C1E2, 0xF5551C66 }, // FreeLibraryAndExitThread
+        { 0x5352450D, 0x9C61C8A0, 0x19146BC3 }, // LoadLibraryW
+        { 0x3D1034C3, 0x734CC1DA, 0xEC23248B }, // LoadLibraryExA
+        { 0x346FEF14, 0xD1B55BF0, 0xA20E3043 }, // LoadLibraryExW
+        { 0x12564EBB, 0xF5407AE5, 0xD65FEC05 }, // FreeLibraryAndExitThread
     };
 #endif
     for (int i = 0; i < arrlen(list); i++)
     {
-        void* proc = FindAPI(list[i].hash, list[i].key);
+        winapi item = list[i];
+        void* proc = FindAPI_ML(context->IMOML, item.mHash, item.pHash, item.hKey);
         if (proc == NULL)
         {
             return false;

@@ -35,6 +35,10 @@ typedef struct {
     bool NotEraseInstruction;
     bool TrackCurrentThread;
 
+    // about process environment
+    uintptr PEB;
+    uintptr IMOML;
+
     // runtime context data
     uintptr MainMemPage;
     uint32  PageSize;

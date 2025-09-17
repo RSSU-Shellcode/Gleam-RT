@@ -131,6 +131,37 @@ hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc WD_Pause
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc WD_Continue
 echo.
 
+echo [Lazy API Redirector]
+hash_api -fmt 64 -conc -mod "msvcrt.dll" -proc malloc
+hash_api -fmt 64 -conc -mod "msvcrt.dll" -proc calloc
+hash_api -fmt 64 -conc -mod "msvcrt.dll" -proc realloc
+hash_api -fmt 64 -conc -mod "msvcrt.dll" -proc free
+hash_api -fmt 64 -conc -mod "msvcrt.dll" -proc _msize
+hash_api -fmt 64 -conc -mod "ucrtbase.dll" -proc malloc
+hash_api -fmt 64 -conc -mod "ucrtbase.dll" -proc calloc
+hash_api -fmt 64 -conc -mod "ucrtbase.dll" -proc realloc
+hash_api -fmt 64 -conc -mod "ucrtbase.dll" -proc free
+hash_api -fmt 64 -conc -mod "ucrtbase.dll" -proc _msize
+hash_api -fmt 64 -conc -mod "advapi32.dll" -proc RegCreateKeyA
+hash_api -fmt 64 -conc -mod "advapi32.dll" -proc RegCreateKeyW
+hash_api -fmt 64 -conc -mod "advapi32.dll" -proc RegCreateKeyExA
+hash_api -fmt 64 -conc -mod "advapi32.dll" -proc RegCreateKeyExW
+hash_api -fmt 64 -conc -mod "advapi32.dll" -proc RegOpenKeyA
+hash_api -fmt 64 -conc -mod "advapi32.dll" -proc RegOpenKeyW
+hash_api -fmt 64 -conc -mod "advapi32.dll" -proc RegOpenKeyExA
+hash_api -fmt 64 -conc -mod "advapi32.dll" -proc RegOpenKeyExW
+hash_api -fmt 64 -conc -mod "advapi32.dll" -proc RegCloseKey
+hash_api -fmt 64 -conc -mod "ws2_32.dll" -proc WSAStartup
+hash_api -fmt 64 -conc -mod "ws2_32.dll" -proc WSACleanup
+hash_api -fmt 64 -conc -mod "ws2_32.dll" -proc WSASocketA
+hash_api -fmt 64 -conc -mod "ws2_32.dll" -proc WSASocketW
+hash_api -fmt 64 -conc -mod "ws2_32.dll" -proc WSAIoctl
+hash_api -fmt 64 -conc -mod "ws2_32.dll" -proc socket
+hash_api -fmt 64 -conc -mod "ws2_32.dll" -proc accept
+hash_api -fmt 64 -conc -mod "ws2_32.dll" -proc shutdown
+hash_api -fmt 64 -conc -mod "ws2_32.dll" -proc closesocket
+echo.
+
 echo [Library Tracker]
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc LoadLibraryA
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc LoadLibraryW
@@ -240,7 +271,6 @@ hash_api -fmt 64 -conc -mod "ws2_32.dll" -proc socket
 hash_api -fmt 64 -conc -mod "ws2_32.dll" -proc accept
 hash_api -fmt 64 -conc -mod "ws2_32.dll" -proc shutdown
 hash_api -fmt 64 -conc -mod "ws2_32.dll" -proc closesocket
-hash_api -fmt 64 -conc -mod "mswsock.dll" -proc AcceptEx
 echo.
 
 echo [WinBase Module]
@@ -422,6 +452,37 @@ hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc WD_Pause
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc WD_Continue
 echo.
 
+echo [Lazy API Redirector]
+hash_api -fmt 32 -conc -mod "msvcrt.dll" -proc malloc
+hash_api -fmt 32 -conc -mod "msvcrt.dll" -proc calloc
+hash_api -fmt 32 -conc -mod "msvcrt.dll" -proc realloc
+hash_api -fmt 32 -conc -mod "msvcrt.dll" -proc free
+hash_api -fmt 32 -conc -mod "msvcrt.dll" -proc _msize
+hash_api -fmt 32 -conc -mod "ucrtbase.dll" -proc malloc
+hash_api -fmt 32 -conc -mod "ucrtbase.dll" -proc calloc
+hash_api -fmt 32 -conc -mod "ucrtbase.dll" -proc realloc
+hash_api -fmt 32 -conc -mod "ucrtbase.dll" -proc free
+hash_api -fmt 32 -conc -mod "ucrtbase.dll" -proc _msize
+hash_api -fmt 32 -conc -mod "advapi32.dll" -proc RegCreateKeyA
+hash_api -fmt 32 -conc -mod "advapi32.dll" -proc RegCreateKeyW
+hash_api -fmt 32 -conc -mod "advapi32.dll" -proc RegCreateKeyExA
+hash_api -fmt 32 -conc -mod "advapi32.dll" -proc RegCreateKeyExW
+hash_api -fmt 32 -conc -mod "advapi32.dll" -proc RegOpenKeyA
+hash_api -fmt 32 -conc -mod "advapi32.dll" -proc RegOpenKeyW
+hash_api -fmt 32 -conc -mod "advapi32.dll" -proc RegOpenKeyExA
+hash_api -fmt 32 -conc -mod "advapi32.dll" -proc RegOpenKeyExW
+hash_api -fmt 32 -conc -mod "advapi32.dll" -proc RegCloseKey
+hash_api -fmt 32 -conc -mod "ws2_32.dll" -proc WSAStartup
+hash_api -fmt 32 -conc -mod "ws2_32.dll" -proc WSACleanup
+hash_api -fmt 32 -conc -mod "ws2_32.dll" -proc WSASocketA
+hash_api -fmt 32 -conc -mod "ws2_32.dll" -proc WSASocketW
+hash_api -fmt 32 -conc -mod "ws2_32.dll" -proc WSAIoctl
+hash_api -fmt 32 -conc -mod "ws2_32.dll" -proc socket
+hash_api -fmt 32 -conc -mod "ws2_32.dll" -proc accept
+hash_api -fmt 32 -conc -mod "ws2_32.dll" -proc shutdown
+hash_api -fmt 32 -conc -mod "ws2_32.dll" -proc closesocket
+echo.
+
 echo [Library Tracker]
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc LoadLibraryA
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc LoadLibraryW
@@ -531,7 +592,6 @@ hash_api -fmt 32 -conc -mod "ws2_32.dll" -proc socket
 hash_api -fmt 32 -conc -mod "ws2_32.dll" -proc accept
 hash_api -fmt 32 -conc -mod "ws2_32.dll" -proc shutdown
 hash_api -fmt 32 -conc -mod "ws2_32.dll" -proc closesocket
-hash_api -fmt 32 -conc -mod "mswsock.dll" -proc AcceptEx
 echo.
 
 echo [WinBase Module]

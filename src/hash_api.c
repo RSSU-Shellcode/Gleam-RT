@@ -166,7 +166,7 @@ void* FindAPI_ML(uintptr list, uint module, uint procedure, uint key)
             procName = (byte*)((uintptr)exportName + dot + 1);
             modHash  = CalcModHash_A(dllName, key);
             procHash = CalcProcHash(procName, key);
-            return FindAPI(modHash, procHash, key);
+            return FindAPI_ML(list, modHash, procHash, key);
         }
     }
     return NULL;

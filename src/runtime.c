@@ -47,7 +47,7 @@ typedef struct {
     // store options from argument
     Runtime_Opts Options;
 
-    // about environment
+    // process environment
     uintptr PEB;   // process environment block
     uintptr IMOML; // InMemoryOrderModuleList address
 
@@ -164,6 +164,8 @@ static bool rt_unlock();
 
 static bool  isValidArgumentStub();
 static void* allocRuntimeMemPage();
+static void* getPEBAddress();
+static void* getIMOMLAddress(uintptr peb);
 static void* calculateEpilogue();
 static bool  initRuntimeAPI(Runtime* runtime);
 static bool  adjustPageProtect(Runtime* runtime, DWORD* old);
@@ -247,8 +249,11 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
         opts = &opt;
     }
     runtime->Options = *opts;
-    // get InMemoryOrderModuleList address
-    runtime->IMOML = GetInMemoryOrderModuleList();
+    // get process environment
+    uintptr PEB   = (uintptr)(getPEBAddress());
+    uintptr IMOML = (uintptr)(getIMOMLAddress(PEB));
+    runtime->PEB   = PEB;
+    runtime->IMOML = IMOML;
     // set runtime data
     runtime->MainMemPage = memPage;
     runtime->Epilogue    = calculateEpilogue();
@@ -442,9 +447,10 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     // {THE TRUTH OF THE WORLD} && [THE END OF THE WORLD] :(
     module->Raw.GetProcAddress = GetFuncAddr(&RT_GetProcAddressOriginal);
     module->Raw.ExitProcess    = GetFuncAddr(&RT_ExitProcess);
-    // about environment
+    // about process environment
+    module->Env.GetPEB   = GetFuncAddr(&RT_GetPEB);
+    module->Env.GetTEB   = GetFuncAddr(&RT_GetTEB);
     module->Env.GetIMOML = GetFuncAddr(&RT_GetIMOML);
-
     // runtime core data
     module->Data.Mutex = runtime->hMutex;
     // runtime core methods
@@ -498,6 +504,30 @@ static void* allocRuntimeMemPage()
     RandBuffer(addr, (int64)size);
     dbg_log("[runtime]", "Main Memory Page: 0x%zX", addr);
     return addr;
+}
+
+static void* getPEBAddress()
+{
+#ifdef _WIN64
+    uintptr teb = __readgsqword(0x30);
+    uintptr peb = *(uintptr*)(teb + 0x60);
+#elif _WIN32
+    uintptr teb = __readfsdword(0x18);
+    uintptr peb = *(uintptr*)(teb + 0x30);
+#endif
+    return peb;
+}
+
+static void* getIMOMLAddress(uintptr peb)
+{
+#ifdef _WIN64
+    uintptr ldr = *(uintptr*)(peb + 0x18);
+    uintptr mod = *(uintptr*)(ldr + 0x20);
+#elif _WIN32
+    uintptr ldr = *(uintptr*)(peb + 0x0C);
+    uintptr mod = *(uintptr*)(ldr + 0x14);
+#endif
+    return mod;
 }
 
 static void* calculateEpilogue()
@@ -1940,6 +1970,25 @@ void RT_ExitProcess(UINT uExitCode)
     Runtime* runtime = getRuntimePointer();
 
     runtime->ExitProcess(uExitCode);
+}
+
+__declspec(noinline)
+uintptr RT_GetPEB()
+{
+    Runtime* runtime = getRuntimePointer();
+
+    return runtime->PEB;
+}
+
+__declspec(noinline)
+uintptr RT_GetTEB()
+{
+#ifdef _WIN64
+    uintptr teb = __readgsqword(0x30);
+#elif _WIN32
+    uintptr teb = __readfsdword(0x18);
+#endif
+    return teb;
 }
 
 __declspec(noinline)

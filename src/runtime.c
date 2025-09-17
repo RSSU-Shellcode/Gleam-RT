@@ -640,7 +640,7 @@ static bool initRuntimeAPI(Runtime* runtime)
     return true;
 }
 
-// CANNOT merge updateRuntimePointer and recoverRuntimePointer 
+// CANNOT merge updateRuntimePointer and recoverRuntimePointer
 // to one function with two arguments, otherwise the compiler
 // will generate the incorrect instructions.
 
@@ -706,6 +706,9 @@ static errno initSubmodules(Runtime* runtime)
         .DisableWatchdog     = runtime->Options.DisableWatchdog,
         .NotEraseInstruction = runtime->Options.NotEraseInstruction,
         .TrackCurrentThread  = runtime->Options.TrackCurrentThread,
+
+        .PEB   = runtime->PEB,
+        .IMOML = runtime->IMOML,
 
         .MainMemPage = (uintptr)(runtime->MainMemPage),
         .PageSize    = runtime->PageSize,

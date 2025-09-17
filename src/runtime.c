@@ -573,7 +573,8 @@ static bool initRuntimeAPI(Runtime* runtime)
 #endif
     for (int i = 0; i < arrlen(list); i++)
     {
-        void* proc = FindAPI_ML(runtime->IMOML, list[i].mHash, list[i].pHash, list[i].hKey);
+        winapi item = list[i];
+        void* proc = FindAPI_ML(runtime->IMOML, item.mHash, item.pHash, item.hKey);
         if (proc == NULL)
         {
             return false;
@@ -945,8 +946,8 @@ static bool initAPIRedirector(Runtime* runtime)
 
     typedef struct {
         uint mHash; uint pHash; uint hKey; void* api;
-    } item;
-    item items[] =
+    } rdr;
+    rdr list[] =
 #ifdef _WIN64
     {
         { 0xFF4DA9811A24DD2A, 0xE6E26FB6E4FE59CE, 0x10BB9100F93D0F8B, GetFuncAddr(&RT_GetProcAddress) },
@@ -1088,15 +1089,16 @@ static bool initAPIRedirector(Runtime* runtime)
         { 0xCA74F49F, 0x56182478, 0xED040027, RT->FindClose },
     };
 #endif
-    for (int i = 0; i < arrlen(items); i++)
+    for (int i = 0; i < arrlen(list); i++)
     {
-        void* proc = FindAPI_ML(runtime->IMOML, items[i].mHash, items[i].pHash, items[i].hKey);
+        rdr item = list[i];
+        void* proc = FindAPI_ML(runtime->IMOML, item.mHash, item.pHash, item.hKey);
         if (proc == NULL)
         {
             return false;
         }
         runtime->Redirectors[i].src = proc;
-        runtime->Redirectors[i].dst = items[i].api;
+        runtime->Redirectors[i].dst = item.api;
     }
     return true;
 }
@@ -1677,7 +1679,7 @@ static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
     typedef struct {
         uint mHash; uint pHash; uint hKey; void* method;
     } method;
-    method methods[] =
+    method list[] =
 #ifdef _WIN64
     {
         { 0x8CDF6BCCACFF5ECA, 0x4BC9F3FE3B59678C, 0x23173EFE31305341, GetFuncAddr(&RT_GetProcAddressByName)   },
@@ -1731,19 +1733,20 @@ static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
         { 0x77753D1A, 0xA8072E02, 0xA25C2C36, WD->Continue   }, // WD_Continue
     };
 #endif
-    for (int i = 0; i < arrlen(methods); i++)
+    for (int i = 0; i < arrlen(list); i++)
     {
-        uint mHash = CalcModHash_W((uint16*)(module), methods[i].hKey);
-        if (mHash != methods[i].mHash)
+        method item = list[i];
+        uint mHash = CalcModHash_W((uint16*)(module), item.hKey);
+        if (mHash != item.mHash)
         {
             continue;
         }
-        uint pHash = CalcProcHash((byte*)lpProcName, methods[i].hKey);
-        if (pHash != methods[i].pHash)
+        uint pHash = CalcProcHash((byte*)lpProcName, item.hKey);
+        if (pHash != item.pHash)
         {
             continue;
         }
-        return methods[i].method;
+        return item.method;
     }
     return NULL;
 }

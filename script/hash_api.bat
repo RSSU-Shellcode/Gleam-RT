@@ -193,10 +193,6 @@ hash_api -fmt 64 -conc -mod "kernel32.dll" -proc GlobalFree
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc LocalAlloc
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc LocalReAlloc
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc LocalFree
-hash_api -fmt 64 -conc -mod "ntdll.dll" -proc RtlAllocateHeap
-hash_api -fmt 64 -conc -mod "ntdll.dll" -proc RtlReAllocateHeap
-hash_api -fmt 64 -conc -mod "ntdll.dll" -proc RtlFreeHeap
-hash_api -fmt 64 -conc -mod "ntdll.dll" -proc RtlSizeHeap
 hash_api -fmt 64 -conc -mod "msvcrt.dll" -proc malloc
 hash_api -fmt 64 -conc -mod "msvcrt.dll" -proc calloc
 hash_api -fmt 64 -conc -mod "msvcrt.dll" -proc realloc
@@ -514,10 +510,6 @@ hash_api -fmt 32 -conc -mod "kernel32.dll" -proc GlobalFree
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc LocalAlloc
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc LocalReAlloc
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc LocalFree
-hash_api -fmt 32 -conc -mod "ntdll.dll" -proc RtlAllocateHeap
-hash_api -fmt 32 -conc -mod "ntdll.dll" -proc RtlReAllocateHeap
-hash_api -fmt 32 -conc -mod "ntdll.dll" -proc RtlFreeHeap
-hash_api -fmt 32 -conc -mod "ntdll.dll" -proc RtlSizeHeap
 hash_api -fmt 32 -conc -mod "msvcrt.dll" -proc malloc
 hash_api -fmt 32 -conc -mod "msvcrt.dll" -proc calloc
 hash_api -fmt 32 -conc -mod "msvcrt.dll" -proc realloc

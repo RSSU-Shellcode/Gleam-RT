@@ -49,6 +49,9 @@ typedef struct {
     // store options
     bool NotEraseInstruction;
 
+    // store environment
+    uintptr IMOML;
+
     // API addresses
     VirtualAlloc_t          VirtualAlloc;
     VirtualFree_t           VirtualFree;
@@ -221,6 +224,8 @@ MemoryTracker_M* InitMemoryTracker(Context* context)
     mem_init(tracker, sizeof(MemoryTracker));
     // store options
     tracker->NotEraseInstruction = context->NotEraseInstruction;
+    // store environment
+    tracker->IMOML = context->IMOML;
     errno errno = NO_ERROR;
     for (;;)
     {
@@ -306,55 +311,56 @@ __declspec(noinline)
 static bool initTrackerAPI(MemoryTracker* tracker, Context* context)
 {
     typedef struct { 
-        uint hash; uint key; void* proc;
+        uint mHash; uint pHash; uint hKey; void* proc;
     } winapi;
     winapi list[] =
 #ifdef _WIN64
     {
-        { 0x69E4CD5EB08400FD, 0x648D50E649F8C06E }, // VirtualQuery
-        { 0xA9CA8BFA460B3D0E, 0x30FECC3CA9988F6A }, // GetProcessHeap
-        { 0x075A8238EE27E826, 0xE930AB7A27AD9691 }, // GetProcessHeaps
-        { 0x3CF9F7C4C1B8FD43, 0x34B7FC51484FB2A3 }, // HeapCreate
-        { 0xEBA36FC951FD2B34, 0x59504100D9684B0E }, // HeapDestroy
-        { 0x8D604A3248B6EAFE, 0x496C489A6E3B8ECD }, // HeapAlloc
-        { 0xE04E489AFF9C386C, 0x1A2E6AE0D610549B }, // HeapReAlloc
-        { 0x76F81CD39D7A292A, 0x82332A8834C25FA2 }, // HeapFree
-        { 0xCBF3B50C5860708F, 0xED694821DB8B2EEC }, // HeapSize
-        { 0x867B4ED0812B2DC2, 0xAA9EAFD21F21E1AD }, // HeapLock
-        { 0x5ED7EC7D0E4BE01C, 0xCD72A9C05C1231B3 }, // HeapUnlock
-        { 0x3E8966B69D68089B, 0x37E3CCE68E00C464 }, // HeapWalk
-        { 0x6D12139E758D2222, 0x65801FD39795C655 }, // GlobalAlloc
-        { 0x71850DBF6F0606DF, 0x9606F2F813AA08B8 }, // GlobalReAlloc
-        { 0x93FC79448E2B42C0, 0x1585336F8D91CF6C }, // GlobalFree
-        { 0xE26929AC886F3D5A, 0xCA1B7E486FE85707 }, // LocalAlloc
-        { 0x06AB6D6AE82D629A, 0x6E607E20E105F7BB }, // LocalReAlloc
-        { 0xB58311891BC88BE4, 0x6735D6D1569CD50C }, // LocalFree
+        { 0x78F7C1EDB1B6C199, 0xDA216AFFF1D8FF27, 0xC8D9B3B117525BFC }, // VirtualQuery
+        { 0xC3D7F454B0F1367C, 0x29CAA1EB805BCCA9, 0xC3DD316E122A78F8 }, // GetProcessHeap
+        { 0x1C65BE5C37AA95C6, 0x9D74C15113BF9588, 0x2379B99B83FE4750 }, // GetProcessHeaps
+        { 0x9B753693D7581756, 0xF68CC0D9B9C7E64A, 0x47B324F64EA3ADF6 }, // HeapCreate
+        { 0xD9394045734EC67B, 0x1F1628B71910002E, 0xB03D2BBD67B6E11E }, // HeapDestroy
+        { 0xCBA2FFCEBBDA6311, 0x2D0E7FFC46A974FA, 0x4CCE4C0F745961A8 }, // HeapAlloc
+        { 0x7648F54F09FFF6A3, 0x6926629478847770, 0x0600B5236324CF2C }, // HeapReAlloc
+        { 0x7859FB6ADEDBFEB3, 0x76F24504A5AFF289, 0xB403CEDF926E940E }, // HeapFree
+        { 0xEB321C1883CE223B, 0xB6A30D8BDD946A2A, 0x6597C0FBEC5BF0FF }, // HeapSize
+        { 0x1B1254B5345E349A, 0xDA42A1FD792C69EF, 0x70A8A70633AB538C }, // HeapLock
+        { 0x177DFB4BF6DC672F, 0x15E96139668EA7F7, 0x81CF522DADFDF307 }, // HeapUnlock
+        { 0x02DBC87FF7E6B0FC, 0xBD878594F6327709, 0xF791420ABA1DD1C4 }, // HeapWalk
+        { 0xCCBAD8DAFD4E4D34, 0xEC3023B51707D6B2, 0xD8EBAD02682CC5E2 }, // GlobalAlloc
+        { 0x1D4619640614CC09, 0xBEA69DC6B8731125, 0x5BD8B2E77A4C988B }, // GlobalReAlloc
+        { 0x715089473E4EED43, 0xB25481578CBAF063, 0x159E7D8AD37AB543 }, // GlobalFree
+        { 0x2E02977F2A4BAD1D, 0xB32694F68FE8E9FC, 0x9F3BA31861DB7C02 }, // LocalAlloc
+        { 0xDAFB72DF65BA28E9, 0x2361FBDA61D3BAF5, 0x44D4C7FE4EB9DD69 }, // LocalReAlloc
+        { 0x52AD04FD4B6F5071, 0x29ADFEAAC6FDF166, 0xF5271D3ECF4E1834 }, // LocalFree
     };
 #elif _WIN32
     {
-        { 0x79D75104, 0x92F1D233 }, // VirtualQuery
-        { 0x758C3172, 0x23E44CDB }, // GetProcessHeap
-        { 0xD9EDA55E, 0x77F2EC35 }, // GetProcessHeaps
-        { 0x857D374F, 0x7DC1A133 }, // HeapCreate
-        { 0x87A7067F, 0x5B6BA0B9 }, // HeapDestroy
-        { 0x6E86E11A, 0x692C7E92 }, // HeapAlloc
-        { 0x0E0168E2, 0xFBFF0866 }, // HeapReAlloc
-        { 0x94D5662A, 0x266763A1 }, // HeapFree
-        { 0xB9E185DC, 0xEDE5B461 }, // HeapSize
-        { 0x0EF3433F, 0x9391D7F0 }, // HeapLock
-        { 0xF848F9C5, 0x7742CCD1 }, // HeapUnlock
-        { 0x252C4D47, 0x1CE53ADF }, // HeapWalk
-        { 0x9FB2283F, 0x47937CF8 }, // GlobalAlloc
-        { 0x79D908FC, 0xDC71CC28 }, // GlobalReAlloc
-        { 0xC173C03A, 0xA7963759 }, // GlobalFree
-        { 0xFC9A5703, 0x272EDBFF }, // LocalAlloc
-        { 0xC0D9E88A, 0x35443CE7 }, // LocalReAlloc
-        { 0x396C4DF0, 0xBDFA6D7B }, // LocalFree
+        { 0x3A9055C4, 0x1A1C6FFE, 0x98138AB0 }, // VirtualQuery
+        { 0x2B2C8947, 0x591F6D82, 0x23CCA605 }, // GetProcessHeap
+        { 0xDC1F8608, 0xF9054AF4, 0x2F9DE4C9 }, // GetProcessHeaps
+        { 0xC117F387, 0x89B7E7BE, 0x107ED3A3 }, // HeapCreate
+        { 0x33DAD8BE, 0x4E77EB1F, 0x82826372 }, // HeapDestroy
+        { 0xA94D0696, 0x3CE0326D, 0xD00D5308 }, // HeapAlloc
+        { 0xC6E6CCDB, 0xFEC5B9B9, 0xFEF6F936 }, // HeapReAlloc
+        { 0xD1A2B293, 0x348015B0, 0x30A9FCCE }, // HeapFree
+        { 0x3135D780, 0xC6621F51, 0x10B4DDD1 }, // HeapSize
+        { 0x12210591, 0x12E75344, 0x092B59BB }, // HeapLock
+        { 0x007809E7, 0x5E43C9AA, 0x14D80281 }, // HeapUnlock
+        { 0x9793DD33, 0xA3DC2B5E, 0x21E6D11E }, // HeapWalk
+        { 0xD5B84921, 0xA8709B42, 0x7160502F }, // GlobalAlloc
+        { 0x56C5336E, 0x41B8D2A6, 0x0834A19B }, // GlobalReAlloc
+        { 0xACE5842C, 0xDC734542, 0x47A785C3 }, // GlobalFree
+        { 0xAC5F330D, 0x37007239, 0x94F28D59 }, // LocalAlloc
+        { 0xB350CABB, 0x6E32C276, 0xAEF8A48D }, // LocalReAlloc
+        { 0x7F244816, 0xF9BF581E, 0x0F05B794 }, // LocalFree
     };
 #endif
     for (int i = 0; i < arrlen(list); i++)
     {
-        void* proc = FindAPI(list[i].hash, list[i].key);
+        winapi item = list[i];
+        void*  proc = FindAPI_ML(context->IMOML, item.mHash, item.pHash, item.hKey);
         if (proc == NULL)
         {
             return false;

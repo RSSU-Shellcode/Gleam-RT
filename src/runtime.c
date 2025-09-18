@@ -163,9 +163,9 @@ static bool rt_lock();
 static bool rt_unlock();
 
 static bool  isValidArgumentStub();
-static void* allocRuntimeMemPage();
 static void* getPEBAddress();
 static void* getIMOMLAddress(uintptr peb);
+static void* allocRuntimeMemPage(uintptr IMOML);
 static void* calculateEpilogue();
 static bool  initRuntimeAPI(Runtime* runtime);
 static bool  adjustPageProtect(Runtime* runtime, DWORD* old);
@@ -221,8 +221,11 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
         SetLastErrno(ERR_RUNTIME_INVALID_ARGS_STUB);
         return NULL;
     }
+    // get process environment
+    uintptr PEB   = (uintptr)(getPEBAddress());
+    uintptr IMOML = (uintptr)(getIMOMLAddress(PEB));
     // alloc memory for store runtime structure
-    void* memPage = allocRuntimeMemPage();
+    void* memPage = allocRuntimeMemPage(IMOML);
     if (memPage == NULL)
     {
         SetLastErrno(ERR_RUNTIME_ALLOC_MEMORY);
@@ -249,9 +252,7 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
         opts = &opt;
     }
     runtime->Options = *opts;
-    // get process environment
-    uintptr PEB   = (uintptr)(getPEBAddress());
-    uintptr IMOML = (uintptr)(getIMOMLAddress(PEB));
+    // store process environment
     runtime->PEB   = PEB;
     runtime->IMOML = IMOML;
     // set runtime data
@@ -479,33 +480,6 @@ static bool isValidArgumentStub()
     return checksum == expected;
 }
 
-static void* allocRuntimeMemPage()
-{
-#ifdef _WIN64
-    uint mHash = 0x7CCA6C542E19FE5E;
-    uint pHash = 0xAA8D188A1F0862DC;
-    uint hKey  = 0x6EDC8B580ACA6913;
-#elif _WIN32
-    uint mHash = 0x67F47A59;
-    uint pHash = 0xA7CFDD6F;
-    uint hKey  = 0x0F2BB61F;
-#endif
-    VirtualAlloc_t virtualAlloc = FindAPI(mHash, pHash, hKey);
-    if (virtualAlloc == NULL)
-    {
-        return NULL;
-    }
-    SIZE_T size = MAIN_MEM_PAGE_SIZE + (1 + RandUintN(0, 32)) * 1024;
-    LPVOID addr = virtualAlloc(NULL, size, MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
-    if (addr == NULL)
-    {
-        return NULL;
-    }
-    RandBuffer(addr, (int64)size);
-    dbg_log("[runtime]", "Main Memory Page: 0x%zX", addr);
-    return addr;
-}
-
 static void* getPEBAddress()
 {
 #ifdef _WIN64
@@ -528,6 +502,33 @@ static void* getIMOMLAddress(uintptr peb)
     uintptr mod = *(uintptr*)(ldr + 0x14);
 #endif
     return mod;
+}
+
+static void* allocRuntimeMemPage(uintptr IMOML)
+{
+#ifdef _WIN64
+    uint mHash = 0x7CCA6C542E19FE5E;
+    uint pHash = 0xAA8D188A1F0862DC;
+    uint hKey  = 0x6EDC8B580ACA6913;
+#elif _WIN32
+    uint mHash = 0x67F47A59;
+    uint pHash = 0xA7CFDD6F;
+    uint hKey  = 0x0F2BB61F;
+#endif
+    VirtualAlloc_t virtualAlloc = FindAPI_ML(IMOML, mHash, pHash, hKey);
+    if (virtualAlloc == NULL)
+    {
+        return NULL;
+    }
+    SIZE_T size = MAIN_MEM_PAGE_SIZE + (1 + RandUintN(0, 32)) * 1024;
+    LPVOID addr = virtualAlloc(NULL, size, MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
+    if (addr == NULL)
+    {
+        return NULL;
+    }
+    RandBuffer(addr, (int64)size);
+    dbg_log("[runtime]", "Main Memory Page: 0x%zX", addr);
+    return addr;
 }
 
 static void* calculateEpilogue()

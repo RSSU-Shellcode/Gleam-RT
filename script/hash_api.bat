@@ -220,7 +220,6 @@ hash_api -fmt 64 -conc -mod "kernel32.dll" -proc TlsAlloc
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc TlsFree
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc CreateWaitableTimerA
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc SetWaitableTimer
-hash_api -fmt 64 -conc -mod "ntdll.dll" -proc RtlExitUserThread
 echo.
 
 echo [Resource Tracker]
@@ -537,7 +536,6 @@ hash_api -fmt 32 -conc -mod "kernel32.dll" -proc TlsAlloc
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc TlsFree
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc CreateWaitableTimerA
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc SetWaitableTimer
-hash_api -fmt 32 -conc -mod "ntdll.dll" -proc RtlExitUserThread
 echo.
 
 echo [Resource Tracker]

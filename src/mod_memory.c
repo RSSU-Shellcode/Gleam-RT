@@ -1437,12 +1437,16 @@ void* __cdecl MT_msvcrt_malloc(uint size)
     errno lastErr = NO_ERROR;
     for (;;)
     {
-        msvcrt_malloc_t malloc;
     #ifdef _WIN64
-        malloc = FindAPI(0xFD7DFE823F8533B7, 0xBEC6D4C78D168493);
+        uint mHash = 0x136CB071EF4DA0EF;
+        uint pHash = 0xA4E537E24F07D662;
+        uint hKey  = 0x329B6DA8E90118ED;
     #elif _WIN32
-        malloc = FindAPI(0x60E86880, 0xC8186851);
+        uint mHash = 0x485F281D;
+        uint pHash = 0xBBEC7575;
+        uint hKey  = 0x1AECAE06;
     #endif
+        msvcrt_malloc_t malloc = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
         if (malloc == NULL)
         {
             lastErr = ERR_MEMORY_API_NOT_FOUND;
@@ -1487,12 +1491,16 @@ void* __cdecl MT_msvcrt_calloc(uint num, uint size)
     errno lastErr = NO_ERROR;
     for (;;)
     {
-        msvcrt_calloc_t calloc;
     #ifdef _WIN64
-        calloc = FindAPI(0x286555ECFD620100, 0x58661E2CD9AFD903);
+        uint mHash = 0x24BEF2B1B592657B;
+        uint pHash = 0x63F6205AAA82CF4E;
+        uint hKey  = 0xC5BAF8FCBD2172F4;
     #elif _WIN32
-        calloc = FindAPI(0x5F5752CD, 0x9FEEAFA7);
+        uint mHash = 0x486DC33E;
+        uint pHash = 0x1EF14D6E;
+        uint hKey  = 0x9E9C4BA5;
     #endif
+        msvcrt_calloc_t calloc = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
         if (calloc == NULL)
         {
             lastErr = ERR_MEMORY_API_NOT_FOUND;
@@ -1542,23 +1550,31 @@ void* __cdecl MT_msvcrt_realloc(void* ptr, uint size)
     errno lastErr = NO_ERROR;
     for (;;)
     {
-        msvcrt_realloc_t realloc;
     #ifdef _WIN64
-        realloc = FindAPI(0x73C74D96B0628E11, 0x6B60E812280A1A13);
+        uint mHash = 0x135AAA35D376EF41;
+        uint pHash = 0x51A8F630FC8E67C4;
+        uint hKey  = 0xFF7BCB0F578542FA;
     #elif _WIN32
-        realloc = FindAPI(0x02ECACC6, 0x7CEA5567);
+        uint mHash = 0x4E56C9CF;
+        uint pHash = 0xBE2BFEFB;
+        uint hKey  = 0xCF70F7F3;
     #endif
+        msvcrt_realloc_t realloc = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
         if (realloc == NULL)
         {
             lastErr = ERR_MEMORY_API_NOT_FOUND;
             break;
         }
-        msvcrt_msize_t msize;
     #ifdef _WIN64
-        msize = FindAPI(0x091301B064342118, 0xEF17BA6517372777);
+        mHash = 0xFF919BD0F407C246;
+        pHash = 0x5E0B85F02E4FEC22;
+        hKey  = 0x9855E214CD9310A8;
     #elif _WIN32
-        msize = FindAPI(0x009A65AF, 0xAB85FB55);
+        mHash = 0x3DD7996A;
+        pHash = 0x845CB2FD;
+        hKey  = 0x9591B59B;
     #endif
+        msvcrt_msize_t msize = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
         if (msize == NULL)
         {
             lastErr = ERR_MEMORY_API_NOT_FOUND;
@@ -1628,23 +1644,31 @@ void __cdecl MT_msvcrt_free(void* ptr)
     errno lastErr = NO_ERROR;
     for (;;)
     {
-        msvcrt_free_t free;
     #ifdef _WIN64
-        free = FindAPI(0xDBBA3D4DD22EE2C3, 0xF050775619325CB5);
+        uint mHash = 0xDE6C9ADEF3C34189;
+        uint pHash = 0x0E9B5E427C74F4E4;
+        uint hKey  = 0xA57ED0DE75FBF6D8;
     #elif _WIN32
-        free = FindAPI(0x9235925D, 0x6A110995);
+        uint mHash = 0x14AC52AA;
+        uint pHash = 0xA5B6E022;
+        uint hKey  = 0x626D1BC5;
     #endif
+        msvcrt_free_t free = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
         if (free == NULL)
         {
             lastErr = ERR_MEMORY_API_NOT_FOUND;
             break;
         }
-        msvcrt_msize_t msize;
     #ifdef _WIN64
-        msize = FindAPI(0xD714C415AAEC7ECC, 0xE7DC618B73D74CC7);
+        mHash = 0xFF919BD0F407C246;
+        pHash = 0x5E0B85F02E4FEC22;
+        hKey  = 0x9855E214CD9310A8;
     #elif _WIN32
-        msize = FindAPI(0x1E2FA524, 0xB29720DC);
+        mHash = 0x3DD7996A;
+        pHash = 0x845CB2FD;
+        hKey  = 0x9591B59B;
     #endif
+        msvcrt_msize_t msize = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
         if (msize == NULL)
         {
             lastErr = ERR_MEMORY_API_NOT_FOUND;
@@ -1713,12 +1737,16 @@ uint __cdecl MT_msvcrt_msize(void* ptr)
         {
             break;
         }
-        msvcrt_msize_t msize;
     #ifdef _WIN64
-        msize = FindAPI(0xE7B940EB83B3983E, 0xE43C2000635615DF);
+        uint mHash = 0xFF919BD0F407C246;
+        uint pHash = 0x5E0B85F02E4FEC22;
+        uint hKey  = 0x9855E214CD9310A8;
     #elif _WIN32
-        msize = FindAPI(0x7C44CF77, 0x9D44F8EA);
+        uint mHash = 0x3DD7996A;
+        uint pHash = 0x845CB2FD;
+        uint hKey  = 0x9591B59B;
     #endif
+        msvcrt_msize_t msize = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
         if (msize == NULL)
         {
             lastErr = ERR_MEMORY_API_NOT_FOUND;
@@ -1767,9 +1795,9 @@ void* __cdecl MT_ucrtbase_malloc(uint size)
     {
         ucrtbase_malloc_t malloc;
     #ifdef _WIN64
-        malloc = FindAPI(0x7789A1909ED9CCBF, 0x99717C0C8D37C14A);
+        malloc = FindAPI_ML(tracker->IMOML, 0x7789A1909ED9CCBF, 0x99717C0C8D37C14A);
     #elif _WIN32
-        malloc = FindAPI(0x83F874FD, 0x1CA89591);
+        malloc = FindAPI_ML(tracker->IMOML, 0x83F874FD, 0x1CA89591);
     #endif
         if (malloc == NULL)
         {
@@ -1817,9 +1845,9 @@ void* __cdecl MT_ucrtbase_calloc(uint num, uint size)
     {
         ucrtbase_calloc_t calloc;
     #ifdef _WIN64
-        calloc = FindAPI(0x70F10113639CEB83, 0xD2316AE480BF91B3);
+        calloc = FindAPI_ML(tracker->IMOML, 0x70F10113639CEB83, 0xD2316AE480BF91B3);
     #elif _WIN32
-        calloc = FindAPI(0x389EA34B, 0x69D8846F);
+        calloc = FindAPI_ML(tracker->IMOML, 0x389EA34B, 0x69D8846F);
     #endif
         if (calloc == NULL)
         {
@@ -1872,9 +1900,9 @@ void* __cdecl MT_ucrtbase_realloc(void* ptr, uint size)
     {
         ucrtbase_realloc_t realloc;
     #ifdef _WIN64
-        realloc = FindAPI(0x63C81F2280566B03, 0x9F039B24B1B12251);
+        realloc = FindAPI_ML(tracker->IMOML, 0x63C81F2280566B03, 0x9F039B24B1B12251);
     #elif _WIN32
-        realloc = FindAPI(0x275557CD, 0x663EE38E);
+        realloc = FindAPI_ML(tracker->IMOML, 0x275557CD, 0x663EE38E);
     #endif
         if (realloc == NULL)
         {
@@ -1883,9 +1911,9 @@ void* __cdecl MT_ucrtbase_realloc(void* ptr, uint size)
         }
         ucrtbase_msize_t msize;
     #ifdef _WIN64
-        msize = FindAPI(0x74D58F2F24046630, 0x048994D256C94892);
+        msize = FindAPI_ML(tracker->IMOML, 0x74D58F2F24046630, 0x048994D256C94892);
     #elif _WIN32
-        msize = FindAPI(0x0BA6529D, 0x4F10E2C7);
+        msize = FindAPI_ML(tracker->IMOML, 0x0BA6529D, 0x4F10E2C7);
     #endif
         if (msize == NULL)
         {
@@ -1958,9 +1986,9 @@ void __cdecl MT_ucrtbase_free(void* ptr)
     {
         ucrtbase_free_t free;
     #ifdef _WIN64
-        free = FindAPI(0x7D91AA1B038C76C5, 0x3059081C8654A25C);
+        free = FindAPI_ML(tracker->IMOML, 0x7D91AA1B038C76C5, 0x3059081C8654A25C);
     #elif _WIN32
-        free = FindAPI(0x3E4E46A9, 0x4E12F93E);
+        free = FindAPI_ML(tracker->IMOML, 0x3E4E46A9, 0x4E12F93E);
     #endif
         if (free == NULL)
         {
@@ -1969,9 +1997,9 @@ void __cdecl MT_ucrtbase_free(void* ptr)
         }
         ucrtbase_msize_t msize;
     #ifdef _WIN64
-        msize = FindAPI(0xB7CEC664623F1FBD, 0x7019101EE16AB530);
+        msize = FindAPI_ML(tracker->IMOML, 0xB7CEC664623F1FBD, 0x7019101EE16AB530);
     #elif _WIN32
-        msize = FindAPI(0xEF51834F, 0xB96264E3);
+        msize = FindAPI_ML(tracker->IMOML, 0xEF51834F, 0xB96264E3);
     #endif
         if (msize == NULL)
         {
@@ -2043,9 +2071,9 @@ uint __cdecl MT_ucrtbase_msize(void* ptr)
         }
         ucrtbase_msize_t msize;
     #ifdef _WIN64
-        msize = FindAPI(0x4BD07C13CBA8FB0F, 0x0941BE2FAF2EE80A);
+        msize = FindAPI_ML(tracker->IMOML, 0x4BD07C13CBA8FB0F, 0x0941BE2FAF2EE80A);
     #elif _WIN32
-        msize = FindAPI(0x502F79C9, 0xFF5CE830);
+        msize = FindAPI_ML(tracker->IMOML, 0x502F79C9, 0xFF5CE830);
     #endif
         if (msize == NULL)
         {

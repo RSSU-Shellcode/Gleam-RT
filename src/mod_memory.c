@@ -1793,12 +1793,16 @@ void* __cdecl MT_ucrtbase_malloc(uint size)
     errno lastErr = NO_ERROR;
     for (;;)
     {
-        ucrtbase_malloc_t malloc;
     #ifdef _WIN64
-        malloc = FindAPI_ML(tracker->IMOML, 0x7789A1909ED9CCBF, 0x99717C0C8D37C14A);
+        uint mHash = 0xC8979D68FC153E63;
+        uint pHash = 0xC3ED093E867586EE;
+        uint hKey  = 0x843D1732A8C40E00;
     #elif _WIN32
-        malloc = FindAPI_ML(tracker->IMOML, 0x83F874FD, 0x1CA89591);
+        uint mHash = 0xE116757B;
+        uint pHash = 0xF402BD57;
+        uint hKey  = 0x4B5196C8;
     #endif
+        ucrtbase_malloc_t malloc = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
         if (malloc == NULL)
         {
             lastErr = ERR_MEMORY_API_NOT_FOUND;
@@ -1843,12 +1847,16 @@ void* __cdecl MT_ucrtbase_calloc(uint num, uint size)
     errno lastErr = NO_ERROR;
     for (;;)
     {
-        ucrtbase_calloc_t calloc;
     #ifdef _WIN64
-        calloc = FindAPI_ML(tracker->IMOML, 0x70F10113639CEB83, 0xD2316AE480BF91B3);
+        uint mHash = 0xBA11B584C0E2C354;
+        uint pHash = 0xB567215A4B430B3F;
+        uint hKey  = 0xBF71AC304E763DD9;
     #elif _WIN32
-        calloc = FindAPI_ML(tracker->IMOML, 0x389EA34B, 0x69D8846F);
+        uint mHash = 0x65389226;
+        uint pHash = 0x21A8EDB6;
+        uint hKey  = 0x83A98C6F;
     #endif
+        ucrtbase_calloc_t calloc = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
         if (calloc == NULL)
         {
             lastErr = ERR_MEMORY_API_NOT_FOUND;
@@ -1898,23 +1906,31 @@ void* __cdecl MT_ucrtbase_realloc(void* ptr, uint size)
     errno lastErr = NO_ERROR;
     for (;;)
     {
-        ucrtbase_realloc_t realloc;
     #ifdef _WIN64
-        realloc = FindAPI_ML(tracker->IMOML, 0x63C81F2280566B03, 0x9F039B24B1B12251);
+        uint mHash = 0x11B0889A6084A30F;
+        uint pHash = 0x438FC396E49E76F1;
+        uint hKey  = 0x2147D0F4BBF0BF25;
     #elif _WIN32
-        realloc = FindAPI_ML(tracker->IMOML, 0x275557CD, 0x663EE38E);
+        uint mHash = 0x611CB923;
+        uint pHash = 0xADA4F1A3;
+        uint hKey  = 0x964B5F08;
     #endif
+        ucrtbase_realloc_t realloc = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
         if (realloc == NULL)
         {
             lastErr = ERR_MEMORY_API_NOT_FOUND;
             break;
         }
-        ucrtbase_msize_t msize;
     #ifdef _WIN64
-        msize = FindAPI_ML(tracker->IMOML, 0x74D58F2F24046630, 0x048994D256C94892);
+        mHash = 0x1831D75A4DDFA430;
+        pHash = 0x14374030484BEBDD;
+        hKey  = 0xE5F0D94E0ED9AC76;
     #elif _WIN32
-        msize = FindAPI_ML(tracker->IMOML, 0x0BA6529D, 0x4F10E2C7);
+        mHash = 0xDBC9F2B0;
+        pHash = 0xB8CB06F0;
+        hKey  = 0xFF1B4883;
     #endif
+        ucrtbase_msize_t msize = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
         if (msize == NULL)
         {
             lastErr = ERR_MEMORY_API_NOT_FOUND;
@@ -1984,23 +2000,31 @@ void __cdecl MT_ucrtbase_free(void* ptr)
     errno lastErr = NO_ERROR;
     for (;;)
     {
-        ucrtbase_free_t free;
     #ifdef _WIN64
-        free = FindAPI_ML(tracker->IMOML, 0x7D91AA1B038C76C5, 0x3059081C8654A25C);
+        uint mHash = 0x11B0889A6084A30F;
+        uint pHash = 0x438FC396E49E76F1;
+        uint hKey  = 0x2147D0F4BBF0BF25;
     #elif _WIN32
-        free = FindAPI_ML(tracker->IMOML, 0x3E4E46A9, 0x4E12F93E);
+        uint mHash = 0x611CB923;
+        uint pHash = 0xADA4F1A3;
+        uint hKey  = 0x964B5F08;
     #endif
+        ucrtbase_free_t free = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
         if (free == NULL)
         {
             lastErr = ERR_MEMORY_API_NOT_FOUND;
             break;
         }
-        ucrtbase_msize_t msize;
     #ifdef _WIN64
-        msize = FindAPI_ML(tracker->IMOML, 0xB7CEC664623F1FBD, 0x7019101EE16AB530);
+        mHash = 0x1831D75A4DDFA430;
+        pHash = 0x14374030484BEBDD;
+        hKey  = 0xE5F0D94E0ED9AC76;
     #elif _WIN32
-        msize = FindAPI_ML(tracker->IMOML, 0xEF51834F, 0xB96264E3);
+        mHash = 0xDBC9F2B0;
+        pHash = 0xB8CB06F0;
+        hKey  = 0xFF1B4883;
     #endif
+        ucrtbase_msize_t msize = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
         if (msize == NULL)
         {
             lastErr = ERR_MEMORY_API_NOT_FOUND;
@@ -2069,12 +2093,16 @@ uint __cdecl MT_ucrtbase_msize(void* ptr)
         {
             break;
         }
-        ucrtbase_msize_t msize;
     #ifdef _WIN64
-        msize = FindAPI_ML(tracker->IMOML, 0x4BD07C13CBA8FB0F, 0x0941BE2FAF2EE80A);
+        uint mHash = 0x1831D75A4DDFA430;
+        uint pHash = 0x14374030484BEBDD;
+        uint hKey  = 0xE5F0D94E0ED9AC76;
     #elif _WIN32
-        msize = FindAPI_ML(tracker->IMOML, 0x502F79C9, 0xFF5CE830);
+        uint mHash = 0xDBC9F2B0;
+        uint pHash = 0xB8CB06F0;
+        uint hKey  = 0xFF1B4883;
     #endif
+        ucrtbase_msize_t msize = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
         if (msize == NULL)
         {
             lastErr = ERR_MEMORY_API_NOT_FOUND;

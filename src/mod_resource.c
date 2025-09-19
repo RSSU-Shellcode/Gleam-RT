@@ -104,6 +104,9 @@ typedef struct {
     // store options
     bool NotEraseInstruction;
 
+    // store environment
+    uintptr IMOML;
+
     // API addresses
     CreateMutexA_t           CreateMutexA;
     CreateMutexW_t           CreateMutexW;
@@ -313,11 +316,14 @@ ResourceTracker_M* InitResourceTracker(Context* context)
     uintptr address = context->MainMemPage;
     uintptr trackerAddr = address + 10000 + RandUintN(address, 128);
     uintptr moduleAddr  = address + 11000 + RandUintN(address, 128);
-    // initialize tracker
+    // allocate tracker memory
     ResourceTracker* tracker = (ResourceTracker*)trackerAddr;
     mem_init(tracker, sizeof(ResourceTracker));
     // store options
     tracker->NotEraseInstruction = context->NotEraseInstruction;
+    // store environment
+    tracker->IMOML = context->IMOML;
+    // initialize tracker
     errno errno = NO_ERROR;
     for (;;)
     {
@@ -420,67 +426,68 @@ __declspec(noinline)
 static bool initTrackerAPI(ResourceTracker* tracker, Context* context)
 {
     typedef struct { 
-        uint hash; uint key; void* proc;
+        uint mHash; uint pHash; uint hKey; void* proc;
     } winapi;
     winapi list[] =
 #ifdef _WIN64
     {
-        { 0xE71F5525D721E78C, 0xE11FEB9E512C3553 }, // CreateMutexA
-        { 0x295624AAC9B7A9CF, 0x5E4366A9F3C3C96B }, // CreateMutexW
-        { 0xCA1BEE55D503E8D3, 0x05CA734617BCB235 }, // CreateMutexExA
-        { 0x235F6300B18F96FA, 0x462245D0B8E090B4 }, // CreateMutexExW
-        { 0x9DD020DC005DFF26, 0x84F68DC491FB820C }, // CreateEventA
-        { 0xC83FE97180E4699D, 0xF809ED9855BEB13D }, // CreateEventW
-        { 0xDEAACA998C18D9CF, 0x2F9217FFF5838855 }, // CreateEventExA
-        { 0x0D90DD87F8996201, 0x8775BEA3A96EE2FD }, // CreateEventExW
-        { 0xF7BE10C1C1F409B6, 0x083D146ACC929A83 }, // CreateSemaphoreA
-        { 0xD76E7132C31D9F7F, 0x810A5E8DF521AF8B }, // CreateSemaphoreW
-        { 0x603EC9885322BE77, 0x91EBBF49FD30CD6C }, // CreateSemaphoreExA
-        { 0x68A9D452BFC4E94E, 0xBDD2F8F5CE920D49 }, // CreateSemaphoreExW
-        { 0xAD2659306A728E9A, 0x3D365A4A5231844C }, // CreateWaitableTimerA
-        { 0x2C557505730F7644, 0x304567D9E1D3AC17 }, // CreateWaitableTimerW
-        { 0x66CA41440F9FF868, 0xBE5C05614AC956F3 }, // CreateWaitableTimerExA
-        { 0xD0262257462ECF54, 0x142D85B27172BAD1 }, // CreateWaitableTimerExW
-        { 0x31399C47B70A8590, 0x5C59C3E176954594 }, // CreateFileA
-        { 0xD1B5E30FA8812243, 0xFD9A53B98C9A437E }, // CreateFileW
-        { 0x60041DBB2B0D19DF, 0x7BD2C85D702B4DDC }, // FindFirstFileA
-        { 0xFE81B7989672CCE3, 0xA7FD593F0ED3E8EA }, // FindFirstFileW
-        { 0xCAA3E575156CF368, 0x8A587657CB19E9BB }, // FindFirstFileExA
-        { 0x7E4308DC46D7B281, 0x10C4F8ED60BC5EB5 }, // FindFirstFileExW
-        { 0x98AC87F60ED8677D, 0x2DF5C74604B2E3A1 }, // FindClose
-        { 0xD696B340A7E3A5ED, 0x535C420EC1129AB9 }, // CreateIoCompletionPort
+        { 0x18557173A3FF60DF, 0x82E2C7817D6985C2, 0x5854A1BC5CB98207 }, // CreateMutexA
+        { 0xC3ADA377C4F82801, 0x0D27D1CC083E59BC, 0x64901F0A3DE7DAAD }, // CreateMutexW
+        { 0x528A29C1320E4677, 0x2229D75AB9596D3B, 0x0F183BC92FF08B5B }, // CreateMutexExA
+        { 0xCA930D7CB5651753, 0xAD498782299971C1, 0x809AB547A56D43DD }, // CreateMutexExW
+        { 0x8FAB0277D2B5C4AD, 0x39B7648853350147, 0xD24B7D700589CAFF }, // CreateEventA
+        { 0x977E44CCA46E915E, 0xCAE2C352577D8F17, 0xF10A0EEAA2A723BF }, // CreateEventW
+        { 0xC265622EE8AE58E2, 0x9835563D2AD1B841, 0xC3D8C0B4B533570F }, // CreateEventExA
+        { 0xEA0E4D94515ACB56, 0x479469500BC8031D, 0x80E6FCEF71BA2651 }, // CreateEventExW
+        { 0x9851FFD6885CE173, 0x5B35C6E9766E9C62, 0x01874A5ADBB5A774 }, // CreateSemaphoreA
+        { 0xC262E20BBEAEB68D, 0xA7AE1089ECA5067C, 0x228570F9458C9F38 }, // CreateSemaphoreW
+        { 0x5CB8BBCB1EBF5E4D, 0x2BA959BCCDD4FC92, 0xDA628DB473E27500 }, // CreateSemaphoreExA
+        { 0xD392AF76603A5E90, 0x64D429F55A541308, 0x59EBF327FBE86941 }, // CreateSemaphoreExW
+        { 0xA0234B679FE50DF7, 0x35A80E36BDC1AC73, 0xE10894F523E4FDD5 }, // CreateWaitableTimerA
+        { 0xC1D01AD9FFDBCD8A, 0x35B069801C4EE076, 0x81251C26497B0215 }, // CreateWaitableTimerW
+        { 0xD0223DF928D65CF5, 0x4CAB2ACD0F728D0A, 0x813C63DABDEF833A }, // CreateWaitableTimerExA
+        { 0x7B0752F23CD8963A, 0xF7903FC62374C665, 0x237967C244D53694 }, // CreateWaitableTimerExW
+        { 0xAC2853EFD178E5D2, 0xB3B6BF59531820F1, 0xAEA3520EDB170379 }, // CreateFileA
+        { 0x61F134B5F496B34D, 0x1BB3665A2B6EB94C, 0xD749F5B4B7A1CA87 }, // CreateFileW
+        { 0x9AA3A0F999CD7815, 0x4368EC23E1BD7B7C, 0x3A04BD90C36C1D0C }, // FindFirstFileA
+        { 0x3E6C94BFC8E8CEF7, 0x0F8E7447E87C3E16, 0x84BFE076C2595727 }, // FindFirstFileW
+        { 0x28BC7AE1E227C488, 0xD988A68E2AA9C7B8, 0xD9AE3BCEDB9370FF }, // FindFirstFileExA
+        { 0x352D40E9FCBDCA23, 0x4B3937CFBF5523D9, 0x10A5C6391A59309E }, // FindFirstFileExW
+        { 0xEEE6CC777DE68F08, 0xB3D2B1E17472956B, 0xEAADF7C8131B85D2 }, // FindClose
+        { 0x6DB80C3F17CB324C, 0xA9DE20B0EC6F90B4, 0xF1870B73E05CB84C }, // CreateIoCompletionPort
     };
 #elif _WIN32
     {
-        { 0x944F5EC7, 0x2006E943 }, // CreateMutexA
-        { 0xC753F3A6, 0x71358A2E }, // CreateMutexW
-        { 0x0E1E9EE7, 0x6E41C8B1 }, // CreateMutexExA
-        { 0xF609D00D, 0x2F424452 }, // CreateMutexExW
-        { 0xC974EC02, 0x4DFD8870 }, // CreateEventA
-        { 0x0545121C, 0x23C575E7 }, // CreateEventW
-        { 0x653BE09B, 0xDD06E20B }, // CreateEventExA
-        { 0x7F51F1C0, 0xC0601496 }, // CreateEventExW
-        { 0xC783748C, 0x1688B859 }, // CreateSemaphoreA
-        { 0xB05FAEA3, 0xC2CC106A }, // CreateSemaphoreW
-        { 0xA6C4A8F2, 0xD597C8AC }, // CreateSemaphoreExA
-        { 0x80B696F0, 0x5DF96491 }, // CreateSemaphoreExW
-        { 0x6EF1C038, 0x8BB752D2 }, // CreateWaitableTimerA
-        { 0x20E11F8D, 0x0515A457 }, // CreateWaitableTimerW
-        { 0x64CC2090, 0xFB298A53 }, // CreateWaitableTimerExA
-        { 0x89FD1E78, 0xAFCC42D6 }, // CreateWaitableTimerExW
-        { 0x0BB8EEBE, 0x28E70E8D }, // CreateFileA
-        { 0x2CB7048A, 0x76AC9783 }, // CreateFileW
-        { 0x131B6345, 0x65478818 }, // FindFirstFileA
-        { 0xD57E7557, 0x50BC5D0F }, // FindFirstFileW
-        { 0xADD805AF, 0xD14251F2 }, // FindFirstFileExA
-        { 0x0A45496A, 0x4A4A7F36 }, // FindFirstFileExW
-        { 0xE992A699, 0x8B6ED092 }, // FindClose
-        { 0x6A3CA941, 0xDAE6E303 }, // CreateIoCompletionPort
+        { 0x01941FA1, 0x8A911392, 0xCD978D9B }, // CreateMutexA
+        { 0x4F8D79D5, 0x0B198EF8, 0x75914A0C }, // CreateMutexW
+        { 0x439D900C, 0x827BEBBC, 0x35FA9598 }, // CreateMutexExA
+        { 0x53291733, 0x569872A3, 0xD871BDF0 }, // CreateMutexExW
+        { 0x01649CDF, 0x6471A6BE, 0x93C1F48F }, // CreateEventA
+        { 0xF5732A91, 0x5C900A9C, 0x88C4F7C2 }, // CreateEventW
+        { 0xF51D591C, 0x7C041E00, 0x489E0651 }, // CreateEventExA
+        { 0xF0639836, 0x4EDE879A, 0x3935C43E }, // CreateEventExW
+        { 0x0D8DA7A4, 0x8FD5542B, 0x6492CF88 }, // CreateSemaphoreA
+        { 0xB73DAB34, 0x07D8C046, 0x82FD3301 }, // CreateSemaphoreW
+        { 0xDCCEA139, 0x43BAC57C, 0x6CD9AB6E }, // CreateSemaphoreExA
+        { 0xAA60305F, 0x97FFFDD5, 0x9AC87B47 }, // CreateSemaphoreExW
+        { 0x5B220EED, 0x858B7C70, 0x7AF18636 }, // CreateWaitableTimerA
+        { 0xD3637677, 0x7405A69F, 0x16C60103 }, // CreateWaitableTimerW
+        { 0x86C82381, 0x78D2EDFC, 0xA28E2C09 }, // CreateWaitableTimerExA
+        { 0xB90EED9A, 0xF8055853, 0x52763229 }, // CreateWaitableTimerExW
+        { 0xCFDD5352, 0x395AFF95, 0xA697F6D0 }, // CreateFileA
+        { 0xA27950C4, 0x5278B69C, 0x4F7DE081 }, // CreateFileW
+        { 0x7790F793, 0x7F124DC1, 0xBADE79B5 }, // FindFirstFileA
+        { 0x42AC967A, 0x7ABCF3F7, 0x3C6A3022 }, // FindFirstFileW
+        { 0xD80C29F0, 0x2BB62EB9, 0x9F243303 }, // FindFirstFileExA
+        { 0x18422147, 0x50EAC3A5, 0xBC4BC36A }, // FindFirstFileExW
+        { 0x74056D09, 0xFFA89CE3, 0x6E906B38 }, // FindClose
+        { 0x8692E8C4, 0x48D73CFB, 0xD525ECEE }, // CreateIoCompletionPort
     };
 #endif
     for (int i = 0; i < arrlen(list); i++)
     {
-        void* proc = FindAPI(list[i].hash, list[i].key);
+        winapi item = list[i];
+        void*  proc = FindAPI_ML(context->IMOML, item.mHash, item.pHash, item.hKey);
         if (proc == NULL)
         {
             return false;

@@ -163,18 +163,13 @@ hash_api -fmt 64 -conc -mod "ws2_32.dll" -proc closesocket
 echo.
 
 echo [Library Tracker]
-hash_api -fmt 64 -conc -mod "kernel32.dll" -proc LoadLibraryA
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc LoadLibraryW
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc LoadLibraryExA
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc LoadLibraryExW
-hash_api -fmt 64 -conc -mod "kernel32.dll" -proc FreeLibrary
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc FreeLibraryAndExitThread
 echo.
 
 echo [Memory Tracker]
-hash_api -fmt 64 -conc -mod "kernel32.dll" -proc VirtualAlloc
-hash_api -fmt 64 -conc -mod "kernel32.dll" -proc VirtualFree
-hash_api -fmt 64 -conc -mod "kernel32.dll" -proc VirtualProtect
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc VirtualQuery
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc GetProcessHeap
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc GetProcessHeaps
@@ -207,9 +202,6 @@ echo.
 
 echo [Thread Tracker]
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc CreateThread
-hash_api -fmt 64 -conc -mod "kernel32.dll" -proc ExitThread
-hash_api -fmt 64 -conc -mod "kernel32.dll" -proc SuspendThread
-hash_api -fmt 64 -conc -mod "kernel32.dll" -proc ResumeThread
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc SwitchToThread
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc GetThreadContext
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc SetThreadContext
@@ -218,8 +210,6 @@ hash_api -fmt 64 -conc -mod "kernel32.dll" -proc GetCurrentThreadId
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc TerminateThread
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc TlsAlloc
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc TlsFree
-hash_api -fmt 64 -conc -mod "kernel32.dll" -proc CreateWaitableTimerA
-hash_api -fmt 64 -conc -mod "kernel32.dll" -proc SetWaitableTimer
 echo.
 
 echo [Resource Tracker]
@@ -479,18 +469,13 @@ hash_api -fmt 32 -conc -mod "ws2_32.dll" -proc closesocket
 echo.
 
 echo [Library Tracker]
-hash_api -fmt 32 -conc -mod "kernel32.dll" -proc LoadLibraryA
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc LoadLibraryW
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc LoadLibraryExA
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc LoadLibraryExW
-hash_api -fmt 32 -conc -mod "kernel32.dll" -proc FreeLibrary
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc FreeLibraryAndExitThread
 echo.
 
 echo [Memory Tracker]
-hash_api -fmt 32 -conc -mod "kernel32.dll" -proc VirtualAlloc
-hash_api -fmt 32 -conc -mod "kernel32.dll" -proc VirtualFree
-hash_api -fmt 32 -conc -mod "kernel32.dll" -proc VirtualProtect
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc VirtualQuery
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc GetProcessHeap
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc GetProcessHeaps
@@ -523,9 +508,6 @@ echo.
 
 echo [Thread Tracker]
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc CreateThread
-hash_api -fmt 32 -conc -mod "kernel32.dll" -proc ExitThread
-hash_api -fmt 32 -conc -mod "kernel32.dll" -proc SuspendThread
-hash_api -fmt 32 -conc -mod "kernel32.dll" -proc ResumeThread
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc SwitchToThread
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc GetThreadContext
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc SetThreadContext
@@ -534,8 +516,6 @@ hash_api -fmt 32 -conc -mod "kernel32.dll" -proc GetCurrentThreadId
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc TerminateThread
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc TlsAlloc
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc TlsFree
-hash_api -fmt 32 -conc -mod "kernel32.dll" -proc CreateWaitableTimerA
-hash_api -fmt 32 -conc -mod "kernel32.dll" -proc SetWaitableTimer
 echo.
 
 echo [Resource Tracker]

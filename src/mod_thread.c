@@ -204,37 +204,38 @@ __declspec(noinline)
 static bool initTrackerAPI(ThreadTracker* tracker, Context* context)
 {
     typedef struct { 
-        uint hash; uint key; void* proc;
+        uint mHash; uint pHash; uint hKey; void* proc;
     } winapi;
     winapi list[] =
 #ifdef _WIN64
     {
-        { 0x430932D6A2AC04EA, 0x9AF52A6480DA3C93 }, // CreateThread
-        { 0x279874724CB6400F, 0x07A93EB12A02E6BE }, // SwitchToThread
-        { 0x59361F47711B4B27, 0xB97411CC715D4940 }, // GetThreadContext
-        { 0xFB9A4AF393D77518, 0xA0CA2E8823A27560 }, // SetThreadContext
-        { 0x5133BE509803E44E, 0x20498B6AFFAED91B }, // GetThreadId
-        { 0x9AF119F551D952CF, 0x5A1B9D61A26B22D7 }, // GetCurrentThreadId
-        { 0xFB891A810F1ABF9A, 0x253BBD721EBD81F0 }, // TerminateThread
-        { 0x2C36E30A5F0A762C, 0xFEB91119DD47EE23 }, // TlsAlloc
-        { 0x93E44660BF1A6F09, 0x87B9005375387D3C }, // TlsFree
+        { 0xBE904CF80CF17C39, 0x519776E56C20ED23, 0x5301991C18DCD17D }, // CreateThread
+        { 0xF23240D671D7EC62, 0x0C68B86B8614EB50, 0x45ACC1750A672E67 }, // SwitchToThread
+        { 0x7ECC38B577C35684, 0x1FF7CABA157024A2, 0x899DCA1F272AF8EB }, // GetThreadContext
+        { 0x8B18734C0789B973, 0xA2C60822A1BE2D5A, 0x76B5C9DD472F424A }, // SetThreadContext
+        { 0x9994C637BC7D7FCB, 0xF2FE8E7A503389EA, 0x26E4C3B35DA8BD0E }, // GetThreadId
+        { 0xB71E7C8FEFD05DB5, 0x8A0B3145841ADACF, 0xE46B1941576D6197 }, // GetCurrentThreadId
+        { 0xE77B1C721DEE4878, 0xCF70DFC838ECCA31, 0xC28365451F8D8061 }, // TerminateThread
+        { 0xE6A216055D1CEF2E, 0x0B5C25B37828D617, 0xA44A88E4F1BD1B3F }, // TlsAlloc
+        { 0xBCED74DF5203BAD4, 0x22130B4B51186B34, 0xC9741392031C8FF3 }, // TlsFree
     };
 #elif _WIN32
     {
-        { 0xB9D69C9D, 0xCAB90EB6 }, // CreateThread
-        { 0xB6DC09AF, 0x56B36926 }, // SwitchToThread
-        { 0x25EF3A63, 0xAFA67C4F }, // GetThreadContext
-        { 0x2729A1C9, 0x3A57FF5D }, // SetThreadContext
-        { 0xFE77EB3E, 0x81CB68B1 }, // GetThreadId
-        { 0x2884E5D9, 0xA933632C }, // GetCurrentThreadId
-        { 0xBA134972, 0x295F9DD2 }, // TerminateThread
-        { 0x8749FD07, 0x783A2597 }, // TlsAlloc
-        { 0x0B8B8434, 0xAD091548 }, // TlsFree
+        { 0x21B7D96A, 0xBFD234C5, 0x79B41A6D }, // CreateThread
+        { 0x10389EFD, 0xFD4F3BAC, 0xDE25CF78 }, // SwitchToThread
+        { 0xBAB8418D, 0x9C6574EC, 0x0450B317 }, // GetThreadContext
+        { 0xAF648BCE, 0xAB5EB7D9, 0x885A79B8 }, // SetThreadContext
+        { 0xD932B610, 0x1EDB556A, 0xEAE314E1 }, // GetThreadId
+        { 0x9DCDA638, 0xD7F7DC6A, 0xE476968C }, // GetCurrentThreadId
+        { 0xEC2E0B2B, 0x010AE228, 0x72B16724 }, // TerminateThread
+        { 0x09C1B0DC, 0xE9B75640, 0x5532D70D }, // TlsAlloc
+        { 0xAB3BF90E, 0x828A480E, 0xB2033621 }, // TlsFree
     };
 #endif
     for (int i = 0; i < arrlen(list); i++)
     {
-        void* proc = FindAPI(list[i].hash, list[i].key);
+        winapi item = list[i];
+        void* proc = FindAPI_ML(context->IMOML, item.mHash, item.pHash, item.hKey);
         if (proc == NULL)
         {
             return false;

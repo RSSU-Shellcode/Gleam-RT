@@ -1593,12 +1593,16 @@ LSTATUS RT_RegOpenKeyA(HKEY hKey, LPCSTR lpSubKey, HKEY* phkResult)
     errno   lastErr = NO_ERROR;
     for (;;)
     {
-        RegOpenKeyA_t RegOpenKeyA;
     #ifdef _WIN64
-        RegOpenKeyA = FindAPI(0x857AA6888A45F4C9, 0x4AFAFEEEC73E784C);
+        uint mHash = 0xFA7EA8AF31135B54;
+        uint pHash = 0x22D8B65730135F58;
+        uint hKey  = 0x60FDAD6E29C89B00;
     #elif _WIN32
-        RegOpenKeyA = FindAPI(0x5F3B549C, 0x588ACE35);
+        uint mHash = 0x5FE996AD;
+        uint pHash = 0x1FADD8BD;
+        uint hKey  = 0x94E3EBAE;
     #endif
+        RegOpenKeyA_t RegOpenKeyA = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
         if (RegOpenKeyA == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -1631,12 +1635,16 @@ LSTATUS RT_RegOpenKeyW(HKEY hKey, LPCWSTR lpSubKey, HKEY* phkResult)
     errno   lastErr = NO_ERROR;
     for (;;)
     {
-        RegOpenKeyW_t RegOpenKeyW;
     #ifdef _WIN64
-        RegOpenKeyW = FindAPI(0x596B080727585709, 0xB6E5C5A7344C86EF);
+        uint mHash = 0x38F57CDA6CA1BF80;
+        uint pHash = 0x5D2DA71712AD845F;
+        uint hKey  = 0xF3F6F1F37138E467;
     #elif _WIN32
-        RegOpenKeyW = FindAPI(0xFE6E3A60, 0x1F3C45C5);
+        uint mHash = 0x7370A861;
+        uint pHash = 0x4D8DD02E;
+        uint hKey  = 0x6B7B9626;
     #endif
+        RegOpenKeyW_t RegOpenKeyW = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
         if (RegOpenKeyW == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -1670,12 +1678,16 @@ LSTATUS RT_RegOpenKeyExA(
     errno   lastErr = NO_ERROR;
     for (;;)
     {
-        RegOpenKeyExA_t RegOpenKeyExA;
     #ifdef _WIN64
-        RegOpenKeyExA = FindAPI(0x189F0999A7259053, 0x4C99200BFC0E770B);
+        uint mHash = 0x2AE0601CC475EB1A;
+        uint pHash = 0xAAE3DFB521796E88;
+        uint hKey  = 0x22106841BD214082;
     #elif _WIN32
-        RegOpenKeyExA = FindAPI(0xBE726FAA, 0xEAD2E08B);
+        uint mHash = 0xF2834E35;
+        uint pHash = 0x93E426ED;
+        uint hKey  = 0xFAB77358;
     #endif
+        RegOpenKeyExA_t RegOpenKeyExA = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
         if (RegOpenKeyExA == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -1711,12 +1723,16 @@ LSTATUS RT_RegOpenKeyExW(
     errno   lastErr = NO_ERROR;
     for (;;)
     {
-        RegOpenKeyExW_t RegOpenKeyExW;
     #ifdef _WIN64
-        RegOpenKeyExW = FindAPI(0xC11E19BF67DF5A0F, 0x9CC21D811EA014ED);
+        uint mHash = 0x532BAEA98DA2BA54;
+        uint pHash = 0x7509BA27645BDAD3;
+        uint hKey  = 0x55CCE92A674BE515;
     #elif _WIN32
-        RegOpenKeyExW = FindAPI(0x4668AB03, 0xC1931B55);
+        uint mHash = 0xB68F1718;
+        uint pHash = 0x57EFEFE7;
+        uint hKey  = 0x7B845953;
     #endif
+        RegOpenKeyExW_t RegOpenKeyExW = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
         if (RegOpenKeyExW == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -1752,12 +1768,16 @@ SOCKET RT_WSASocketA(
     errno  lastErr = NO_ERROR;
     for (;;)
     {
-        WSASocketA_t WSASocketA;
     #ifdef _WIN64
-        WSASocketA = FindAPI(0x9423BC8A7F7135CE, 0xBF3CF52071378ED3);
+        uint mHash = 0xB424460D6D3EC693;
+        uint pHash = 0x0F5D3E03A731E351;
+        uint hKey  = 0x6E9AA870F2F9AC99;
     #elif _WIN32
-        WSASocketA = FindAPI(0xA853C263, 0x43B98477);
+        uint mHash = 0x1408823C;
+        uint pHash = 0x9F86512A;
+        uint hKey  = 0x64A5FFCA;
     #endif
+        WSASocketA_t WSASocketA = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
         if (WSASocketA == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -1792,12 +1812,16 @@ SOCKET RT_WSASocketW(
     errno  lastErr = NO_ERROR;
     for (;;)
     {
-        WSASocketA_t WSASocketW;
     #ifdef _WIN64
-        WSASocketW = FindAPI(0x7BCE82408C2BFF04, 0xC39F53FE566C687A);
+        uint mHash = 0x30A392BC95981448;
+        uint pHash = 0xC43AA717D9415F71;
+        uint hKey  = 0x30FB0B12069C9DFB;
     #elif _WIN32
-        WSASocketW = FindAPI(0xE94A63DF, 0xA4F52264);
+        uint mHash = 0xAEDE20DD;
+        uint pHash = 0x780CEC7E;
+        uint hKey  = 0xA75A0D12;
     #endif
+        WSASocketA_t WSASocketW = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
         if (WSASocketW == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -1828,6 +1852,8 @@ int RT_WSAIoctl(
     LPVOID lpvOutBuffer, DWORD cbOutBuffer, DWORD* lpcbBytesReturned, 
     POINTER lpOverlapped, POINTER lpCompletionRoutine
 ){
+    ResourceTracker* tracker = getTrackerPointer();
+
     if (!RT_Lock())
     {
         return SOCKET_ERROR;
@@ -1837,12 +1863,16 @@ int RT_WSAIoctl(
     errno lastErr = NO_ERROR;
     for (;;)
     {
-        WSAIoctl_t WSAIoctl;
     #ifdef _WIN64
-        WSAIoctl = FindAPI(0x0B65FD2D1363C59C, 0xB3254437C88FD365);
+        uint mHash = 0x90AE148F1075C6EC;
+        uint pHash = 0x2CA84E695E895E24;
+        uint hKey  = 0xC7DAAAC503BA2B8F;
     #elif _WIN32
-        WSAIoctl = FindAPI(0x670B5A46, 0x9B886A3E);
+        uint mHash = 0xD77C37E7;
+        uint pHash = 0xC8C2BB8E;
+        uint hKey  = 0x284C99AE;
     #endif
+        WSAIoctl_t WSAIoctl = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
         if (WSAIoctl == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -1885,12 +1915,16 @@ SOCKET RT_socket(int af, int type, int protocol)
     errno  lastErr = NO_ERROR;
     for (;;)
     {
-        socket_t socket;
     #ifdef _WIN64
-        socket = FindAPI(0x2F4244FE0885F2C3, 0x3AD9A156D89CC096);
+        uint mHash = 0xEEC793C0338C998B;
+        uint pHash = 0xAFC82792DA88601D;
+        uint hKey  = 0xEA9BFB6E5BB5CAA9;
     #elif _WIN32
-        socket = FindAPI(0xBC5E9C2A, 0x0148A701);
+        uint mHash = 0x7F221CDB;
+        uint pHash = 0x73884599;
+        uint hKey  = 0x496D9B55;
     #endif
+        socket_t socket = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
         if (socket == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -1924,12 +1958,16 @@ SOCKET RT_accept(SOCKET s, POINTER addr, int* addrlen)
     errno  lastErr = NO_ERROR;
     for (;;)
     {
-        accept_t accept;
     #ifdef _WIN64
-        accept = FindAPI(0x10D963E47F6DB6B9, 0x8DD31C5FBD824AD8);
+        uint mHash = 0x3F0E2AACEE8BCF80;
+        uint pHash = 0x6BF8E08668FFE9F8;
+        uint hKey  = 0x974521B6A59B3E8A;
     #elif _WIN32
-        accept = FindAPI(0x1F94AC37, 0x93C9AB8B);
+        uint mHash = 0xA4B36517;
+        uint pHash = 0x639BA467;
+        uint hKey  = 0x37B5BE81;
     #endif
+        accept_t accept = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
         if (accept == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -1957,6 +1995,8 @@ SOCKET RT_accept(SOCKET s, POINTER addr, int* addrlen)
 __declspec(noinline)
 int RT_shutdown(SOCKET s, int how)
 {
+    ResourceTracker* tracker = getTrackerPointer();
+
     if (!RT_Lock())
     {
         return SOCKET_ERROR;
@@ -1966,12 +2006,16 @@ int RT_shutdown(SOCKET s, int how)
     errno lastErr = NO_ERROR;
     for (;;)
     {
-        shutdown_t shutdown;
     #ifdef _WIN64
-        shutdown = FindAPI(0x42DD4257D6989C17, 0x7D77B81F7CCE783A);
+        uint mHash = 0xA37CB252069AFC45;
+        uint pHash = 0x958D1BF7675DF3C6;
+        uint hKey  = 0x8FB0DF6A8F4B0164;
     #elif _WIN32
-        shutdown = FindAPI(0xE8BAC920, 0xD2DEFA8B);
+        uint mHash = 0x00B6237F;
+        uint pHash = 0x29BC24ED;
+        uint hKey  = 0x70911362;
     #endif
+        shutdown_t shutdown = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
         if (shutdown == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;

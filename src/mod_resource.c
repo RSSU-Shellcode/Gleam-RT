@@ -2130,12 +2130,16 @@ LSTATUS RT_RegCloseKey(HKEY hKey)
     errno   lastErr = NO_ERROR;
     for (;;)
     {
-        RegCloseKey_t RegCloseKey;
     #ifdef _WIN64
-        RegCloseKey = FindAPI(0xD73DC3457F3F2267, 0xDE79CCC293884D1C);
+        uint mHash = 0xBF61DC9DB58F2119;
+        uint pHash = 0x634B2EA7763B50E7;
+        uint hKey  = 0x1E92D01ACD546FAA;
     #elif _WIN32
-        RegCloseKey = FindAPI(0xB63BD7A6, 0x614CB75F);
+        uint mHash = 0x21897061;
+        uint pHash = 0x05759268;
+        uint hKey  = 0x6DD08644;
     #endif
+        RegCloseKey_t RegCloseKey = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
         if (RegCloseKey == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -2169,12 +2173,16 @@ int RT_closesocket(SOCKET hSocket)
     errno lastErr = NO_ERROR;
     for (;;)
     {
-        closesocket_t closesocket;
     #ifdef _WIN64
-        closesocket = FindAPI(0x53A87D9CE52FEC49, 0xBBC0625CD7DA8E92);
+        uint mHash = 0xEF92E9B35ECEA6BA;
+        uint pHash = 0xEE5724C40D2CCCD2;
+        uint hKey  = 0xA7D1387163EE7961;
     #elif _WIN32
-        closesocket = FindAPI(0x224A8165, 0x524B8D52);
+        uint mHash = 0x5585015C;
+        uint pHash = 0xE4D20008;
+        uint hKey  = 0xE6423398;
     #endif
+        closesocket_t closesocket = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
         if (closesocket == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -2215,6 +2223,11 @@ static bool addHandle(ResourceTracker* tracker, void* hObject, uint32 source)
     {
         return true;
     }
+
+    uint mHash;
+    uint pHash;
+    uint hKey; 
+
     switch (source & TYPE_MASK)
     {
     case TYPE_CLOSE_HANDLE:
@@ -2224,24 +2237,32 @@ static bool addHandle(ResourceTracker* tracker, void* hObject, uint32 source)
         tracker->FindClose(hObject);
         break;
     case TYPE_CLOSE_KEY:
-        RegCloseKey_t RegCloseKey;
     #ifdef _WIN64
-        RegCloseKey = FindAPI(0xB576E6CD0F49BDB2, 0xE696272D1E3E8FE4);
+        mHash = 0xBF61DC9DB58F2119;
+        pHash = 0x634B2EA7763B50E7;
+        hKey  = 0x1E92D01ACD546FAA;
     #elif _WIN32
-        RegCloseKey = FindAPI(0x19D4543D, 0xC129A3D6);
+        mHash = 0x21897061;
+        pHash = 0x05759268;
+        hKey  = 0x6DD08644;
     #endif
+        RegCloseKey_t RegCloseKey = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
         if (RegCloseKey != NULL)
         {
             RegCloseKey(hObject);
         }
         break;
     case TYPE_CLOSE_SOCKET:
-        closesocket_t closesocket;
     #ifdef _WIN64
-        closesocket = FindAPI(0xBCEC2D54FA2DA0C4, 0x14359928896948A4);
+        mHash = 0xEF92E9B35ECEA6BA;
+        pHash = 0xEE5724C40D2CCCD2;
+        hKey  = 0xA7D1387163EE7961;
     #elif _WIN32
-        closesocket = FindAPI(0x8B0243F7, 0x35CA08AD);
+        mHash = 0x5585015C;
+        pHash = 0xE4D20008;
+        hKey  = 0xE6423398;
     #endif
+        closesocket_t closesocket = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
         if (closesocket != NULL)
         {
             closesocket(hObject);
@@ -2333,12 +2354,16 @@ int RT_WSAStartup(WORD wVersionRequired, POINTER lpWSAData)
     errno lastErr = NO_ERROR;
     for (;;)
     {
-        WSAStartup_t WSAStartup;
     #ifdef _WIN64
-        WSAStartup = FindAPI(0x21A84954D72D9F93, 0xD549133F33DA137E);
+        uint mHash = 0xEA897E8A6C57363D;
+        uint pHash = 0x2A32B9468CED7FC7;
+        uint hKey  = 0xADEBF9D727119E08;
     #elif _WIN32
-        WSAStartup = FindAPI(0x8CD788B9, 0xA349D8A2);
+        uint mHash = 0xFCDD5F57;
+        uint pHash = 0x6C10A1BE;
+        uint hKey  = 0x36C5B1D5;
     #endif
+        WSAStartup_t WSAStartup = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
         if (WSAStartup == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -2377,12 +2402,16 @@ int RT_WSACleanup()
     errno lastErr = NO_ERROR;
     for (;;)
     {
-        WSACleanup_t WSACleanup;
     #ifdef _WIN64
-        WSACleanup = FindAPI(0x324EEA09CB7B262C, 0xE64CBAD3BBD4F522);
+        uint mHash = 0x4315CA7C2DE0953F;
+        uint pHash = 0xFAA60831E40346AA;
+        uint hKey  = 0xEB60CFC4E8AF64CE;
     #elif _WIN32
-        WSACleanup = FindAPI(0xBD997AF1, 0x88F10695);
+        uint mHash = 0x3F43DBA5;
+        uint pHash = 0x2F28803E;
+        uint hKey  = 0xFEC6856A;
     #endif
+        WSACleanup_t WSACleanup = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
         if (WSACleanup == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -2410,10 +2439,15 @@ int RT_WSACleanup()
 static errno doWSACleanup(ResourceTracker* tracker)
 {
 #ifdef _WIN64
-    WSACleanup_t WSACleanup = FindAPI(0x2D5ED79692C593E4, 0xF65130FCB6DB3FD4);
+    uint mHash = 0x4315CA7C2DE0953F;
+    uint pHash = 0xFAA60831E40346AA;
+    uint hKey  = 0xEB60CFC4E8AF64CE;
 #elif _WIN32
-    WSACleanup_t WSACleanup = FindAPI(0x59F727E0, 0x156A74C5);
+    uint mHash = 0x3F43DBA5;
+    uint pHash = 0x2F28803E;
+    uint hKey  = 0xFEC6856A;
 #endif
+    WSACleanup_t WSACleanup = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
     if (WSACleanup == NULL)
     {
         return NO_ERROR;
@@ -2714,21 +2748,34 @@ errno RT_FreeAll()
     ResourceTracker* tracker = getTrackerPointer();
 
     // try to find api
-    RegCloseKey_t RegCloseKey;
-    CancelIoEx_t  CancelIoEx;
-    shutdown_t    shutdown;
-    closesocket_t closesocket;
+    typedef struct { 
+        uint mHash; uint pHash; uint hKey; void* proc;
+    } winapi;
+    winapi list[] =
 #ifdef _WIN64
-    RegCloseKey = FindAPI(0x51D9FB4FF72F1963, 0xB0265320F46E2304);
-    CancelIoEx  = FindAPI(0x06F984CC96939FA7, 0xC97B2F6A0C3413D8);
-    shutdown    = FindAPI(0xAB64496EF237CCA4, 0x65EDF9B76AD9A688);
-    closesocket = FindAPI(0xD9DD30B81F6B58FF, 0x35D911BB33B68FD1);
+    {
+        { 0xC4984645B356A7CA, 0x501838FB2F515443, 0x13F9E474C15125B2 }, // CancelIoEx
+        { 0x4E6024F14E9301CF, 0x54C3240233CCD66A, 0x3BF5EF169E089B09 }, // RegCloseKey
+        { 0x424EA1F161C7EF34, 0x1221B341D24D8989, 0xCE263A026A2173CA }, // shutdown
+        { 0xF4A81300A6A78A79, 0x9CDA1B81F057D32B, 0xB46F9B5F228665A7 }, // closesocket
+    };
 #elif _WIN32
-    RegCloseKey = FindAPI(0x976649E4, 0xDCEADBCD);
-    CancelIoEx  = FindAPI(0x492230DB, 0xF26FEB1B);
-    shutdown    = FindAPI(0x850FC0A9, 0x613BCDCB);
-    closesocket = FindAPI(0x5E8F4EC0, 0x95F951E5);
+    {
+        { 0xBE5D22C7, 0xA935663D, 0x02DF2D58 }, // CancelIoEx
+        { 0xE3B65E24, 0x5649F184, 0xAA804765 }, // RegCloseKey
+        { 0xAF47C532, 0x9F18D3A7, 0xE91CDB79 }, // shutdown
+        { 0x7C67CD01, 0x2B26FADD, 0xC168AE5E }, // closesocket
+    };
 #endif
+    for (int i = 0; i < arrlen(list); i++)
+    {
+        winapi item  = list[i];
+        list[i].proc = FindAPI_ML(tracker->IMOML, item.mHash, item.pHash, item.hKey);
+    }
+    CancelIoEx_t  CancelIoEx  = list[0x00].proc;
+    RegCloseKey_t RegCloseKey = list[0x01].proc;
+    shutdown_t    shutdown    = list[0x02].proc;
+    closesocket_t closesocket = list[0x03].proc;
 
     // close all tracked handles
     List* handles = &tracker->Handles;
@@ -2817,21 +2864,34 @@ errno RT_Clean()
     ResourceTracker* tracker = getTrackerPointer();
 
     // try to find api
-    RegCloseKey_t RegCloseKey;
-    CancelIoEx_t  CancelIoEx;
-    shutdown_t    shutdown;
-    closesocket_t closesocket;
+    typedef struct { 
+        uint mHash; uint pHash; uint hKey; void* proc;
+    } winapi;
+    winapi list[] =
 #ifdef _WIN64
-    RegCloseKey = FindAPI(0xC7AB3649E2BE8396, 0x28F0B94509382351);
-    CancelIoEx  = FindAPI(0x06F984CC96939FA7, 0xC97B2F6A0C3413D8);
-    shutdown    = FindAPI(0xAB64496EF237CCA4, 0x65EDF9B76AD9A688);
-    closesocket = FindAPI(0x0941CD072727D858, 0x67DD2DFFFF2ED396);
+    {
+        { 0xC4984645B356A7CA, 0x501838FB2F515443, 0x13F9E474C15125B2 }, // CancelIoEx
+        { 0x4E6024F14E9301CF, 0x54C3240233CCD66A, 0x3BF5EF169E089B09 }, // RegCloseKey
+        { 0x424EA1F161C7EF34, 0x1221B341D24D8989, 0xCE263A026A2173CA }, // shutdown
+        { 0xF4A81300A6A78A79, 0x9CDA1B81F057D32B, 0xB46F9B5F228665A7 }, // closesocket
+    };
 #elif _WIN32
-    RegCloseKey = FindAPI(0x6370BD08, 0xF9823D25);
-    CancelIoEx  = FindAPI(0x492230DB, 0xF26FEB1B);
-    shutdown    = FindAPI(0x850FC0A9, 0x613BCDCB);
-    closesocket = FindAPI(0x17C2486A, 0xC8ABB537);
+    {
+        { 0xBE5D22C7, 0xA935663D, 0x02DF2D58 }, // CancelIoEx
+        { 0xE3B65E24, 0x5649F184, 0xAA804765 }, // RegCloseKey
+        { 0xAF47C532, 0x9F18D3A7, 0xE91CDB79 }, // shutdown
+        { 0x7C67CD01, 0x2B26FADD, 0xC168AE5E }, // closesocket
+    };
 #endif
+    for (int i = 0; i < arrlen(list); i++)
+    {
+        winapi item  = list[i];
+        list[i].proc = FindAPI_ML(tracker->IMOML, item.mHash, item.pHash, item.hKey);
+    }
+    CancelIoEx_t  CancelIoEx  = list[0x00].proc;
+    RegCloseKey_t RegCloseKey = list[0x01].proc;
+    shutdown_t    shutdown    = list[0x02].proc;
+    closesocket_t closesocket = list[0x03].proc;
 
     // close all tracked handles
     List* handles = &tracker->Handles;

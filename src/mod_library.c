@@ -98,11 +98,12 @@ LibraryTracker_M* InitLibraryTracker(Context* context)
     uintptr address = context->MainMemPage;
     uintptr trackerAddr = address + 4096 + RandUintN(address, 128);
     uintptr moduleAddr  = address + 5000 + RandUintN(address, 128);
-    // initialize tracker
+    // allocate tracker memory
     LibraryTracker* tracker = (LibraryTracker*)trackerAddr;
     mem_init(tracker, sizeof(LibraryTracker));
     // store options
     tracker->NotEraseInstruction = context->NotEraseInstruction;
+    // initialize tracker
     errno errno = NO_ERROR;
     for (;;)
     {
@@ -181,7 +182,7 @@ static bool initTrackerAPI(LibraryTracker* tracker, Context* context)
     for (int i = 0; i < arrlen(list); i++)
     {
         winapi item = list[i];
-        void* proc = FindAPI_ML(context->IMOML, item.mHash, item.pHash, item.hKey);
+        void*  proc = FindAPI_ML(context->IMOML, item.mHash, item.pHash, item.hKey);
         if (proc == NULL)
         {
             return false;

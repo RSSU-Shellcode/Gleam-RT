@@ -1413,12 +1413,16 @@ LSTATUS RT_RegCreateKeyA(HKEY hKey, LPCSTR lpSubKey, HKEY* phkResult)
     errno   lastErr = NO_ERROR;
     for (;;)
     {
-        RegCreateKeyA_t RegCreateKeyA;
     #ifdef _WIN64
-        RegCreateKeyA = FindAPI(0xDEF562502ECFC906, 0x3F5AA82CB3098A5E);
+        uint mHash = 0x96A609C4644380C8;
+        uint pHash = 0xCCA21B11ED2032A9;
+        uint hKey  = 0xB712895B7F4E3137;
     #elif _WIN32
-        RegCreateKeyA = FindAPI(0x953DDEB4, 0xBD4C7C1F);
+        uint mHash = 0x32484FCA;
+        uint pHash = 0xF1BBFA85;
+        uint hKey  = 0xB34D4A92;
     #endif
+        RegCreateKeyA_t RegCreateKeyA = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
         if (RegCreateKeyA == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -1451,12 +1455,16 @@ LSTATUS RT_RegCreateKeyW(HKEY hKey, LPCWSTR lpSubKey, HKEY* phkResult)
     errno   lastErr = NO_ERROR;
     for (;;)
     {
-        RegCreateKeyW_t RegCreateKeyW;
     #ifdef _WIN64
-        RegCreateKeyW = FindAPI(0x44B01D3112A46809, 0x45D6EE3EFCCE4368);
+        uint mHash = 0x7F1EBB0B5BF08964;
+        uint pHash = 0xF622574D5E02E9DB;
+        uint hKey  = 0x4736E3EDE9B87BD7;
     #elif _WIN32
-        RegCreateKeyW = FindAPI(0x49E44B92, 0xEAD232CB);
+        uint mHash = 0x380E972A;
+        uint pHash = 0xF78241FB;
+        uint hKey  = 0x01A5FA89;
     #endif
+        RegCreateKeyW_t RegCreateKeyW = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
         if (RegCreateKeyW == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -1492,12 +1500,16 @@ LSTATUS RT_RegCreateKeyExA(
     errno   lastErr = NO_ERROR;
     for (;;)
     {
-        RegCreateKeyExA_t RegCreateKeyExA;
     #ifdef _WIN64
-        RegCreateKeyExA = FindAPI(0xE1FEFF278289A0C6, 0x190D4FE8AC872642);
+        uint mHash = 0x10C1CC6DFBC96F56;
+        uint pHash = 0x3B563DEE011D55EA;
+        uint hKey  = 0x5277163B5A7EE259;
     #elif _WIN32
-        RegCreateKeyExA = FindAPI(0x32BDE294, 0x3489A92B);
+        uint mHash = 0xB1B2BFDB;
+        uint pHash = 0x6E3FE5C2;
+        uint hKey  = 0x1E21042F;
     #endif
+        RegCreateKeyExA_t RegCreateKeyExA = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
         if (RegCreateKeyExA == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -1536,12 +1548,16 @@ LSTATUS RT_RegCreateKeyExW(
     errno   lastErr = NO_ERROR;
     for (;;)
     {
-        RegCreateKeyExW_t RegCreateKeyExW;
     #ifdef _WIN64
-        RegCreateKeyExW = FindAPI(0x94B8538578BDDBEE, 0xCC21BEDFFEB6BBDF);
+        uint mHash = 0xA440EA2E6B7DA1CB;
+        uint pHash = 0xFE239E0C5881EF75;
+        uint hKey  = 0x8B1F06BAC9BC0FB4;
     #elif _WIN32
-        RegCreateKeyExW = FindAPI(0x5F5EC82E, 0x2205AD9E);
+        uint mHash = 0xD59266B5;
+        uint pHash = 0x29E2F4EF;
+        uint hKey  = 0xF4DED6CA;
     #endif
+        RegCreateKeyExW_t RegCreateKeyExW = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
         if (RegCreateKeyExW == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;

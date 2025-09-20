@@ -237,7 +237,6 @@ hash_api -fmt 64 -conc -mod "kernel32.dll" -proc FindFirstFileExA
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc FindFirstFileExW
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc FindClose
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc CreateIoCompletionPort
-hash_api -fmt 64 -conc -mod "kernel32.dll" -proc CancelIoEx
 hash_api -fmt 64 -conc -mod "advapi32.dll" -proc RegCreateKeyA
 hash_api -fmt 64 -conc -mod "advapi32.dll" -proc RegCreateKeyW
 hash_api -fmt 64 -conc -mod "advapi32.dll" -proc RegCreateKeyExA
@@ -256,6 +255,10 @@ hash_api -fmt 64 -conc -mod "ws2_32.dll" -proc socket
 hash_api -fmt 64 -conc -mod "ws2_32.dll" -proc accept
 hash_api -fmt 64 -conc -mod "ws2_32.dll" -proc shutdown
 hash_api -fmt 64 -conc -mod "ws2_32.dll" -proc closesocket
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc CancelIoEx
+hash_api -fmt 64 -conc -mod "advapi32.dll" -proc RegCloseKey
+hash_api -fmt 64 -conc -mod "ws2_32.dll"   -proc shutdown
+hash_api -fmt 64 -conc -mod "ws2_32.dll"   -proc closesocket
 echo.
 
 echo [WinBase Module]
@@ -543,7 +546,6 @@ hash_api -fmt 32 -conc -mod "kernel32.dll" -proc FindFirstFileExA
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc FindFirstFileExW
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc FindClose
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc CreateIoCompletionPort
-hash_api -fmt 32 -conc -mod "kernel32.dll" -proc CancelIoEx
 hash_api -fmt 32 -conc -mod "advapi32.dll" -proc RegCreateKeyA
 hash_api -fmt 32 -conc -mod "advapi32.dll" -proc RegCreateKeyW
 hash_api -fmt 32 -conc -mod "advapi32.dll" -proc RegCreateKeyExA
@@ -562,6 +564,10 @@ hash_api -fmt 32 -conc -mod "ws2_32.dll" -proc socket
 hash_api -fmt 32 -conc -mod "ws2_32.dll" -proc accept
 hash_api -fmt 32 -conc -mod "ws2_32.dll" -proc shutdown
 hash_api -fmt 32 -conc -mod "ws2_32.dll" -proc closesocket
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc CancelIoEx
+hash_api -fmt 32 -conc -mod "advapi32.dll" -proc RegCloseKey
+hash_api -fmt 32 -conc -mod "ws2_32.dll"   -proc shutdown
+hash_api -fmt 32 -conc -mod "ws2_32.dll"   -proc closesocket
 echo.
 
 echo [WinBase Module]

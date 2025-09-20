@@ -219,13 +219,14 @@ MemoryTracker_M* InitMemoryTracker(Context* context)
     uintptr address = context->MainMemPage;
     uintptr trackerAddr = address + 6000 + RandUintN(address, 128);
     uintptr moduleAddr  = address + 7000 + RandUintN(address, 128);
-    // initialize tracker
+    // allocate tracker memory
     MemoryTracker* tracker = (MemoryTracker*)trackerAddr;
     mem_init(tracker, sizeof(MemoryTracker));
     // store options
     tracker->NotEraseInstruction = context->NotEraseInstruction;
     // store environment
     tracker->IMOML = context->IMOML;
+    // initialize tracker
     errno errno = NO_ERROR;
     for (;;)
     {

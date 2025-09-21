@@ -48,8 +48,8 @@ typedef struct {
     Runtime_Opts Options;
 
     // process environment
-    uintptr PEB;   // process environment block
-    uintptr IMOML; // InMemoryOrderModuleList address
+    void* PEB;   // process environment block
+    void* IMOML; // InMemoryOrderModuleList address
 
     // API addresses
     GetSystemInfo_t          GetSystemInfo;
@@ -112,12 +112,14 @@ typedef struct {
 
 // export methods about Runtime
 void* RT_FindAPI(uint module, uint procedure, uint key);
+void* RT_FindAPI_ML(uintptr list, uint module, uint procedure, uint key);
 void* RT_FindAPI_A(byte* module, byte* procedure);
 void* RT_FindAPI_W(uint16* module, byte* procedure);
 
 void* RT_GetProcAddress(HMODULE hModule, LPCSTR lpProcName);
 void* RT_GetProcAddressByName(HMODULE hModule, LPCSTR lpProcName, bool redirect);
 void* RT_GetProcAddressByHash(uint mHash, uint pHash, uint hKey, bool redirect);
+void* RT_GetProcAddressByHashML(uintptr list, uint mHash, uint pHash, uint hKey, bool redirect);
 void* RT_GetProcAddressOriginal(HMODULE hModule, LPCSTR lpProcName);
 
 BOOL  RT_SetCurrentDirectoryA(LPSTR lpPathName);
@@ -126,9 +128,9 @@ void  RT_Sleep(DWORD dwMilliseconds);
 DWORD RT_SleepEx(DWORD dwMilliseconds, BOOL bAlertable);
 void  RT_ExitProcess(UINT uExitCode);
 
-uintptr RT_GetPEB();
-uintptr RT_GetTEB();
-uintptr RT_GetIMOML();
+void* RT_GetPEB();
+void* RT_GetTEB();
+void* RT_GetIMOML();
 
 errno RT_SleepHR(DWORD dwMilliseconds);
 errno RT_Hide();
@@ -605,7 +607,7 @@ static bool initRuntimeAPI(Runtime* runtime)
     for (int i = 0; i < arrlen(list); i++)
     {
         winapi item = list[i];
-        void* proc = FindAPI_ML(runtime->IMOML, item.mHash, item.pHash, item.hKey);
+        void* proc  = FindAPI_ML(runtime->IMOML, item.mHash, item.pHash, item.hKey);
         if (proc == NULL)
         {
             return false;
@@ -1125,7 +1127,7 @@ static bool initAPIRedirector(Runtime* runtime)
 #endif
     for (int i = 0; i < arrlen(list); i++)
     {
-        rdr item = list[i];
+        rdr   item = list[i];
         void* proc = FindAPI_ML(runtime->IMOML, item.mHash, item.pHash, item.hKey);
         if (proc == NULL)
         {
@@ -1562,6 +1564,12 @@ void* RT_FindAPI(uint module, uint procedure, uint key)
 }
 
 __declspec(noinline)
+void* RT_FindAPI_ML(uintptr list, uint module, uint procedure, uint key)
+{
+    return RT_GetProcAddressByHashML(list, module, procedure, key, true);
+}
+
+__declspec(noinline)
 void* RT_FindAPI_A(byte* module, byte* procedure)
 {                  
 #ifdef _WIN64
@@ -1664,7 +1672,15 @@ void* RT_GetProcAddressByHash(uint mHash, uint pHash, uint hKey, bool redirect)
 {
     Runtime* runtime = getRuntimePointer();
 
-    void* proc = FindAPI_ML(runtime->IMOML, mHash, pHash, hKey);
+    return RT_GetProcAddressByHashML(runtime->IMOML, mHash, pHash, hKey, redirect);
+}
+
+__declspec(noinline)
+void* RT_GetProcAddressByHashML(uintptr list, uint mHash, uint pHash, uint hKey, bool redirect)
+{
+    Runtime* runtime = getRuntimePointer();
+
+    void* proc = FindAPI_ML(list, mHash, pHash, hKey);
     if (proc == NULL)
     {
         return NULL;
@@ -1979,7 +1995,7 @@ void RT_ExitProcess(UINT uExitCode)
 }
 
 __declspec(noinline)
-uintptr RT_GetPEB()
+void* RT_GetPEB()
 {
     Runtime* runtime = getRuntimePointer();
 
@@ -1987,7 +2003,7 @@ uintptr RT_GetPEB()
 }
 
 __declspec(noinline)
-uintptr RT_GetTEB()
+void* RT_GetTEB()
 {
 #ifdef _WIN64
     uintptr teb = __readgsqword(0x30);
@@ -1998,7 +2014,7 @@ uintptr RT_GetTEB()
 }
 
 __declspec(noinline)
-uintptr RT_GetIMOML()
+void* RT_GetIMOML()
 {
     Runtime* runtime = getRuntimePointer();
 

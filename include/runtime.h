@@ -316,6 +316,7 @@ typedef void (*BinToPattern_t)(void* data, uint size, byte* pattern);
 // These methods are used for API Redirector or common shellcode.
 typedef void* (*GetProcByName_t)(HMODULE hModule, LPCSTR lpProcName, bool redirect);
 typedef void* (*GetProcByHash_t)(uint mHash, uint pHash, uint hKey, bool redirect);
+typedef void* (*GetProcByHashML_t)(void* list, uint mHash, uint pHash, uint hKey, bool redirect);
 
 // about sysmon
 #ifndef SYSMON_H
@@ -350,7 +351,7 @@ typedef bool  (*WDGetStatus_t)(WD_Status* status);
 typedef errno (*WDPause_t)();
 typedef errno (*WDContinue_t)();
 
-// about process environment 
+// about process environment
 //
 // These methods are used to ensure that __readgsqword or __readfsdword
 // is used only once, of course except GetTEB.
@@ -393,9 +394,10 @@ typedef void  (*RTStop_t)();
 // Runtime_M contains exported runtime methods.
 typedef struct {
     struct {
-        FindAPI_t   FindAPI;
-        FindAPI_A_t FindAPI_A;
-        FindAPI_W_t FindAPI_W;
+        FindAPI_t    FindAPI;
+        FindAPI_ML_t FindAPI_ML;   
+        FindAPI_A_t  FindAPI_A;
+        FindAPI_W_t  FindAPI_W;
     } HashAPI;
 
     struct {
@@ -535,8 +537,9 @@ typedef struct {
     } MemScanner;
 
     struct {
-        GetProcByName_t GetProcByName;
-        GetProcByHash_t GetProcByHash;
+        GetProcByName_t   GetProcByName;
+        GetProcByHash_t   GetProcByHash;
+        GetProcByHashML_t GetProcByHashML;
     } Procedure;
 
     struct {

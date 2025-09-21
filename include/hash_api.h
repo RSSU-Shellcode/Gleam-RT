@@ -10,7 +10,7 @@
 // FindAPI is NOT support DLL about API Sets.
 
 typedef void* (*FindAPI_t)(uint module, uint procedure, uint key);
-typedef void* (*FindAPI_ML_t)(uintptr list, uint module, uint procedure, uint key);
+typedef void* (*FindAPI_ML_t)(void* list, uint module, uint procedure, uint key);
 typedef void* (*FindAPI_A_t)(byte* module, byte* procedure);
 typedef void* (*FindAPI_W_t)(uint16* module, byte* procedure);
 

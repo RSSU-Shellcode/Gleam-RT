@@ -136,6 +136,12 @@ typedef struct {
     ReleaseMutex_t           ReleaseMutex;
     WaitForSingleObject_t    WaitForSingleObject;
 
+    // cached API addresses
+    CancelIoEx_t  CancelIoEx;
+    RegCloseKey_t RegCloseKey;
+    shutdown_t    shutdown;
+    closesocket_t closesocket;
+
     // protect data
     HANDLE hMutex;
 
@@ -308,7 +314,8 @@ static bool addHandleMu(ResourceTracker* tracker, void* hObject, uint32 source);
 static void delHandleMu(ResourceTracker* tracker, void* hObject, uint32 type);
 static bool setHandleLocker(HANDLE hObject, uint32 func, bool lock);
 
-static errno doWSACleanup(ResourceTracker* tracker);
+static void  tryToFindAPI();
+static errno doWSACleanup();
 
 ResourceTracker_M* InitResourceTracker(Context* context)
 {
@@ -2436,38 +2443,6 @@ int RT_WSACleanup()
     return retVal;
 }
 
-static errno doWSACleanup(ResourceTracker* tracker)
-{
-#ifdef _WIN64
-    uint mHash = 0x4315CA7C2DE0953F;
-    uint pHash = 0xFAA60831E40346AA;
-    uint hKey  = 0xEB60CFC4E8AF64CE;
-#elif _WIN32
-    uint mHash = 0x3F43DBA5;
-    uint pHash = 0x2F28803E;
-    uint hKey  = 0xFEC6856A;
-#endif
-    WSACleanup_t WSACleanup = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
-    if (WSACleanup == NULL)
-    {
-        return NO_ERROR;
-    }
-
-    errno errno = NO_ERROR;
-    int64 counter = tracker->Counters[CTR_WSA_STARTUP];
-    for (int64 i = 0; i < counter; i++)
-    {
-        if (WSACleanup() != 0)
-        {
-            errno = ERR_RESOURCE_WSA_CLEANUP;
-        }
-    }
-
-    // reset counter
-    tracker->Counters[CTR_WSA_STARTUP] = 0;
-    return errno;
-}
-
 __declspec(noinline)
 bool RT_LockMutex(HANDLE hMutex)
 {
@@ -2747,35 +2722,11 @@ errno RT_FreeAll()
 {
     ResourceTracker* tracker = getTrackerPointer();
 
-    // try to find api
-    typedef struct { 
-        uint mHash; uint pHash; uint hKey; void* proc;
-    } winapi;
-    winapi list[] =
-#ifdef _WIN64
-    {
-        { 0xC4984645B356A7CA, 0x501838FB2F515443, 0x13F9E474C15125B2 }, // CancelIoEx
-        { 0x4E6024F14E9301CF, 0x54C3240233CCD66A, 0x3BF5EF169E089B09 }, // RegCloseKey
-        { 0x424EA1F161C7EF34, 0x1221B341D24D8989, 0xCE263A026A2173CA }, // shutdown
-        { 0xF4A81300A6A78A79, 0x9CDA1B81F057D32B, 0xB46F9B5F228665A7 }, // closesocket
-    };
-#elif _WIN32
-    {
-        { 0xBE5D22C7, 0xA935663D, 0x02DF2D58 }, // CancelIoEx
-        { 0xE3B65E24, 0x5649F184, 0xAA804765 }, // RegCloseKey
-        { 0xAF47C532, 0x9F18D3A7, 0xE91CDB79 }, // shutdown
-        { 0x7C67CD01, 0x2B26FADD, 0xC168AE5E }, // closesocket
-    };
-#endif
-    for (int i = 0; i < arrlen(list); i++)
-    {
-        winapi item  = list[i];
-        list[i].proc = FindAPI_ML(tracker->IMOML, item.mHash, item.pHash, item.hKey);
-    }
-    CancelIoEx_t  CancelIoEx  = list[0x00].proc;
-    RegCloseKey_t RegCloseKey = list[0x01].proc;
-    shutdown_t    shutdown    = list[0x02].proc;
-    closesocket_t closesocket = list[0x03].proc;
+    tryToFindAPI();
+    CancelIoEx_t  CancelIoEx  = tracker->CancelIoEx;
+    RegCloseKey_t RegCloseKey = tracker->RegCloseKey;
+    shutdown_t    shutdown    = tracker->shutdown;
+    closesocket_t closesocket = tracker->closesocket;
 
     // close all tracked handles
     List* handles = &tracker->Handles;
@@ -2848,7 +2799,7 @@ errno RT_FreeAll()
     }
 
     // about WSACleanup
-    errno err = doWSACleanup(tracker);
+    errno err = doWSACleanup();
     if (err != NO_ERROR)
     {
         error = err;
@@ -2863,35 +2814,11 @@ errno RT_Clean()
 {
     ResourceTracker* tracker = getTrackerPointer();
 
-    // try to find api
-    typedef struct { 
-        uint mHash; uint pHash; uint hKey; void* proc;
-    } winapi;
-    winapi list[] =
-#ifdef _WIN64
-    {
-        { 0xC4984645B356A7CA, 0x501838FB2F515443, 0x13F9E474C15125B2 }, // CancelIoEx
-        { 0x4E6024F14E9301CF, 0x54C3240233CCD66A, 0x3BF5EF169E089B09 }, // RegCloseKey
-        { 0x424EA1F161C7EF34, 0x1221B341D24D8989, 0xCE263A026A2173CA }, // shutdown
-        { 0xF4A81300A6A78A79, 0x9CDA1B81F057D32B, 0xB46F9B5F228665A7 }, // closesocket
-    };
-#elif _WIN32
-    {
-        { 0xBE5D22C7, 0xA935663D, 0x02DF2D58 }, // CancelIoEx
-        { 0xE3B65E24, 0x5649F184, 0xAA804765 }, // RegCloseKey
-        { 0xAF47C532, 0x9F18D3A7, 0xE91CDB79 }, // shutdown
-        { 0x7C67CD01, 0x2B26FADD, 0xC168AE5E }, // closesocket
-    };
-#endif
-    for (int i = 0; i < arrlen(list); i++)
-    {
-        winapi item  = list[i];
-        list[i].proc = FindAPI_ML(tracker->IMOML, item.mHash, item.pHash, item.hKey);
-    }
-    CancelIoEx_t  CancelIoEx  = list[0x00].proc;
-    RegCloseKey_t RegCloseKey = list[0x01].proc;
-    shutdown_t    shutdown    = list[0x02].proc;
-    closesocket_t closesocket = list[0x03].proc;
+    tryToFindAPI();
+    CancelIoEx_t  CancelIoEx  = tracker->CancelIoEx;
+    RegCloseKey_t RegCloseKey = tracker->RegCloseKey;
+    shutdown_t    shutdown    = tracker->shutdown;
+    closesocket_t closesocket = tracker->closesocket;
 
     // close all tracked handles
     List* handles = &tracker->Handles;
@@ -2953,7 +2880,7 @@ errno RT_Clean()
     }
 
     // about WSACleanup
-    errno err = doWSACleanup(tracker);
+    errno err = doWSACleanup();
     if (err != NO_ERROR && error == NO_ERROR)
     {
         error = err;
@@ -2983,4 +2910,72 @@ errno RT_Clean()
 
     dbg_log("[resource]", "handles: %zu", handles->Len);
     return error;
+}
+
+static void tryToFindAPI()
+{
+    ResourceTracker* tracker = getTrackerPointer();
+
+    typedef struct { 
+        uint mHash; uint pHash; uint hKey; void* proc;
+    } winapi;
+    winapi list[] =
+#ifdef _WIN64
+    {
+        { 0xC4984645B356A7CA, 0x501838FB2F515443, 0x13F9E474C15125B2 }, // CancelIoEx
+        { 0x4E6024F14E9301CF, 0x54C3240233CCD66A, 0x3BF5EF169E089B09 }, // RegCloseKey
+        { 0x424EA1F161C7EF34, 0x1221B341D24D8989, 0xCE263A026A2173CA }, // shutdown
+        { 0xF4A81300A6A78A79, 0x9CDA1B81F057D32B, 0xB46F9B5F228665A7 }, // closesocket
+    };
+#elif _WIN32
+    {
+        { 0xBE5D22C7, 0xA935663D, 0x02DF2D58 }, // CancelIoEx
+        { 0xE3B65E24, 0x5649F184, 0xAA804765 }, // RegCloseKey
+        { 0xAF47C532, 0x9F18D3A7, 0xE91CDB79 }, // shutdown
+        { 0x7C67CD01, 0x2B26FADD, 0xC168AE5E }, // closesocket
+    };
+#endif
+    for (int i = 0; i < arrlen(list); i++)
+    {
+        winapi item  = list[i];
+        list[i].proc = FindAPI_ML(tracker->IMOML, item.mHash, item.pHash, item.hKey);
+    }
+    tracker->CancelIoEx  = list[0x00].proc;
+    tracker->RegCloseKey = list[0x01].proc;
+    tracker->shutdown    = list[0x02].proc;
+    tracker->closesocket = list[0x03].proc;
+}
+
+static errno doWSACleanup()
+{
+    ResourceTracker* tracker = getTrackerPointer();
+
+#ifdef _WIN64
+    uint mHash = 0x4315CA7C2DE0953F;
+    uint pHash = 0xFAA60831E40346AA;
+    uint hKey  = 0xEB60CFC4E8AF64CE;
+#elif _WIN32
+    uint mHash = 0x3F43DBA5;
+    uint pHash = 0x2F28803E;
+    uint hKey  = 0xFEC6856A;
+#endif
+    WSACleanup_t WSACleanup = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+    if (WSACleanup == NULL)
+    {
+        return NO_ERROR;
+    }
+
+    errno errno = NO_ERROR;
+    int64 counter = tracker->Counters[CTR_WSA_STARTUP];
+    for (int64 i = 0; i < counter; i++)
+    {
+        if (WSACleanup() != 0)
+        {
+            errno = ERR_RESOURCE_WSA_CLEANUP;
+        }
+    }
+
+    // reset counter
+    tracker->Counters[CTR_WSA_STARTUP] = 0;
+    return errno;
 }

@@ -19,7 +19,7 @@ void* FindAPI(uint module, uint procedure, uint key);
 
 // FindAPI_ML is used to find Windows API address by hash and key.
 // But it will use the cached InMemoryOrderModuleList.
-void* FindAPI_ML(uintptr list, uint module, uint procedure, uint key);
+void* FindAPI_ML(void* list, uint module, uint procedure, uint key);
 
 // FindAPI_A is used to find Windows API address by module name
 // and procedure name with ANSI, it is a wrapper about FindAPI.
@@ -45,6 +45,6 @@ uint32 CalcProcHash32(byte* procedure, uint32 key);
 uint64 CalcProcHash64(byte* procedure, uint64 key);
 
 // GetInMemoryOrderModuleList is used to get InMemoryOrderModuleList address.
-uintptr GetInMemoryOrderModuleList();
+void* GetInMemoryOrderModuleList();
 
 #endif // HASH_API_H

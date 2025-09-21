@@ -22,16 +22,16 @@ static uint ror(uint value, uint bits);
 __declspec(noinline)
 void* FindAPI(uint module, uint procedure, uint key)
 {
-    uintptr list = GetInMemoryOrderModuleList();
+    void* list = GetInMemoryOrderModuleList();
     return FindAPI_ML(list, module, procedure, key);
 }
 
 __declspec(noinline)
-void* FindAPI_ML(uintptr list, uint module, uint procedure, uint key)
+void* FindAPI_ML(void* list, uint module, uint procedure, uint key)
 {
     uint seedHash = calcSeedHash(key);
     uint keyHash  = calcKeyHash(seedHash, key);
-    uintptr mod = list;
+    uintptr mod = (uintptr)list;
     for (;; mod = *(uintptr*)(mod))
     {
     #ifdef _WIN64
@@ -264,7 +264,7 @@ uint CalcProcHash(byte* procedure, uint key)
 }
 
 __declspec(noinline)
-uintptr GetInMemoryOrderModuleList()
+void* GetInMemoryOrderModuleList()
 {
 #ifdef _WIN64
     uintptr teb = __readgsqword(0x30);
@@ -277,7 +277,7 @@ uintptr GetInMemoryOrderModuleList()
     uintptr ldr = *(uintptr*)(peb + 0x0C);
     uintptr mod = *(uintptr*)(ldr + 0x14);
 #endif
-    return mod;
+    return (void*)mod;
 }
 
 #define KEY_SIZE_32 4

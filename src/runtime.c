@@ -49,7 +49,7 @@ typedef struct {
 
     // process environment
     void* PEB;   // process environment block
-    void* IMOML; // InMemoryOrderModuleList address
+    void* IMOML; // In-Memory order module list
 
     // API addresses
     GetSystemInfo_t          GetSystemInfo;
@@ -119,7 +119,7 @@ void* RT_FindAPI_W(uint16* module, byte* procedure);
 void* RT_GetProcAddress(HMODULE hModule, LPCSTR lpProcName);
 void* RT_GetProcAddressByName(HMODULE hModule, LPCSTR lpProcName, bool redirect);
 void* RT_GetProcAddressByHash(uint mHash, uint pHash, uint hKey, bool redirect);
-void* RT_GetProcAddressByHashML(uintptr list, uint mHash, uint pHash, uint hKey, bool redirect);
+void* RT_GetProcAddressByHashML(void* list, uint mHash, uint pHash, uint hKey, bool redirect);
 void* RT_GetProcAddressOriginal(HMODULE hModule, LPCSTR lpProcName);
 
 BOOL  RT_SetCurrentDirectoryA(LPSTR lpPathName);
@@ -326,9 +326,10 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     // create methods for Runtime
     Runtime_M* module = (Runtime_M*)moduleAddr;
     // hash api
-    module->HashAPI.FindAPI   = GetFuncAddr(&RT_FindAPI);
-    module->HashAPI.FindAPI_A = GetFuncAddr(&RT_FindAPI_A);
-    module->HashAPI.FindAPI_W = GetFuncAddr(&RT_FindAPI_W);
+    module->HashAPI.FindAPI    = GetFuncAddr(&RT_FindAPI);
+    module->HashAPI.FindAPI_ML = GetFuncAddr(&RT_FindAPI_ML);
+    module->HashAPI.FindAPI_A  = GetFuncAddr(&RT_FindAPI_A);
+    module->HashAPI.FindAPI_W  = GetFuncAddr(&RT_FindAPI_W);
     // library tracker
     module->Library.LoadA   = runtime->LibraryTracker->LoadLibraryA;
     module->Library.LoadW   = runtime->LibraryTracker->LoadLibraryW;
@@ -432,8 +433,9 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->MemScanner.ScanByPattern = GetFuncAddr(&MemScanByPattern);
     module->MemScanner.BinToPattern  = GetFuncAddr(&BinToPattern);
     // get procedure address
-    module->Procedure.GetProcByName = GetFuncAddr(&RT_GetProcAddressByName);
-    module->Procedure.GetProcByHash = GetFuncAddr(&RT_GetProcAddressByHash);
+    module->Procedure.GetProcByName   = GetFuncAddr(&RT_GetProcAddressByName);
+    module->Procedure.GetProcByHash   = GetFuncAddr(&RT_GetProcAddressByHash);
+    module->Procedure.GetProcByHashML = GetFuncAddr(&RT_GetProcAddressByHashML);
     // about system monitor
     module->Sysmon.Status   = runtime->Sysmon->GetStatus;
     module->Sysmon.Pause    = runtime->Sysmon->Pause;
@@ -1676,7 +1678,7 @@ void* RT_GetProcAddressByHash(uint mHash, uint pHash, uint hKey, bool redirect)
 }
 
 __declspec(noinline)
-void* RT_GetProcAddressByHashML(uintptr list, uint mHash, uint pHash, uint hKey, bool redirect)
+void* RT_GetProcAddressByHashML(void* list, uint mHash, uint pHash, uint hKey, bool redirect)
 {
     Runtime* runtime = getRuntimePointer();
 
@@ -1734,6 +1736,7 @@ static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
     {
         { 0x8CDF6BCCACFF5ECA, 0x4BC9F3FE3B59678C, 0x23173EFE31305341, GetFuncAddr(&RT_GetProcAddressByName)   },
         { 0xF395D014FC4A9847, 0x2D6352C01B64C8CD, 0x02E1C76F946DD411, GetFuncAddr(&RT_GetProcAddressByHash)   },
+        { 0xD6B7CE32BE36AE15, 0x8C40B58C324BF998, 0x2EC1D940231B43F6, GetFuncAddr(&RT_GetProcAddressByHashML) },
         { 0x3AB89D3D84B47DFE, 0x667F961CE2D5EE7A, 0x43BD143E1D761DB4, GetFuncAddr(&RT_GetProcAddressOriginal) },
         { 0x8297D36EE43D98B8, 0x5CC0ED58C88E507B, 0x48701A09531A893B, GetFuncAddr(&RT_GetMetrics)             },
         { 0x87C47270364481C7, 0x0F85CE174F27B497, 0x42E184C4D600AB3B, GetFuncAddr(&RT_ExitProcess)            },
@@ -1760,6 +1763,7 @@ static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
     {
         { 0xB45C0CFA, 0x2A5E9BBD, 0x15D1E23E, GetFuncAddr(&RT_GetProcAddressByName)   },
         { 0x7431D137, 0x86263112, 0x01401C56, GetFuncAddr(&RT_GetProcAddressByHash)   },
+        { 0x6411C109, 0x7D9578EB, 0xACD88A68, GetFuncAddr(&RT_GetProcAddressByHashML) },
         { 0x46AE0C6F, 0x9CA280BD, 0xE68B3680, GetFuncAddr(&RT_GetProcAddressOriginal) },
         { 0x2674137F, 0xD79A5D69, 0xB3C0A554, GetFuncAddr(&RT_GetMetrics)             },
         { 0x8ABE078B, 0xD3D543F1, 0xE132AE7B, GetFuncAddr(&RT_ExitProcess)            },

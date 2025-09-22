@@ -355,9 +355,9 @@ typedef errno (*WDContinue_t)();
 //
 // These methods are used to ensure that __readgsqword or __readfsdword
 // is used only once, of course except GetTEB.
-typedef uintptr (*GetPEB_t)();   // get stored PEB address
-typedef uintptr (*GetTEB_t)();   // only a shortcut
-typedef uintptr (*GetIMOML_t)(); // get stored InMemoryOrderModuleList address
+typedef void* (*GetPEB_t)();   // get stored PEB address
+typedef void* (*GetTEB_t)();   // only a shortcut
+typedef void* (*GetIMOML_t)(); // get stored InMemoryOrderModuleList address
 
 // about runtime core methods
 //

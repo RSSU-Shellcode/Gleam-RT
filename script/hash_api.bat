@@ -108,6 +108,7 @@ echo.
 echo [Runtime Methods]
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc GetProcAddressByName
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc GetProcAddressByHash
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc GetProcAddressByHashML
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc GetProcAddressOriginal
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc GetMetrics
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc ExitProcess
@@ -417,6 +418,7 @@ echo.
 echo [Runtime Methods]
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc GetProcAddressByName
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc GetProcAddressByHash
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc GetProcAddressByHashML
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc GetProcAddressOriginal
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc GetMetrics
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc ExitProcess

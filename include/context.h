@@ -36,8 +36,8 @@ typedef struct {
     bool TrackCurrentThread;
 
     // about process environment
-    uintptr PEB;
-    uintptr IMOML;
+    void* PEB;
+    void* IMOML;
 
     // runtime context data
     uintptr MainMemPage;

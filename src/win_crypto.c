@@ -16,6 +16,9 @@ typedef struct {
     // store options
     bool NotEraseInstruction;
 
+    // store environment
+    void* IMOML;
+
     // API addresses
     CryptAcquireContextA_t  CryptAcquireContextA;
     CryptReleaseContext_t   CryptReleaseContext;
@@ -98,11 +101,14 @@ WinCrypto_M* InitWinCrypto(Context* context)
     uintptr address = context->MainMemPage;
     uintptr moduleAddr = address + 22000 + RandUintN(address, 128);
     uintptr methodAddr = address + 23000 + RandUintN(address, 128);
-    // initialize module
+    // allocate module memory
     WinCrypto* module = (WinCrypto*)moduleAddr;
     mem_init(module, sizeof(WinCrypto));
     // store options
     module->NotEraseInstruction = context->NotEraseInstruction;
+    // store environment
+    module->IMOML = context->IMOML;
+    // initialize module
     errno errno = NO_ERROR;
     for (;;)
     {
@@ -313,53 +319,54 @@ static bool findWinCryptoAPI()
     WinCrypto* module = getModulePointer();
 
     typedef struct { 
-        uint hash; uint key; void* proc;
+        uint mHash; uint pHash; uint hKey; void* proc;
     } winapi;
     winapi list[] =
 #ifdef _WIN64
     {
-        { 0x229A36DB5A153884, 0x5C8D8943760A0AD5 }, // CryptAcquireContextA
-        { 0xC8A4ABEFC4A15414, 0xDCD358FAAA9AD697 }, // CryptReleaseContext
-        { 0x052D13759C233989, 0xD129B99F2DE11CE1 }, // CryptGenRandom
-        { 0x7139781045860379, 0xD9B823C41B31892D }, // CryptGenKey
-        { 0xFBD14E610ABC19B0, 0x427A278C5526F497 }, // CryptExportKey
-        { 0xCA46DCB36C8EF17A, 0xEDEA67BFCC8F2970 }, // CryptCreateHash
-        { 0x0E182B65460D3A77, 0xD15B5AD9BC662323 }, // CryptSetHashParam
-        { 0x76F8459880F8ACF9, 0x252C1D935020E9D4 }, // CryptGetHashParam
-        { 0x08F3ADAD64028885, 0xFF7C7DF5E4A9283F }, // CryptHashData
-        { 0x2003C9A7DB794999, 0x0E51E1688FD1869E }, // CryptDestroyHash
-        { 0x8D1E49656BB1E55E, 0x7EF987CE7272029B }, // CryptImportKey
-        { 0x3D31DE5787EA688F, 0xB851328C0A45FBD2 }, // CryptSetKeyParam
-        { 0x56C8B4615CEA5713, 0x3ACD65C055BEF2C6 }, // CryptEncrypt
-        { 0x9AEECF188C0A6B15, 0xEFCD0584199F194B }, // CryptDecrypt
-        { 0x5C0D6B76D2524A1F, 0x6B665445585C1AB4 }, // CryptDestroyKey
-        { 0xAFF4E2EFE83F7659, 0xD46F801C7B1A139A }, // CryptSignHashA
-        { 0xBCB00320DFAF3AD3, 0xEF345CBEAAB6E545 }, // CryptVerifySignatureA
+        { 0xB6F03004CD357474, 0xA351B02C407D69CC, 0xDD7D00B830A394FC }, // CryptAcquireContextA
+        { 0x8A9FC9ED17AEC71C, 0x41AC4A30D20E8B2E, 0x96556E657055BDA9 }, // CryptReleaseContext
+        { 0x3A1784CBE54B0BA4, 0x1B55DEBA9D6933F1, 0x6825FB594E8F80A8 }, // CryptGenRandom
+        { 0xF884FA6B7F026840, 0xE7B2EB87FFEFBFD9, 0xA53E8656CF8E08E9 }, // CryptGenKey
+        { 0xF9BC05DA31E3EBC1, 0x3C4A4F16EA243D9B, 0x0AF2AB242BB0FDEF }, // CryptExportKey
+        { 0x310476309F1DC16F, 0x524072F2DF4E467D, 0x088DB8077AE3C86A }, // CryptCreateHash
+        { 0x211744E8281B5C93, 0xC8AC1AF2337010F2, 0x2FCAA3A4CA39D3B5 }, // CryptSetHashParam
+        { 0x12DB3C697FB240FB, 0xB37F8BC073D55030, 0x0E2E3591487BC537 }, // CryptGetHashParam
+        { 0x04B6E067AE35CEF7, 0xE009015BBB558D1E, 0x99DCA0D4D95616B5 }, // CryptHashData
+        { 0xD0850B88090F8D81, 0x1ECFE1493FF6DE12, 0xAF82AA225567AA48 }, // CryptDestroyHash
+        { 0xEE7DE621C28FA074, 0x41252C966AB64519, 0xC4FDE9574C0B980D }, // CryptImportKey
+        { 0xA6B92B9EDED891B3, 0xBBC77F4D4C9F6622, 0x128791C921FC7F3D }, // CryptSetKeyParam
+        { 0x7877D5D429180A3E, 0xEA409B53F00E75B3, 0xC10D507F5B675A5A }, // CryptEncrypt
+        { 0xDF51786F7585A937, 0x6EB2FB49A3EA8901, 0x23ACC4ADF57F71C8 }, // CryptDecrypt
+        { 0x81A9DD1891A0B37D, 0xBCA59C1124951985, 0x5C3EF6F56744B1E2 }, // CryptDestroyKey
+        { 0xCE673261B7235F0C, 0xE5F99AB76164C991, 0xD92E0734B071DFDA }, // CryptSignHashA
+        { 0xEA2B2384AFD2A96D, 0xB475E30ADAA479D9, 0xEE5CE4DB4859F811 }, // CryptVerifySignatureA
     };
 #elif _WIN32
     {
-        { 0x8999214A, 0x46521BDF }, // CryptAcquireContextA
-        { 0x201C2004, 0x435A9F1B }, // CryptReleaseContext
-        { 0x608C5DA1, 0xE9C08140 }, // CryptGenRandom
-        { 0x9EDA4CE2, 0x1D81FE5F }, // CryptGenKey
-        { 0x1F7F51F7, 0x38675FE9 }, // CryptExportKey
-        { 0xAC10214C, 0x745E27FB }, // CryptCreateHash
-        { 0xCC7D1FC5, 0x29A75B86 }, // CryptSetHashParam
-        { 0x5D3903BA, 0x461539AA }, // CryptGetHashParam
-        { 0x34BF08ED, 0x2C655EC2 }, // CryptHashData
-        { 0x599DEAEE, 0xB4B75228 }, // CryptDestroyHash
-        { 0xF6111932, 0x31A2ABE4 }, // CryptImportKey
-        { 0x847508E7, 0xBAA59832 }, // CryptSetKeyParam
-        { 0x8D308D6A, 0x5F981D82 }, // CryptEncrypt
-        { 0xC3B016FD, 0x2645198B }, // CryptDecrypt
-        { 0x140AED46, 0xD877FFE7 }, // CryptDestroyKey
-        { 0xBF957CE6, 0xD014705B }, // CryptSignHashA
-        { 0x03911C87, 0x1DEA20BD }, // CryptVerifySignatureA
+        { 0x5985FEC7, 0x070B9EB5, 0xBEAFA370 }, // CryptAcquireContextA
+        { 0x2A0E7859, 0xE5E4A413, 0x046D26C1 }, // CryptReleaseContext
+        { 0xA7DB5AA9, 0x73CF8409, 0x830D3537 }, // CryptGenRandom
+        { 0xDF1BE7D0, 0xDDD40A08, 0x10874E83 }, // CryptGenKey
+        { 0xB09C8CFE, 0x76DF4FAD, 0xA4762C49 }, // CryptExportKey
+        { 0x3BB01C54, 0xD9AD5D20, 0x5A153264 }, // CryptCreateHash
+        { 0xE15CD1D7, 0x1E66EEE4, 0xB89CB8A4 }, // CryptSetHashParam
+        { 0xF1922AC5, 0x2E9C3BD2, 0xB231823C }, // CryptGetHashParam
+        { 0xDAB7BBAE, 0xC1394F7F, 0x42FF6BB3 }, // CryptHashData
+        { 0x2CBC1294, 0xB5E650E0, 0x18083A06 }, // CryptDestroyHash
+        { 0xA38B7321, 0x8F8DA970, 0xA3424AEA }, // CryptImportKey
+        { 0x9731631A, 0xCDCA3093, 0x66FC8B85 }, // CryptSetKeyParam
+        { 0x354457F3, 0xCDECFAC3, 0xC888E171 }, // CryptEncrypt
+        { 0xE9120B1B, 0xC25604AE, 0x9A769A74 }, // CryptDecrypt
+        { 0xE687A129, 0x338E62F6, 0xA7909B6F }, // CryptDestroyKey
+        { 0x364AECE6, 0xAA2C4959, 0xB21A3BC2 }, // CryptSignHashA
+        { 0x4E0660BB, 0xD985014B, 0xD924E471 }, // CryptVerifySignatureA
     };
 #endif
     for (int i = 0; i < arrlen(list); i++)
     {
-        void* proc = FindAPI(list[i].hash, list[i].key);
+        winapi item = list[i];
+        void*  proc = FindAPI_ML(module->IMOML, item.mHash, item.pHash, item.hKey);
         if (proc == NULL)
         {
             return false;

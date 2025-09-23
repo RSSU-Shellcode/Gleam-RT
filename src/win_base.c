@@ -55,11 +55,12 @@ WinBase_M* InitWinBase(Context* context)
     uintptr address = context->MainMemPage;
     uintptr moduleAddr = address + 16384 + RandUintN(address, 128);
     uintptr methodAddr = address + 17000 + RandUintN(address, 128);
-    // initialize module
+    // allocate module memory
     WinBase* module = (WinBase*)moduleAddr;
     mem_init(module, sizeof(WinBase));
     // store options
     module->NotEraseInstruction = context->NotEraseInstruction;
+    // initialize module
     errno errno = NO_ERROR;
     for (;;)
     {
@@ -99,23 +100,24 @@ WinBase_M* InitWinBase(Context* context)
 static bool initModuleAPI(WinBase* module, Context* context)
 {
     typedef struct { 
-        uint hash; uint key; void* proc;
+        uint mHash; uint pHash; uint hKey; void* proc;
     } winapi;
     winapi list[] =
 #ifdef _WIN64
     {
-        { 0xFECF5D77CC76C334, 0x3291C4717151B366}, // MultiByteToWideChar
-        { 0x32C7684AB4B518B6, 0x0C4F51C8DCCC447D}, // WideCharToMultiByte
+        { 0xA9013BF7425F8D08, 0x5A0BBE5359A272F2, 0xF434E337059CB0C7 }, // MultiByteToWideChar
+        { 0x28BE5F33B4C6ABE1, 0x080448D6DB38EC1B, 0x3E5B3174E09112AB }, // WideCharToMultiByte
     };
 #elif _WIN32
     {
-        { 0x68A627A6, 0x4087B044}, // MultiByteToWideChar
-        { 0x4F572177, 0x5F4B7BE1}, // WideCharToMultiByte
+        { 0x0A065F56, 0xD20CFB1A, 0x7C7609D6 }, // MultiByteToWideChar
+        { 0xDC731EA7, 0xD3DCEEA4, 0x7F287F6B }, // WideCharToMultiByte
     };
 #endif
     for (int i = 0; i < arrlen(list); i++)
     {
-        void* proc = FindAPI(list[i].hash, list[i].key);
+        winapi item = list[i];
+        void*  proc = FindAPI_ML(context->IMOML, item.mHash, item.pHash, item.hKey);
         if (proc == NULL)
         {
             return false;

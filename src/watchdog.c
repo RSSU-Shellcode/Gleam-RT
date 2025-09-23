@@ -101,12 +101,13 @@ Watchdog_M* InitWatchdog(Context* context)
     uintptr address = context->MainMemPage;
     uintptr watchdogAddr = address + 26000 + RandUintN(address, 128);
     uintptr methodAddr   = address + 27000 + RandUintN(address, 128);
-    // initialize watchdog
+    // allocate watchdog memory
     Watchdog* watchdog = (Watchdog*)watchdogAddr;
     mem_init(watchdog, sizeof(Watchdog));
     // store options
     watchdog->DisableWatchdog     = context->DisableWatchdog;
     watchdog->NotEraseInstruction = context->NotEraseInstruction;
+    // initialize watchdog
     errno errno = NO_ERROR;
     for (;;)
     {
@@ -155,21 +156,22 @@ Watchdog_M* InitWatchdog(Context* context)
 static bool initWatchdogAPI(Watchdog* watchdog, Context* context)
 {
     typedef struct { 
-        uint hash; uint key; void* proc;
+        uint mHash; uint pHash; uint hKey; void* proc;
     } winapi;
     winapi list[] =
 #ifdef _WIN64
     {
-        { 0xA6F25F2ADD9B1353, 0x8B729F0C74C2C45F }, // ResetEvent
+        { 0x30BFA6B95AFB38E9, 0xB85028D3B8C79467, 0xE741B3D6D25343A1 }, // ResetEvent
     };
 #elif _WIN32
     {
-        { 0xD60A0046, 0x4292DD1E }, // ResetEvent
+        { 0x9603D553, 0x5C129486, 0x12BD2862 }, // ResetEvent
     };
 #endif
     for (int i = 0; i < arrlen(list); i++)
     {
-        void* proc = FindAPI(list[i].hash, list[i].key);
+        winapi item = list[i];
+        void*  proc = FindAPI_ML(context->IMOML, item.mHash, item.pHash, item.hKey);
         if (proc == NULL)
         {
             return false;

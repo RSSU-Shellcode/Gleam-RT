@@ -99,12 +99,13 @@ Sysmon_M* InitSysmon(Context* context)
     uintptr address = context->MainMemPage;
     uintptr sysmonAddr = address + 24000 + RandUintN(address, 128);
     uintptr methodAddr = address + 25000 + RandUintN(address, 128);
-    // initialize sysmon
+    // allocate sysmon memory
     Sysmon* sysmon = (Sysmon*)sysmonAddr;
     mem_init(sysmon, sizeof(Sysmon));
     // store options
     sysmon->DisableSysmon       = context->DisableSysmon;
     sysmon->NotEraseInstruction = context->NotEraseInstruction;
+    // initialize sysmon
     errno errno = NO_ERROR;
     for (;;)
     {

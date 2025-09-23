@@ -65,11 +65,12 @@ WinFile_M* InitWinFile(Context* context)
     uintptr address = context->MainMemPage;
     uintptr moduleAddr = address + 18000 + RandUintN(address, 128);
     uintptr methodAddr = address + 19000 + RandUintN(address, 128);
-    // initialize module
+    // allocate module memory
     WinFile* module = (WinFile*)moduleAddr;
     mem_init(module, sizeof(WinFile));
     // store options
     module->NotEraseInstruction = context->NotEraseInstruction;
+    // initialize module
     errno errno = NO_ERROR;
     for (;;)
     {
@@ -109,29 +110,30 @@ WinFile_M* InitWinFile(Context* context)
 static bool initModuleAPI(WinFile* module, Context* context)
 {
     typedef struct { 
-        uint hash; uint key; void* proc;
+        uint mHash; uint pHash; uint hKey; void* proc;
     } winapi;
     winapi list[] =
 #ifdef _WIN64
     {
-        { 0x25A5D7F5BB962DC8, 0x9CD44B683CE17BB6 }, // CreateFileA
-        { 0x1E0DC0D6B2FBC9BE, 0xD0D465B1C6EE90D2 }, // CreateFileW
-        { 0x5E4CF1B0CACB9DD4, 0xF2F660A9FA989AA5 }, // GetFileSizeEx
-        { 0xA35B1843BD034620, 0x5A61E67086B515E9 }, // ReadFile
-        { 0x2DC91E971C8A6CAB, 0x53D106A37CB5022C }, // WriteFile
+        { 0x317DD0F693475EA8, 0xB8051A7915B80944, 0x0F743D616B0CAEE6 }, // CreateFileA
+        { 0x93F5D06BE816866D, 0x3735E419DDE43453, 0xE7876845E2EEE5F9 }, // CreateFileW
+        { 0x21CE75D66E4090A8, 0x19FA8270E3357B8E, 0xB404659651609EFC }, // GetFileSizeEx
+        { 0x6FE4F6657EFBD93E, 0x897FBABEB06C235B, 0xB850B555B85E70FB }, // ReadFile
+        { 0xD75FA9589DD972CD, 0xB88F4B527CFE51D5, 0x9F87323E42C1C109 }, // WriteFile
     };
 #elif _WIN32
     {
-        { 0xF1EB542C, 0xBE63A34F }, // CreateFileA
-        { 0x72331B65, 0x2347FDB8 }, // CreateFileW
-        { 0x75FAD4ED, 0xF7D881E8 }, // GetFileSizeEx
-        { 0x02C8D131, 0xA90353CD }, // ReadFile
-        { 0x0A0B19BF, 0x91D1EBF2 }, // WriteFile
+        { 0x4A79EC7C, 0x041548A2, 0x6078A702 }, // CreateFileA
+        { 0x5CDE3B8B, 0xC144ECFB, 0x773BD184 }, // CreateFileW
+        { 0x5357BA7F, 0xE65C60FB, 0x1B4E1DC2 }, // GetFileSizeEx
+        { 0x306A983D, 0x9D073E4A, 0x3DA8E38C }, // ReadFile
+        { 0x81CB5D38, 0x16637045, 0x522192A1 }, // WriteFile
     };
 #endif
     for (int i = 0; i < arrlen(list); i++)
     {
-        void* proc = FindAPI(list[i].hash, list[i].key);
+        winapi item = list[i];
+        void*  proc = FindAPI_ML(context->IMOML, item.mHash, item.pHash, item.hKey);
         if (proc == NULL)
         {
             return false;

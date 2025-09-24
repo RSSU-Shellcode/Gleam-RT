@@ -112,7 +112,7 @@ typedef struct {
 
 // export methods about Runtime
 void* RT_FindAPI(uint module, uint procedure, uint key);
-void* RT_FindAPI_ML(uintptr list, uint module, uint procedure, uint key);
+void* RT_FindAPI_ML(void* list, uint module, uint procedure, uint key);
 void* RT_FindAPI_A(byte* module, byte* procedure);
 void* RT_FindAPI_W(uint16* module, byte* procedure);
 
@@ -167,7 +167,7 @@ static bool rt_unlock();
 static bool  isValidArgumentStub();
 static void* getPEBAddress();
 static void* getIMOMLAddress(uintptr peb);
-static void* allocRuntimeMemPage(uintptr IMOML);
+static void* allocRuntimeMemPage(void* IMOML);
 static void* calculateEpilogue();
 static bool  initRuntimeAPI(Runtime* runtime);
 static bool  adjustPageProtect(Runtime* runtime, DWORD* old);
@@ -224,8 +224,8 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
         return NULL;
     }
     // get process environment
-    uintptr PEB   = (uintptr)(getPEBAddress());
-    uintptr IMOML = (uintptr)(getIMOMLAddress(PEB));
+    void* PEB   = getPEBAddress();
+    void* IMOML = getIMOMLAddress((uintptr)PEB);
     // alloc memory for store runtime structure
     void* memPage = allocRuntimeMemPage(IMOML);
     if (memPage == NULL)
@@ -493,7 +493,7 @@ static void* getPEBAddress()
     uintptr teb = __readfsdword(0x18);
     uintptr peb = *(uintptr*)(teb + 0x30);
 #endif
-    return peb;
+    return (void*)peb;
 }
 
 static void* getIMOMLAddress(uintptr peb)
@@ -505,10 +505,10 @@ static void* getIMOMLAddress(uintptr peb)
     uintptr ldr = *(uintptr*)(peb + 0x0C);
     uintptr mod = *(uintptr*)(ldr + 0x14);
 #endif
-    return mod;
+    return (void*)mod;
 }
 
-static void* allocRuntimeMemPage(uintptr IMOML)
+static void* allocRuntimeMemPage(void* IMOML)
 {
 #ifdef _WIN64
     uint mHash = 0x7CCA6C542E19FE5E;
@@ -1566,7 +1566,7 @@ void* RT_FindAPI(uint module, uint procedure, uint key)
 }
 
 __declspec(noinline)
-void* RT_FindAPI_ML(uintptr list, uint module, uint procedure, uint key)
+void* RT_FindAPI_ML(void* list, uint module, uint procedure, uint key)
 {
     return RT_GetProcAddressByHashML(list, module, procedure, key, true);
 }
@@ -2014,7 +2014,7 @@ void* RT_GetTEB()
 #elif _WIN32
     uintptr teb = __readfsdword(0x18);
 #endif
-    return teb;
+    return (void*)teb;
 }
 
 __declspec(noinline)

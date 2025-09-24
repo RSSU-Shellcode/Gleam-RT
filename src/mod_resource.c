@@ -105,7 +105,7 @@ typedef struct {
     bool NotEraseInstruction;
 
     // store environment
-    uintptr IMOML;
+    void* IMOML;
 
     // API addresses
     CreateMutexA_t           CreateMutexA;
@@ -1423,13 +1423,13 @@ LSTATUS RT_RegCreateKeyA(HKEY hKey, LPCSTR lpSubKey, HKEY* phkResult)
     #ifdef _WIN64
         uint mHash = 0x96A609C4644380C8;
         uint pHash = 0xCCA21B11ED2032A9;
-        uint hKey  = 0xB712895B7F4E3137;
+        uint hhKey = 0xB712895B7F4E3137;
     #elif _WIN32
         uint mHash = 0x32484FCA;
         uint pHash = 0xF1BBFA85;
-        uint hKey  = 0xB34D4A92;
+        uint hhKey = 0xB34D4A92;
     #endif
-        RegCreateKeyA_t RegCreateKeyA = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+        RegCreateKeyA_t RegCreateKeyA = FindAPI_ML(tracker->IMOML, mHash, pHash, hhKey);
         if (RegCreateKeyA == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -1465,13 +1465,13 @@ LSTATUS RT_RegCreateKeyW(HKEY hKey, LPCWSTR lpSubKey, HKEY* phkResult)
     #ifdef _WIN64
         uint mHash = 0x7F1EBB0B5BF08964;
         uint pHash = 0xF622574D5E02E9DB;
-        uint hKey  = 0x4736E3EDE9B87BD7;
+        uint hhKey = 0x4736E3EDE9B87BD7;
     #elif _WIN32
         uint mHash = 0x380E972A;
         uint pHash = 0xF78241FB;
-        uint hKey  = 0x01A5FA89;
+        uint hhKey = 0x01A5FA89;
     #endif
-        RegCreateKeyW_t RegCreateKeyW = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+        RegCreateKeyW_t RegCreateKeyW = FindAPI_ML(tracker->IMOML, mHash, pHash, hhKey);
         if (RegCreateKeyW == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -1510,13 +1510,13 @@ LSTATUS RT_RegCreateKeyExA(
     #ifdef _WIN64
         uint mHash = 0x10C1CC6DFBC96F56;
         uint pHash = 0x3B563DEE011D55EA;
-        uint hKey  = 0x5277163B5A7EE259;
+        uint hhKey = 0x5277163B5A7EE259;
     #elif _WIN32
         uint mHash = 0xB1B2BFDB;
         uint pHash = 0x6E3FE5C2;
-        uint hKey  = 0x1E21042F;
+        uint hhKey = 0x1E21042F;
     #endif
-        RegCreateKeyExA_t RegCreateKeyExA = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+        RegCreateKeyExA_t RegCreateKeyExA = FindAPI_ML(tracker->IMOML, mHash, pHash, hhKey);
         if (RegCreateKeyExA == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -1558,13 +1558,13 @@ LSTATUS RT_RegCreateKeyExW(
     #ifdef _WIN64
         uint mHash = 0xA440EA2E6B7DA1CB;
         uint pHash = 0xFE239E0C5881EF75;
-        uint hKey  = 0x8B1F06BAC9BC0FB4;
+        uint hhKey = 0x8B1F06BAC9BC0FB4;
     #elif _WIN32
         uint mHash = 0xD59266B5;
         uint pHash = 0x29E2F4EF;
-        uint hKey  = 0xF4DED6CA;
+        uint hhKey = 0xF4DED6CA;
     #endif
-        RegCreateKeyExW_t RegCreateKeyExW = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+        RegCreateKeyExW_t RegCreateKeyExW = FindAPI_ML(tracker->IMOML, mHash, pHash, hhKey);
         if (RegCreateKeyExW == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -1603,13 +1603,13 @@ LSTATUS RT_RegOpenKeyA(HKEY hKey, LPCSTR lpSubKey, HKEY* phkResult)
     #ifdef _WIN64
         uint mHash = 0xFA7EA8AF31135B54;
         uint pHash = 0x22D8B65730135F58;
-        uint hKey  = 0x60FDAD6E29C89B00;
+        uint hhKey = 0x60FDAD6E29C89B00;
     #elif _WIN32
         uint mHash = 0x5FE996AD;
         uint pHash = 0x1FADD8BD;
-        uint hKey  = 0x94E3EBAE;
+        uint hhKey = 0x94E3EBAE;
     #endif
-        RegOpenKeyA_t RegOpenKeyA = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+        RegOpenKeyA_t RegOpenKeyA = FindAPI_ML(tracker->IMOML, mHash, pHash, hhKey);
         if (RegOpenKeyA == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -1645,13 +1645,13 @@ LSTATUS RT_RegOpenKeyW(HKEY hKey, LPCWSTR lpSubKey, HKEY* phkResult)
     #ifdef _WIN64
         uint mHash = 0x38F57CDA6CA1BF80;
         uint pHash = 0x5D2DA71712AD845F;
-        uint hKey  = 0xF3F6F1F37138E467;
+        uint hhKey = 0xF3F6F1F37138E467;
     #elif _WIN32
         uint mHash = 0x7370A861;
         uint pHash = 0x4D8DD02E;
-        uint hKey  = 0x6B7B9626;
+        uint hhKey = 0x6B7B9626;
     #endif
-        RegOpenKeyW_t RegOpenKeyW = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+        RegOpenKeyW_t RegOpenKeyW = FindAPI_ML(tracker->IMOML, mHash, pHash, hhKey);
         if (RegOpenKeyW == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -1688,13 +1688,13 @@ LSTATUS RT_RegOpenKeyExA(
     #ifdef _WIN64
         uint mHash = 0x2AE0601CC475EB1A;
         uint pHash = 0xAAE3DFB521796E88;
-        uint hKey  = 0x22106841BD214082;
+        uint hhKey = 0x22106841BD214082;
     #elif _WIN32
         uint mHash = 0xF2834E35;
         uint pHash = 0x93E426ED;
-        uint hKey  = 0xFAB77358;
+        uint hhKey = 0xFAB77358;
     #endif
-        RegOpenKeyExA_t RegOpenKeyExA = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+        RegOpenKeyExA_t RegOpenKeyExA = FindAPI_ML(tracker->IMOML, mHash, pHash, hhKey);
         if (RegOpenKeyExA == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -1733,13 +1733,13 @@ LSTATUS RT_RegOpenKeyExW(
     #ifdef _WIN64
         uint mHash = 0x532BAEA98DA2BA54;
         uint pHash = 0x7509BA27645BDAD3;
-        uint hKey  = 0x55CCE92A674BE515;
+        uint hhKey = 0x55CCE92A674BE515;
     #elif _WIN32
         uint mHash = 0xB68F1718;
         uint pHash = 0x57EFEFE7;
-        uint hKey  = 0x7B845953;
+        uint hhKey = 0x7B845953;
     #endif
-        RegOpenKeyExW_t RegOpenKeyExW = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+        RegOpenKeyExW_t RegOpenKeyExW = FindAPI_ML(tracker->IMOML, mHash, pHash, hhKey);
         if (RegOpenKeyExW == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -2140,13 +2140,13 @@ LSTATUS RT_RegCloseKey(HKEY hKey)
     #ifdef _WIN64
         uint mHash = 0xBF61DC9DB58F2119;
         uint pHash = 0x634B2EA7763B50E7;
-        uint hKey  = 0x1E92D01ACD546FAA;
+        uint hhKey = 0x1E92D01ACD546FAA;
     #elif _WIN32
         uint mHash = 0x21897061;
         uint pHash = 0x05759268;
-        uint hKey  = 0x6DD08644;
+        uint hhKey = 0x6DD08644;
     #endif
-        RegCloseKey_t RegCloseKey = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+        RegCloseKey_t RegCloseKey = FindAPI_ML(tracker->IMOML, mHash, pHash, hhKey);
         if (RegCloseKey == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;

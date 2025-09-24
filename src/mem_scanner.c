@@ -1,8 +1,6 @@
 #include "c_types.h"
-#include "dll_kernel32.h"
 #include "lib_memory.h"
 #include "lib_match.h"
-#include "hash_api.h"
 #include "errno.h"
 #include "mem_scanner.h"
 
@@ -22,7 +20,7 @@ static bool isRegionReadable(DWORD protect);
 
 #pragma optimize("t", on)
 
-uint MemScanByValue(void* value, uint size, uintptr* results, uint maxItem)
+uint MemScanByValue(MemScan_Ctx* ctx, void* value, uint size, uintptr* results, uint maxItem)
 {
     if (size == 0 || size > MAX_NUM_CONDITION)
     {
@@ -31,26 +29,11 @@ uint MemScanByValue(void* value, uint size, uintptr* results, uint maxItem)
     }
     byte pattern[MAX_NUM_CONDITION * 3 + 1];
     BinToPattern(value, size, pattern);
-    return MemScanByPattern(pattern, results, maxItem);
+    return MemScanByPattern(ctx, pattern, results, maxItem);
 }
 
-uint MemScanByPattern(byte* pattern, uintptr* results, uint maxItem)
+uint MemScanByPattern(MemScan_Ctx* ctx, byte* pattern, uintptr* results, uint maxItem)
 {
-    GetSystemInfo_t GetSystemInfo;
-    VirtualQuery_t  VirtualQuery;
-#ifdef _WIN64
-    GetSystemInfo = FindAPI(0x4392322CEA817F1F, 0xE20A45B6346E8009);
-    VirtualQuery  = FindAPI(0x7E3FFDE2F6882D52, 0x118655CA8CAE6F48);
-#elif _WIN32
-    GetSystemInfo = FindAPI(0x980274CF, 0xE3941931);
-    VirtualQuery  = FindAPI(0x786F453F, 0x10579014);
-#endif
-    if (GetSystemInfo == NULL || VirtualQuery == NULL)
-    {
-        SetLastErrno(ERR_MEM_SCANNER_NOT_FOUND_API);
-        return (uint)(-1);
-    }
-
     // parse pattern to condition array
     uint16 condition[MAX_NUM_CONDITION];
     mem_init(condition, sizeof(condition));
@@ -84,17 +67,15 @@ uint MemScanByPattern(byte* pattern, uintptr* results, uint maxItem)
     }
 
     // scan memory region
-    SYSTEM_INFO sysInfo;
-    GetSystemInfo(&sysInfo);
-    uintptr address    = (uintptr)(sysInfo.MinimumApplicationAddress);
-    uintptr endAddress = (uintptr)(sysInfo.MaximumApplicationAddress);
+    uintptr address    = ctx->MinAddress;
+    uintptr endAddress = ctx->MaxAddress;
     MEMORY_BASIC_INFORMATION mbi;
     mem_init(&mbi, sizeof(mbi));
     uint numResults = 0;
     while (address < endAddress)
     {
         // query memory region information
-        if (VirtualQuery((LPCVOID)address, &mbi, sizeof(mbi)) == 0)
+        if (ctx->VirtualQuery((LPCVOID)address, &mbi, sizeof(mbi)) == 0)
         {
             SetLastErrno(ERR_MEM_SCANNER_VIRTUAL_QUERY);
             return (uint)(-1);

@@ -78,6 +78,9 @@ typedef struct {
     SleepEx_t                SleepEx;
     ExitProcess_t            ExitProcess;
 
+    // system information
+    SYSTEM_INFO SysInfo;
+
     // runtime data
     void*  MainMemPage; // store all structures
     void*  Epilogue;    // store shellcode epilogue
@@ -689,10 +692,10 @@ static bool recoverRuntimePointer(Runtime* runtime)
 
 static errno initRuntimeEnvironment(Runtime* runtime)
 {
-    // get memory page size
-    SYSTEM_INFO sysInfo;
-    runtime->GetSystemInfo(&sysInfo);
-    runtime->PageSize = sysInfo.PageSize;
+    // get system information
+    runtime->GetSystemInfo(&runtime->SysInfo);
+    // store memory page size
+    runtime->PageSize = runtime->SysInfo.PageSize;
     // create global mutex
     HANDLE hMutex = runtime->CreateMutexA(NULL, false, NAME_RT_MUTEX_GLOBAL);
     if (hMutex == NULL)

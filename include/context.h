@@ -35,7 +35,7 @@ typedef struct {
     bool NotEraseInstruction;
     bool TrackCurrentThread;
 
-    // about process environment
+    // process environment
     void* PEB;
     void* IMOML;
 
@@ -63,6 +63,7 @@ typedef struct {
     VirtualAlloc_t           VirtualAlloc;
     VirtualFree_t            VirtualFree;
     VirtualProtect_t         VirtualProtect;
+    VirtualQuery_t           VirtualQuery;
     FlushInstructionCache_t  FlushInstructionCache;
     SuspendThread_t          SuspendThread;
     ResumeThread_t           ResumeThread;

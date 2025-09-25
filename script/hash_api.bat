@@ -15,6 +15,7 @@ hash_api -fmt 64 -conc -mod "kernel32.dll" -proc GetProcAddress
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc VirtualAlloc
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc VirtualFree
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc VirtualProtect
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc VirtualQuery
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc FlushInstructionCache
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc SuspendThread
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc ResumeThread
@@ -171,7 +172,6 @@ hash_api -fmt 64 -conc -mod "kernel32.dll" -proc FreeLibraryAndExitThread
 echo.
 
 echo [Memory Tracker]
-hash_api -fmt 64 -conc -mod "kernel32.dll" -proc VirtualQuery
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc GetProcessHeap
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc GetProcessHeaps
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc HeapCreate
@@ -325,6 +325,7 @@ hash_api -fmt 32 -conc -mod "kernel32.dll" -proc GetProcAddress
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc VirtualAlloc
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc VirtualFree
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc VirtualProtect
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc VirtualQuery
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc FlushInstructionCache
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc SuspendThread
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc ResumeThread
@@ -481,7 +482,6 @@ hash_api -fmt 32 -conc -mod "kernel32.dll" -proc FreeLibraryAndExitThread
 echo.
 
 echo [Memory Tracker]
-hash_api -fmt 32 -conc -mod "kernel32.dll" -proc VirtualQuery
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc GetProcessHeap
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc GetProcessHeaps
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc HeapCreate

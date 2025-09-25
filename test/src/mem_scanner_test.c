@@ -2,7 +2,6 @@
 #include "c_types.h"
 #include "lib_memory.h"
 #include "lib_string.h"
-#include "mem_scanner.h"
 #include "test.h"
 
 static bool TestMemScanByValue();

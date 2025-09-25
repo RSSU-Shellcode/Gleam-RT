@@ -59,6 +59,7 @@ typedef struct {
     VirtualAlloc_t           VirtualAlloc;
     VirtualFree_t            VirtualFree;
     VirtualProtect_t         VirtualProtect;
+    VirtualQuery_t           VirtualQuery;
     FlushInstructionCache_t  FlushInstructionCache;
     SuspendThread_t          SuspendThread;
     ResumeThread_t           ResumeThread;
@@ -156,7 +157,11 @@ errno RT_unlock_mods();
 void  RT_try_lock_mods();
 void  RT_try_unlock_mods();
 
-bool RT_WD_IsEnabled();
+// method wrapper for user and Runtime submodules
+uint MW_MemScanByValue(void* value, uint size, uintptr* results, uint maxItem);
+uint MW_MemScanByPattern(byte* pattern, uintptr* results, uint maxItem);
+
+bool MW_WD_IsEnabled();
 
 // hard encoded address in getRuntimePointer for replacement
 #ifdef _WIN64
@@ -431,8 +436,8 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->Serialization.Serialize   = GetFuncAddr(&Serialize);
     module->Serialization.Unserialize = GetFuncAddr(&Unserialize);
     // memory scanner
-    module->MemScanner.ScanByValue   = GetFuncAddr(&MemScanByValue);
-    module->MemScanner.ScanByPattern = GetFuncAddr(&MemScanByPattern);
+    module->MemScanner.ScanByValue   = GetFuncAddr(&MW_MemScanByValue);
+    module->MemScanner.ScanByPattern = GetFuncAddr(&MW_MemScanByPattern);
     module->MemScanner.BinToPattern  = GetFuncAddr(&BinToPattern);
     // get procedure address
     module->Procedure.GetProcByName   = GetFuncAddr(&RT_GetProcAddressByName);
@@ -560,6 +565,7 @@ static bool initRuntimeAPI(Runtime* runtime)
         { 0x01D79EDD3081D078, 0x447B8E23EA19AFBF, 0xC733FDBD9B57119F }, // VirtualAlloc
         { 0x103364F533A102DE, 0x66E51926BF5C2675, 0xE23E338B794BD214 }, // VirtualFree
         { 0xE61F09814F6DB0F1, 0xE720DBF70F19D718, 0xFD32DE1953F12824 }, // VirtualProtect
+        { 0x782DBEA37FA26901, 0x6BFCB0DC860C2060, 0xB7AE04F1641B5A9E }, // VirtualQuery
         { 0x2942F56B284BE6A0, 0x06172C4E43D310FB, 0xF2B7646EDF1ADF06 }, // FlushInstructionCache
         { 0x83E845755EFA1E95, 0xFC8825DC3C55B265, 0xCCBCA1685F8E8AD6 }, // SuspendThread
         { 0x392F3A38C3FA3EED, 0xB0CAB85785F06761, 0xF5EE69828D2BD6E1 }, // ResumeThread
@@ -588,6 +594,7 @@ static bool initRuntimeAPI(Runtime* runtime)
         { 0xED38BE94, 0x2EC158C4, 0xB33593DB }, // VirtualAlloc
         { 0x2E5F98A6, 0xBFAD008B, 0x086D5CBA }, // VirtualFree
         { 0xA0D678CB, 0x684D4B46, 0xFEAE4785 }, // VirtualProtect
+        { 0x35881A35, 0x8066F5F0, 0x1587304E }, // VirtualQuery
         { 0x1EF0D6B9, 0xF3E223E4, 0x58D1C6E8 }, // FlushInstructionCache
         { 0xE5E1E669, 0xBFE496D9, 0x144C6CFA }, // SuspendThread
         { 0x87529AFE, 0xA848A36A, 0xF5703D40 }, // ResumeThread
@@ -737,6 +744,7 @@ static errno initSubmodules(Runtime* runtime)
         .VirtualAlloc           = runtime->VirtualAlloc,
         .VirtualFree            = runtime->VirtualFree,
         .VirtualProtect         = runtime->VirtualProtect,
+        .VirtualQuery           = runtime->VirtualQuery,
         .FlushInstructionCache  = runtime->FlushInstructionCache,
         .SuspendThread          = runtime->SuspendThread,
         .ResumeThread           = runtime->ResumeThread,
@@ -814,7 +822,7 @@ static errno initSubmodules(Runtime* runtime)
     context.RT_Cleanup = GetFuncAddr(&RT_Cleanup);
     context.RT_Stop    = GetFuncAddr(&RT_Stop);
 
-    context.WD_IsEnabled = GetFuncAddr(&RT_WD_IsEnabled);
+    context.WD_IsEnabled = GetFuncAddr(&MW_WD_IsEnabled);
 
     // initialize reliability modules
     module_t rel_modules[] = 
@@ -1554,7 +1562,35 @@ void RT_try_unlock_mods()
 }
 
 __declspec(noinline)
-bool RT_WD_IsEnabled()
+uint MW_MemScanByValue(void* value, uint size, uintptr* results, uint maxItem)
+{
+    Runtime* runtime = getRuntimePointer();
+
+    MemScan_Ctx ctx = {
+        .MinAddress = (uintptr)(runtime->SysInfo.MinimumApplicationAddress),
+        .MaxAddress = (uintptr)(runtime->SysInfo.MaximumApplicationAddress),
+
+        .VirtualQuery = runtime->VirtualQuery,
+    };
+    return MemScanByValue(&ctx, value, size, results, maxItem);
+}
+
+__declspec(noinline)
+uint MW_MemScanByPattern(byte* pattern, uintptr* results, uint maxItem)
+{
+    Runtime* runtime = getRuntimePointer();
+
+    MemScan_Ctx ctx = {
+        .MinAddress = (uintptr)(runtime->SysInfo.MinimumApplicationAddress),
+        .MaxAddress = (uintptr)(runtime->SysInfo.MaximumApplicationAddress),
+
+        .VirtualQuery = runtime->VirtualQuery,
+    };
+    return MemScanByPattern(&ctx, pattern, results, maxItem);
+}
+
+__declspec(noinline)
+bool MW_WD_IsEnabled()
 {
     Runtime* runtime = getRuntimePointer();
 

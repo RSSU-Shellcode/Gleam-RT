@@ -156,6 +156,8 @@ errno RT_unlock_mods();
 void  RT_try_lock_mods();
 void  RT_try_unlock_mods();
 
+bool RT_WD_IsEnabled();
+
 // hard encoded address in getRuntimePointer for replacement
 #ifdef _WIN64
     #define RUNTIME_POINTER 0x7FABCDEF111111FF
@@ -205,9 +207,6 @@ static void* getLazyAPIRedirector(Runtime* runtime, void* proc);
 static errno sleep(Runtime* runtime, HANDLE hTimer);
 static errno hide(Runtime* runtime);
 static errno recover(Runtime* runtime);
-
-static bool df_WD_IsEnabled();
-
 static errno stop(bool exitThread);
 
 static void eraseMemory(uintptr address, uintptr size);
@@ -815,7 +814,7 @@ static errno initSubmodules(Runtime* runtime)
     context.RT_Cleanup = GetFuncAddr(&RT_Cleanup);
     context.RT_Stop    = GetFuncAddr(&RT_Stop);
 
-    context.WD_IsEnabled = GetFuncAddr(&df_WD_IsEnabled);
+    context.WD_IsEnabled = GetFuncAddr(&RT_WD_IsEnabled);
 
     // initialize reliability modules
     module_t rel_modules[] = 
@@ -1316,14 +1315,6 @@ static bool rt_unlock()
     return runtime->ReleaseMutex(runtime->hMutex);
 }
 
-__declspec(noinline)
-static bool df_WD_IsEnabled()
-{
-    Runtime* runtime = getRuntimePointer();
-
-    return runtime->Watchdog->IsEnabled();
-}
-
 // +---------+----------+-------------+
 // |  size   | capacity | user buffer |
 // +---------+----------+-------------+
@@ -1563,6 +1554,14 @@ void RT_try_unlock_mods()
 }
 
 __declspec(noinline)
+bool RT_WD_IsEnabled()
+{
+    Runtime* runtime = getRuntimePointer();
+
+    return runtime->Watchdog->IsEnabled();
+}
+
+__declspec(noinline)
 void* RT_FindAPI(uint module, uint procedure, uint key)
 {
     return RT_GetProcAddressByHash(module, procedure, key, true);
@@ -1741,8 +1740,8 @@ static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
         { 0xF395D014FC4A9847, 0x2D6352C01B64C8CD, 0x02E1C76F946DD411, GetFuncAddr(&RT_GetProcAddressByHash)   },
         { 0xD6B7CE32BE36AE15, 0x8C40B58C324BF998, 0x2EC1D940231B43F6, GetFuncAddr(&RT_GetProcAddressByHashML) },
         { 0x3AB89D3D84B47DFE, 0x667F961CE2D5EE7A, 0x43BD143E1D761DB4, GetFuncAddr(&RT_GetProcAddressOriginal) },
-        { 0x8297D36EE43D98B8, 0x5CC0ED58C88E507B, 0x48701A09531A893B, GetFuncAddr(&RT_GetMetrics)             },
         { 0x87C47270364481C7, 0x0F85CE174F27B497, 0x42E184C4D600AB3B, GetFuncAddr(&RT_ExitProcess)            },
+        { 0x8297D36EE43D98B8, 0x5CC0ED58C88E507B, 0x48701A09531A893B, GetFuncAddr(&RT_GetMetrics)             },
         { 0x172EB189DC662FCA, 0x0406D1ED1D897C2E, 0x11974ED8D65FEA41, AS->GetValue   }, // AS_GetValue
         { 0xA884D08380DBB048, 0xBD7F30E36376638E, 0xDA5805C2D8B16DCE, AS->GetPointer }, // AS_GetPointer
         { 0x777977B4AE250D4F, 0x032B55E616810E84, 0x8606E6C48610C9A8, AS->Erase      }, // AS_Erase
@@ -1768,8 +1767,8 @@ static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
         { 0x7431D137, 0x86263112, 0x01401C56, GetFuncAddr(&RT_GetProcAddressByHash)   },
         { 0x6411C109, 0x7D9578EB, 0xACD88A68, GetFuncAddr(&RT_GetProcAddressByHashML) },
         { 0x46AE0C6F, 0x9CA280BD, 0xE68B3680, GetFuncAddr(&RT_GetProcAddressOriginal) },
-        { 0x2674137F, 0xD79A5D69, 0xB3C0A554, GetFuncAddr(&RT_GetMetrics)             },
         { 0x8ABE078B, 0xD3D543F1, 0xE132AE7B, GetFuncAddr(&RT_ExitProcess)            },
+        { 0x2674137F, 0xD79A5D69, 0xB3C0A554, GetFuncAddr(&RT_GetMetrics)             },
         { 0x2859483E, 0xBF4749F4, 0xCBEAF70B, AS->GetValue   }, // AS_GetValue
         { 0xD2432243, 0x85A16057, 0xF762BF9F, AS->GetPointer }, // AS_GetPointer
         { 0xB115F50E, 0xD1879F7C, 0xDB1CB9F6, AS->Erase      }, // AS_Erase

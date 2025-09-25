@@ -34,7 +34,7 @@ bool TestMemScanner()
 static bool TestMemScanByValue()
 {
     uintptr results[100];
-    uint num = MemScanByValue("test", 4, results, arrlen(results));
+    uint num = runtime->MemScanner.ScanByValue("test", 4, results, arrlen(results));
     if (num == -1 || num == 0)
     {
         printf_s("failed to scan target data: 0x%X\n", GetLastErrno());
@@ -51,7 +51,7 @@ static bool TestMemScanByPattern()
     uintptr results[100]; // "test"
 
     // exact value
-    uint num = MemScanByPattern("74 65 73 74", results, arrlen(results));
+    uint num = runtime->MemScanner.ScanByPattern("74 65 73 74", results, arrlen(results));
     if (num == -1 || num == 0)
     {
         printf_s("failed to scan target data: 0x%X\n", GetLastErrno());
@@ -60,7 +60,7 @@ static bool TestMemScanByPattern()
     printResults(results, num);
 
     // contains arbitrary value
-    num = MemScanByPattern("74 65 ?? 74", results, arrlen(results));
+    num = runtime->MemScanner.ScanByPattern("74 65 ?? 74", results, arrlen(results));
     if (num == -1 || num == 0)
     {
         printf_s("failed to scan target data: 0x%X\n", GetLastErrno());
@@ -78,7 +78,7 @@ static bool TestMemScanByPattern()
     };
     for (int i = 0; i < arrlen(patterns); i++)
     {
-        num = MemScanByPattern(patterns[i], results, arrlen(results));
+        num = runtime->MemScanner.ScanByPattern(patterns[i], results, arrlen(results));
         if (num != -1 || GetLastErrno() != ERR_MEM_SCANNER_INVALID_CONDITION)
         {
             printf_s("unexcepted return value or errno\n");
@@ -93,7 +93,7 @@ static bool TestMemScanByPattern()
 static bool TestBinToPattern()
 {
     byte pattern[32];
-    BinToPattern("test", 4, pattern);
+    runtime->MemScanner.BinToPattern("test", 4, pattern);
     if (strcmp_a(pattern, "74 65 73 74 ") != 0)
     {
         printf_s("invalid output pattern\n");
@@ -101,7 +101,7 @@ static bool TestBinToPattern()
     }
 
     uint64 value = 0xABCDEF123456;
-    BinToPattern(&value, sizeof(value), pattern);
+    runtime->MemScanner.BinToPattern(&value, sizeof(value), pattern);
     if (strcmp_a(pattern, "56 34 12 EF CD AB 00 00 ") != 0)
     {
         printf_s("invalid output pattern\n");

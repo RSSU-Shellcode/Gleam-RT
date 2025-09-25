@@ -50,7 +50,7 @@ typedef struct {
     bool NotEraseInstruction;
 
     // store environment
-    uintptr IMOML;
+    void* IMOML;
 
     // API addresses
     VirtualAlloc_t          VirtualAlloc;
@@ -317,7 +317,6 @@ static bool initTrackerAPI(MemoryTracker* tracker, Context* context)
     winapi list[] =
 #ifdef _WIN64
     {
-        { 0x78F7C1EDB1B6C199, 0xDA216AFFF1D8FF27, 0xC8D9B3B117525BFC }, // VirtualQuery
         { 0xC3D7F454B0F1367C, 0x29CAA1EB805BCCA9, 0xC3DD316E122A78F8 }, // GetProcessHeap
         { 0x1C65BE5C37AA95C6, 0x9D74C15113BF9588, 0x2379B99B83FE4750 }, // GetProcessHeaps
         { 0x9B753693D7581756, 0xF68CC0D9B9C7E64A, 0x47B324F64EA3ADF6 }, // HeapCreate
@@ -338,7 +337,6 @@ static bool initTrackerAPI(MemoryTracker* tracker, Context* context)
     };
 #elif _WIN32
     {
-        { 0x3A9055C4, 0x1A1C6FFE, 0x98138AB0 }, // VirtualQuery
         { 0x2B2C8947, 0x591F6D82, 0x23CCA605 }, // GetProcessHeap
         { 0xDC1F8608, 0xF9054AF4, 0x2F9DE4C9 }, // GetProcessHeaps
         { 0xC117F387, 0x89B7E7BE, 0x107ED3A3 }, // HeapCreate
@@ -368,28 +366,28 @@ static bool initTrackerAPI(MemoryTracker* tracker, Context* context)
         }
         list[i].proc = proc;
     }
-    tracker->VirtualQuery    = list[0x00].proc;
-    tracker->GetProcessHeap  = list[0x01].proc;
-    tracker->GetProcessHeaps = list[0x02].proc;
-    tracker->HeapCreate      = list[0x03].proc;
-    tracker->HeapDestroy     = list[0x04].proc;
-    tracker->HeapAlloc       = list[0x05].proc;
-    tracker->HeapReAlloc     = list[0x06].proc;
-    tracker->HeapFree        = list[0x07].proc;
-    tracker->HeapSize        = list[0x08].proc;
-    tracker->HeapLock        = list[0x09].proc;
-    tracker->HeapUnlock      = list[0x0A].proc;
-    tracker->HeapWalk        = list[0x0B].proc;
-    tracker->GlobalAlloc     = list[0x0C].proc;
-    tracker->GlobalReAlloc   = list[0x0D].proc;
-    tracker->GlobalFree      = list[0x0E].proc;
-    tracker->LocalAlloc      = list[0x0F].proc;
-    tracker->LocalReAlloc    = list[0x10].proc;
-    tracker->LocalFree       = list[0x11].proc;
+    tracker->GetProcessHeap  = list[0x00].proc;
+    tracker->GetProcessHeaps = list[0x01].proc;
+    tracker->HeapCreate      = list[0x02].proc;
+    tracker->HeapDestroy     = list[0x03].proc;
+    tracker->HeapAlloc       = list[0x04].proc;
+    tracker->HeapReAlloc     = list[0x05].proc;
+    tracker->HeapFree        = list[0x06].proc;
+    tracker->HeapSize        = list[0x07].proc;
+    tracker->HeapLock        = list[0x08].proc;
+    tracker->HeapUnlock      = list[0x09].proc;
+    tracker->HeapWalk        = list[0x0A].proc;
+    tracker->GlobalAlloc     = list[0x0B].proc;
+    tracker->GlobalReAlloc   = list[0x0C].proc;
+    tracker->GlobalFree      = list[0x0D].proc;
+    tracker->LocalAlloc      = list[0x0E].proc;
+    tracker->LocalReAlloc    = list[0x0F].proc;
+    tracker->LocalFree       = list[0x10].proc;
 
     tracker->VirtualAlloc          = context->VirtualAlloc;
     tracker->VirtualFree           = context->VirtualFree;
     tracker->VirtualProtect        = context->VirtualProtect;
+    tracker->VirtualQuery          = context->VirtualQuery;
     tracker->ReleaseMutex          = context->ReleaseMutex;
     tracker->WaitForSingleObject   = context->WaitForSingleObject;
     tracker->FlushInstructionCache = context->FlushInstructionCache;

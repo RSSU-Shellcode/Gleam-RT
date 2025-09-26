@@ -4,7 +4,6 @@
 #include "win_types.h"
 #include "lib_memory.h"
 #include "rel_addr.h"
-#include "hash_api.h"
 #include "errno.h"
 #include "mod_argument.h"
 #include "runtime.h"

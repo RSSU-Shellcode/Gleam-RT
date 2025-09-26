@@ -560,19 +560,15 @@ typedef struct {
     } Watchdog;
 
     struct {
-        GetProcAddress_t GetProcAddress;
-        ExitProcess_t    ExitProcess;
-    } Raw;
-
-    struct {
         GetPEB_t   GetPEB;
         GetTEB_t   GetTEB;
         GetIMOML_t GetIMOML;
     } Env;
 
     struct {
-        HANDLE Mutex;
-    } Data;
+        GetProcAddress_t GetProcAddress;
+        ExitProcess_t    ExitProcess;
+    } Raw;
 
     struct {
         RTSleepHR_t Sleep;
@@ -583,6 +579,10 @@ typedef struct {
         RTExit_t    Exit;
         RTStop_t    Stop;
     } Core;
+
+    struct {
+        HANDLE Mutex;
+    } Data;
 } Runtime_M;
 
 typedef struct {

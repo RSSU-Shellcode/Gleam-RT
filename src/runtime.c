@@ -126,15 +126,15 @@ void* RT_GetProcAddressByHash(uint mHash, uint pHash, uint hKey, bool redirect);
 void* RT_GetProcAddressByHashML(void* list, uint mHash, uint pHash, uint hKey, bool redirect);
 void* RT_GetProcAddressOriginal(HMODULE hModule, LPCSTR lpProcName);
 
+void* RT_GetPEB();
+void* RT_GetTEB();
+void* RT_GetIMOML();
+
 BOOL  RT_SetCurrentDirectoryA(LPSTR lpPathName);
 BOOL  RT_SetCurrentDirectoryW(LPWSTR lpPathName);
 void  RT_Sleep(DWORD dwMilliseconds);
 DWORD RT_SleepEx(DWORD dwMilliseconds, BOOL bAlertable);
 void  RT_ExitProcess(UINT uExitCode);
-
-void* RT_GetPEB();
-void* RT_GetTEB();
-void* RT_GetIMOML();
 
 errno RT_SleepHR(DWORD dwMilliseconds);
 errno RT_Hide();
@@ -160,7 +160,6 @@ void  RT_try_unlock_mods();
 // method wrapper for user and Runtime submodules
 uint MW_MemScanByValue(void* value, uint size, uintptr* results, uint maxItem);
 uint MW_MemScanByPattern(byte* pattern, uintptr* results, uint maxItem);
-
 bool MW_WD_IsEnabled();
 
 // hard encoded address in getRuntimePointer for replacement
@@ -456,15 +455,13 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->Watchdog.Status     = runtime->Watchdog->GetStatus;
     module->Watchdog.Pause      = runtime->Watchdog->Pause;
     module->Watchdog.Continue   = runtime->Watchdog->Continue;
-    // {THE TRUTH OF THE WORLD} && [THE END OF THE WORLD] :(
-    module->Raw.GetProcAddress = GetFuncAddr(&RT_GetProcAddressOriginal);
-    module->Raw.ExitProcess    = GetFuncAddr(&RT_ExitProcess);
     // about process environment
     module->Env.GetPEB   = GetFuncAddr(&RT_GetPEB);
     module->Env.GetTEB   = GetFuncAddr(&RT_GetTEB);
     module->Env.GetIMOML = GetFuncAddr(&RT_GetIMOML);
-    // runtime core data
-    module->Data.Mutex = runtime->hMutex;
+    // {THE TRUTH OF THE WORLD} && [THE END OF THE WORLD] :(
+    module->Raw.GetProcAddress = GetFuncAddr(&RT_GetProcAddressOriginal);
+    module->Raw.ExitProcess    = GetFuncAddr(&RT_ExitProcess);
     // runtime core methods
     module->Core.Sleep   = GetFuncAddr(&RT_SleepHR);
     module->Core.Hide    = GetFuncAddr(&RT_Hide);
@@ -473,6 +470,8 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->Core.Cleanup = GetFuncAddr(&RT_Cleanup);
     module->Core.Exit    = GetFuncAddr(&RT_Exit);
     module->Core.Stop    = GetFuncAddr(&RT_Stop);
+    // runtime core data
+    module->Data.Mutex = runtime->hMutex;
     return module;
 }
 
@@ -1951,6 +1950,33 @@ static void* getLazyAPIRedirector(Runtime* runtime, void* proc)
 }
 
 __declspec(noinline)
+void* RT_GetPEB()
+{
+    Runtime* runtime = getRuntimePointer();
+
+    return runtime->PEB;
+}
+
+__declspec(noinline)
+void* RT_GetTEB()
+{
+#ifdef _WIN64
+    uintptr teb = __readgsqword(0x30);
+#elif _WIN32
+    uintptr teb = __readfsdword(0x18);
+#endif
+    return (void*)teb;
+}
+
+__declspec(noinline)
+void* RT_GetIMOML()
+{
+    Runtime* runtime = getRuntimePointer();
+
+    return runtime->IMOML;
+}
+
+__declspec(noinline)
 BOOL RT_SetCurrentDirectoryA(LPSTR lpPathName)
 {
     Runtime* runtime = getRuntimePointer();
@@ -2041,33 +2067,6 @@ void RT_ExitProcess(UINT uExitCode)
     Runtime* runtime = getRuntimePointer();
 
     runtime->ExitProcess(uExitCode);
-}
-
-__declspec(noinline)
-void* RT_GetPEB()
-{
-    Runtime* runtime = getRuntimePointer();
-
-    return runtime->PEB;
-}
-
-__declspec(noinline)
-void* RT_GetTEB()
-{
-#ifdef _WIN64
-    uintptr teb = __readgsqword(0x30);
-#elif _WIN32
-    uintptr teb = __readfsdword(0x18);
-#endif
-    return (void*)teb;
-}
-
-__declspec(noinline)
-void* RT_GetIMOML()
-{
-    Runtime* runtime = getRuntimePointer();
-
-    return runtime->IMOML;
 }
 
 __declspec(noinline)

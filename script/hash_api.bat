@@ -112,6 +112,9 @@ hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc GetProcAddressByHash
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc GetProcAddressByHashML
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc GetProcAddressOriginal
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc ExitProcess
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc GetPEB
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc GetTEB
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc GetIMOML
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc GetMetrics
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc AS_GetValue
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc AS_GetPointer
@@ -422,6 +425,9 @@ hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc GetProcAddressByHash
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc GetProcAddressByHashML
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc GetProcAddressOriginal
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc ExitProcess
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc GetPEB
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc GetTEB
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc GetIMOML
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc GetMetrics
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc AS_GetValue
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc AS_GetPointer

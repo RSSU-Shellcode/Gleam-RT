@@ -104,8 +104,8 @@ typedef struct {
     // store options
     bool NotEraseInstruction;
 
-    // store environment
-    void* IMOML;
+    // store HashAPI with spoof call
+    FindAPI_t FindAPI;
 
     // API addresses
     CreateMutexA_t           CreateMutexA;
@@ -328,8 +328,8 @@ ResourceTracker_M* InitResourceTracker(Context* context)
     mem_init(tracker, sizeof(ResourceTracker));
     // store options
     tracker->NotEraseInstruction = context->NotEraseInstruction;
-    // store environment
-    tracker->IMOML = context->IMOML;
+    // store HashAPI method
+    tracker->FindAPI = context->FindAPI;
     // initialize tracker
     errno errno = NO_ERROR;
     for (;;)
@@ -494,7 +494,7 @@ static bool initTrackerAPI(ResourceTracker* tracker, Context* context)
     for (int i = 0; i < arrlen(list); i++)
     {
         winapi item = list[i];
-        void*  proc = FindAPI_ML(context->IMOML, item.mHash, item.pHash, item.hKey);
+        void*  proc = context->FindAPI(item.mHash, item.pHash, item.hKey);
         if (proc == NULL)
         {
             return false;
@@ -1429,7 +1429,7 @@ LSTATUS RT_RegCreateKeyA(HKEY hKey, LPCSTR lpSubKey, HKEY* phkResult)
         uint pHash = 0xF1BBFA85;
         uint hhKey = 0xB34D4A92;
     #endif
-        RegCreateKeyA_t RegCreateKeyA = FindAPI_ML(tracker->IMOML, mHash, pHash, hhKey);
+        RegCreateKeyA_t RegCreateKeyA = tracker->FindAPI(mHash, pHash, hhKey);
         if (RegCreateKeyA == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -1471,7 +1471,7 @@ LSTATUS RT_RegCreateKeyW(HKEY hKey, LPCWSTR lpSubKey, HKEY* phkResult)
         uint pHash = 0xF78241FB;
         uint hhKey = 0x01A5FA89;
     #endif
-        RegCreateKeyW_t RegCreateKeyW = FindAPI_ML(tracker->IMOML, mHash, pHash, hhKey);
+        RegCreateKeyW_t RegCreateKeyW = tracker->FindAPI(mHash, pHash, hhKey);
         if (RegCreateKeyW == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -1516,7 +1516,7 @@ LSTATUS RT_RegCreateKeyExA(
         uint pHash = 0x6E3FE5C2;
         uint hhKey = 0x1E21042F;
     #endif
-        RegCreateKeyExA_t RegCreateKeyExA = FindAPI_ML(tracker->IMOML, mHash, pHash, hhKey);
+        RegCreateKeyExA_t RegCreateKeyExA = tracker->FindAPI(mHash, pHash, hhKey);
         if (RegCreateKeyExA == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -1564,7 +1564,7 @@ LSTATUS RT_RegCreateKeyExW(
         uint pHash = 0x29E2F4EF;
         uint hhKey = 0xF4DED6CA;
     #endif
-        RegCreateKeyExW_t RegCreateKeyExW = FindAPI_ML(tracker->IMOML, mHash, pHash, hhKey);
+        RegCreateKeyExW_t RegCreateKeyExW = tracker->FindAPI(mHash, pHash, hhKey);
         if (RegCreateKeyExW == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -1609,7 +1609,7 @@ LSTATUS RT_RegOpenKeyA(HKEY hKey, LPCSTR lpSubKey, HKEY* phkResult)
         uint pHash = 0x1FADD8BD;
         uint hhKey = 0x94E3EBAE;
     #endif
-        RegOpenKeyA_t RegOpenKeyA = FindAPI_ML(tracker->IMOML, mHash, pHash, hhKey);
+        RegOpenKeyA_t RegOpenKeyA = tracker->FindAPI(mHash, pHash, hhKey);
         if (RegOpenKeyA == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -1651,7 +1651,7 @@ LSTATUS RT_RegOpenKeyW(HKEY hKey, LPCWSTR lpSubKey, HKEY* phkResult)
         uint pHash = 0x4D8DD02E;
         uint hhKey = 0x6B7B9626;
     #endif
-        RegOpenKeyW_t RegOpenKeyW = FindAPI_ML(tracker->IMOML, mHash, pHash, hhKey);
+        RegOpenKeyW_t RegOpenKeyW = tracker->FindAPI(mHash, pHash, hhKey);
         if (RegOpenKeyW == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -1694,7 +1694,7 @@ LSTATUS RT_RegOpenKeyExA(
         uint pHash = 0x93E426ED;
         uint hhKey = 0xFAB77358;
     #endif
-        RegOpenKeyExA_t RegOpenKeyExA = FindAPI_ML(tracker->IMOML, mHash, pHash, hhKey);
+        RegOpenKeyExA_t RegOpenKeyExA = tracker->FindAPI(mHash, pHash, hhKey);
         if (RegOpenKeyExA == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -1739,7 +1739,7 @@ LSTATUS RT_RegOpenKeyExW(
         uint pHash = 0x57EFEFE7;
         uint hhKey = 0x7B845953;
     #endif
-        RegOpenKeyExW_t RegOpenKeyExW = FindAPI_ML(tracker->IMOML, mHash, pHash, hhKey);
+        RegOpenKeyExW_t RegOpenKeyExW = tracker->FindAPI(mHash, pHash, hhKey);
         if (RegOpenKeyExW == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -1784,7 +1784,7 @@ SOCKET RT_WSASocketA(
         uint pHash = 0x9F86512A;
         uint hKey  = 0x64A5FFCA;
     #endif
-        WSASocketA_t WSASocketA = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+        WSASocketA_t WSASocketA = tracker->FindAPI(mHash, pHash, hKey);
         if (WSASocketA == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -1828,7 +1828,7 @@ SOCKET RT_WSASocketW(
         uint pHash = 0x780CEC7E;
         uint hKey  = 0xA75A0D12;
     #endif
-        WSASocketA_t WSASocketW = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+        WSASocketA_t WSASocketW = tracker->FindAPI(mHash, pHash, hKey);
         if (WSASocketW == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -1879,7 +1879,7 @@ int RT_WSAIoctl(
         uint pHash = 0xC8C2BB8E;
         uint hKey  = 0x284C99AE;
     #endif
-        WSAIoctl_t WSAIoctl = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+        WSAIoctl_t WSAIoctl = tracker->FindAPI(mHash, pHash, hKey);
         if (WSAIoctl == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -1931,7 +1931,7 @@ SOCKET RT_socket(int af, int type, int protocol)
         uint pHash = 0x73884599;
         uint hKey  = 0x496D9B55;
     #endif
-        socket_t socket = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+        socket_t socket = tracker->FindAPI(mHash, pHash, hKey);
         if (socket == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -1974,7 +1974,7 @@ SOCKET RT_accept(SOCKET s, POINTER addr, int* addrlen)
         uint pHash = 0x639BA467;
         uint hKey  = 0x37B5BE81;
     #endif
-        accept_t accept = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+        accept_t accept = tracker->FindAPI(mHash, pHash, hKey);
         if (accept == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -2022,7 +2022,7 @@ int RT_shutdown(SOCKET s, int how)
         uint pHash = 0x29BC24ED;
         uint hKey  = 0x70911362;
     #endif
-        shutdown_t shutdown = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+        shutdown_t shutdown = tracker->FindAPI(mHash, pHash, hKey);
         if (shutdown == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -2146,7 +2146,7 @@ LSTATUS RT_RegCloseKey(HKEY hKey)
         uint pHash = 0x05759268;
         uint hhKey = 0x6DD08644;
     #endif
-        RegCloseKey_t RegCloseKey = FindAPI_ML(tracker->IMOML, mHash, pHash, hhKey);
+        RegCloseKey_t RegCloseKey = tracker->FindAPI(mHash, pHash, hhKey);
         if (RegCloseKey == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -2189,7 +2189,7 @@ int RT_closesocket(SOCKET hSocket)
         uint pHash = 0xE4D20008;
         uint hKey  = 0xE6423398;
     #endif
-        closesocket_t closesocket = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+        closesocket_t closesocket = tracker->FindAPI(mHash, pHash, hKey);
         if (closesocket == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -2253,7 +2253,7 @@ static bool addHandle(ResourceTracker* tracker, void* hObject, uint32 source)
         pHash = 0x05759268;
         hKey  = 0x6DD08644;
     #endif
-        RegCloseKey_t RegCloseKey = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+        RegCloseKey_t RegCloseKey = tracker->FindAPI(mHash, pHash, hKey);
         if (RegCloseKey != NULL)
         {
             RegCloseKey(hObject);
@@ -2269,7 +2269,7 @@ static bool addHandle(ResourceTracker* tracker, void* hObject, uint32 source)
         pHash = 0xE4D20008;
         hKey  = 0xE6423398;
     #endif
-        closesocket_t closesocket = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+        closesocket_t closesocket = tracker->FindAPI(mHash, pHash, hKey);
         if (closesocket != NULL)
         {
             closesocket(hObject);
@@ -2370,7 +2370,7 @@ int RT_WSAStartup(WORD wVersionRequired, POINTER lpWSAData)
         uint pHash = 0x6C10A1BE;
         uint hKey  = 0x36C5B1D5;
     #endif
-        WSAStartup_t WSAStartup = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+        WSAStartup_t WSAStartup = tracker->FindAPI(mHash, pHash, hKey);
         if (WSAStartup == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -2418,7 +2418,7 @@ int RT_WSACleanup()
         uint pHash = 0x2F28803E;
         uint hKey  = 0xFEC6856A;
     #endif
-        WSACleanup_t WSACleanup = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+        WSACleanup_t WSACleanup = tracker->FindAPI(mHash, pHash, hKey);
         if (WSACleanup == NULL)
         {
             lastErr = ERR_RESOURCE_API_NOT_FOUND;
@@ -2938,7 +2938,7 @@ static void tryToFindAPI()
     for (int i = 0; i < arrlen(list); i++)
     {
         winapi item  = list[i];
-        list[i].proc = FindAPI_ML(tracker->IMOML, item.mHash, item.pHash, item.hKey);
+        list[i].proc = tracker->FindAPI(item.mHash, item.pHash, item.hKey);
     }
     tracker->CancelIoEx  = list[0x00].proc;
     tracker->RegCloseKey = list[0x01].proc;
@@ -2959,7 +2959,7 @@ static errno doWSACleanup()
     uint pHash = 0x2F28803E;
     uint hKey  = 0xFEC6856A;
 #endif
-    WSACleanup_t WSACleanup = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+    WSACleanup_t WSACleanup = tracker->FindAPI(mHash, pHash, hKey);
     if (WSACleanup == NULL)
     {
         return NO_ERROR;

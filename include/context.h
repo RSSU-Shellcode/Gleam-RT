@@ -5,6 +5,7 @@
 #include "win_types.h"
 #include "dll_kernel32.h"
 #include "lib_memory.h"
+#include "hash_api.h"
 #include "errno.h"
 
 typedef errno (*rt_lock_mods_t)();
@@ -42,6 +43,9 @@ typedef struct {
     // runtime context data
     uintptr MainMemPage;
     uint32  PageSize;
+
+    // HashAPI with spoof call
+    FindAPI_t FindAPI;
 
     // runtime internal methods
     malloc_t  malloc;

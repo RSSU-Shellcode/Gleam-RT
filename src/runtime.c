@@ -162,6 +162,10 @@ uint MW_MemScanByValue(void* value, uint size, uintptr* results, uint maxItem);
 uint MW_MemScanByPattern(byte* pattern, uintptr* results, uint maxItem);
 bool MW_WD_IsEnabled();
 
+// HashAPI with spoof call (forge GetProcAddress)
+void* FindAPI_SC(uint module, uint procedure, uint key);
+void* FindAPI_SC_ML(void* list, uint module, uint procedure, uint key);
+
 // hard encoded address in getRuntimePointer for replacement
 #ifdef _WIN64
     #define RUNTIME_POINTER 0x7FABCDEF111111FF
@@ -617,7 +621,7 @@ static bool initRuntimeAPI(Runtime* runtime)
     for (int i = 0; i < arrlen(list); i++)
     {
         winapi item = list[i];
-        void* proc  = FindAPI_ML(runtime->IMOML, item.mHash, item.pHash, item.hKey);
+        void*  proc = FindAPI_ML(runtime->IMOML, item.mHash, item.pHash, item.hKey);
         if (proc == NULL)
         {
             return false;
@@ -726,6 +730,8 @@ static errno initSubmodules(Runtime* runtime)
 
         .MainMemPage = (uintptr)(runtime->MainMemPage),
         .PageSize    = runtime->PageSize,
+
+        .FindAPI = GetFuncAddr(&FindAPI_SC),
 
         .malloc  = GetFuncAddr(&RT_malloc),
         .calloc  = GetFuncAddr(&RT_calloc),
@@ -1140,7 +1146,7 @@ static bool initAPIRedirector(Runtime* runtime)
     for (int i = 0; i < arrlen(list); i++)
     {
         rdr   item = list[i];
-        void* proc = FindAPI_ML(runtime->IMOML, item.mHash, item.pHash, item.hKey);
+        void* proc = FindAPI_SC(item.mHash, item.pHash, item.hKey);
         if (proc == NULL)
         {
             return false;
@@ -1598,6 +1604,21 @@ bool MW_WD_IsEnabled()
 }
 
 __declspec(noinline)
+void* FindAPI_SC(uint module, uint procedure, uint key)
+{
+    Runtime* runtime = getRuntimePointer();
+
+    return FindAPI_ML(runtime->IMOML, module, procedure, key);
+}
+
+__declspec(noinline)
+void* FindAPI_SC_ML(void* list, uint module, uint procedure, uint key)
+{
+    // TODO implement spoof call
+    return FindAPI_ML(list, module, procedure, key);
+}
+
+__declspec(noinline)
 void* RT_FindAPI(uint module, uint procedure, uint key)
 {
     return RT_GetProcAddressByHash(module, procedure, key, true);
@@ -1720,7 +1741,7 @@ void* RT_GetProcAddressByHashML(void* list, uint mHash, uint pHash, uint hKey, b
 {
     Runtime* runtime = getRuntimePointer();
 
-    void* proc = FindAPI_ML(list, mHash, pHash, hKey);
+    void* proc = FindAPI_SC_ML(list, mHash, pHash, hKey);
     if (proc == NULL)
     {
         return NULL;

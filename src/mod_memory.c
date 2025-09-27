@@ -49,8 +49,8 @@ typedef struct {
     // store options
     bool NotEraseInstruction;
 
-    // store environment
-    void* IMOML;
+    // store HashAPI with spoof call
+    FindAPI_t FindAPI;
 
     // API addresses
     VirtualAlloc_t          VirtualAlloc;
@@ -86,9 +86,11 @@ typedef struct {
     free_t    RT_free;
 
     // runtime data
-    uint32 PageSize; // memory page size
-    HANDLE hMutex;   // protect data
-    
+    uint32 PageSize;
+
+    // protect data
+    HANDLE hMutex;
+
     // count global/local heap block
     int64 NumGlobals;
     int64 NumLocals;
@@ -224,8 +226,8 @@ MemoryTracker_M* InitMemoryTracker(Context* context)
     mem_init(tracker, sizeof(MemoryTracker));
     // store options
     tracker->NotEraseInstruction = context->NotEraseInstruction;
-    // store environment
-    tracker->IMOML = context->IMOML;
+    // store HashAPI method
+    tracker->FindAPI = context->FindAPI;
     // initialize tracker
     errno errno = NO_ERROR;
     for (;;)
@@ -359,7 +361,7 @@ static bool initTrackerAPI(MemoryTracker* tracker, Context* context)
     for (int i = 0; i < arrlen(list); i++)
     {
         winapi item = list[i];
-        void*  proc = FindAPI_ML(context->IMOML, item.mHash, item.pHash, item.hKey);
+        void*  proc = context->FindAPI(item.mHash, item.pHash, item.hKey);
         if (proc == NULL)
         {
             return false;
@@ -1445,7 +1447,7 @@ void* __cdecl MT_msvcrt_malloc(uint size)
         uint pHash = 0xBBEC7575;
         uint hKey  = 0x1AECAE06;
     #endif
-        msvcrt_malloc_t malloc = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+        msvcrt_malloc_t malloc = tracker->FindAPI(mHash, pHash, hKey);
         if (malloc == NULL)
         {
             lastErr = ERR_MEMORY_API_NOT_FOUND;
@@ -1499,7 +1501,7 @@ void* __cdecl MT_msvcrt_calloc(uint num, uint size)
         uint pHash = 0x1EF14D6E;
         uint hKey  = 0x9E9C4BA5;
     #endif
-        msvcrt_calloc_t calloc = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+        msvcrt_calloc_t calloc = tracker->FindAPI(mHash, pHash, hKey);
         if (calloc == NULL)
         {
             lastErr = ERR_MEMORY_API_NOT_FOUND;
@@ -1558,7 +1560,7 @@ void* __cdecl MT_msvcrt_realloc(void* ptr, uint size)
         uint pHash = 0xBE2BFEFB;
         uint hKey  = 0xCF70F7F3;
     #endif
-        msvcrt_realloc_t realloc = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+        msvcrt_realloc_t realloc = tracker->FindAPI(mHash, pHash, hKey);
         if (realloc == NULL)
         {
             lastErr = ERR_MEMORY_API_NOT_FOUND;
@@ -1573,7 +1575,7 @@ void* __cdecl MT_msvcrt_realloc(void* ptr, uint size)
         pHash = 0x845CB2FD;
         hKey  = 0x9591B59B;
     #endif
-        msvcrt_msize_t msize = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+        msvcrt_msize_t msize = tracker->FindAPI(mHash, pHash, hKey);
         if (msize == NULL)
         {
             lastErr = ERR_MEMORY_API_NOT_FOUND;
@@ -1652,7 +1654,7 @@ void __cdecl MT_msvcrt_free(void* ptr)
         uint pHash = 0xA5B6E022;
         uint hKey  = 0x626D1BC5;
     #endif
-        msvcrt_free_t free = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+        msvcrt_free_t free = tracker->FindAPI(mHash, pHash, hKey);
         if (free == NULL)
         {
             lastErr = ERR_MEMORY_API_NOT_FOUND;
@@ -1667,7 +1669,7 @@ void __cdecl MT_msvcrt_free(void* ptr)
         pHash = 0x845CB2FD;
         hKey  = 0x9591B59B;
     #endif
-        msvcrt_msize_t msize = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+        msvcrt_msize_t msize = tracker->FindAPI(mHash, pHash, hKey);
         if (msize == NULL)
         {
             lastErr = ERR_MEMORY_API_NOT_FOUND;
@@ -1745,7 +1747,7 @@ uint __cdecl MT_msvcrt_msize(void* ptr)
         uint pHash = 0x845CB2FD;
         uint hKey  = 0x9591B59B;
     #endif
-        msvcrt_msize_t msize = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+        msvcrt_msize_t msize = tracker->FindAPI(mHash, pHash, hKey);
         if (msize == NULL)
         {
             lastErr = ERR_MEMORY_API_NOT_FOUND;
@@ -1801,7 +1803,7 @@ void* __cdecl MT_ucrtbase_malloc(uint size)
         uint pHash = 0xF402BD57;
         uint hKey  = 0x4B5196C8;
     #endif
-        ucrtbase_malloc_t malloc = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+        ucrtbase_malloc_t malloc = tracker->FindAPI(mHash, pHash, hKey);
         if (malloc == NULL)
         {
             lastErr = ERR_MEMORY_API_NOT_FOUND;
@@ -1855,7 +1857,7 @@ void* __cdecl MT_ucrtbase_calloc(uint num, uint size)
         uint pHash = 0x21A8EDB6;
         uint hKey  = 0x83A98C6F;
     #endif
-        ucrtbase_calloc_t calloc = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+        ucrtbase_calloc_t calloc = tracker->FindAPI(mHash, pHash, hKey);
         if (calloc == NULL)
         {
             lastErr = ERR_MEMORY_API_NOT_FOUND;
@@ -1914,7 +1916,7 @@ void* __cdecl MT_ucrtbase_realloc(void* ptr, uint size)
         uint pHash = 0xADA4F1A3;
         uint hKey  = 0x964B5F08;
     #endif
-        ucrtbase_realloc_t realloc = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+        ucrtbase_realloc_t realloc = tracker->FindAPI(mHash, pHash, hKey);
         if (realloc == NULL)
         {
             lastErr = ERR_MEMORY_API_NOT_FOUND;
@@ -1929,7 +1931,7 @@ void* __cdecl MT_ucrtbase_realloc(void* ptr, uint size)
         pHash = 0xB8CB06F0;
         hKey  = 0xFF1B4883;
     #endif
-        ucrtbase_msize_t msize = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+        ucrtbase_msize_t msize = tracker->FindAPI(mHash, pHash, hKey);
         if (msize == NULL)
         {
             lastErr = ERR_MEMORY_API_NOT_FOUND;
@@ -2008,7 +2010,7 @@ void __cdecl MT_ucrtbase_free(void* ptr)
         uint pHash = 0xADA4F1A3;
         uint hKey  = 0x964B5F08;
     #endif
-        ucrtbase_free_t free = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+        ucrtbase_free_t free = tracker->FindAPI(mHash, pHash, hKey);
         if (free == NULL)
         {
             lastErr = ERR_MEMORY_API_NOT_FOUND;
@@ -2023,7 +2025,7 @@ void __cdecl MT_ucrtbase_free(void* ptr)
         pHash = 0xB8CB06F0;
         hKey  = 0xFF1B4883;
     #endif
-        ucrtbase_msize_t msize = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+        ucrtbase_msize_t msize = tracker->FindAPI(mHash, pHash, hKey);
         if (msize == NULL)
         {
             lastErr = ERR_MEMORY_API_NOT_FOUND;
@@ -2101,7 +2103,7 @@ uint __cdecl MT_ucrtbase_msize(void* ptr)
         uint pHash = 0xB8CB06F0;
         uint hKey  = 0xFF1B4883;
     #endif
-        ucrtbase_msize_t msize = FindAPI_ML(tracker->IMOML, mHash, pHash, hKey);
+        ucrtbase_msize_t msize = tracker->FindAPI(mHash, pHash, hKey);
         if (msize == NULL)
         {
             lastErr = ERR_MEMORY_API_NOT_FOUND;

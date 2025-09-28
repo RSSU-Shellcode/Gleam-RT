@@ -4,6 +4,8 @@
 #include "c_types.h"
 #include "win_types.h"
 
+#define UCRTBASE_EINVAL 22
+
 typedef void* (__cdecl *ucrtbase_malloc_t)
 (
     uint size

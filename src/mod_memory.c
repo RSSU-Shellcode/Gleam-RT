@@ -1736,6 +1736,7 @@ uint __cdecl MT_msvcrt_msize(void* ptr)
     {
         if (ptr == NULL)
         {
+            lastErr = MSVCRT_EINVAL;
             break;
         }
     #ifdef _WIN64
@@ -2092,6 +2093,7 @@ uint __cdecl MT_ucrtbase_msize(void* ptr)
     {
         if (ptr == NULL)
         {
+            lastErr = UCRTBASE_EINVAL;
             break;
         }
     #ifdef _WIN64

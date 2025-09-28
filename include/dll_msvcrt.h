@@ -4,6 +4,8 @@
 #include "c_types.h"
 #include "win_types.h"
 
+#define MSVCRT_EINVAL 22
+
 typedef void* (__cdecl *msvcrt_malloc_t)
 (
     uint size

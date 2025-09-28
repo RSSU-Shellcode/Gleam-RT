@@ -25,8 +25,8 @@ typedef struct {
     // store options
     bool NotEraseInstruction;
 
-    // store environment
-    void* IMOML;
+    // store HashAPI with spoof call
+    FindAPI_t FindAPI;
 
     // API addresses
     WinHttpCrackUrl_t           WinHttpCrackUrl;
@@ -110,8 +110,8 @@ WinHTTP_M* InitWinHTTP(Context* context)
     mem_init(module, sizeof(WinHTTP));
     // store options
     module->NotEraseInstruction = context->NotEraseInstruction;
-    // store environment
-    module->IMOML = context->IMOML;
+    // store HashAPI method
+    module->FindAPI = context->FindAPI;
     // initialize module
     errno errno = NO_ERROR;
     for (;;)
@@ -359,7 +359,7 @@ static bool findWinHTTPAPI()
     for (int i = 0; i < arrlen(list); i++)
     {
         winapi item = list[i];
-        void*  proc = FindAPI_ML(module->IMOML, item.mHash, item.pHash, item.hKey);
+        void*  proc = module->FindAPI(item.mHash, item.pHash, item.hKey);
         if (proc == NULL)
         {
             return false;

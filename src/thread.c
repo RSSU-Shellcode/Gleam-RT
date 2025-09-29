@@ -4,23 +4,14 @@
 #include "pe_image.h"
 #include "thread.h"
 
-void* CamouflageStartAddress(void* address)
+void* CamouflageStartAddress(void* list, void* address)
 {
 #ifdef NOT_CAMOUFLAGE
     return address;
 #endif // NOT_CAMOUFLAGE
 
-    // get current process module from PEB
-#ifdef _WIN64
-    uintptr peb = __readgsqword(96);
-    uintptr ldr = *(uintptr*)(peb + 24);
-    uintptr mod = *(uintptr*)(ldr + 32);
-#elif _WIN32
-    uintptr peb = __readfsdword(48);
-    uintptr ldr = *(uintptr*)(peb + 12);
-    uintptr mod = *(uintptr*)(ldr + 20);
-#endif
     // get current process module address
+    uintptr mod = (uintptr)list;
 #ifdef _WIN64
     uintptr modAddr = *(uintptr*)(mod + 32);
 #elif _WIN32

@@ -5,7 +5,7 @@
 #include "win_types.h"
 #include "dll_kernel32.h"
 
-DWORD   GetModuleFileName(HMODULE hModule, LPWSTR lpFilename, DWORD nSize);
-HMODULE GetModuleHandle(LPWSTR lpFilename);
+DWORD   GetModuleFileName(void* list, HMODULE hModule, LPWSTR lpFilename, DWORD nSize);
+HMODULE GetModuleHandle(void* list, LPWSTR lpFilename);
 
 #endif // WIN_API_H

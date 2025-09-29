@@ -25,6 +25,9 @@ typedef struct {
     // store options
     bool NotEraseInstruction;
 
+    // store environment
+    void* IMOML;
+
     // API addresses
     CreateThread_t         CreateThread;
     ExitThread_t           ExitThread;
@@ -138,6 +141,8 @@ ThreadTracker_M* InitThreadTracker(Context* context)
     mem_init(tracker, sizeof(ThreadTracker));
     // store options
     tracker->NotEraseInstruction = context->NotEraseInstruction;
+    // store environment
+    tracker->IMOML = context->IMOML;
     // initialize tracker
     errno errno = NO_ERROR;
     for (;;)
@@ -435,7 +440,7 @@ HANDLE tt_createThread(
     {
         // create thread from camouflaged start address and pause it
         bool  resume   = (dwCreationFlags & 0xF) != CREATE_SUSPENDED;
-        void* fakeAddr = CamouflageStartAddress(lpStartAddress);
+        void* fakeAddr = CamouflageStartAddress(tracker->IMOML, lpStartAddress);
         dwCreationFlags |= CREATE_SUSPENDED;
         hThread = tracker->CreateThread(
             lpThreadAttributes, dwStackSize, fakeAddr,

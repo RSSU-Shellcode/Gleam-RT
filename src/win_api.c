@@ -5,17 +5,9 @@
 #include "lib_string.h"
 #include "win_api.h"
 
-DWORD GetModuleFileName(HMODULE hModule, LPWSTR lpFilename, DWORD nSize)
+DWORD GetModuleFileName(void* list, HMODULE hModule, LPWSTR lpFilename, DWORD nSize)
 {
-#ifdef _WIN64
-    uintptr peb = __readgsqword(96);
-    uintptr ldr = *(uintptr*)(peb + 24);
-    uintptr mod = *(uintptr*)(ldr + 32);
-#elif _WIN32
-    uintptr peb = __readfsdword(48);
-    uintptr ldr = *(uintptr*)(peb + 12);
-    uintptr mod = *(uintptr*)(ldr + 20);
-#endif
+    uintptr mod = (uintptr)list;
     for (;; mod = *(uintptr*)(mod))
     {
     #ifdef _WIN64
@@ -51,17 +43,9 @@ DWORD GetModuleFileName(HMODULE hModule, LPWSTR lpFilename, DWORD nSize)
     return 0;
 }
 
-HMODULE GetModuleHandle(LPWSTR lpFilename)
+HMODULE GetModuleHandle(void* list, LPWSTR lpFilename)
 {
-#ifdef _WIN64
-    uintptr peb = __readgsqword(96);
-    uintptr ldr = *(uintptr*)(peb + 24);
-    uintptr mod = *(uintptr*)(ldr + 32);
-#elif _WIN32
-    uintptr peb = __readfsdword(48);
-    uintptr ldr = *(uintptr*)(peb + 12);
-    uintptr mod = *(uintptr*)(ldr + 20);
-#endif
+    uintptr mod = (uintptr)list;
     for (;; mod = *(uintptr*)(mod))
     {
     #ifdef _WIN64

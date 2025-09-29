@@ -1693,7 +1693,7 @@ void* RT_GetProcAddressByName(HMODULE hModule, LPCSTR lpProcName, bool redirect)
         XORBuf(mod, sizeof(mod), key, sizeof(key));
         mem_copy(module, mod, sizeof(mod));
     } else {
-        if (GetModuleFileName(hModule, module, sizeof(module)) == 0)
+        if (GetModuleFileName(runtime->IMOML, hModule, module, sizeof(module)) == 0)
         {
             SetLastErrno(ERR_RUNTIME_NOT_FOUND_MODULE);
             return NULL;

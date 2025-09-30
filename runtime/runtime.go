@@ -41,9 +41,10 @@ type Options struct {
 // RuntimeM contains exported methods of runtime.
 type RuntimeM struct {
 	HashAPI struct {
-		FindAPI  uintptr
-		FindAPIA uintptr
-		FindAPIW uintptr
+		FindAPI   uintptr
+		FindAPIML uintptr
+		FindAPIA  uintptr
+		FindAPIW  uintptr
 	}
 
 	Library struct {
@@ -183,8 +184,9 @@ type RuntimeM struct {
 	}
 
 	Procedure struct {
-		GetProcByName uintptr
-		GetProcByHash uintptr
+		GetProcByName   uintptr
+		GetProcByHash   uintptr
+		GetProcByHashML uintptr
 	}
 
 	Sysmon struct {
@@ -204,13 +206,15 @@ type RuntimeM struct {
 		Continue   uintptr
 	}
 
+	Env struct {
+		GetPEB   uintptr
+		GetTEB   uintptr
+		GetIMOML uintptr
+	}
+
 	Raw struct {
 		GetProcAddress uintptr
 		ExitProcess    uintptr
-	}
-
-	Data struct {
-		Mutex uintptr
 	}
 
 	Core struct {
@@ -221,6 +225,10 @@ type RuntimeM struct {
 		Cleanup uintptr
 		Exit    uintptr
 		Stop    uintptr
+	}
+
+	Data struct {
+		Mutex uintptr
 	}
 }
 

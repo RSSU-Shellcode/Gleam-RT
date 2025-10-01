@@ -10,6 +10,7 @@
 #include "crypto.h"
 #include "errno.h"
 #include "context.h"
+#include "layout.h"
 #include "mod_library.h"
 #include "debug.h"
 
@@ -95,9 +96,9 @@ static bool cleanModule(LibraryTracker* tracker, module* module);
 LibraryTracker_M* InitLibraryTracker(Context* context)
 {
     // set structure address
-    uintptr address = context->MainMemPage;
-    uintptr trackerAddr = address + 4096 + RandUintN(address, 128);
-    uintptr moduleAddr  = address + 5000 + RandUintN(address, 128);
+    uintptr addr = context->MainMemPage;
+    uintptr trackerAddr = addr + LAYOUT_LT_STRUCT + RandUintN(addr, 128);
+    uintptr moduleAddr  = addr + LAYOUT_LT_MODULE + RandUintN(addr, 128);
     // allocate tracker memory
     LibraryTracker* tracker = (LibraryTracker*)trackerAddr;
     mem_init(tracker, sizeof(LibraryTracker));

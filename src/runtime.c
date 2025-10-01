@@ -14,6 +14,7 @@
 #include "win_api.h"
 #include "errno.h"
 #include "context.h"
+#include "layout.h"
 #include "mod_library.h"
 #include "mod_memory.h"
 #include "mod_thread.h"
@@ -29,13 +30,6 @@
 #include "shield.h"
 #include "runtime.h"
 #include "debug.h"
-
-// +--------------+--------------------+-------------------+
-// |    0-4096    |     4096-16384     |    16384-32768    |
-// +--------------+--------------------+-------------------+
-// | runtime core | runtime submodules | high-level module |
-// +--------------+--------------------+-------------------+
-#define MAIN_MEM_PAGE_SIZE (32 * 1024)
 
 // about Windows API redirector
 typedef struct {
@@ -244,9 +238,9 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
         return NULL;
     }
     // set structure address
-    uintptr address = (uintptr)memPage;
-    uintptr runtimeAddr = address + 1000 + RandUintN(address, 128);
-    uintptr moduleAddr  = address + 2800 + RandUintN(address, 128);
+    uintptr addr = (uintptr)memPage;
+    uintptr runtimeAddr = addr + LAYOUT_RUNTIME_STRUCT + RandUintN(addr, 128);
+    uintptr moduleAddr  = addr + LAYOUT_RUNTIME_MODULE + RandUintN(addr, 128);
     // initialize structure
     Runtime* runtime = (Runtime*)runtimeAddr;
     mem_init(runtime, sizeof(Runtime));

@@ -38,6 +38,7 @@
     <ClInclude Include="..\include\win_api.h" />
     <ClInclude Include="..\include\errno.h" />
     <ClInclude Include="..\include\context.h" />
+    <ClInclude Include="..\include\layout.h" />
     <ClInclude Include="..\include\mod_library.h" />
     <ClInclude Include="..\include\mod_memory.h" />
     <ClInclude Include="..\include\mod_thread.h" />
@@ -49,7 +50,7 @@
     <ClInclude Include="..\include\win_http.h" />
     <ClInclude Include="..\include\win_crypto.h" />
     <ClInclude Include="..\include\sysmon.h" />
-	<ClInclude Include="..\include\watchdog.h" />
+    <ClInclude Include="..\include\watchdog.h" />
     <ClInclude Include="..\include\runtime.h" />
     <ClInclude Include="..\include\shield.h" />
     <ClInclude Include="..\include\debug.h" />
@@ -76,7 +77,7 @@
     <ClCompile Include="src\win_http_test.c" />
     <ClCompile Include="src\win_crypto_test.c" />
     <ClCompile Include="src\sysmon_test.c" />
-	<ClCompile Include="src\watchdog_test.c" />
+    <ClCompile Include="src\watchdog_test.c" />
     <ClCompile Include="..\src\runtime.c" />
     <ClCompile Include="..\src\lib_memory.c" />
     <ClCompile Include="..\src\lib_string.c" />
@@ -104,7 +105,7 @@
     <ClCompile Include="..\src\win_http.c" />
     <ClCompile Include="..\src\win_crypto.c" />
     <ClCompile Include="..\src\sysmon.c" />
-	<ClCompile Include="..\src\watchdog.c" />
+    <ClCompile Include="..\src\watchdog.c" />
     <ClCompile Include="..\src\shield.c" />
     <ClCompile Include="..\src\debug.c" />
   </ItemGroup>

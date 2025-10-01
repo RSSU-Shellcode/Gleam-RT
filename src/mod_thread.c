@@ -11,6 +11,7 @@
 #include "thread.h"
 #include "errno.h"
 #include "context.h"
+#include "layout.h"
 #include "mod_thread.h"
 #include "debug.h"
 
@@ -133,9 +134,9 @@ static bool setThreadLocker(DWORD threadID, bool lock);
 ThreadTracker_M* InitThreadTracker(Context* context)
 {
     // set structure address
-    uintptr address = context->MainMemPage;
-    uintptr trackerAddr = address + 8000 + RandUintN(address, 128);
-    uintptr moduleAddr  = address + 9000 + RandUintN(address, 128);
+    uintptr addr = context->MainMemPage;
+    uintptr trackerAddr = addr + LAYOUT_TT_STRUCT + RandUintN(addr, 128);
+    uintptr moduleAddr  = addr + LAYOUT_TT_MODULE + RandUintN(addr, 128);
     // allocate tracker memory
     ThreadTracker* tracker = (ThreadTracker*)trackerAddr;
     mem_init(tracker, sizeof(ThreadTracker));

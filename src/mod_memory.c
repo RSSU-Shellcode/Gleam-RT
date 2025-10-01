@@ -11,6 +11,7 @@
 #include "crypto.h"
 #include "errno.h"
 #include "context.h"
+#include "layout.h"
 #include "mod_memory.h"
 #include "debug.h"
 
@@ -218,9 +219,9 @@ static bool cleanPage(MemoryTracker* tracker, memPage* page);
 MemoryTracker_M* InitMemoryTracker(Context* context)
 {
     // set structure address
-    uintptr address = context->MainMemPage;
-    uintptr trackerAddr = address + 6000 + RandUintN(address, 128);
-    uintptr moduleAddr  = address + 7000 + RandUintN(address, 128);
+    uintptr addr = context->MainMemPage;
+    uintptr trackerAddr = addr + LAYOUT_MT_STRUCT + RandUintN(addr, 128);
+    uintptr moduleAddr  = addr + LAYOUT_MT_MODULE + RandUintN(addr, 128);
     // allocate tracker memory
     MemoryTracker* tracker = (MemoryTracker*)trackerAddr;
     mem_init(tracker, sizeof(MemoryTracker));

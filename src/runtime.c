@@ -1800,11 +1800,11 @@ static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
         { 0xA884D08380DBB048, 0xBD7F30E36376638E, 0xDA5805C2D8B16DCE, AS->GetPointer }, // AS_GetPointer
         { 0x777977B4AE250D4F, 0x032B55E616810E84, 0x8606E6C48610C9A8, AS->Erase      }, // AS_Erase
         { 0x9BCB981B023D8DC2, 0x1DFCCEAD651F9B13, 0xD65D0195182A03E1, AS->EraseAll   }, // AS_EraseAll
-        { 0xB7F22EC9F544E7F8, 0x17BBF6FE350DDF39, 0xBC931F78FE8181B9, IS->SetValue   }, // IMS_SetValue
-        { 0x755B8EC262123068, 0xA7B4A76AAE71299C, 0x12DEC98C19648A95, IS->GetValue   }, // IMS_GetValue
-        { 0x90078743D070263C, 0x31AA5AD855BA4CF8, 0xE4FFD5D778BF5A01, IS->GetPointer }, // IMS_GetPointer
-        { 0xD58CF11F20CF68CE, 0x2140154B5CCFA8A0, 0x0FE13BA97AF3CC43, IS->Delete     }, // IMS_Delete
-        { 0xA9E044EA06DDF847, 0xEBF78EE054A03994, 0x391E1CEAADDDCF46, IS->DeleteAll  }, // IMS_DeleteAll
+        { 0xCF596C48439AC8D9, 0x5ECE49DC91D671C6, 0xE1EA7702BE4D4C22, IS->SetValue   }, // IS_SetValue
+        { 0x621CC1A89E9F8B68, 0x704987B8E70F74E4, 0x968F7E69F7B7A703, IS->GetValue   }, // IS_GetValue
+        { 0x7A2F02E9472A6B4C, 0xB39AF5ACF1986924, 0xFC3098BE0DDFCEB9, IS->GetPointer }, // IS_GetPointer
+        { 0xC33D496665F15E79, 0x0AB50841540975E5, 0x15370ED87A82E6D9, IS->Delete     }, // IS_Delete
+        { 0xAF239943E7539B6D, 0xE17D724F9945D888, 0x1071FD5143C55971, IS->DeleteAll  }, // IS_DeleteAll
         { 0x82216EF8B41FA151, 0x6607CDBDCF13CB3A, 0xFA9DF9D380BF1C1D, SM->Pause      }, // SM_Pause
         { 0x555D764BE9610F60, 0xE2A53FFB78A3D65F, 0xC2C721E343F55454, SM->Continue   }, // SM_Continue
         { 0x1F832C6CB8DF6133, 0x17E85FF98FA3DE49, 0x47A5C8F4268DBCBB, WD->Kick       }, // WD_Kick
@@ -1830,11 +1830,11 @@ static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
         { 0xD2432243, 0x85A16057, 0xF762BF9F, AS->GetPointer }, // AS_GetPointer
         { 0xB115F50E, 0xD1879F7C, 0xDB1CB9F6, AS->Erase      }, // AS_Erase
         { 0x58F68F24, 0x1B504FA3, 0x4E62C4D7, AS->EraseAll   }, // AS_EraseAll
-        { 0xA6B4E4A0, 0x09EB9E68, 0x5037847E, IS->SetValue   }, // IMS_SetValue
-        { 0xA85FD6B4, 0x75ADBC69, 0x189E4683, IS->GetValue   }, // IMS_GetValue
-        { 0x1B780435, 0xE355816A, 0x082D0FA8, IS->GetPointer }, // IMS_GetPointer
-        { 0x5A0E318A, 0xA78FBB76, 0x6A4E3B08, IS->Delete     }, // IMS_Delete
-        { 0xC8CC1937, 0xB5CBE41E, 0xCC3EA834, IS->DeleteAll  }, // IMS_DeleteAll
+        { 0xECB1ACB0, 0x4B4C9920, 0xDD8ADF4E, IS->SetValue   }, // IS_SetValue
+        { 0xDA7A10AE, 0xE5A612BF, 0xA41F7425, IS->GetValue   }, // IS_GetValue
+        { 0xEE91CD4F, 0x2EBA17AE, 0x67B0C201, IS->GetPointer }, // IS_GetPointer
+        { 0xD4E677A9, 0xDFA59DC0, 0x33A7EB51, IS->Delete     }, // IS_Delete
+        { 0x23A94E72, 0x22A1B412, 0xD86D4A3B, IS->DeleteAll  }, // IS_DeleteAll
         { 0xEC9FDAA4, 0xF05F8702, 0x550FD573, SM->Pause      }, // SM_Pause
         { 0xB3D350A9, 0xF1C68904, 0xBBD5FB89, SM->Continue   }, // SM_Continue
         { 0x74153A99, 0x1104477F, 0x7012B5BD, WD->Kick       }, // WD_Kick

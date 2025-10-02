@@ -171,7 +171,7 @@ static bool initWatchdogAPI(Watchdog* watchdog, Context* context)
     for (int i = 0; i < arrlen(list); i++)
     {
         winapi item = list[i];
-        void*  proc = FindAPI_ML(context->IMOML, item.mHash, item.pHash, item.hKey);
+        void*  proc = context->FindAPI(item.mHash, item.pHash, item.hKey);
         if (proc == NULL)
         {
             return false;

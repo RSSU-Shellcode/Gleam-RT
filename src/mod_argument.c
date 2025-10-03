@@ -7,6 +7,7 @@
 #include "crypto.h"
 #include "errno.h"
 #include "context.h"
+#include "layout.h"
 #include "mod_argument.h"
 #include "debug.h"
 
@@ -74,14 +75,15 @@ static byte  rol(byte value, uint8 bits);
 ArgumentStore_M* InitArgumentStore(Context* context)
 {
     // set structure address
-    uintptr address = context->MainMemPage;
-    uintptr storeAddr  = address + 12000 + RandUintN(address, 128);
-    uintptr moduleAddr = address + 13000 + RandUintN(address, 128);
-    // initialize store
+    uintptr addr = context->MainMemPage;
+    uintptr storeAddr  = addr + LAYOUT_AS_STRUCT + RandUintN(addr, 128);
+    uintptr moduleAddr = addr + LAYOUT_AS_MODULE + RandUintN(addr, 128);
+    // allocate store memory
     ArgumentStore* store = (ArgumentStore*)storeAddr;
     mem_init(store, sizeof(ArgumentStore));
     // store options
     store->NotEraseInstruction = context->NotEraseInstruction;
+    // initialize store
     errno errno = NO_ERROR;
     for (;;)
     {

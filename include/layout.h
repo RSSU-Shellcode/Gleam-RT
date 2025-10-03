@@ -9,11 +9,13 @@
 
 #define MAIN_MEM_PAGE_SIZE (8 * 4096)
 
-// runtime core
+// ----------runtime core-----------
+
 #define LAYOUT_RUNTIME_STRUCT 1000
 #define LAYOUT_RUNTIME_MODULE 2800
 
-// submodule
+// ------------submodule------------
+
 #define LAYOUT_LT_STRUCT 4096
 #define LAYOUT_LT_MODULE 5000
 
@@ -32,6 +34,24 @@
 #define LAYOUT_IS_STRUCT 14000
 #define LAYOUT_IS_MODULE 15000
 
-// high-level module
+// --------high-level module--------
+
+#define LAYOUT_WB_STRUCT 16384
+#define LAYOUT_WB_METHOD 17000
+
+#define LAYOUT_WF_STRUCT 18000
+#define LAYOUT_WF_METHOD 19000
+
+#define LAYOUT_WH_STRUCT 20000
+#define LAYOUT_WH_METHOD 21000
+
+#define LAYOUT_WC_STRUCT 22000
+#define LAYOUT_WC_METHOD 23000
+
+#define LAYOUT_SM_STRUCT 24000
+#define LAYOUT_SM_METHOD 25000
+
+#define LAYOUT_WD_STRUCT 26000
+#define LAYOUT_WD_METHOD 27000
 
 #endif // LAYOUT_H

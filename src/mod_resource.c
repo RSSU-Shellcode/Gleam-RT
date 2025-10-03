@@ -11,6 +11,7 @@
 #include "crypto.h"
 #include "errno.h"
 #include "context.h"
+#include "layout.h"
 #include "mod_resource.h"
 #include "debug.h"
 
@@ -320,9 +321,9 @@ static errno doWSACleanup();
 ResourceTracker_M* InitResourceTracker(Context* context)
 {
     // set structure address
-    uintptr address = context->MainMemPage;
-    uintptr trackerAddr = address + 10000 + RandUintN(address, 128);
-    uintptr moduleAddr  = address + 11000 + RandUintN(address, 128);
+    uintptr addr = context->MainMemPage;
+    uintptr trackerAddr = addr + LAYOUT_RT_STRUCT + RandUintN(addr, 128);
+    uintptr moduleAddr  = addr + LAYOUT_RT_MODULE + RandUintN(addr, 128);
     // allocate tracker memory
     ResourceTracker* tracker = (ResourceTracker*)trackerAddr;
     mem_init(tracker, sizeof(ResourceTracker));

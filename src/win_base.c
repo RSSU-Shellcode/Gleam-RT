@@ -8,6 +8,7 @@
 #include "random.h"
 #include "errno.h"
 #include "context.h"
+#include "layout.h"
 #include "win_base.h"
 #include "debug.h"
 
@@ -52,9 +53,9 @@ static void eraseModuleMethods(Context* context);
 WinBase_M* InitWinBase(Context* context)
 {
     // set structure address
-    uintptr address = context->MainMemPage;
-    uintptr moduleAddr = address + 16384 + RandUintN(address, 128);
-    uintptr methodAddr = address + 17000 + RandUintN(address, 128);
+    uintptr addr = context->MainMemPage;
+    uintptr moduleAddr = addr + LAYOUT_WB_STRUCT + RandUintN(addr, 128);
+    uintptr methodAddr = addr + LAYOUT_WB_METHOD + RandUintN(addr, 128);
     // allocate module memory
     WinBase* module = (WinBase*)moduleAddr;
     mem_init(module, sizeof(WinBase));

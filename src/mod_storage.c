@@ -8,6 +8,7 @@
 #include "crypto.h"
 #include "errno.h"
 #include "context.h"
+#include "layout.h"
 #include "mod_storage.h"
 #include "debug.h"
 
@@ -81,14 +82,15 @@ static bool delItem(int id);
 InMemoryStorage_M* InitInMemoryStorage(Context* context)
 {
     // set structure address
-    uintptr address = context->MainMemPage;
-    uintptr storageAddr = address + 14000 + RandUintN(address, 128);
-    uintptr moduleAddr  = address + 15000 + RandUintN(address, 128);
-    // initialize storage
+    uintptr addr = context->MainMemPage;
+    uintptr storageAddr = addr + LAYOUT_IS_STRUCT + RandUintN(addr, 128);
+    uintptr moduleAddr  = addr + LAYOUT_IS_MODULE + RandUintN(addr, 128);
+    // allocate store memory
     InMemoryStorage* storage = (InMemoryStorage*)storageAddr;
     mem_init(storage, sizeof(InMemoryStorage));
     // store options
     storage->NotEraseInstruction = context->NotEraseInstruction;
+    // initialize storage
     errno errno = NO_ERROR;
     for (;;)
     {

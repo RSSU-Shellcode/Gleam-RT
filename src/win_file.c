@@ -7,6 +7,7 @@
 #include "random.h"
 #include "errno.h"
 #include "context.h"
+#include "layout.h"
 #include "win_file.h"
 #include "debug.h"
 
@@ -62,9 +63,9 @@ errno writeFile(HANDLE hFile, databuf* file);
 WinFile_M* InitWinFile(Context* context)
 {
     // set structure address
-    uintptr address = context->MainMemPage;
-    uintptr moduleAddr = address + 18000 + RandUintN(address, 128);
-    uintptr methodAddr = address + 19000 + RandUintN(address, 128);
+    uintptr addr = context->MainMemPage;
+    uintptr moduleAddr = addr + LAYOUT_WF_STRUCT + RandUintN(addr, 128);
+    uintptr methodAddr = addr + LAYOUT_WF_METHOD + RandUintN(addr, 128);
     // allocate module memory
     WinFile* module = (WinFile*)moduleAddr;
     mem_init(module, sizeof(WinFile));

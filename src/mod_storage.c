@@ -85,7 +85,7 @@ InMemoryStorage_M* InitInMemoryStorage(Context* context)
     uintptr addr = context->MainMemPage;
     uintptr storageAddr = addr + LAYOUT_IS_STRUCT + RandUintN(addr, 128);
     uintptr moduleAddr  = addr + LAYOUT_IS_MODULE + RandUintN(addr, 128);
-    // allocate store memory
+    // allocate storage memory
     InMemoryStorage* storage = (InMemoryStorage*)storageAddr;
     mem_init(storage, sizeof(InMemoryStorage));
     // store options

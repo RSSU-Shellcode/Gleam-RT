@@ -6,6 +6,7 @@
 #include "random.h"
 #include "errno.h"
 #include "context.h"
+#include "layout.h"
 #include "sysmon.h"
 #include "debug.h"
 
@@ -96,9 +97,9 @@ static void sm_add_panic();
 Sysmon_M* InitSysmon(Context* context)
 {
     // set structure address
-    uintptr address = context->MainMemPage;
-    uintptr sysmonAddr = address + 24000 + RandUintN(address, 128);
-    uintptr methodAddr = address + 25000 + RandUintN(address, 128);
+    uintptr addr = context->MainMemPage;
+    uintptr sysmonAddr = addr + LAYOUT_SM_STRUCT + RandUintN(addr, 128);
+    uintptr methodAddr = addr + LAYOUT_SM_METHOD + RandUintN(addr, 128);
     // allocate sysmon memory
     Sysmon* sysmon = (Sysmon*)sysmonAddr;
     mem_init(sysmon, sizeof(Sysmon));
@@ -136,8 +137,8 @@ Sysmon_M* InitSysmon(Context* context)
     // create thread for watcher
     if (!context->DisableSysmon)
     {
-        void* addr = GetFuncAddr(&sm_watcher);
-        HANDLE hThread = context->TT_NewThread(addr, NULL, false);
+        void*  address = GetFuncAddr(&sm_watcher);
+        HANDLE hThread = context->TT_NewThread(address, NULL, false);
         if (hThread == NULL)
         {
             SetLastErrno(ERR_SYSMON_START_WATCHER);

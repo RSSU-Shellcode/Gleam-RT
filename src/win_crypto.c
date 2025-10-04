@@ -9,6 +9,7 @@
 #include "crypto.h"
 #include "errno.h"
 #include "context.h"
+#include "layout.h"
 #include "win_crypto.h"
 #include "debug.h"
 
@@ -98,9 +99,9 @@ static errno isValidRSAPublicKey(databuf* key);
 WinCrypto_M* InitWinCrypto(Context* context)
 {
     // set structure address
-    uintptr address = context->MainMemPage;
-    uintptr moduleAddr = address + 22000 + RandUintN(address, 128);
-    uintptr methodAddr = address + 23000 + RandUintN(address, 128);
+    uintptr addr = context->MainMemPage;
+    uintptr moduleAddr = addr + LAYOUT_WC_STRUCT + RandUintN(addr, 128);
+    uintptr methodAddr = addr + LAYOUT_WC_METHOD + RandUintN(addr, 128);
     // allocate module memory
     WinCrypto* module = (WinCrypto*)moduleAddr;
     mem_init(module, sizeof(WinCrypto));

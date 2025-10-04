@@ -6,6 +6,7 @@
 #include "random.h"
 #include "errno.h"
 #include "context.h"
+#include "layout.h"
 #include "watchdog.h"
 #include "debug.h"
 
@@ -98,9 +99,9 @@ static void wd_add_reset();
 Watchdog_M* InitWatchdog(Context* context)
 {
     // set structure address
-    uintptr address = context->MainMemPage;
-    uintptr watchdogAddr = address + 26000 + RandUintN(address, 128);
-    uintptr methodAddr   = address + 27000 + RandUintN(address, 128);
+    uintptr addr = context->MainMemPage;
+    uintptr watchdogAddr = addr + LAYOUT_WD_STRUCT + RandUintN(addr, 128);
+    uintptr methodAddr   = addr + LAYOUT_WD_METHOD + RandUintN(addr, 128);
     // allocate watchdog memory
     Watchdog* watchdog = (Watchdog*)watchdogAddr;
     mem_init(watchdog, sizeof(Watchdog));
@@ -594,8 +595,8 @@ errno WD_Enable()
             errno = ERR_WATCHDOG_EMPTY_HANDLER;
             break;
         }
-        void* addr = GetFuncAddr(&wd_watcher);
-        HANDLE hThread = watchdog->TT_NewThread(addr, NULL, false);
+        void*  address = GetFuncAddr(&wd_watcher);
+        HANDLE hThread = watchdog->TT_NewThread(address, NULL, false);
         if (hThread == NULL)
         {
             errno = ERR_WATCHDOG_START_WATCHER;

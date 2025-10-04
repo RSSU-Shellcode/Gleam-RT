@@ -10,6 +10,7 @@
 #include "crypto.h"
 #include "errno.h"
 #include "context.h"
+#include "layout.h"
 #include "win_http.h"
 #include "debug.h"
 
@@ -102,9 +103,9 @@ static bool decreaseCounter();
 WinHTTP_M* InitWinHTTP(Context* context)
 {
     // set structure address
-    uintptr address = context->MainMemPage;
-    uintptr moduleAddr = address + 20000 + RandUintN(address, 128);
-    uintptr methodAddr = address + 21000 + RandUintN(address, 128);
+    uintptr addr = context->MainMemPage;
+    uintptr moduleAddr = addr + LAYOUT_WH_STRUCT + RandUintN(addr, 128);
+    uintptr methodAddr = addr + LAYOUT_WH_METHOD + RandUintN(addr, 128);
     // allocate module memory
     WinHTTP* module = (WinHTTP*)moduleAddr;
     mem_init(module, sizeof(WinHTTP));

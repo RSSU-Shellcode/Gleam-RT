@@ -1955,7 +1955,7 @@ static void* getLazyAPIRedirector(Runtime* runtime, void* proc)
     for (int i = 0; i < arrlen(list); i++)
     {
         rdr item = list[i]; 
-        if (FindAPI_ML(runtime->IMOML, item.mHash, item.pHash, item.hKey) != proc)
+        if (FindAPI_SC(item.mHash, item.pHash, item.hKey) != proc)
         {
             continue;
         }

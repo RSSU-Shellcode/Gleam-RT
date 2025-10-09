@@ -3,9 +3,6 @@
 
 #include "c_types.h"
 
-#define PE_FILE_HEADER_SIZE    24
-#define PE_SECTION_HEADER_SIZE 40
-
 typedef struct {
     // optional header
     uintptr EntryPoint;

@@ -22,15 +22,15 @@ void* CamouflageStartAddress(void* list, void* address)
     mem_init(&image, sizeof(image));
     ParsePEImage((byte*)modAddr, &image);
     // if failed to get text section address, return raw address
-    if (image.TextVirtualAddress == 0)
+    if (image.Text.VirtualAddress == 0)
     {
         return address;
     }
     // select a random start address
-    uintptr base  = modAddr + image.TextVirtualAddress;
-    uintptr range = image.TextSizeOfRawData;
+    uintptr base  = modAddr + image.Text.VirtualAddress;
+    uintptr range = image.Text.SizeOfRawData;
     uintptr begin = base + RandUintN((uint64)address, range);
-    uintptr end   = base + image.TextSizeOfRawData;
+    uintptr end   = base + image.Text.SizeOfRawData;
     for (uintptr addr = begin; addr < end; addr++)
     {
         byte b = *(byte*)addr; 

@@ -151,6 +151,8 @@ errno RT_unlock_mods();
 void  RT_try_lock_mods();
 void  RT_try_unlock_mods();
 
+void RT_flush_api_cache();
+
 // method wrapper for user and Runtime submodules
 uint MW_MemScanByValue(void* value, uint size, uintptr* results, uint maxItem);
 uint MW_MemScanByPattern(byte* pattern, uintptr* results, uint maxItem);
@@ -416,6 +418,7 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->WinCrypto.RSAVerify  = runtime->WinCrypto->RSAVerify;
     module->WinCrypto.RSAEncrypt = runtime->WinCrypto->RSAEncrypt;
     module->WinCrypto.RSADecrypt = runtime->WinCrypto->RSADecrypt;
+    module->WinCrypto.FreeDLL    = runtime->WinCrypto->FreeDLL;
     // random module
     module->Random.Buffer  = GetFuncAddr(&RandBuffer);
     module->Random.Bool    = GetFuncAddr(&RandBool);
@@ -1562,6 +1565,14 @@ void RT_try_unlock_mods()
 }
 
 __declspec(noinline)
+void RT_flush_api_cache()
+{
+    Runtime* runtime = getRuntimePointer();
+
+
+}
+
+__declspec(noinline)
 uint MW_MemScanByValue(void* value, uint size, uintptr* results, uint maxItem)
 {
     Runtime* runtime = getRuntimePointer();
@@ -2187,10 +2198,14 @@ static errno hide(Runtime* runtime)
 {
     typedef errno (*submodule_t)();
     submodule_t submodules[] = {
+        runtime->ThreadTracker->Suspend,
+
         runtime->Watchdog->Pause,
         runtime->Sysmon->Pause,
+
         runtime->WinHTTP->Clean,
-        runtime->ThreadTracker->Suspend,
+        runtime->WinCrypto->Clean,
+
         runtime->LibraryTracker->Encrypt,
         runtime->MemoryTracker->Encrypt,
         runtime->ResourceTracker->Encrypt,
@@ -2214,13 +2229,15 @@ static errno recover(Runtime* runtime)
 {
     typedef errno (*submodule_t)();
     submodule_t submodules[] = {
-        runtime->LibraryTracker->Decrypt,
-        runtime->MemoryTracker->Decrypt,
-        runtime->ResourceTracker->Decrypt,
-        runtime->ArgumentStore->Decrypt,
         runtime->InMemoryStorage->Decrypt,
+        runtime->ArgumentStore->Decrypt,
+        runtime->ResourceTracker->Decrypt,
+        runtime->MemoryTracker->Decrypt,
+        runtime->LibraryTracker->Decrypt,
+
         runtime->Sysmon->Continue,
         runtime->Watchdog->Continue,
+
         runtime->ThreadTracker->Resume,
     };
     errno err = NO_ERROR;
@@ -2421,6 +2438,7 @@ errno RT_Cleanup()
 
         // high-level modules
         runtime->WinHTTP->Clean,
+        runtime->WinCrypto->Clean,
 
         // runtime submodules
         runtime->ResourceTracker->FreeAll,

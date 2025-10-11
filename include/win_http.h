@@ -39,11 +39,11 @@ typedef struct {
     databuf Body;
 } HTTP_Response;
 
+typedef void  (*WHInit_t)(HTTP_Request* req);
 typedef errno (*WHGet_t)(HTTP_Request* req, HTTP_Response* resp);
 typedef errno (*WHPost_t)(HTTP_Request* req, HTTP_Response* resp);
 typedef errno (*WHDo_t)(UTF16 method, HTTP_Request* req, HTTP_Response* resp);
-typedef void  (*WHInit_t)(HTTP_Request* req);
-typedef errno (*WHFree_t)();
+typedef errno (*WHFreeDLL_t)();
 
 typedef bool  (*WHLock_t)();
 typedef bool  (*WHUnlock_t)();
@@ -51,12 +51,11 @@ typedef errno (*WHClean_t)();
 typedef errno (*WHUninstall_t)();
 
 typedef struct {
-    WHGet_t  Get;
-    WHPost_t Post;
-    WHDo_t   Do;
-
-    WHInit_t Init;
-    WHFree_t Free;
+    WHInit_t    Init;
+    WHGet_t     Get;
+    WHPost_t    Post;
+    WHDo_t      Do;
+    WHFreeDLL_t FreeDLL;
 
     WHLock_t      Lock;
     WHUnlock_t    Unlock;

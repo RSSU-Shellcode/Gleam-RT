@@ -69,8 +69,10 @@ errno WC_RSASign(ALG_ID aid, databuf* data, databuf* key, databuf* signature);
 errno WC_RSAVerify(ALG_ID aid, databuf* data, databuf* key, databuf* signature);
 errno WC_RSAEncrypt(databuf* data, databuf* key, databuf* output);
 errno WC_RSADecrypt(databuf* data, databuf* key, databuf* output);
+errno WC_FreeDLL();
 
 // methods for runtime
+errno WC_Clean();
 errno WC_Uninstall();
 
 // hard encoded address in getModulePointer for replacement
@@ -92,6 +94,7 @@ static void eraseModuleMethods(Context* context);
 
 static bool initWinCryptoEnv();
 static bool findWinCryptoAPI();
+static bool tryToFreeLibrary();
 
 static errno isValidRSAPrivateKey(databuf* key);
 static errno isValidRSAPublicKey(databuf* key);
@@ -149,7 +152,9 @@ WinCrypto_M* InitWinCrypto(Context* context)
     method->RSAVerify  = GetFuncAddr(&WC_RSAVerify);
     method->RSAEncrypt = GetFuncAddr(&WC_RSAEncrypt);
     method->RSADecrypt = GetFuncAddr(&WC_RSADecrypt);
+    method->FreeDLL    = GetFuncAddr(&WC_FreeDLL);
     // methods for runtime
+    method->Clean     = GetFuncAddr(&WC_Clean);
     method->Uninstall = GetFuncAddr(&WC_Uninstall);
     return method;
 }
@@ -392,6 +397,30 @@ static bool findWinCryptoAPI()
     module->CryptSignHashA        = list[0x0F].proc;
     module->CryptVerifySignatureA = list[0x10].proc;
     return true;
+}
+
+__declspec(noinline)
+static bool tryToFreeLibrary()
+{
+    WinCrypto* module = getModulePointer();
+
+    bool success = false;
+    for (;;)
+    {
+        if (module->hModule == NULL)
+        {
+            success = true;
+            break;
+        }
+        if (!module->FreeLibrary(module->hModule))
+        {
+            break;
+        }
+        module->hModule = NULL;
+        success = true;
+        break;
+    }
+    return success;
 }
 
 __declspec(noinline)
@@ -1343,6 +1372,38 @@ errno WC_RSADecrypt(databuf* data, databuf* key, databuf* output)
     }
     output->buf = buffer;
     output->len = length;
+    return NO_ERROR;
+}
+
+__declspec(noinline)
+errno WC_FreeDLL()
+{
+    if (!wc_lock())
+    {
+        return false;
+    }
+
+    bool success = tryToFreeLibrary();
+
+    if (!wc_unlock())
+    {
+        return false;
+    }
+
+    if (!success)
+    {
+        return GetLastErrno();
+    }
+    return NO_ERROR;
+}
+
+__declspec(noinline)
+errno WC_Clean()
+{
+    if (!tryToFreeLibrary())
+    {
+        return GetLastErrno();
+    }
     return NO_ERROR;
 }
 

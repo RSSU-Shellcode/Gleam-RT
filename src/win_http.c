@@ -65,11 +65,11 @@ typedef struct {
 } WinHTTP;
 
 // methods for user
+void  WH_Init(HTTP_Request* req);
 errno WH_Get(HTTP_Request* req, HTTP_Response* resp);
 errno WH_Post(HTTP_Request* req, HTTP_Response* resp);
 errno WH_Do(UTF16 method, HTTP_Request* req, HTTP_Response* resp);
-void  WH_Init(HTTP_Request* req);
-errno WH_Free();
+errno WH_FreeDLL();
 
 // methods for runtime
 bool  WH_Lock();
@@ -142,11 +142,11 @@ WinHTTP_M* InitWinHTTP(Context* context)
     }
     // methods for user
     WinHTTP_M* method = (WinHTTP_M*)methodAddr;
-    method->Get  = GetFuncAddr(&WH_Get);
-    method->Post = GetFuncAddr(&WH_Post);
-    method->Do   = GetFuncAddr(&WH_Do);
-    method->Init = GetFuncAddr(&WH_Init);
-    method->Free = GetFuncAddr(&WH_Free);
+    method->Init    = GetFuncAddr(&WH_Init);
+    method->Get     = GetFuncAddr(&WH_Get);
+    method->Post    = GetFuncAddr(&WH_Post);
+    method->Do      = GetFuncAddr(&WH_Do);
+    method->FreeDLL = GetFuncAddr(&WH_FreeDLL);
     // methods for runtime
     method->Lock      = GetFuncAddr(&WH_Lock);
     method->Unlock    = GetFuncAddr(&WH_Unlock);
@@ -457,6 +457,23 @@ static bool decreaseCounter()
 }
 
 __declspec(noinline)
+void WH_Init(HTTP_Request* req)
+{
+    req->URL            = NULL;
+    req->Headers        = NULL;
+    req->UserAgent      = NULL;
+    req->ProxyURL       = NULL;
+    req->ProxyUser      = NULL;
+    req->ProxyPass      = NULL;
+    req->ConnectTimeout = DEFAULT_TIMEOUT;
+    req->SendTimeout    = 10 * DEFAULT_TIMEOUT;
+    req->ReceiveTimeout = 10 * DEFAULT_TIMEOUT;
+    req->MaxBodySize    = 0;
+    req->AccessType     = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
+    req->Body           = NULL;
+}
+
+__declspec(noinline)
 errno WH_Get(HTTP_Request* req, HTTP_Response* resp)
 {
     // build "GET" string
@@ -488,12 +505,14 @@ errno WH_Do(UTF16 method, HTTP_Request* req, HTTP_Response* resp)
 
     dbg_log("[WinHTTP]", "%ls %ls", method, req->URL);
 
-    if (!initWinHTTPEnv())
+    if (!increaseCounter())
     {
         return GetLastErrno();
     }
-    if (!increaseCounter())
+
+    if (!initWinHTTPEnv())
     {
+        decreaseCounter();
         return GetLastErrno();
     }
 
@@ -767,24 +786,7 @@ exit_loop:
 }
 
 __declspec(noinline)
-void WH_Init(HTTP_Request* req)
-{
-    req->URL            = NULL;
-    req->Headers        = NULL;
-    req->UserAgent      = NULL;
-    req->ProxyURL       = NULL;
-    req->ProxyUser      = NULL;
-    req->ProxyPass      = NULL;
-    req->ConnectTimeout = DEFAULT_TIMEOUT;
-    req->SendTimeout    = 10 * DEFAULT_TIMEOUT;
-    req->ReceiveTimeout = 10 * DEFAULT_TIMEOUT;
-    req->MaxBodySize    = 0;
-    req->AccessType     = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
-    req->Body           = NULL;
-}
-
-__declspec(noinline)
-errno WH_Free()
+errno WH_FreeDLL()
 {
     if (!wh_lock())
     {

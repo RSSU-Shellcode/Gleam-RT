@@ -222,6 +222,7 @@ typedef errno (*CryptoRSASign_t)(ALG_ID aid, databuf* data, databuf* key, databu
 typedef errno (*CryptoRSAVerify_t)(ALG_ID aid, databuf* data, databuf* key, databuf* sign);
 typedef errno (*CryptoRSAEncrypt_t)(databuf* data, databuf* key, databuf* output);
 typedef errno (*CryptoRSADecrypt_t)(databuf* data, databuf* key, databuf* output);
+typedef errno (*CryptoFreeDLL_t)();
 
 // =================================Runtime=================================
 
@@ -450,8 +451,9 @@ typedef struct {
         ResUnlockWaitableTimer_t UnlockWaitableTimer;
         ResLockFile_t            LockFile;
         ResUnlockFile_t          UnlockFile;
-        ResGetStatus_t           Status;
-        ResFreeAllMu_t           FreeAll;
+
+        ResGetStatus_t Status;
+        ResFreeAllMu_t FreeAll;
     } Resource;
 
     struct {
@@ -504,6 +506,8 @@ typedef struct {
         CryptoRSAVerify_t  RSAVerify;
         CryptoRSAEncrypt_t RSAEncrypt;
         CryptoRSADecrypt_t RSADecrypt;
+
+        CryptoFreeDLL_t FreeDLL;
     } WinCrypto;
 
     struct {

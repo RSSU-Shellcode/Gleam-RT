@@ -38,7 +38,9 @@ typedef errno (*WCRSASign_t)(ALG_ID aid, databuf* data, databuf* key, databuf* s
 typedef errno (*WCRSAVerify_t)(ALG_ID aid, databuf* data, databuf* key, databuf* sign);
 typedef errno (*WCRSAEncrypt_t)(databuf* data, databuf* key, databuf* output);
 typedef errno (*WCRSADecrypt_t)(databuf* data, databuf* key, databuf* output);
+typedef errno (*WCFreeDLL_t)();
 
+typedef errno (*WCClean_t)();
 typedef errno (*WCUninstall_t)();
 
 typedef struct {
@@ -53,7 +55,9 @@ typedef struct {
     WCRSAVerify_t  RSAVerify;
     WCRSAEncrypt_t RSAEncrypt;
     WCRSADecrypt_t RSADecrypt;
+    WCFreeDLL_t    FreeDLL;
 
+    WCClean_t     Clean;
     WCUninstall_t Uninstall;
 } WinCrypto_M;
 

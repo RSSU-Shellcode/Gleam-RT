@@ -13,16 +13,16 @@
 static bool TestWinHTTP_Get();
 static bool TestWinHTTP_Post();
 static bool TestWinHTTP_Do();
-static bool TestWinHTTP_Free();
+static bool TestWinHTTP_FreeDLL();
 
 bool TestRuntime_WinHTTP()
 {
     test_t tests[] = 
     {
-        { TestWinHTTP_Get  },
-        { TestWinHTTP_Post },
-        { TestWinHTTP_Do   },
-        { TestWinHTTP_Free },
+        { TestWinHTTP_Get     },
+        { TestWinHTTP_Post    },
+        { TestWinHTTP_Do      },
+        { TestWinHTTP_FreeDLL },
     };
     for (int i = 0; i < arrlen(tests); i++)
     {
@@ -171,15 +171,15 @@ static bool TestWinHTTP_Do()
     return true;
 }
 
-static bool TestWinHTTP_Free()
+static bool TestWinHTTP_FreeDLL()
 {
-    errno err = runtime->WinHTTP.Free();
+    errno err = runtime->WinHTTP.FreeDLL();
     if (err != NO_ERROR)
     {
-        printf_s("failed to free: 0x%X\n", err);
+        printf_s("failed to free library about WinHTTP: 0x%X\n", err);
         return false;
     }
 
-    printf_s("test Free passed\n");
+    printf_s("test FreeDLL passed\n");
     return true;
 }

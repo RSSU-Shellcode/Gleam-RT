@@ -177,11 +177,11 @@ typedef struct {
 
 #endif // WIN_HTTP_H
 
+typedef void  (*HTTPInit_t)(HTTP_Request* req);
 typedef errno (*HTTPGet_t)(HTTP_Request* req, HTTP_Response* resp);
 typedef errno (*HTTPPost_t)(HTTP_Request* req, HTTP_Response* resp);
 typedef errno (*HTTPDo_t)(UTF16 method, HTTP_Request* req, HTTP_Response* resp);
-typedef void  (*HTTPInit_t)(HTTP_Request* req);
-typedef errno (*HTTPFree_t)();
+typedef errno (*HTTPFreeDLL_t)();
 
 // ================================WinCrypto================================
 
@@ -486,12 +486,12 @@ typedef struct {
     } WinFile;
     
     struct {
+        HTTPInit_t Init;
         HTTPGet_t  Get;
         HTTPPost_t Post;
         HTTPDo_t   Do;
 
-        HTTPInit_t Init;
-        HTTPFree_t Free;
+        HTTPFreeDLL_t FreeDLL;
     } WinHTTP;
 
     struct {

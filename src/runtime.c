@@ -725,23 +725,6 @@ static errno initSubmodules(Runtime* runtime)
         .PEB   = runtime->PEB,
         .IMOML = runtime->IMOML,
 
-        .MainMemPage = (uintptr)(runtime->MainMemPage),
-        .PageSize    = runtime->PageSize,
-
-        .FindAPI = GetFuncAddr(&FindAPI_SC),
-
-        .malloc  = GetFuncAddr(&RT_malloc),
-        .calloc  = GetFuncAddr(&RT_calloc),
-        .realloc = GetFuncAddr(&RT_realloc),
-        .free    = GetFuncAddr(&RT_free),
-        .msize   = GetFuncAddr(&RT_msize),
-        .mcap    = GetFuncAddr(&RT_mcap),
-
-        .lock_mods       = GetFuncAddr(&RT_lock_mods),
-        .unlock_mods     = GetFuncAddr(&RT_unlock_mods),
-        .try_lock_mods   = GetFuncAddr(&RT_try_lock_mods),
-        .try_unlock_mods = GetFuncAddr(&RT_try_unlock_mods),
-
         .LoadLibraryA           = runtime->LoadLibraryA,
         .FreeLibrary            = runtime->FreeLibrary,
         .VirtualAlloc           = runtime->VirtualAlloc,
@@ -763,6 +746,25 @@ static errno initSubmodules(Runtime* runtime)
         .DuplicateHandle        = runtime->DuplicateHandle,
         .CloseHandle            = runtime->CloseHandle,
         .Sleep                  = GetFuncAddr(&RT_Sleep),
+
+        .MainMemPage = (uintptr)(runtime->MainMemPage),
+        .PageSize    = runtime->PageSize,
+
+        .FindAPI = GetFuncAddr(&FindAPI_SC),
+
+        .malloc  = GetFuncAddr(&RT_malloc),
+        .calloc  = GetFuncAddr(&RT_calloc),
+        .realloc = GetFuncAddr(&RT_realloc),
+        .free    = GetFuncAddr(&RT_free),
+        .msize   = GetFuncAddr(&RT_msize),
+        .mcap    = GetFuncAddr(&RT_mcap),
+
+        .lock_mods       = GetFuncAddr(&RT_lock_mods),
+        .unlock_mods     = GetFuncAddr(&RT_unlock_mods),
+        .try_lock_mods   = GetFuncAddr(&RT_try_lock_mods),
+        .try_unlock_mods = GetFuncAddr(&RT_try_unlock_mods),
+
+        .flush_api_cache = GetFuncAddr(&RT_flush_api_cache),
     };
 
     // initialize runtime submodules
@@ -1569,7 +1571,8 @@ void RT_flush_api_cache()
 {
     Runtime* runtime = getRuntimePointer();
 
-
+    runtime->MemoryTracker->Flush();
+    runtime->ResourceTracker->Flush();
 }
 
 __declspec(noinline)

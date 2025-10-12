@@ -97,8 +97,9 @@ type RuntimeM struct {
 		UnlockWaitableTimer uintptr
 		LockFile            uintptr
 		UnlockFile          uintptr
-		Status              uintptr
-		FreeAll             uintptr
+
+		Status  uintptr
+		FreeAll uintptr
 	}
 
 	Argument struct {
@@ -131,12 +132,12 @@ type RuntimeM struct {
 	}
 
 	WinHTTP struct {
+		Init uintptr
 		Get  uintptr
 		Post uintptr
 		Do   uintptr
 
-		Init uintptr
-		Free uintptr
+		FreeDLL uintptr
 	}
 
 	WinCrypto struct {
@@ -151,6 +152,8 @@ type RuntimeM struct {
 		RSAVerify  uintptr
 		RSAEncrypt uintptr
 		RSADecrypt uintptr
+
+		FreeDLL uintptr
 	}
 
 	Random struct {

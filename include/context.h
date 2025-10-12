@@ -13,6 +13,8 @@ typedef errno (*rt_unlock_mods_t)();
 typedef void  (*rt_try_lock_mods_t)();
 typedef void  (*rt_try_unlock_mods_t)();
 
+typedef void (*rt_flush_api_cache_t)();
+
 typedef void* (*mt_malloc_t)(uint size);
 typedef void* (*mt_calloc_t)(uint num, uint size);
 typedef void* (*mt_realloc_t)(void* ptr, uint size);
@@ -40,27 +42,6 @@ typedef struct {
     void* PEB;
     void* IMOML;
 
-    // runtime context data
-    uintptr MainMemPage;
-    uint32  PageSize;
-
-    // HashAPI with spoof call
-    FindAPI_t FindAPI;
-
-    // runtime internal methods
-    malloc_t  malloc;
-    calloc_t  calloc;
-    realloc_t realloc;
-    free_t    free;
-    msize_t   msize;
-    mcap_t    mcap;
-
-    // runtime lock submodules
-    rt_lock_mods_t       lock_mods;
-    rt_unlock_mods_t     unlock_mods;
-    rt_try_lock_mods_t   try_lock_mods;
-    rt_try_unlock_mods_t try_unlock_mods;
-
     // for initialize runtime submodules
     LoadLibraryA_t           LoadLibraryA;
     FreeLibrary_t            FreeLibrary;
@@ -83,6 +64,30 @@ typedef struct {
     DuplicateHandle_t        DuplicateHandle;
     CloseHandle_t            CloseHandle;
     Sleep_t                  Sleep;
+
+    // runtime context data
+    uintptr MainMemPage;
+    uint32  PageSize;
+
+    // HashAPI with spoof call
+    FindAPI_t FindAPI;
+
+    // runtime internal methods
+    malloc_t  malloc;
+    calloc_t  calloc;
+    realloc_t realloc;
+    free_t    free;
+    msize_t   msize;
+    mcap_t    mcap;
+
+    // runtime lock submodules
+    rt_lock_mods_t       lock_mods;
+    rt_unlock_mods_t     unlock_mods;
+    rt_try_lock_mods_t   try_lock_mods;
+    rt_try_unlock_mods_t try_unlock_mods;
+
+    // for flush lazy API cache
+    rt_flush_api_cache_t flush_api_cache;
 
     // for initialize high-level modules
     mt_malloc_t  mt_malloc;

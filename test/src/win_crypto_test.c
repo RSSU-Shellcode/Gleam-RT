@@ -19,6 +19,7 @@ static bool TestWinCrypto_RSASign();
 static bool TestWinCrypto_RSAVerify();
 static bool TestWinCrypto_RSAEncrypt();
 static bool TestWinCrypto_RSADecrypt();
+static bool TestWinCrypto_FreeDLL();
 static bool TestWinCrypto_Golang();
 
 static void printHexBytes(databuf* data);
@@ -37,6 +38,7 @@ bool TestRuntime_WinCrypto()
         { TestWinCrypto_RSAVerify  },
         { TestWinCrypto_RSAEncrypt },
         { TestWinCrypto_RSADecrypt },
+        { TestWinCrypto_FreeDLL    },
         { TestWinCrypto_Golang     },
     };
     for (int i = 0; i < arrlen(tests); i++)
@@ -599,6 +601,19 @@ static bool TestWinCrypto_RSADecrypt()
     runtime->Memory.Free(plainData.buf);
 
     printf_s("test RSADecrypt passed\n");
+    return true;
+}
+
+static bool TestWinCrypto_FreeDLL()
+{
+    errno err = runtime->WinCrypto.FreeDLL();
+    if (err != NO_ERROR)
+    {
+        printf_s("failed to free library about WinCrypto: 0x%X\n", err);
+        return false;
+    }
+
+    printf_s("test FreeDLL passed\n");
     return true;
 }
 

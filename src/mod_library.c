@@ -40,6 +40,9 @@ typedef struct {
     WaitForSingleObject_t      WaitForSingleObject;
     CloseHandle_t              CloseHandle;
 
+    // runtime method
+    rt_flush_api_cache_t RT_flush_api_cache;
+
     // protect data
     HANDLE hMutex;
 
@@ -267,6 +270,8 @@ static bool initTrackerEnvironment(LibraryTracker* tracker, Context* context)
     // set crypto context data
     RandBuffer(tracker->ModulesKey, CRYPTO_KEY_SIZE);
     RandBuffer(tracker->ModulesIV, CRYPTO_IV_SIZE);
+    // copy runtime method
+    tracker->RT_flush_api_cache = context->flush_api_cache;
     return true;
 }
 
@@ -529,6 +534,10 @@ BOOL LT_FreeLibrary(HMODULE hLibModule)
         {
             break;
         }
+        if (!tracker->RT_flush_api_cache())
+        {
+            break;
+        }
         success = true;
         break;
     }
@@ -555,6 +564,7 @@ void LT_FreeLibraryAndExitThread(HMODULE hLibModule, DWORD dwExitCode)
     if (hLibModule != HMODULE_GLEAM_RT)
     {
         delModule(tracker, hLibModule);
+        tracker->RT_flush_api_cache();
     }
     dbg_log("[library]", "FreeLibraryAndExitThread: 0x%zX", hLibModule);
 
@@ -563,6 +573,7 @@ void LT_FreeLibraryAndExitThread(HMODULE hLibModule, DWORD dwExitCode)
         return;
     }
 
+    // TODO clean thread
     tracker->FreeLibraryAndExitThread(hLibModule, dwExitCode);
 }
 
@@ -847,6 +858,11 @@ errno LT_FreeAll()
             errno = ERR_LIBRARY_DELETE_MODULE;
         }
         num++;
+    }
+
+    if (!tracker->RT_flush_api_cache())
+    {
+        errno = ERR_LIBRARY_FLUSH_CACHE;
     }
 
     dbg_log("[library]", "modules: %zu", modules->Len);

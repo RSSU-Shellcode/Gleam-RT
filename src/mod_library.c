@@ -536,6 +536,7 @@ BOOL LT_FreeLibrary(HMODULE hLibModule)
         }
         if (!tracker->RT_flush_api_cache())
         {
+            SetLastErrno(ERR_LIBRARY_FLUSH_CACHE);
             break;
         }
         success = true;
@@ -756,18 +757,35 @@ bool LT_GetStatus(LT_Status* status)
 __declspec(noinline)
 bool LT_FreeAllMu()
 {
+    LibraryTracker* tracker = getTrackerPointer();
+
     if (!LT_Lock())
     {
         return false;
     }
 
-    errno errno = LT_FreeAll();
-    dbg_log("[library]", "FreeAll has been called");
+    errno errno = NO_ERROR;
+    for (;;)
+    {
+        errno = LT_FreeAll();
+        if (errno != NO_ERROR)
+        {
+            break;
+        }
+        if (!tracker->RT_flush_api_cache())
+        {
+            errno = ERR_LIBRARY_FLUSH_CACHE;
+            break;
+        }
+        break;
+    }
 
     if (!LT_Unlock())
     {
         return false;
     }
+
+    dbg_log("[library]", "FreeAll has been called");
 
     if (errno != NO_ERROR)
     {
@@ -858,11 +876,6 @@ errno LT_FreeAll()
             errno = ERR_LIBRARY_DELETE_MODULE;
         }
         num++;
-    }
-
-    if (!tracker->RT_flush_api_cache())
-    {
-        errno = ERR_LIBRARY_FLUSH_CACHE;
     }
 
     dbg_log("[library]", "modules: %zu", modules->Len);

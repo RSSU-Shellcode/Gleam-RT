@@ -151,7 +151,7 @@ errno RT_unlock_mods();
 void  RT_try_lock_mods();
 void  RT_try_unlock_mods();
 
-void RT_flush_api_cache();
+bool RT_flush_api_cache();
 
 // method wrapper for user and Runtime submodules
 uint MW_MemScanByValue(void* value, uint size, uintptr* results, uint maxItem);
@@ -1567,12 +1567,32 @@ void RT_try_unlock_mods()
 }
 
 __declspec(noinline)
-void RT_flush_api_cache()
+bool RT_flush_api_cache()
 {
     Runtime* runtime = getRuntimePointer();
 
-    runtime->MemoryTracker->Flush();
-    runtime->ResourceTracker->Flush();
+    errno errno = NO_ERROR;
+    for (;;)
+    {
+        errno = runtime->MemoryTracker->Flush();
+        if (errno != NO_ERROR)
+        {
+            break;
+        }
+        errno = runtime->ResourceTracker->Flush();
+        if (errno != NO_ERROR)
+        {
+            break;
+        }
+        break;
+    }
+
+    if (errno != NO_ERROR)
+    {
+        SetLastErrno(errno);
+        return false;
+    }
+    return true;
 }
 
 __declspec(noinline)

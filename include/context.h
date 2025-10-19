@@ -13,7 +13,7 @@ typedef errno (*rt_unlock_mods_t)();
 typedef void  (*rt_try_lock_mods_t)();
 typedef void  (*rt_try_unlock_mods_t)();
 
-typedef void (*rt_flush_api_cache_t)();
+typedef bool (*rt_flush_api_cache_t)();
 
 typedef void* (*mt_malloc_t)(uint size);
 typedef void* (*mt_calloc_t)(uint num, uint size);

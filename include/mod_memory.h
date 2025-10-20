@@ -35,11 +35,12 @@ typedef bool  (*MemUnlock_t)();
 typedef errno (*MemEncrypt_t)();
 typedef errno (*MemDecrypt_t)();
 typedef void  (*MemFlush_t)();
-typedef errno (*MemFlushMu_t)();
+typedef bool  (*MemFlushMu_t)();
 typedef errno (*MemFreeAll_t)();
 typedef errno (*MemClean_t)();
 
 typedef struct {
+    // for API redirector
     VirtualAlloc_t   VirtualAlloc;
     VirtualFree_t    VirtualFree;
     VirtualProtect_t VirtualProtect;
@@ -57,6 +58,7 @@ typedef struct {
     LocalReAlloc_t   LocalReAlloc;
     LocalFree_t      LocalFree;
 
+    // for lazy API redirector
     msvcrt_malloc_t  msvcrt_malloc;
     msvcrt_calloc_t  msvcrt_calloc;
     msvcrt_realloc_t msvcrt_realloc;
@@ -69,6 +71,7 @@ typedef struct {
     ucrtbase_free_t    ucrtbase_free;
     ucrtbase_msize_t   ucrtbase_msize;
 
+    // for user
     MemAlloc_t   Alloc;
     MemCalloc_t  Calloc;
     MemRealloc_t Realloc;
@@ -81,6 +84,7 @@ typedef struct {
     MemGetStatus_t    GetStatus;
     MemFreeAllMu_t    FreeAllMu;
 
+    // for runtime internel usage
     MemLock_t    Lock;
     MemUnlock_t  Unlock;
     MemEncrypt_t Encrypt;
@@ -90,6 +94,7 @@ typedef struct {
     MemFreeAll_t FreeAll;
     MemClean_t   Clean;
 
+    // data for sysmon
     HANDLE hMutex;
 } MemoryTracker_M;
 

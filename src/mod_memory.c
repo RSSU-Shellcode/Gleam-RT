@@ -167,6 +167,8 @@ bool  MT_Lock();
 bool  MT_Unlock();
 errno MT_Encrypt();
 errno MT_Decrypt();
+void  MT_Flush();
+errno MT_FlushMu();
 errno MT_FreeAll();
 errno MT_Clean();
 
@@ -304,6 +306,8 @@ MemoryTracker_M* InitMemoryTracker(Context* context)
     module->Unlock  = GetFuncAddr(&MT_Unlock);
     module->Encrypt = GetFuncAddr(&MT_Encrypt);
     module->Decrypt = GetFuncAddr(&MT_Decrypt);
+    module->Flush   = GetFuncAddr(&MT_Flush);
+    module->FlushMu = GetFuncAddr(&MT_FlushMu);
     module->FreeAll = GetFuncAddr(&MT_FreeAll);
     module->Clean   = GetFuncAddr(&MT_Clean);
     // data for sysmon
@@ -2903,6 +2907,22 @@ static bool walkHeapBlocks(HANDLE hHeap, int operation)
         SetLastErrno(lastErr);
     }
     return success;
+}
+
+__declspec(noinline)
+void MT_Flush()
+{
+    MemoryTracker* tracker = getTrackerPointer();
+
+
+}
+
+__declspec(noinline)
+errno MT_FlushMu()
+{
+    MemoryTracker* tracker = getTrackerPointer();
+
+    return NO_ERROR;
 }
 
 __declspec(noinline)

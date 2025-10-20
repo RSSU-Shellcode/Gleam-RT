@@ -80,6 +80,19 @@ typedef struct {
     FlushInstructionCache_t FlushInstructionCache;
     CloseHandle_t           CloseHandle;
 
+    // Cached API addresses
+    msvcrt_malloc_t  msvcrt_malloc;
+    msvcrt_calloc_t  msvcrt_calloc;
+    msvcrt_realloc_t msvcrt_realloc;
+    msvcrt_free_t    msvcrt_free;
+    msvcrt_msize_t   msvcrt_msize;
+
+    ucrtbase_malloc_t  ucrtbase_malloc;
+    ucrtbase_calloc_t  ucrtbase_calloc;
+    ucrtbase_realloc_t ucrtbase_realloc;
+    ucrtbase_free_t    ucrtbase_free;
+    ucrtbase_msize_t   ucrtbase_msize;
+
     // runtime methods
     malloc_t  RT_malloc;
     calloc_t  RT_calloc;
@@ -168,7 +181,7 @@ bool  MT_Unlock();
 errno MT_Encrypt();
 errno MT_Decrypt();
 void  MT_Flush();
-errno MT_FlushMu();
+bool  MT_FlushMu();
 errno MT_FreeAll();
 errno MT_Clean();
 
@@ -2914,15 +2927,34 @@ void MT_Flush()
 {
     MemoryTracker* tracker = getTrackerPointer();
 
+   tracker->msvcrt_malloc  = NULL;
+   tracker->msvcrt_calloc  = NULL;
+   tracker->msvcrt_realloc = NULL;
+   tracker->msvcrt_free    = NULL;
+   tracker->msvcrt_msize   = NULL;
 
+   tracker->ucrtbase_malloc  = NULL;
+   tracker->ucrtbase_calloc  = NULL;
+   tracker->ucrtbase_realloc = NULL;
+   tracker->ucrtbase_free    = NULL;
+   tracker->ucrtbase_msize   = NULL;
 }
 
 __declspec(noinline)
-errno MT_FlushMu()
+bool MT_FlushMu()
 {
-    MemoryTracker* tracker = getTrackerPointer();
+    if (!MT_Lock())
+    {
+        return false;
+    }
 
-    return NO_ERROR;
+    MT_Flush();
+
+    if (!MT_Unlock())
+    {
+        return false;
+    }
+    return true;
 }
 
 __declspec(noinline)

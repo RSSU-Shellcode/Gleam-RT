@@ -291,6 +291,8 @@ bool  RT_Lock();
 bool  RT_Unlock();
 errno RT_Encrypt();
 errno RT_Decrypt();
+void  RT_Flush();
+errno RT_FlushMu();
 errno RT_FreeAll();
 errno RT_Clean();
 
@@ -423,6 +425,8 @@ ResourceTracker_M* InitResourceTracker(Context* context)
     module->Unlock  = GetFuncAddr(&RT_Unlock);
     module->Encrypt = GetFuncAddr(&RT_Encrypt);
     module->Decrypt = GetFuncAddr(&RT_Decrypt);
+    module->Flush   = GetFuncAddr(&RT_Flush);
+    module->FlushMu = GetFuncAddr(&RT_FlushMu);
     module->FreeAll = GetFuncAddr(&RT_FreeAll);
     module->Clean   = GetFuncAddr(&RT_Clean);
     // data for sysmon
@@ -2719,6 +2723,22 @@ errno RT_Decrypt()
 }
 
 __declspec(noinline)
+void RT_Flush()
+{
+    ResourceTracker* tracker = getTrackerPointer();
+
+
+}
+
+__declspec(noinline)
+errno RT_FlushMu()
+{
+    ResourceTracker* tracker = getTrackerPointer();
+
+    return NO_ERROR;
+}
+
+__declspec(noinline)
 errno RT_FreeAll()
 {
     ResourceTracker* tracker = getTrackerPointer();
@@ -2859,7 +2879,7 @@ errno RT_Clean()
             }
             break;
         case TYPE_CLOSE_SOCKET:
-            if (closesocket == NULL)
+            if (shutdown == NULL || closesocket == NULL)
             {
                 break;
             }

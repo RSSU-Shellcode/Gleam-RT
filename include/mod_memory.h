@@ -34,6 +34,8 @@ typedef bool  (*MemLock_t)();
 typedef bool  (*MemUnlock_t)();
 typedef errno (*MemEncrypt_t)();
 typedef errno (*MemDecrypt_t)();
+typedef void  (*MemFlush_t)();
+typedef errno (*MemFlushMu_t)();
 typedef errno (*MemFreeAll_t)();
 typedef errno (*MemClean_t)();
 
@@ -83,6 +85,8 @@ typedef struct {
     MemUnlock_t  Unlock;
     MemEncrypt_t Encrypt;
     MemDecrypt_t Decrypt;
+    MemFlush_t   Flush;
+    MemFlushMu_t FlushMu;
     MemFreeAll_t FreeAll;
     MemClean_t   Clean;
 

@@ -38,6 +38,8 @@ typedef bool  (*ResLock_t)();
 typedef bool  (*ResUnlock_t)();
 typedef errno (*ResEncrypt_t)();
 typedef errno (*ResDecrypt_t)();
+typedef void  (*ResFlush_t)();
+typedef errno (*ResFlushMu_t)();
 typedef errno (*ResFreeAll_t)();
 typedef errno (*ResClean_t)();
 
@@ -113,6 +115,8 @@ typedef struct {
     ResUnlock_t  Unlock;
     ResEncrypt_t Encrypt;
     ResDecrypt_t Decrypt;
+    ResFlush_t   Flush;
+    ResFlushMu_t FlushMu;
     ResFreeAll_t FreeAll;
     ResClean_t   Clean;
 

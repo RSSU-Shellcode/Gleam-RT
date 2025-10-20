@@ -26,6 +26,7 @@ typedef errno (*LibFreeAll_t)();
 typedef errno (*LibClean_t)();
 
 typedef struct {
+    // for API redirector
     LoadLibraryA_t             LoadLibraryA;
     LoadLibraryW_t             LoadLibraryW;
     LoadLibraryExA_t           LoadLibraryExA;
@@ -33,11 +34,13 @@ typedef struct {
     FreeLibrary_t              FreeLibrary;
     FreeLibraryAndExitThread_t FreeLibraryAndExitThread;
 
+    // for user
     LibLockModule_t   LockModule;
     LibUnlockModule_t UnlockModule;
     LibGetStatus_t    GetStatus;
     LibFreeAllMu_t    FreeAllMu;
 
+    // for runtime internel usage
     LibLock_t    Lock;
     LibUnlock_t  Unlock;
     LibEncrypt_t Encrypt;
@@ -45,6 +48,7 @@ typedef struct {
     LibFreeAll_t FreeAll;
     LibClean_t   Clean;
 
+    // data for sysmon
     HANDLE hMutex;
 } LibraryTracker_M;
 

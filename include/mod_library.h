@@ -40,7 +40,7 @@ typedef struct {
     LibGetStatus_t    GetStatus;
     LibFreeAllMu_t    FreeAllMu;
 
-    // for runtime internel usage
+    // for runtime internal usage
     LibLock_t    Lock;
     LibUnlock_t  Unlock;
     LibEncrypt_t Encrypt;

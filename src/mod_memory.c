@@ -1856,21 +1856,28 @@ void* __cdecl MT_ucrtbase_malloc(uint size)
     errno lastErr = NO_ERROR;
     for (;;)
     {
-    #ifdef _WIN64
-        uint mHash = 0xC8979D68FC153E63;
-        uint pHash = 0xC3ED093E867586EE;
-        uint hKey  = 0x843D1732A8C40E00;
-    #elif _WIN32
-        uint mHash = 0xE116757B;
-        uint pHash = 0xF402BD57;
-        uint hKey  = 0x4B5196C8;
-    #endif
-        ucrtbase_malloc_t malloc = tracker->FindAPI(mHash, pHash, hKey);
+        // try to get API address from cache
+        ucrtbase_malloc_t malloc = tracker->ucrtbase_malloc;
         if (malloc == NULL)
         {
-            lastErr = ERR_MEMORY_API_NOT_FOUND;
-            break;
+        #ifdef _WIN64
+            uint mHash = 0xC8979D68FC153E63;
+            uint pHash = 0xC3ED093E867586EE;
+            uint hKey  = 0x843D1732A8C40E00;
+        #elif _WIN32
+            uint mHash = 0xE116757B;
+            uint pHash = 0xF402BD57;
+            uint hKey  = 0x4B5196C8;
+        #endif
+            malloc = tracker->FindAPI(mHash, pHash, hKey);
+            if (malloc == NULL)
+            {
+                lastErr = ERR_MEMORY_API_NOT_FOUND;
+                break;
+            }
+            tracker->ucrtbase_malloc = malloc;
         }
+        // call malloc
         address = malloc(size + BLOCK_MARK_SIZE);
         if (address == NULL)
         {
@@ -1910,21 +1917,28 @@ void* __cdecl MT_ucrtbase_calloc(uint num, uint size)
     errno lastErr = NO_ERROR;
     for (;;)
     {
-    #ifdef _WIN64
-        uint mHash = 0xBA11B584C0E2C354;
-        uint pHash = 0xB567215A4B430B3F;
-        uint hKey  = 0xBF71AC304E763DD9;
-    #elif _WIN32
-        uint mHash = 0x65389226;
-        uint pHash = 0x21A8EDB6;
-        uint hKey  = 0x83A98C6F;
-    #endif
-        ucrtbase_calloc_t calloc = tracker->FindAPI(mHash, pHash, hKey);
+        // try to get API address from cache
+        ucrtbase_calloc_t calloc = tracker->ucrtbase_calloc;
         if (calloc == NULL)
         {
-            lastErr = ERR_MEMORY_API_NOT_FOUND;
-            break;
+        #ifdef _WIN64
+            uint mHash = 0xBA11B584C0E2C354;
+            uint pHash = 0xB567215A4B430B3F;
+            uint hKey  = 0xBF71AC304E763DD9;
+        #elif _WIN32
+            uint mHash = 0x65389226;
+            uint pHash = 0x21A8EDB6;
+            uint hKey  = 0x83A98C6F;
+        #endif
+            calloc = tracker->FindAPI(mHash, pHash, hKey);
+            if (calloc == NULL)
+            {
+                lastErr = ERR_MEMORY_API_NOT_FOUND;
+                break;
+            }
+            tracker->ucrtbase_calloc = calloc;
         }
+        // call calloc
         address = calloc(num + BLOCK_MARK_SIZE, size);
         if (address == NULL)
         {
@@ -1969,35 +1983,46 @@ void* __cdecl MT_ucrtbase_realloc(void* ptr, uint size)
     errno lastErr = NO_ERROR;
     for (;;)
     {
-    #ifdef _WIN64
-        uint mHash = 0x11B0889A6084A30F;
-        uint pHash = 0x438FC396E49E76F1;
-        uint hKey  = 0x2147D0F4BBF0BF25;
-    #elif _WIN32
-        uint mHash = 0x611CB923;
-        uint pHash = 0xADA4F1A3;
-        uint hKey  = 0x964B5F08;
-    #endif
-        ucrtbase_realloc_t realloc = tracker->FindAPI(mHash, pHash, hKey);
+        // try to get API address from cache
+        ucrtbase_realloc_t realloc = tracker->ucrtbase_realloc;
         if (realloc == NULL)
         {
-            lastErr = ERR_MEMORY_API_NOT_FOUND;
-            break;
+        #ifdef _WIN64
+            uint mHash = 0x11B0889A6084A30F;
+            uint pHash = 0x438FC396E49E76F1;
+            uint hKey  = 0x2147D0F4BBF0BF25;
+        #elif _WIN32
+            uint mHash = 0x611CB923;
+            uint pHash = 0xADA4F1A3;
+            uint hKey  = 0x964B5F08;
+        #endif
+            realloc = tracker->FindAPI(mHash, pHash, hKey);
+            if (realloc == NULL)
+            {
+                lastErr = ERR_MEMORY_API_NOT_FOUND;
+                break;
+            }
+            tracker->ucrtbase_realloc = realloc;
         }
-    #ifdef _WIN64
-        mHash = 0x1831D75A4DDFA430;
-        pHash = 0x14374030484BEBDD;
-        hKey  = 0xE5F0D94E0ED9AC76;
-    #elif _WIN32
-        mHash = 0xDBC9F2B0;
-        pHash = 0xB8CB06F0;
-        hKey  = 0xFF1B4883;
-    #endif
-        ucrtbase_msize_t msize = tracker->FindAPI(mHash, pHash, hKey);
+        ucrtbase_msize_t msize = tracker->ucrtbase_msize;
         if (msize == NULL)
         {
-            lastErr = ERR_MEMORY_API_NOT_FOUND;
-            break;
+        #ifdef _WIN64
+            uint mHash = 0x1831D75A4DDFA430;
+            uint pHash = 0x14374030484BEBDD;
+            uint hKey  = 0xE5F0D94E0ED9AC76;
+        #elif _WIN32
+            uint mHash = 0xDBC9F2B0;
+            uint pHash = 0xB8CB06F0;
+            uint hKey  = 0xFF1B4883;
+        #endif
+            msize = tracker->FindAPI(mHash, pHash, hKey);
+            if (msize == NULL)
+            {
+                lastErr = ERR_MEMORY_API_NOT_FOUND;
+                break;
+            }
+            tracker->ucrtbase_msize = msize;
         }
         // get old size about heap block
         SIZE_T oSize = 0;
@@ -2063,35 +2088,46 @@ void __cdecl MT_ucrtbase_free(void* ptr)
     errno lastErr = NO_ERROR;
     for (;;)
     {
-    #ifdef _WIN64
-        uint mHash = 0x11B0889A6084A30F;
-        uint pHash = 0x438FC396E49E76F1;
-        uint hKey  = 0x2147D0F4BBF0BF25;
-    #elif _WIN32
-        uint mHash = 0x611CB923;
-        uint pHash = 0xADA4F1A3;
-        uint hKey  = 0x964B5F08;
-    #endif
-        ucrtbase_free_t free = tracker->FindAPI(mHash, pHash, hKey);
+        // try to get API address from cache
+        ucrtbase_free_t free = tracker->ucrtbase_free;
         if (free == NULL)
         {
-            lastErr = ERR_MEMORY_API_NOT_FOUND;
-            break;
+        #ifdef _WIN64
+            uint mHash = 0x11B0889A6084A30F;
+            uint pHash = 0x438FC396E49E76F1;
+            uint hKey  = 0x2147D0F4BBF0BF25;
+        #elif _WIN32
+            uint mHash = 0x611CB923;
+            uint pHash = 0xADA4F1A3;
+            uint hKey  = 0x964B5F08;
+        #endif
+            free = tracker->FindAPI(mHash, pHash, hKey);
+            if (free == NULL)
+            {
+                lastErr = ERR_MEMORY_API_NOT_FOUND;
+                break;
+            }
+            tracker->ucrtbase_free = free;
         }
-    #ifdef _WIN64
-        mHash = 0x1831D75A4DDFA430;
-        pHash = 0x14374030484BEBDD;
-        hKey  = 0xE5F0D94E0ED9AC76;
-    #elif _WIN32
-        mHash = 0xDBC9F2B0;
-        pHash = 0xB8CB06F0;
-        hKey  = 0xFF1B4883;
-    #endif
-        ucrtbase_msize_t msize = tracker->FindAPI(mHash, pHash, hKey);
+        ucrtbase_msize_t msize = tracker->ucrtbase_msize;
         if (msize == NULL)
         {
-            lastErr = ERR_MEMORY_API_NOT_FOUND;
-            break;
+        #ifdef _WIN64
+            uint mHash = 0x1831D75A4DDFA430;
+            uint pHash = 0x14374030484BEBDD;
+            uint hKey  = 0xE5F0D94E0ED9AC76;
+        #elif _WIN32
+            uint mHash = 0xDBC9F2B0;
+            uint pHash = 0xB8CB06F0;
+            uint hKey  = 0xFF1B4883;
+        #endif
+            msize = tracker->FindAPI(mHash, pHash, hKey);
+            if (msize == NULL)
+            {
+                lastErr = ERR_MEMORY_API_NOT_FOUND;
+                break;
+            }
+            tracker->ucrtbase_msize = msize;
         }
         // special case
         if (ptr == NULL)
@@ -2157,21 +2193,28 @@ uint __cdecl MT_ucrtbase_msize(void* ptr)
             lastErr = UCRTBASE_EINVAL;
             break;
         }
-    #ifdef _WIN64
-        uint mHash = 0x1831D75A4DDFA430;
-        uint pHash = 0x14374030484BEBDD;
-        uint hKey  = 0xE5F0D94E0ED9AC76;
-    #elif _WIN32
-        uint mHash = 0xDBC9F2B0;
-        uint pHash = 0xB8CB06F0;
-        uint hKey  = 0xFF1B4883;
-    #endif
-        ucrtbase_msize_t msize = tracker->FindAPI(mHash, pHash, hKey);
+        // try to get API address from cache
+        ucrtbase_msize_t msize = tracker->ucrtbase_msize;
         if (msize == NULL)
         {
-            lastErr = ERR_MEMORY_API_NOT_FOUND;
-            break;
+        #ifdef _WIN64
+            uint mHash = 0x1831D75A4DDFA430;
+            uint pHash = 0x14374030484BEBDD;
+            uint hKey  = 0xE5F0D94E0ED9AC76;
+        #elif _WIN32
+            uint mHash = 0xDBC9F2B0;
+            uint pHash = 0xB8CB06F0;
+            uint hKey  = 0xFF1B4883;
+        #endif
+            msize = tracker->FindAPI(mHash, pHash, hKey);
+            if (msize == NULL)
+            {
+                lastErr = ERR_MEMORY_API_NOT_FOUND;
+                break;
+            }
+            tracker->ucrtbase_msize = msize;
         }
+        // call msize
         memSize = msize(ptr);
         if (memSize < BLOCK_MARK_SIZE)
         {

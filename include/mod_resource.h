@@ -44,6 +44,7 @@ typedef errno (*ResFreeAll_t)();
 typedef errno (*ResClean_t)();
 
 typedef struct {
+    // for API redirector
     CreateMutexA_t   CreateMutexA;
     CreateMutexW_t   CreateMutexW;
     CreateMutexExA_t CreateMutexExA;
@@ -74,6 +75,7 @@ typedef struct {
 
     CreateIoCompletionPort_t CreateIoCompletionPort;
 
+    // for lazy API redirector
     RegCreateKeyA_t   RegCreateKeyA;
     RegCreateKeyW_t   RegCreateKeyW;
     RegCreateKeyExA_t RegCreateKeyExA;
@@ -90,14 +92,17 @@ typedef struct {
     accept_t     accept;
     shutdown_t   shutdown;
 
+    // about clean redirector
     CloseHandle_t CloseHandle;
     FindClose_t   FindClose;
     RegCloseKey_t RegCloseKey;
     closesocket_t closesocket;
 
+    // about lazy clean redirector
     WSAStartup_t WSAStartup;
     WSACleanup_t WSACleanup;
 
+    // for user
     ResLockMutex_t           LockMutex;
     ResUnlockMutex_t         UnlockMutex;
     ResLockEvent_t           LockEvent;
@@ -111,6 +116,7 @@ typedef struct {
     ResGetStatus_t           GetStatus;
     ResFreeAllMu_t           FreeAllMu;
 
+    // for runtime internal usage
     ResLock_t    Lock;
     ResUnlock_t  Unlock;
     ResEncrypt_t Encrypt;
@@ -120,6 +126,7 @@ typedef struct {
     ResFreeAll_t FreeAll;
     ResClean_t   Clean;
 
+    // data for sysmon
     HANDLE hMutex;
 } ResourceTracker_M;
 

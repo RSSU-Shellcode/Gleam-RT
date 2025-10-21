@@ -1456,21 +1456,28 @@ void* __cdecl MT_msvcrt_malloc(uint size)
     errno lastErr = NO_ERROR;
     for (;;)
     {
-    #ifdef _WIN64
-        uint mHash = 0x136CB071EF4DA0EF;
-        uint pHash = 0xA4E537E24F07D662;
-        uint hKey  = 0x329B6DA8E90118ED;
-    #elif _WIN32
-        uint mHash = 0x485F281D;
-        uint pHash = 0xBBEC7575;
-        uint hKey  = 0x1AECAE06;
-    #endif
-        msvcrt_malloc_t malloc = tracker->FindAPI(mHash, pHash, hKey);
+        // try to get API address from cache
+        msvcrt_malloc_t malloc = tracker->msvcrt_malloc;
         if (malloc == NULL)
         {
-            lastErr = ERR_MEMORY_API_NOT_FOUND;
-            break;
+        #ifdef _WIN64
+            uint mHash = 0x136CB071EF4DA0EF;
+            uint pHash = 0xA4E537E24F07D662;
+            uint hKey  = 0x329B6DA8E90118ED;
+        #elif _WIN32
+            uint mHash = 0x485F281D;
+            uint pHash = 0xBBEC7575;
+            uint hKey  = 0x1AECAE06;
+        #endif
+            malloc = tracker->FindAPI(mHash, pHash, hKey);
+            if (malloc == NULL)
+            {
+                lastErr = ERR_MEMORY_API_NOT_FOUND;
+                break;
+            }
+            tracker->msvcrt_malloc = malloc;
         }
+        // call malloc
         address = malloc(size + BLOCK_MARK_SIZE);
         if (address == NULL)
         {
@@ -1510,28 +1517,35 @@ void* __cdecl MT_msvcrt_calloc(uint num, uint size)
     errno lastErr = NO_ERROR;
     for (;;)
     {
-    #ifdef _WIN64
-        uint mHash = 0x24BEF2B1B592657B;
-        uint pHash = 0x63F6205AAA82CF4E;
-        uint hKey  = 0xC5BAF8FCBD2172F4;
-    #elif _WIN32
-        uint mHash = 0x486DC33E;
-        uint pHash = 0x1EF14D6E;
-        uint hKey  = 0x9E9C4BA5;
-    #endif
-        msvcrt_calloc_t calloc = tracker->FindAPI(mHash, pHash, hKey);
+        // try to get API address from cache
+        msvcrt_calloc_t calloc = tracker->msvcrt_calloc;
         if (calloc == NULL)
         {
-            lastErr = ERR_MEMORY_API_NOT_FOUND;
-            break;
+        #ifdef _WIN64
+            uint mHash = 0x24BEF2B1B592657B;
+            uint pHash = 0x63F6205AAA82CF4E;
+            uint hKey  = 0xC5BAF8FCBD2172F4;
+        #elif _WIN32
+            uint mHash = 0x486DC33E;
+            uint pHash = 0x1EF14D6E;
+            uint hKey  = 0x9E9C4BA5;
+        #endif
+            calloc = tracker->FindAPI(mHash, pHash, hKey);
+            if (calloc == NULL)
+            {
+                lastErr = ERR_MEMORY_API_NOT_FOUND;
+                break;
+            }
+            tracker->msvcrt_calloc = calloc;
         }
+        // call calloc
         address = calloc(num + BLOCK_MARK_SIZE, size);
         if (address == NULL)
         {
             lastErr = GetLastErrno();
             break;
         }
-        if (size == 0)
+        if (num == 0 || size == 0)
         {
             break;
         }
@@ -1569,35 +1583,46 @@ void* __cdecl MT_msvcrt_realloc(void* ptr, uint size)
     errno lastErr = NO_ERROR;
     for (;;)
     {
-    #ifdef _WIN64
-        uint mHash = 0x135AAA35D376EF41;
-        uint pHash = 0x51A8F630FC8E67C4;
-        uint hKey  = 0xFF7BCB0F578542FA;
-    #elif _WIN32
-        uint mHash = 0x4E56C9CF;
-        uint pHash = 0xBE2BFEFB;
-        uint hKey  = 0xCF70F7F3;
-    #endif
-        msvcrt_realloc_t realloc = tracker->FindAPI(mHash, pHash, hKey);
+        // try to get API address from cache
+        msvcrt_realloc_t realloc = tracker->msvcrt_realloc;
         if (realloc == NULL)
         {
-            lastErr = ERR_MEMORY_API_NOT_FOUND;
-            break;
+        #ifdef _WIN64
+            uint mHash = 0x135AAA35D376EF41;
+            uint pHash = 0x51A8F630FC8E67C4;
+            uint hKey  = 0xFF7BCB0F578542FA;
+        #elif _WIN32
+            uint mHash = 0x4E56C9CF;
+            uint pHash = 0xBE2BFEFB;
+            uint hKey  = 0xCF70F7F3;
+        #endif
+            realloc = tracker->FindAPI(mHash, pHash, hKey);
+            if (realloc == NULL)
+            {
+                lastErr = ERR_MEMORY_API_NOT_FOUND;
+                break;
+            }
+            tracker->msvcrt_realloc = realloc;
         }
-    #ifdef _WIN64
-        mHash = 0xFF919BD0F407C246;
-        pHash = 0x5E0B85F02E4FEC22;
-        hKey  = 0x9855E214CD9310A8;
-    #elif _WIN32
-        mHash = 0x3DD7996A;
-        pHash = 0x845CB2FD;
-        hKey  = 0x9591B59B;
-    #endif
-        msvcrt_msize_t msize = tracker->FindAPI(mHash, pHash, hKey);
+        msvcrt_msize_t msize = tracker->msvcrt_msize;
         if (msize == NULL)
         {
-            lastErr = ERR_MEMORY_API_NOT_FOUND;
-            break;
+        #ifdef _WIN64
+            uint mHash = 0xFF919BD0F407C246;
+            uint pHash = 0x5E0B85F02E4FEC22;
+            uint hKey  = 0x9855E214CD9310A8;
+        #elif _WIN32
+            uint mHash = 0x3DD7996A;
+            uint pHash = 0x845CB2FD;
+            uint hKey  = 0x9591B59B;
+        #endif
+            msize = tracker->FindAPI(mHash, pHash, hKey);
+            if (msize == NULL)
+            {
+                lastErr = ERR_MEMORY_API_NOT_FOUND;
+                break;
+            }
+            tracker->msvcrt_msize = msize;
         }
         // get old size about heap block
         SIZE_T oSize = 0;
@@ -1663,35 +1688,46 @@ void __cdecl MT_msvcrt_free(void* ptr)
     errno lastErr = NO_ERROR;
     for (;;)
     {
-    #ifdef _WIN64
-        uint mHash = 0xDE6C9ADEF3C34189;
-        uint pHash = 0x0E9B5E427C74F4E4;
-        uint hKey  = 0xA57ED0DE75FBF6D8;
-    #elif _WIN32
-        uint mHash = 0x14AC52AA;
-        uint pHash = 0xA5B6E022;
-        uint hKey  = 0x626D1BC5;
-    #endif
-        msvcrt_free_t free = tracker->FindAPI(mHash, pHash, hKey);
+        // try to get API address from cache
+        msvcrt_free_t free = tracker->msvcrt_free;
         if (free == NULL)
         {
-            lastErr = ERR_MEMORY_API_NOT_FOUND;
-            break;
+        #ifdef _WIN64
+            uint mHash = 0xDE6C9ADEF3C34189;
+            uint pHash = 0x0E9B5E427C74F4E4;
+            uint hKey  = 0xA57ED0DE75FBF6D8;
+        #elif _WIN32
+            uint mHash = 0x14AC52AA;
+            uint pHash = 0xA5B6E022;
+            uint hKey  = 0x626D1BC5;
+        #endif
+            free = tracker->FindAPI(mHash, pHash, hKey);
+            if (free == NULL)
+            {
+                lastErr = ERR_MEMORY_API_NOT_FOUND;
+                break;
+            }
+            tracker->msvcrt_free = free;
         }
-    #ifdef _WIN64
-        mHash = 0xFF919BD0F407C246;
-        pHash = 0x5E0B85F02E4FEC22;
-        hKey  = 0x9855E214CD9310A8;
-    #elif _WIN32
-        mHash = 0x3DD7996A;
-        pHash = 0x845CB2FD;
-        hKey  = 0x9591B59B;
-    #endif
-        msvcrt_msize_t msize = tracker->FindAPI(mHash, pHash, hKey);
+        msvcrt_msize_t msize = tracker->msvcrt_msize;
         if (msize == NULL)
         {
-            lastErr = ERR_MEMORY_API_NOT_FOUND;
-            break;
+        #ifdef _WIN64
+            uint mHash = 0xFF919BD0F407C246;
+            uint pHash = 0x5E0B85F02E4FEC22;
+            uint hKey  = 0x9855E214CD9310A8;
+        #elif _WIN32
+            uint mHash = 0x3DD7996A;
+            uint pHash = 0x845CB2FD;
+            uint hKey  = 0x9591B59B;
+        #endif
+            msize = tracker->FindAPI(mHash, pHash, hKey);
+            if (msize == NULL)
+            {
+                lastErr = ERR_MEMORY_API_NOT_FOUND;
+                break;
+            }
+            tracker->msvcrt_msize = msize;
         }
         // special case
         if (ptr == NULL)
@@ -1748,8 +1784,8 @@ uint __cdecl MT_msvcrt_msize(void* ptr)
         return (SIZE_T)(-1);
     }
 
-    SIZE_T size = (SIZE_T)(-1);
-    errno lastErr = NO_ERROR;
+    SIZE_T memSize = (SIZE_T)(-1);
+    errno  lastErr = NO_ERROR;
     for (;;)
     {
         if (ptr == NULL)
@@ -1757,38 +1793,45 @@ uint __cdecl MT_msvcrt_msize(void* ptr)
             lastErr = MSVCRT_EINVAL;
             break;
         }
-    #ifdef _WIN64
-        uint mHash = 0xFF919BD0F407C246;
-        uint pHash = 0x5E0B85F02E4FEC22;
-        uint hKey  = 0x9855E214CD9310A8;
-    #elif _WIN32
-        uint mHash = 0x3DD7996A;
-        uint pHash = 0x845CB2FD;
-        uint hKey  = 0x9591B59B;
-    #endif
-        msvcrt_msize_t msize = tracker->FindAPI(mHash, pHash, hKey);
+        // try to get API address from cache
+        msvcrt_msize_t msize = tracker->msvcrt_msize;
         if (msize == NULL)
         {
-            lastErr = ERR_MEMORY_API_NOT_FOUND;
-            break;
+        #ifdef _WIN64
+            uint mHash = 0xFF919BD0F407C246;
+            uint pHash = 0x5E0B85F02E4FEC22;
+            uint hKey  = 0x9855E214CD9310A8;
+        #elif _WIN32
+            uint mHash = 0x3DD7996A;
+            uint pHash = 0x845CB2FD;
+            uint hKey  = 0x9591B59B;
+        #endif
+            msize = tracker->FindAPI(mHash, pHash, hKey);
+            if (msize == NULL)
+            {
+                lastErr = ERR_MEMORY_API_NOT_FOUND;
+                break;
+            }
+            tracker->msvcrt_msize = msize;
         }
-        size = msize(ptr);
-        if (size < BLOCK_MARK_SIZE)
+        // call msize
+        memSize = msize(ptr);
+        if (memSize < BLOCK_MARK_SIZE)
         {
             break;
         }
         // check it is a marked block and adjust the return size
         uintptr block = (uintptr)ptr;
-        uint bSize = size - BLOCK_MARK_SIZE;
+        uint bSize = memSize - BLOCK_MARK_SIZE;
         uint mark  = *(uint*)(block + bSize);
         if (calcHeapMark(tracker, block, bSize) == mark)
         {
-            size -= BLOCK_MARK_SIZE;
+            memSize -= BLOCK_MARK_SIZE;
         }
         break;
     }
 
-    dbg_log("[memory]", "msvcrt.msize: %zu, ptr: 0x%zX", size, ptr);
+    dbg_log("[memory]", "msvcrt.msize: %zu, ptr: 0x%zX", memSize, ptr);
 
     if (!MT_Unlock())
     {
@@ -1796,7 +1839,7 @@ uint __cdecl MT_msvcrt_msize(void* ptr)
     }
 
     SetLastErrno(lastErr);
-    return size;
+    return memSize;
 }
 
 __declspec(noinline) 
@@ -1888,7 +1931,7 @@ void* __cdecl MT_ucrtbase_calloc(uint num, uint size)
             lastErr = GetLastErrno();
             break;
         }
-        if (size == 0)
+        if (num == 0 || size == 0)
         {
             break;
         }
@@ -2105,8 +2148,8 @@ uint __cdecl MT_ucrtbase_msize(void* ptr)
         return (SIZE_T)(-1);
     }
 
-    SIZE_T size = (SIZE_T)(-1);
-    errno lastErr = NO_ERROR;
+    SIZE_T memSize = (SIZE_T)(-1);
+    errno  lastErr = NO_ERROR;
     for (;;)
     {
         if (ptr == NULL)
@@ -2129,23 +2172,23 @@ uint __cdecl MT_ucrtbase_msize(void* ptr)
             lastErr = ERR_MEMORY_API_NOT_FOUND;
             break;
         }
-        size = msize(ptr);
-        if (size < BLOCK_MARK_SIZE)
+        memSize = msize(ptr);
+        if (memSize < BLOCK_MARK_SIZE)
         {
             break;
         }
         // check it is a marked block and adjust the return size
         uintptr block = (uintptr)ptr;
-        uint bSize = size - BLOCK_MARK_SIZE;
+        uint bSize = memSize - BLOCK_MARK_SIZE;
         uint mark  = *(uint*)(block + bSize);
         if (calcHeapMark(tracker, block, bSize) == mark)
         {
-            size -= BLOCK_MARK_SIZE;
+            memSize -= BLOCK_MARK_SIZE;
         }
         break;
     }
 
-    dbg_log("[memory]", "ucrtbase.msize: %zu, ptr: 0x%zX", size, ptr);
+    dbg_log("[memory]", "ucrtbase.msize: %zu, ptr: 0x%zX", memSize, ptr);
 
     if (!MT_Unlock())
     {
@@ -2153,7 +2196,7 @@ uint __cdecl MT_ucrtbase_msize(void* ptr)
     }
 
     SetLastErrno(lastErr);
-    return size;
+    return memSize;
 }
 
 __declspec(noinline)

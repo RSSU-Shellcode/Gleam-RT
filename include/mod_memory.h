@@ -84,7 +84,7 @@ typedef struct {
     MemGetStatus_t    GetStatus;
     MemFreeAllMu_t    FreeAllMu;
 
-    // for runtime internel usage
+    // for runtime internal usage
     MemLock_t    Lock;
     MemUnlock_t  Unlock;
     MemEncrypt_t Encrypt;

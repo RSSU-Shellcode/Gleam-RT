@@ -32,6 +32,7 @@ typedef errno (*ThdKillAll_t)();
 typedef errno (*ThdClean_t)();
 
 typedef struct {
+    // for API redirector
     CreateThread_t     CreateThread;
     ExitThread_t       ExitThread;
     SuspendThread_t    SuspendThread;
@@ -43,6 +44,7 @@ typedef struct {
     TlsAlloc_t         TlsAlloc;
     TlsFree_t          TlsFree;
 
+    // for user
     ThdNew_t   New;
     ThdExit_t  Exit;
     ThdSleep_t Sleep;
@@ -52,6 +54,7 @@ typedef struct {
     ThdGetStatus_t    GetStatus;
     ThdKillAllMu_t    KillAllMu;
 
+    // for runtime internal usage
     ThdLock_t      Lock;
     ThdUnlock_t    Unlock;
     ThdSuspend_t   Suspend;
@@ -61,6 +64,7 @@ typedef struct {
     ThdKillAll_t   KillAll;
     ThdClean_t     Clean;
 
+    // data for sysmon
     HANDLE hMutex;
 } ThreadTracker_M;
 

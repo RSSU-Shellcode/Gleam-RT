@@ -39,7 +39,7 @@ typedef bool  (*ResUnlock_t)();
 typedef errno (*ResEncrypt_t)();
 typedef errno (*ResDecrypt_t)();
 typedef void  (*ResFlush_t)();
-typedef errno (*ResFlushMu_t)();
+typedef bool  (*ResFlushMu_t)();
 typedef errno (*ResFreeAll_t)();
 typedef errno (*ResClean_t)();
 

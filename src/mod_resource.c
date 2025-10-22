@@ -137,9 +137,26 @@ typedef struct {
     ReleaseMutex_t           ReleaseMutex;
     WaitForSingleObject_t    WaitForSingleObject;
 
-    // cached API addresses
-    CancelIoEx_t  CancelIoEx;
-    RegCloseKey_t RegCloseKey;
+    // Cached API addresses
+    CancelIoEx_t CancelIoEx;
+
+    RegCreateKeyA_t   RegCreateKeyA;
+    RegCreateKeyW_t   RegCreateKeyW;
+    RegCreateKeyExA_t RegCreateKeyExA;
+    RegCreateKeyExW_t RegCreateKeyExW;
+    RegOpenKeyA_t     RegOpenKeyA;
+    RegOpenKeyW_t     RegOpenKeyW;
+    RegOpenKeyExA_t   RegOpenKeyExA;
+    RegOpenKeyExW_t   RegOpenKeyExW;
+    RegCloseKey_t     RegCloseKey;
+
+    WSAStartup_t  WSAStartup;
+    WSACleanup_t  WSACleanup;
+    WSASocketA_t  WSASocketA;
+    WSASocketW_t  WSASocketW;
+    WSAIoctl_t    WSAIoctl;
+    socket_t      socket;
+    accept_t      accept;
     shutdown_t    shutdown;
     closesocket_t closesocket;
 
@@ -292,7 +309,7 @@ bool  RT_Unlock();
 errno RT_Encrypt();
 errno RT_Decrypt();
 void  RT_Flush();
-errno RT_FlushMu();
+bool  RT_FlushMu();
 errno RT_FreeAll();
 errno RT_Clean();
 
@@ -2727,15 +2744,44 @@ void RT_Flush()
 {
     ResourceTracker* tracker = getTrackerPointer();
 
+    tracker->CancelIoEx = NULL;
 
+    tracker->RegCreateKeyA   = NULL;
+    tracker->RegCreateKeyW   = NULL;
+    tracker->RegCreateKeyExA = NULL;
+    tracker->RegCreateKeyExW = NULL;
+    tracker->RegOpenKeyA     = NULL;
+    tracker->RegOpenKeyW     = NULL;
+    tracker->RegOpenKeyExA   = NULL;
+    tracker->RegOpenKeyExW   = NULL;
+    tracker->RegCloseKey     = NULL;
+
+    tracker->WSAStartup  = NULL;
+    tracker->WSACleanup  = NULL;
+    tracker->WSASocketA  = NULL;
+    tracker->WSASocketW  = NULL;
+    tracker->WSAIoctl    = NULL;
+    tracker->socket      = NULL;
+    tracker->accept      = NULL;
+    tracker->shutdown    = NULL;
+    tracker->closesocket = NULL;
 }
 
 __declspec(noinline)
-errno RT_FlushMu()
+bool RT_FlushMu()
 {
-    ResourceTracker* tracker = getTrackerPointer();
+    if (!RT_Lock())
+    {
+        return false;
+    }
 
-    return NO_ERROR;
+    RT_Flush();
+
+    if (!RT_Unlock())
+    {
+        return false;
+    }
+    return true;
 }
 
 __declspec(noinline)

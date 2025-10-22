@@ -18,18 +18,21 @@ typedef errno (*ImsDecrypt_t)();
 typedef errno (*ImsClean_t)();
 
 typedef struct {
+    // for user
     ImsSetValue_t   SetValue;
     ImsGetValue_t   GetValue;
     ImsGetPointer_t GetPointer;
     ImsDelete_t     Delete;
     ImsDeleteAll_t  DeleteAll;
 
+    // for runtime internal usage
     ImsLock_t    Lock;
     ImsUnlock_t  Unlock;
     ImsEncrypt_t Encrypt;
     ImsDecrypt_t Decrypt;
     ImsClean_t   Clean;
 
+    // data for sysmon
     HANDLE hMutex;
 } InMemoryStorage_M;
 

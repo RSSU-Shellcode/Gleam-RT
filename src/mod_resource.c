@@ -2608,7 +2608,7 @@ bool RT_GetStatus(RT_Status* status)
     int64 numFiles   = 0;
     int64 numDirs    = 0;
     int64 numIOCPs   = 0;
-    int64 numKeys    = 0;
+    int64 numRegKeys = 0;
     int64 numSockets = 0;
 
     uint len = handles->Len;
@@ -2644,7 +2644,7 @@ bool RT_GetStatus(RT_Status* status)
             numIOCPs++;
             break;
         case FUNC_REG_CREATE_KEY: case FUNC_REG_OPEN_KEY:
-            numKeys++;
+            numRegKeys++;
             break;
         case FUNC_WSA_SOCKET: case FUNC_SOCKET: case FUNC_ACCEPT:
             numSockets++;
@@ -2665,7 +2665,7 @@ bool RT_GetStatus(RT_Status* status)
     status->NumFiles          = numFiles;
     status->NumDirectories    = numDirs;
     status->NumIOCPs          = numIOCPs;
-    status->NumKeys           = numKeys;
+    status->NumRegKeys        = numRegKeys;
     status->NumSockets        = numSockets;
     return true;
 }

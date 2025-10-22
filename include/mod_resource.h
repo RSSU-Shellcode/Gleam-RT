@@ -17,7 +17,7 @@ typedef struct {
     int64 NumFiles;
     int64 NumDirectories;
     int64 NumIOCPs;
-    int64 NumKeys;
+    int64 NumRegKeys;
     int64 NumSockets;
 } RT_Status;
 

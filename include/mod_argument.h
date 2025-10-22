@@ -32,17 +32,20 @@ typedef errno (*ArgDecrypt_t)();
 typedef errno (*ArgClean_t)();
 
 typedef struct {
+    // for user
     ArgGetValue_t   GetValue;
     ArgGetPointer_t GetPointer;
     ArgErase_t      Erase;
     ArgEraseAll_t   EraseAll;
 
+    // for runtime internal usage
     ArgLock_t    Lock;
     ArgUnlock_t  Unlock;
     ArgEncrypt_t Encrypt;
     ArgDecrypt_t Decrypt;
     ArgClean_t   Clean;
 
+    // data for sysmon
     HANDLE hMutex;
 } ArgumentStore_M;
 

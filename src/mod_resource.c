@@ -1646,20 +1646,26 @@ LSTATUS RT_RegOpenKeyA(HKEY hKey, LPCSTR lpSubKey, HKEY* phkResult)
     errno   lastErr = NO_ERROR;
     for (;;)
     {
-    #ifdef _WIN64
-        uint mHash = 0xFA7EA8AF31135B54;
-        uint pHash = 0x22D8B65730135F58;
-        uint hhKey = 0x60FDAD6E29C89B00;
-    #elif _WIN32
-        uint mHash = 0x5FE996AD;
-        uint pHash = 0x1FADD8BD;
-        uint hhKey = 0x94E3EBAE;
-    #endif
-        RegOpenKeyA_t RegOpenKeyA = tracker->FindAPI(mHash, pHash, hhKey);
+        // try to get API address from cache
+        RegOpenKeyA_t RegOpenKeyA = tracker->RegOpenKeyA;
         if (RegOpenKeyA == NULL)
         {
-            lastErr = ERR_RESOURCE_API_NOT_FOUND;
-            break;
+        #ifdef _WIN64
+            uint mHash = 0xFA7EA8AF31135B54;
+            uint pHash = 0x22D8B65730135F58;
+            uint hhKey = 0x60FDAD6E29C89B00;
+        #elif _WIN32
+            uint mHash = 0x5FE996AD;
+            uint pHash = 0x1FADD8BD;
+            uint hhKey = 0x94E3EBAE;
+        #endif
+            RegOpenKeyA = tracker->FindAPI(mHash, pHash, hhKey);
+            if (RegOpenKeyA == NULL)
+            {
+                lastErr = ERR_RESOURCE_API_NOT_FOUND;
+                break;
+            }
+            tracker->RegOpenKeyA = RegOpenKeyA;
         }
         lStatus = RegOpenKeyA(hKey, lpSubKey, phkResult);
         if (lStatus != ERROR_SUCCESS)
@@ -1688,20 +1694,26 @@ LSTATUS RT_RegOpenKeyW(HKEY hKey, LPCWSTR lpSubKey, HKEY* phkResult)
     errno   lastErr = NO_ERROR;
     for (;;)
     {
-    #ifdef _WIN64
-        uint mHash = 0x38F57CDA6CA1BF80;
-        uint pHash = 0x5D2DA71712AD845F;
-        uint hhKey = 0xF3F6F1F37138E467;
-    #elif _WIN32
-        uint mHash = 0x7370A861;
-        uint pHash = 0x4D8DD02E;
-        uint hhKey = 0x6B7B9626;
-    #endif
-        RegOpenKeyW_t RegOpenKeyW = tracker->FindAPI(mHash, pHash, hhKey);
+        // try to get API address from cache
+        RegOpenKeyW_t RegOpenKeyW = tracker->RegOpenKeyW;
         if (RegOpenKeyW == NULL)
         {
-            lastErr = ERR_RESOURCE_API_NOT_FOUND;
-            break;
+        #ifdef _WIN64
+            uint mHash = 0x38F57CDA6CA1BF80;
+            uint pHash = 0x5D2DA71712AD845F;
+            uint hhKey = 0xF3F6F1F37138E467;
+        #elif _WIN32
+            uint mHash = 0x7370A861;
+            uint pHash = 0x4D8DD02E;
+            uint hhKey = 0x6B7B9626;
+        #endif
+            RegOpenKeyW = tracker->FindAPI(mHash, pHash, hhKey);
+            if (RegOpenKeyW == NULL)
+            {
+                lastErr = ERR_RESOURCE_API_NOT_FOUND;
+                break;
+            }
+            tracker->RegOpenKeyW = RegOpenKeyW;
         }
         lStatus = RegOpenKeyW(hKey, lpSubKey, phkResult);
         if (lStatus != ERROR_SUCCESS)
@@ -1731,20 +1743,26 @@ LSTATUS RT_RegOpenKeyExA(
     errno   lastErr = NO_ERROR;
     for (;;)
     {
-    #ifdef _WIN64
-        uint mHash = 0x2AE0601CC475EB1A;
-        uint pHash = 0xAAE3DFB521796E88;
-        uint hhKey = 0x22106841BD214082;
-    #elif _WIN32
-        uint mHash = 0xF2834E35;
-        uint pHash = 0x93E426ED;
-        uint hhKey = 0xFAB77358;
-    #endif
-        RegOpenKeyExA_t RegOpenKeyExA = tracker->FindAPI(mHash, pHash, hhKey);
+        // try to get API address from cache
+        RegOpenKeyExA_t RegOpenKeyExA = tracker->RegOpenKeyExA;
         if (RegOpenKeyExA == NULL)
         {
-            lastErr = ERR_RESOURCE_API_NOT_FOUND;
-            break;
+        #ifdef _WIN64
+            uint mHash = 0x2AE0601CC475EB1A;
+            uint pHash = 0xAAE3DFB521796E88;
+            uint hhKey = 0x22106841BD214082;
+        #elif _WIN32
+            uint mHash = 0xF2834E35;
+            uint pHash = 0x93E426ED;
+            uint hhKey = 0xFAB77358;
+        #endif
+            RegOpenKeyExA = tracker->FindAPI(mHash, pHash, hhKey);
+            if (RegOpenKeyExA == NULL)
+            {
+                lastErr = ERR_RESOURCE_API_NOT_FOUND;
+                break;
+            }
+            tracker->RegOpenKeyExA = RegOpenKeyExA;
         }
         lStatus = RegOpenKeyExA(
             hKey, lpSubKey, ulOptions, samDesired, phkResult
@@ -1776,20 +1794,26 @@ LSTATUS RT_RegOpenKeyExW(
     errno   lastErr = NO_ERROR;
     for (;;)
     {
-    #ifdef _WIN64
-        uint mHash = 0x532BAEA98DA2BA54;
-        uint pHash = 0x7509BA27645BDAD3;
-        uint hhKey = 0x55CCE92A674BE515;
-    #elif _WIN32
-        uint mHash = 0xB68F1718;
-        uint pHash = 0x57EFEFE7;
-        uint hhKey = 0x7B845953;
-    #endif
-        RegOpenKeyExW_t RegOpenKeyExW = tracker->FindAPI(mHash, pHash, hhKey);
+        // try to get API address from cache
+        RegOpenKeyExW_t RegOpenKeyExW = tracker->RegOpenKeyExW;
         if (RegOpenKeyExW == NULL)
         {
-            lastErr = ERR_RESOURCE_API_NOT_FOUND;
-            break;
+        #ifdef _WIN64
+            uint mHash = 0x532BAEA98DA2BA54;
+            uint pHash = 0x7509BA27645BDAD3;
+            uint hhKey = 0x55CCE92A674BE515;
+        #elif _WIN32
+            uint mHash = 0xB68F1718;
+            uint pHash = 0x57EFEFE7;
+            uint hhKey = 0x7B845953;
+        #endif
+            RegOpenKeyExW = tracker->FindAPI(mHash, pHash, hhKey);
+            if (RegOpenKeyExW == NULL)
+            {
+                lastErr = ERR_RESOURCE_API_NOT_FOUND;
+                break;
+            }
+            tracker->RegOpenKeyExW = RegOpenKeyExW;
         }
         lStatus = RegOpenKeyExW(
             hKey, lpSubKey, ulOptions, samDesired, phkResult

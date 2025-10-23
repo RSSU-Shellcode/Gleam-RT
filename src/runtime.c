@@ -1571,28 +1571,21 @@ bool RT_flush_api_cache()
 {
     Runtime* runtime = getRuntimePointer();
 
-    errno errno = NO_ERROR;
+    bool success = false;
     for (;;)
     {
-        errno = runtime->MemoryTracker->Flush();
-        if (errno != NO_ERROR)
+        if (!runtime->MemoryTracker->FlushMu())
         {
             break;
         }
-        errno = runtime->ResourceTracker->Flush();
-        if (errno != NO_ERROR)
+        if (!runtime->ResourceTracker->FlushMu())
         {
             break;
         }
+        success = true;
         break;
     }
-
-    if (errno != NO_ERROR)
-    {
-        SetLastErrno(errno);
-        return false;
-    }
-    return true;
+    return success;
 }
 
 __declspec(noinline)
@@ -2477,6 +2470,10 @@ errno RT_Cleanup()
             err = enmod;
         }
     }
+
+    // flush Windows API cache without mutex
+    runtime->MemoryTracker->Flush();
+    runtime->ResourceTracker->Flush();
 
     errno errum = RT_unlock_mods();
     if (errum != NO_ERROR)

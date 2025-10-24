@@ -2243,20 +2243,26 @@ LSTATUS RT_RegCloseKey(HKEY hKey)
     errno   lastErr = NO_ERROR;
     for (;;)
     {
-    #ifdef _WIN64
-        uint mHash = 0xBF61DC9DB58F2119;
-        uint pHash = 0x634B2EA7763B50E7;
-        uint hhKey = 0x1E92D01ACD546FAA;
-    #elif _WIN32
-        uint mHash = 0x21897061;
-        uint pHash = 0x05759268;
-        uint hhKey = 0x6DD08644;
-    #endif
-        RegCloseKey_t RegCloseKey = tracker->FindAPI(mHash, pHash, hhKey);
+        // try to get API address from cache
+        RegCloseKey_t RegCloseKey = tracker->RegCloseKey;
         if (RegCloseKey == NULL)
         {
-            lastErr = ERR_RESOURCE_API_NOT_FOUND;
-            break;
+        #ifdef _WIN64
+            uint mHash = 0xBF61DC9DB58F2119;
+            uint pHash = 0x634B2EA7763B50E7;
+            uint hhKey = 0x1E92D01ACD546FAA;
+        #elif _WIN32
+            uint mHash = 0x21897061;
+            uint pHash = 0x05759268;
+            uint hhKey = 0x6DD08644;
+        #endif
+            RegCloseKey = tracker->FindAPI(mHash, pHash, hhKey);
+            if (RegCloseKey == NULL)
+            {
+                lastErr = ERR_RESOURCE_API_NOT_FOUND;
+                break;
+            }
+            tracker->RegCloseKey = RegCloseKey;
         }
         lStatus = RegCloseKey(hKey);
         if (lStatus != ERROR_SUCCESS)
@@ -2286,20 +2292,26 @@ int RT_closesocket(SOCKET hSocket)
     errno lastErr = NO_ERROR;
     for (;;)
     {
-    #ifdef _WIN64
-        uint mHash = 0xEF92E9B35ECEA6BA;
-        uint pHash = 0xEE5724C40D2CCCD2;
-        uint hKey  = 0xA7D1387163EE7961;
-    #elif _WIN32
-        uint mHash = 0x5585015C;
-        uint pHash = 0xE4D20008;
-        uint hKey  = 0xE6423398;
-    #endif
-        closesocket_t closesocket = tracker->FindAPI(mHash, pHash, hKey);
+        // try to get API address from cache
+        closesocket_t closesocket = tracker->closesocket;
         if (closesocket == NULL)
         {
-            lastErr = ERR_RESOURCE_API_NOT_FOUND;
-            break;
+        #ifdef _WIN64
+            uint mHash = 0xEF92E9B35ECEA6BA;
+            uint pHash = 0xEE5724C40D2CCCD2;
+            uint hKey  = 0xA7D1387163EE7961;
+        #elif _WIN32
+            uint mHash = 0x5585015C;
+            uint pHash = 0xE4D20008;
+            uint hKey  = 0xE6423398;
+        #endif
+            closesocket = tracker->FindAPI(mHash, pHash, hKey);
+            if (closesocket == NULL)
+            {
+                lastErr = ERR_RESOURCE_API_NOT_FOUND;
+                break;
+            }
+            tracker->closesocket = closesocket;
         }
         int ret = closesocket(hSocket);
         lastErr = GetLastErrno();
@@ -2467,20 +2479,26 @@ int RT_WSAStartup(WORD wVersionRequired, POINTER lpWSAData)
     errno lastErr = NO_ERROR;
     for (;;)
     {
-    #ifdef _WIN64
-        uint mHash = 0xEA897E8A6C57363D;
-        uint pHash = 0x2A32B9468CED7FC7;
-        uint hKey  = 0xADEBF9D727119E08;
-    #elif _WIN32
-        uint mHash = 0xFCDD5F57;
-        uint pHash = 0x6C10A1BE;
-        uint hKey  = 0x36C5B1D5;
-    #endif
-        WSAStartup_t WSAStartup = tracker->FindAPI(mHash, pHash, hKey);
+        // try to get API address from cache
+        WSAStartup_t WSAStartup = tracker->WSAStartup;
         if (WSAStartup == NULL)
         {
-            lastErr = ERR_RESOURCE_API_NOT_FOUND;
-            break;
+        #ifdef _WIN64
+            uint mHash = 0xEA897E8A6C57363D;
+            uint pHash = 0x2A32B9468CED7FC7;
+            uint hKey  = 0xADEBF9D727119E08;
+        #elif _WIN32
+            uint mHash = 0xFCDD5F57;
+            uint pHash = 0x6C10A1BE;
+            uint hKey  = 0x36C5B1D5;
+        #endif
+            WSAStartup = tracker->FindAPI(mHash, pHash, hKey);
+            if (WSAStartup == NULL)
+            {
+                lastErr = ERR_RESOURCE_API_NOT_FOUND;
+                break;
+            }
+            tracker->WSAStartup = WSAStartup;
         }
         retVal = WSAStartup(wVersionRequired, lpWSAData);
         if (retVal == 0)
@@ -2515,20 +2533,26 @@ int RT_WSACleanup()
     errno lastErr = NO_ERROR;
     for (;;)
     {
-    #ifdef _WIN64
-        uint mHash = 0x4315CA7C2DE0953F;
-        uint pHash = 0xFAA60831E40346AA;
-        uint hKey  = 0xEB60CFC4E8AF64CE;
-    #elif _WIN32
-        uint mHash = 0x3F43DBA5;
-        uint pHash = 0x2F28803E;
-        uint hKey  = 0xFEC6856A;
-    #endif
-        WSACleanup_t WSACleanup = tracker->FindAPI(mHash, pHash, hKey);
+        // try to get API address from cache
+        WSACleanup_t WSACleanup = tracker->WSACleanup;
         if (WSACleanup == NULL)
         {
-            lastErr = ERR_RESOURCE_API_NOT_FOUND;
-            break;
+        #ifdef _WIN64
+            uint mHash = 0x4315CA7C2DE0953F;
+            uint pHash = 0xFAA60831E40346AA;
+            uint hKey  = 0xEB60CFC4E8AF64CE;
+        #elif _WIN32
+            uint mHash = 0x3F43DBA5;
+            uint pHash = 0x2F28803E;
+            uint hKey  = 0xFEC6856A;
+        #endif
+            WSACleanup = tracker->FindAPI(mHash, pHash, hKey);
+            if (WSACleanup == NULL)
+            {
+                lastErr = ERR_RESOURCE_API_NOT_FOUND;
+                break;
+            }
+            tracker->WSACleanup = WSACleanup;
         }
         retVal = WSACleanup();
         if (retVal == 0)

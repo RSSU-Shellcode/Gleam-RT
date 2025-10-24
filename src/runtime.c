@@ -70,11 +70,9 @@ typedef struct {
     CloseHandle_t            CloseHandle;
     SetCurrentDirectoryA_t   SetCurrentDirectoryA;
     SetCurrentDirectoryW_t   SetCurrentDirectoryW;
+    SetErrorMode_t           SetErrorMode;
     SleepEx_t                SleepEx;
     ExitProcess_t            ExitProcess;
-
-    // system information
-    SYSTEM_INFO SysInfo;
 
     // runtime data
     void*  MainMemPage; // store all structures
@@ -82,12 +80,18 @@ typedef struct {
     uint32 PageSize;    // for memory management
     HANDLE hMutex;      // global method mutex
 
-    // try to lock submodules mutex
-    HANDLE ModMutexHandle[6];
-    bool   ModMutexStatus[6];
+    // system information
+    SYSTEM_INFO SysInfo;
+
+    // record old error mode.
+    UINT ErrorMode;
 
     // Windows API redirector about GetProcAddress
     API_RDR Redirectors[67];
+
+    // try to lock submodules mutex
+    HANDLE ModMutexHandle[6];
+    bool   ModMutexStatus[6];
 
     // runtime submodules
     LibraryTracker_M*  LibraryTracker;
@@ -126,6 +130,7 @@ void* RT_GetIMOML();
 
 BOOL  RT_SetCurrentDirectoryA(LPSTR lpPathName);
 BOOL  RT_SetCurrentDirectoryW(LPWSTR lpPathName);
+UINT  RT_SetErrorMode(UINT uMode);
 void  RT_Sleep(DWORD dwMilliseconds);
 DWORD RT_SleepEx(DWORD dwMilliseconds, BOOL bAlertable);
 void  RT_ExitProcess(UINT uExitCode);
@@ -2056,6 +2061,24 @@ BOOL RT_SetCurrentDirectoryW(LPWSTR lpPathName)
         return true;
     }
     return runtime->SetCurrentDirectoryW(++lpPathName);
+}
+
+__declspec(noinline)
+UINT RT_SetErrorMode(UINT uMode)
+{
+    Runtime* runtime = getRuntimePointer();
+
+    if (!rt_lock())
+    {
+        return 0;
+    }
+
+
+
+    if (!rt_unlock())
+    {
+        return 0;
+    }
 }
 
 __declspec(noinline)

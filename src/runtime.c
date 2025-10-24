@@ -2108,6 +2108,8 @@ void RT_ExitProcess(UINT uExitCode)
 {
     Runtime* runtime = getRuntimePointer();
 
+    RT_Cleanup();
+
     runtime->ExitProcess(uExitCode);
 }
 
@@ -2601,7 +2603,7 @@ static errno stop(bool exitThread)
     if (!runtime->Options.NotEraseInstruction)
     {
         uintptr begin = (uintptr)(GetFuncAddr(&InitRuntime));
-        uintptr end   = (uintptr)(GetFuncAddr(&RT_Exit));
+        uintptr end   = (uintptr)(GetFuncAddr(&RT_Stop));
         uintptr size  = end - begin;
         eraseMemory(begin, size);
         begin = (uintptr)(GetFuncAddr(&rt_epilogue));

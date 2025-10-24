@@ -479,6 +479,11 @@ typedef BOOL (*SetCurrentDirectoryW_t)
     LPWSTR lpPathName
 );
 
+typedef UINT (*SetErrorMode_t)
+(
+    UINT uMode
+);
+
 typedef HANDLE (*CreateFileA_t)
 (
     LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,

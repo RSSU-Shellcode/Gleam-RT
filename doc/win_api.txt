@@ -28,6 +28,7 @@ https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-globalfre
 https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-localalloc
 https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-localrealloc
 https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-localfree
+https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-setcurrentdirectory
 https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createthread
 https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-exitthread
 https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-suspendthread
@@ -42,7 +43,7 @@ https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-process
 https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-tlsfree
 https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-flushinstructioncache
 https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-exitprocess
-https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-setcurrentdirectory
+https://learn.microsoft.com/en-us/windows/win32/api/errhandlingapi/nf-errhandlingapi-seterrormode
 https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilea
 https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew
 https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getfilesizeex

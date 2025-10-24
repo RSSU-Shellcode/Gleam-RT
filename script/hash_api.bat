@@ -32,6 +32,7 @@ hash_api -fmt 64 -conc -mod "kernel32.dll" -proc DuplicateHandle
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc CloseHandle
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc SetCurrentDirectoryA
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc SetCurrentDirectoryW
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc SetErrorMode
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc SleepEx
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc ExitProcess
 echo.
@@ -345,6 +346,7 @@ hash_api -fmt 32 -conc -mod "kernel32.dll" -proc DuplicateHandle
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc CloseHandle
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc SetCurrentDirectoryA
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc SetCurrentDirectoryW
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc SetErrorMode
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc SleepEx
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc ExitProcess
 echo.

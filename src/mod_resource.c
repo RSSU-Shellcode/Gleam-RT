@@ -2349,10 +2349,7 @@ static bool addHandle(ResourceTracker* tracker, void* hObject, uint32 source)
         return true;
     }
 
-    uint mHash;
-    uint pHash;
-    uint hKey; 
-
+    uint mHash, pHash, hKey;
     switch (source & TYPE_MASK)
     {
     case TYPE_CLOSE_HANDLE:
@@ -2362,32 +2359,44 @@ static bool addHandle(ResourceTracker* tracker, void* hObject, uint32 source)
         tracker->FindClose(hObject);
         break;
     case TYPE_CLOSE_KEY:
-    #ifdef _WIN64
-        mHash = 0xBF61DC9DB58F2119;
-        pHash = 0x634B2EA7763B50E7;
-        hKey  = 0x1E92D01ACD546FAA;
-    #elif _WIN32
-        mHash = 0x21897061;
-        pHash = 0x05759268;
-        hKey  = 0x6DD08644;
-    #endif
-        RegCloseKey_t RegCloseKey = tracker->FindAPI(mHash, pHash, hKey);
+        // try to get API address from cache
+        RegCloseKey_t RegCloseKey = tracker->RegCloseKey;
+        if (RegCloseKey == NULL)
+        {
+        #ifdef _WIN64
+            mHash = 0xBF61DC9DB58F2119;
+            pHash = 0x634B2EA7763B50E7;
+            hKey  = 0x1E92D01ACD546FAA;
+        #elif _WIN32
+            mHash = 0x21897061;
+            pHash = 0x05759268;
+            hKey  = 0x6DD08644;
+        #endif
+            RegCloseKey = tracker->FindAPI(mHash, pHash, hKey);
+            tracker->RegCloseKey = RegCloseKey;
+        }
         if (RegCloseKey != NULL)
         {
             RegCloseKey(hObject);
         }
         break;
     case TYPE_CLOSE_SOCKET:
-    #ifdef _WIN64
-        mHash = 0xEF92E9B35ECEA6BA;
-        pHash = 0xEE5724C40D2CCCD2;
-        hKey  = 0xA7D1387163EE7961;
-    #elif _WIN32
-        mHash = 0x5585015C;
-        pHash = 0xE4D20008;
-        hKey  = 0xE6423398;
-    #endif
-        closesocket_t closesocket = tracker->FindAPI(mHash, pHash, hKey);
+        // try to get API address from cache
+        closesocket_t closesocket = tracker->closesocket;
+        if (closesocket == NULL)
+        {
+        #ifdef _WIN64
+            mHash = 0xEF92E9B35ECEA6BA;
+            pHash = 0xEE5724C40D2CCCD2;
+            hKey  = 0xA7D1387163EE7961;
+        #elif _WIN32
+            mHash = 0x5585015C;
+            pHash = 0xE4D20008;
+            hKey  = 0xE6423398;
+        #endif
+            closesocket = tracker->FindAPI(mHash, pHash, hKey);
+            tracker->closesocket = closesocket;
+        }
         if (closesocket != NULL)
         {
             closesocket(hObject);
@@ -3125,16 +3134,21 @@ static errno doWSACleanup()
 {
     ResourceTracker* tracker = getTrackerPointer();
 
-#ifdef _WIN64
-    uint mHash = 0x4315CA7C2DE0953F;
-    uint pHash = 0xFAA60831E40346AA;
-    uint hKey  = 0xEB60CFC4E8AF64CE;
-#elif _WIN32
-    uint mHash = 0x3F43DBA5;
-    uint pHash = 0x2F28803E;
-    uint hKey  = 0xFEC6856A;
-#endif
-    WSACleanup_t WSACleanup = tracker->FindAPI(mHash, pHash, hKey);
+    // try to get API address from cache
+    WSACleanup_t WSACleanup = tracker->WSACleanup;
+    if (WSACleanup == NULL)
+    {
+    #ifdef _WIN64
+        uint mHash = 0x4315CA7C2DE0953F;
+        uint pHash = 0xFAA60831E40346AA;
+        uint hKey  = 0xEB60CFC4E8AF64CE;
+    #elif _WIN32
+        uint mHash = 0x3F43DBA5;
+        uint pHash = 0x2F28803E;
+        uint hKey  = 0xFEC6856A;
+    #endif
+        WSACleanup = tracker->FindAPI(mHash, pHash, hKey);
+    }
     if (WSACleanup == NULL)
     {
         return NO_ERROR;

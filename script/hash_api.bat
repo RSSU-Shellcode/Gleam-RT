@@ -41,6 +41,7 @@ echo [API Redirector]
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc GetProcAddress
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc SetCurrentDirectoryA
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc SetCurrentDirectoryW
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc SetErrorMode
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc Sleep
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc SleepEx
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc LoadLibraryA
@@ -355,6 +356,7 @@ echo [API Redirector]
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc GetProcAddress
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc SetCurrentDirectoryA
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc SetCurrentDirectoryW
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc SetErrorMode
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc Sleep
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc SleepEx
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc LoadLibraryA

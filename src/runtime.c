@@ -87,7 +87,7 @@ typedef struct {
     UINT ErrorMode;
 
     // Windows API redirector about GetProcAddress
-    API_RDR Redirectors[67];
+    API_RDR Redirectors[68];
 
     // try to lock submodules mutex
     HANDLE ModMutexHandle[6];
@@ -206,6 +206,7 @@ static bool  initAPIRedirector(Runtime* runtime);
 static bool  flushInstructionCache(Runtime* runtime);
 static void  eraseArgumentStub(Runtime* runtime);
 static void  eraseRuntimeMethods(Runtime* runtime);
+static void  recoverErrorMode(Runtime* runtime);
 static errno cleanRuntime(Runtime* runtime);
 static errno closeHandles(Runtime* runtime);
 
@@ -271,6 +272,8 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     // set runtime data
     runtime->MainMemPage = memPage;
     runtime->Epilogue    = calculateEpilogue();
+    // set init value
+    runtime->ErrorMode = (UINT)(-1);
     // initialize runtime
     DWORD oldProtect = 0;
     errno errno = NO_ERROR;
@@ -587,6 +590,7 @@ static bool initRuntimeAPI(Runtime* runtime)
         { 0x34F6DB7FD270DACD, 0xAD3CAC3CA6B3F85F, 0x3A69E267838CC49B }, // CloseHandle
         { 0x9645F47C050C8970, 0x7958DD2E625BFB9A, 0x8D88DDA980B5423A }, // SetCurrentDirectoryA
         { 0x2DA99CE4EAA5EBC5, 0x92705193BA8D0E4C, 0x0157A58CBD86F5CB }, // SetCurrentDirectoryW
+        { 0xB95FD82DE5AF8CA3, 0x47600C16911CFF63, 0xA1BAB93C34930F17 }, // SetErrorMode
         { 0x45C00FCCD8608BF4, 0xFF59A6239E10D034, 0x259506B04B900790 }, // SleepEx
         { 0xA42803533C850050, 0xAE626A54FB4B1EFE, 0xC74CD2670540D0E5 }, // ExitProcess
     };
@@ -616,6 +620,7 @@ static bool initRuntimeAPI(Runtime* runtime)
         { 0x35F0E826, 0xD4D75A32, 0x585D80CF }, // CloseHandle
         { 0xC029EB89, 0x2361ABF9, 0xBD82334D }, // SetCurrentDirectoryA
         { 0xB3FC81E0, 0xD69E0B74, 0x2833ECFE }, // SetCurrentDirectoryW
+        { 0xA73B7DE6, 0x2CBDCC0D, 0x2DE6253F }, // SetErrorMode
         { 0xA7424FD3, 0x35D0E695, 0x1FAAF404 }, // SleepEx
         { 0xE715A750, 0xE9D3E889, 0x65A48058 }, // ExitProcess
     };
@@ -655,8 +660,9 @@ static bool initRuntimeAPI(Runtime* runtime)
     runtime->CloseHandle            = list[0x15].proc;
     runtime->SetCurrentDirectoryA   = list[0x16].proc;
     runtime->SetCurrentDirectoryW   = list[0x17].proc;
-    runtime->SleepEx                = list[0x18].proc;
-    runtime->ExitProcess            = list[0x19].proc;
+    runtime->SetErrorMode           = list[0x18].proc;
+    runtime->SleepEx                = list[0x19].proc;
+    runtime->ExitProcess            = list[0x1A].proc;
     return true;
 }
 
@@ -1011,6 +1017,7 @@ static bool initAPIRedirector(Runtime* runtime)
         { 0xFF4DA9811A24DD2A, 0xE6E26FB6E4FE59CE, 0x10BB9100F93D0F8B, GetFuncAddr(&RT_GetProcAddress) },
         { 0xC1166F5480F32BFD, 0x12A3CA6BA34EAD87, 0x4DC32CDE85E16492, GetFuncAddr(&RT_SetCurrentDirectoryA) },
         { 0xFBE4BC0513717538, 0x891F575DD3B8F3E6, 0x9D79D93FAB212FD8, GetFuncAddr(&RT_SetCurrentDirectoryW) },
+        { 0x42727ECD088158B0, 0x5AD097EF20CCF2F6, 0x5D7BAE3110895355, GetFuncAddr(&RT_SetErrorMode) },
         { 0x6434DEA711176856, 0x0BB33DC44169CD1C, 0x962140866F051973, GetFuncAddr(&RT_SleepHR) }, // kernel32.Sleep
         { 0xDF5822C48AE06E22, 0x0C095075F316AE39, 0x058807734232290F, GetFuncAddr(&RT_SleepEx) }, // kernel32.SleepEx
         { 0x4DC42B3903DA99C6, 0xCA400801FF61A34E, 0xE1AC9F7852E1B05D, LT->LoadLibraryA },
@@ -1081,6 +1088,7 @@ static bool initAPIRedirector(Runtime* runtime)
         { 0x75C01F83, 0xE7A45E2B, 0x1A710E4F, GetFuncAddr(&RT_GetProcAddress) },
         { 0x6B13DC24, 0x53E41BF6, 0xFFB6599D, GetFuncAddr(&RT_SetCurrentDirectoryA) },
         { 0x7C903CB0, 0xCAF08A95, 0xBB8B0575, GetFuncAddr(&RT_SetCurrentDirectoryW) },
+        { 0x32C6D5E5, 0x3DC6B776, 0xD5167779, GetFuncAddr(&RT_SetErrorMode) },
         { 0x536949F6, 0x6C9410A5, 0x82568B27, GetFuncAddr(&RT_SleepHR) }, // kernel32.Sleep
         { 0x6B23E4B7, 0xBA37BAF4, 0x0257F540, GetFuncAddr(&RT_SleepEx) }, // kernel32.SleepEx
         { 0xAE0F3CDC, 0xBF4F25FA, 0xA131C539, LT->LoadLibraryA },
@@ -1191,7 +1199,7 @@ static void eraseRuntimeMethods(Runtime* runtime)
     RandBuffer((byte*)begin, (int64)size);
 }
 
-// ======================== these instructions will not be erased ========================
+// ================ next instructions will not be erased after InitRuntime ================
 
 // change memory protect for dynamic update pointer that hard encode.
 __declspec(noinline)
@@ -1253,6 +1261,17 @@ static bool flushInstructionCache(Runtime* runtime)
     return runtime->FlushInstructionCache(CURRENT_PROCESS, addr, size);
 }
 
+__declspec(noinline)
+static void recoverErrorMode(Runtime* runtime)
+{
+    if (runtime->ErrorMode == (UINT)(-1))
+    {
+        return;
+    }
+    runtime->SetErrorMode(runtime->ErrorMode);
+}
+
+__declspec(noinline)
 static errno cleanRuntime(Runtime* runtime)
 {
     errno err = NO_ERROR;
@@ -2073,12 +2092,19 @@ UINT RT_SetErrorMode(UINT uMode)
         return 0;
     }
 
+    UINT mode = runtime->SetErrorMode(uMode);
 
+    // only record the first time
+    if (runtime->ErrorMode == (UINT)(-1))
+    {
+        runtime->ErrorMode = mode;
+    }
 
     if (!rt_unlock())
     {
         return 0;
     }
+    return mode;
 }
 
 __declspec(noinline)
@@ -2097,7 +2123,6 @@ void RT_Sleep(DWORD dwMilliseconds)
     {
         return;
     }
-
     Sleep(dwMilliseconds);
 }
 
@@ -2500,6 +2525,8 @@ errno RT_Cleanup()
     runtime->MemoryTracker->Flush();
     runtime->ResourceTracker->Flush();
 
+    recoverErrorMode(runtime);
+
     errno errum = RT_unlock_mods();
     if (errum != NO_ERROR)
     {
@@ -2546,6 +2573,7 @@ static errno stop(bool exitThread)
     }
 
     errno error = NO_ERROR;
+
     // maybe some libraries will use the tracked
     // memory page or heap, so free memory after
     // free all library.
@@ -2580,6 +2608,8 @@ static errno stop(bool exitThread)
             error = enmod;
         }
     }
+
+    recoverErrorMode(runtime);
 
     // must copy structure before clean runtime
     Runtime clone;

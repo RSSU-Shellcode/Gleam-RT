@@ -1439,7 +1439,7 @@ LSTATUS RT_RegCreateKeyA(HKEY hKey, LPCSTR lpSubKey, HKEY* phkResult)
     ResourceTracker* tracker = getTrackerPointer();
 
     LSTATUS lStatus = ERROR_SUCCESS;
-    errno   lastErr = NO_ERROR;
+    errno   lastErr = GetLastErrno();
     for (;;)
     {
         // try to get API address from cache
@@ -1487,7 +1487,7 @@ LSTATUS RT_RegCreateKeyW(HKEY hKey, LPCWSTR lpSubKey, HKEY* phkResult)
     ResourceTracker* tracker = getTrackerPointer();
 
     LSTATUS lStatus = ERROR_SUCCESS;
-    errno   lastErr = NO_ERROR;
+    errno   lastErr = GetLastErrno();
     for (;;)
     {
         // try to get API address from cache
@@ -1538,7 +1538,7 @@ LSTATUS RT_RegCreateKeyExA(
     ResourceTracker* tracker = getTrackerPointer();
 
     LSTATUS lStatus = ERROR_SUCCESS;
-    errno   lastErr = NO_ERROR;
+    errno   lastErr = GetLastErrno();
     for (;;)
     {
         // try to get API address from cache
@@ -1592,7 +1592,7 @@ LSTATUS RT_RegCreateKeyExW(
     ResourceTracker* tracker = getTrackerPointer();
 
     LSTATUS lStatus = ERROR_SUCCESS;
-    errno   lastErr = NO_ERROR;
+    errno   lastErr = GetLastErrno();
     for (;;)
     {
         // try to get API address from cache
@@ -1643,7 +1643,7 @@ LSTATUS RT_RegOpenKeyA(HKEY hKey, LPCSTR lpSubKey, HKEY* phkResult)
     ResourceTracker* tracker = getTrackerPointer();
 
     LSTATUS lStatus = ERROR_SUCCESS;
-    errno   lastErr = NO_ERROR;
+    errno   lastErr = GetLastErrno();
     for (;;)
     {
         // try to get API address from cache
@@ -1691,7 +1691,7 @@ LSTATUS RT_RegOpenKeyW(HKEY hKey, LPCWSTR lpSubKey, HKEY* phkResult)
     ResourceTracker* tracker = getTrackerPointer();
 
     LSTATUS lStatus = ERROR_SUCCESS;
-    errno   lastErr = NO_ERROR;
+    errno   lastErr = GetLastErrno();
     for (;;)
     {
         // try to get API address from cache
@@ -1740,7 +1740,7 @@ LSTATUS RT_RegOpenKeyExA(
     ResourceTracker* tracker = getTrackerPointer();
 
     LSTATUS lStatus = ERROR_SUCCESS;
-    errno   lastErr = NO_ERROR;
+    errno   lastErr = GetLastErrno();
     for (;;)
     {
         // try to get API address from cache
@@ -1791,7 +1791,7 @@ LSTATUS RT_RegOpenKeyExW(
     ResourceTracker* tracker = getTrackerPointer();
 
     LSTATUS lStatus = ERROR_SUCCESS;
-    errno   lastErr = NO_ERROR;
+    errno   lastErr = GetLastErrno();
     for (;;)
     {
         // try to get API address from cache
@@ -2240,7 +2240,7 @@ LSTATUS RT_RegCloseKey(HKEY hKey)
     }
 
     LSTATUS lStatus = ERROR_SUCCESS;
-    errno   lastErr = NO_ERROR;
+    errno   lastErr = GetLastErrno();
     for (;;)
     {
         // try to get API address from cache

@@ -918,13 +918,11 @@ HANDLE MT_HeapCreate(DWORD flOptions, SIZE_T dwInitialSize, SIZE_T dwMaximumSize
     }
 
     HANDLE hHeap;
-    errno lastErr = NO_ERROR;
     for (;;)
     {
         hHeap = tracker->HeapCreate(flOptions, dwInitialSize, dwMaximumSize);
         if (hHeap == NULL)
         {
-            lastErr = GetLastErrno();
             break;
         }
         if (!addHeapObject(tracker, hHeap, flOptions))
@@ -943,8 +941,6 @@ HANDLE MT_HeapCreate(DWORD flOptions, SIZE_T dwInitialSize, SIZE_T dwMaximumSize
     {
         return NULL;
     }
-
-    SetLastErrno(lastErr);
     return hHeap;
 }
 
@@ -972,13 +968,11 @@ BOOL MT_HeapDestroy(HANDLE hHeap)
         return false;
     }
 
-    BOOL  success = false;
-    errno lastErr = NO_ERROR;
+    BOOL success = false;
     for (;;)
     {
         if (!tracker->HeapDestroy(hHeap))
         {
-            lastErr = GetLastErrno();
             break;
         }
         if (!delHeapObject(tracker, hHeap))
@@ -995,8 +989,6 @@ BOOL MT_HeapDestroy(HANDLE hHeap)
     {
         return false;
     }
-
-    SetLastErrno(lastErr);
     return success;
 }
 
@@ -1129,15 +1121,13 @@ BOOL MT_HeapFree(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem)
         return false;
     }
 
-    BOOL  success = false;
-    errno lastErr = NO_ERROR;
+    BOOL success = false;
     for (;;)
     {
         // special case
         if (lpMem == NULL)
         {
             success = tracker->HeapFree(hHeap, dwFlags, lpMem);
-            lastErr = GetLastErrno();
             break;
         }
         // check it is a marked block before free
@@ -1161,7 +1151,6 @@ BOOL MT_HeapFree(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem)
         mem_init(lpMem, size);
         if (!tracker->HeapFree(hHeap, dwFlags, lpMem))
         {
-            lastErr = GetLastErrno();
             break;
         }
         // update counter
@@ -1179,8 +1168,6 @@ BOOL MT_HeapFree(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem)
     {
         return false;
     }
-
-    SetLastErrno(lastErr);
     return success;
 }
 
@@ -1237,18 +1224,15 @@ HGLOBAL MT_GlobalAlloc(UINT uFlags, SIZE_T dwBytes)
     }
 
     HGLOBAL hGlobal;
-    errno lastErr = NO_ERROR;
     for (;;)
     {
         hGlobal = tracker->GlobalAlloc(uFlags, dwBytes);
         if (hGlobal == NULL)
         {
-            lastErr = GetLastErrno();
             break;
         }
         // update counter
         tracker->NumGlobals++;
-        lastErr = GetLastErrno();
         break;
     }
 
@@ -1258,8 +1242,6 @@ HGLOBAL MT_GlobalAlloc(UINT uFlags, SIZE_T dwBytes)
     {
         return NULL;
     }
-
-    SetLastErrno(lastErr);
     return hGlobal;
 }
 
@@ -1273,19 +1255,7 @@ HGLOBAL MT_GlobalReAlloc(HGLOBAL hMem, SIZE_T dwBytes, UINT uFlags)
         return NULL;
     }
 
-    HGLOBAL hGlobal;
-    errno lastErr = NO_ERROR;
-    for (;;)
-    {
-        hGlobal = tracker->GlobalReAlloc(hMem, dwBytes, uFlags);
-        if (hGlobal == NULL)
-        {
-            lastErr = GetLastErrno();
-            break;
-        }
-        lastErr = GetLastErrno();
-        break;
-    }
+    HGLOBAL hGlobal = tracker->GlobalReAlloc(hMem, dwBytes, uFlags);
 
     dbg_log("[memory]", "GlobalReAlloc: 0x%zX, 0x%zX", hGlobal, dwBytes);
 
@@ -1293,8 +1263,6 @@ HGLOBAL MT_GlobalReAlloc(HGLOBAL hMem, SIZE_T dwBytes, UINT uFlags)
     {
         return NULL;
     }
-
-    SetLastErrno(lastErr);
     return hGlobal;
 }
 
@@ -1309,20 +1277,17 @@ HGLOBAL MT_GlobalFree(HGLOBAL lpMem)
     }
 
     HGLOBAL hGlobal;
-    errno lastErr = NO_ERROR;
     for (;;)
     {
         hGlobal = tracker->GlobalFree(lpMem);
         if (hGlobal != NULL)
         {
-            lastErr = GetLastErrno();
             break;
         }
         if (lpMem != NULL)
         {
             tracker->NumGlobals--;
         }
-        lastErr = GetLastErrno();
         break;
     }
 
@@ -1332,8 +1297,6 @@ HGLOBAL MT_GlobalFree(HGLOBAL lpMem)
     {
         return false;
     }
-
-    SetLastErrno(lastErr);
     return hGlobal;
 }
 
@@ -1348,18 +1311,15 @@ HLOCAL MT_LocalAlloc(UINT uFlags, SIZE_T dwBytes)
     }
 
     HLOCAL hLocal;
-    errno lastErr = NO_ERROR;
     for (;;)
     {
         hLocal = tracker->LocalAlloc(uFlags, dwBytes);
         if (hLocal == NULL)
         {
-            lastErr = GetLastErrno();
             break;
         }
         // update counter
         tracker->NumLocals++;
-        lastErr = GetLastErrno();
         break;
     }
 
@@ -1369,8 +1329,6 @@ HLOCAL MT_LocalAlloc(UINT uFlags, SIZE_T dwBytes)
     {
         return NULL;
     }
-
-    SetLastErrno(lastErr);
     return hLocal;
 }
 
@@ -1384,19 +1342,7 @@ HLOCAL MT_LocalReAlloc(HLOCAL hMem, SIZE_T dwBytes, UINT uFlags)
         return NULL;
     }
 
-    HLOCAL hLocal;
-    errno lastErr = NO_ERROR;
-    for (;;)
-    {
-        hLocal = tracker->LocalReAlloc(hMem, dwBytes, uFlags);
-        if (hLocal == NULL)
-        {
-            lastErr = GetLastErrno();
-            break;
-        }
-        lastErr = GetLastErrno();
-        break;
-    }
+    HLOCAL hLocal = tracker->LocalReAlloc(hMem, dwBytes, uFlags);
 
     dbg_log("[memory]", "LocalReAlloc: 0x%zX, 0x%zX", hLocal, dwBytes);
 
@@ -1404,8 +1350,6 @@ HLOCAL MT_LocalReAlloc(HLOCAL hMem, SIZE_T dwBytes, UINT uFlags)
     {
         return NULL;
     }
-
-    SetLastErrno(lastErr);
     return hLocal;
 }
 
@@ -1420,20 +1364,17 @@ HLOCAL MT_LocalFree(HLOCAL lpMem)
     }
 
     HLOCAL hLocal;
-    errno lastErr = NO_ERROR;
     for (;;)
     {
         hLocal = tracker->LocalFree(lpMem);
         if (hLocal != NULL)
         {
-            lastErr = GetLastErrno();
             break;
         }
         if (lpMem != NULL)
         {
             tracker->NumLocals--;
         }
-        lastErr = GetLastErrno();
         break;
     }
 
@@ -1443,8 +1384,6 @@ HLOCAL MT_LocalFree(HLOCAL lpMem)
     {
         return false;
     }
-
-    SetLastErrno(lastErr);
     return hLocal;
 }
 

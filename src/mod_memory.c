@@ -918,6 +918,8 @@ HANDLE MT_HeapCreate(DWORD flOptions, SIZE_T dwInitialSize, SIZE_T dwMaximumSize
     }
 
     HANDLE hHeap;
+
+    bool success = false;
     for (;;)
     {
         hHeap = tracker->HeapCreate(flOptions, dwInitialSize, dwMaximumSize);
@@ -929,6 +931,7 @@ HANDLE MT_HeapCreate(DWORD flOptions, SIZE_T dwInitialSize, SIZE_T dwMaximumSize
         {
             break;
         }
+        success = true;
         break;
     }
 
@@ -938,6 +941,11 @@ HANDLE MT_HeapCreate(DWORD flOptions, SIZE_T dwInitialSize, SIZE_T dwMaximumSize
     );
 
     if (!MT_Unlock())
+    {
+        return NULL;
+    }
+
+    if (!success)
     {
         return NULL;
     }

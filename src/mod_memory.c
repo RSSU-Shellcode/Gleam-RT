@@ -1248,6 +1248,7 @@ HGLOBAL MT_GlobalAlloc(UINT uFlags, SIZE_T dwBytes)
         }
         // update counter
         tracker->NumGlobals++;
+        lastErr = GetLastErrno();
         break;
     }
 
@@ -1282,6 +1283,7 @@ HGLOBAL MT_GlobalReAlloc(HGLOBAL hMem, SIZE_T dwBytes, UINT uFlags)
             lastErr = GetLastErrno();
             break;
         }
+        lastErr = GetLastErrno();
         break;
     }
 
@@ -1320,6 +1322,7 @@ HGLOBAL MT_GlobalFree(HGLOBAL lpMem)
         {
             tracker->NumGlobals--;
         }
+        lastErr = GetLastErrno();
         break;
     }
 
@@ -1356,6 +1359,7 @@ HLOCAL MT_LocalAlloc(UINT uFlags, SIZE_T dwBytes)
         }
         // update counter
         tracker->NumLocals++;
+        lastErr = GetLastErrno();
         break;
     }
 
@@ -1390,6 +1394,7 @@ HLOCAL MT_LocalReAlloc(HLOCAL hMem, SIZE_T dwBytes, UINT uFlags)
             lastErr = GetLastErrno();
             break;
         }
+        lastErr = GetLastErrno();
         break;
     }
 
@@ -1428,6 +1433,7 @@ HLOCAL MT_LocalFree(HLOCAL lpMem)
         {
             tracker->NumLocals--;
         }
+        lastErr = GetLastErrno();
         break;
     }
 
@@ -1489,6 +1495,7 @@ void* __cdecl MT_msvcrt_malloc(uint size)
         *tail = calcHeapMark(tracker, (uintptr)address, size);
         // update counter
         tracker->NumBlocks++;
+        lastErr = GetLastErrno();
         break;
     }
 
@@ -1547,6 +1554,7 @@ void* __cdecl MT_msvcrt_calloc(uint num, uint size)
         }
         if (num == 0 || size == 0)
         {
+            lastErr = GetLastErrno();
             break;
         }
         // write heap block mark
@@ -1555,6 +1563,7 @@ void* __cdecl MT_msvcrt_calloc(uint num, uint size)
         *tail = calcHeapMark(tracker, (uintptr)address, total);
         // update counter
         tracker->NumBlocks++;
+        lastErr = GetLastErrno();
         break;
     }
 
@@ -1631,6 +1640,7 @@ void* __cdecl MT_msvcrt_realloc(void* ptr, uint size)
             oSize = msize(ptr);
             if (oSize == (SIZE_T)(-1))
             {
+                lastErr = GetLastErrno();
                 break;
             }
         }
@@ -1661,6 +1671,7 @@ void* __cdecl MT_msvcrt_realloc(void* ptr, uint size)
         {
             tracker->NumBlocks++;
         }
+        lastErr = GetLastErrno();
         break;
     }
 
@@ -1740,6 +1751,7 @@ void __cdecl MT_msvcrt_free(void* ptr)
         SIZE_T oSize = msize(ptr);
         if (oSize == (SIZE_T)(-1))
         {
+            lastErr = GetLastErrno();
             break;
         }
         // check it is a marked block before free
@@ -1761,6 +1773,7 @@ void __cdecl MT_msvcrt_free(void* ptr)
         {
             tracker->NumBlocks--;
         }
+        lastErr = GetLastErrno();
         break;
     }
 
@@ -1818,6 +1831,7 @@ uint __cdecl MT_msvcrt_msize(void* ptr)
         memSize = msize(ptr);
         if (memSize < BLOCK_MARK_SIZE)
         {
+            lastErr = GetLastErrno();
             break;
         }
         // check it is a marked block and adjust the return size
@@ -1828,6 +1842,7 @@ uint __cdecl MT_msvcrt_msize(void* ptr)
         {
             memSize -= BLOCK_MARK_SIZE;
         }
+        lastErr = GetLastErrno();
         break;
     }
 
@@ -1889,6 +1904,7 @@ void* __cdecl MT_ucrtbase_malloc(uint size)
         *tail = calcHeapMark(tracker, (uintptr)address, size);
         // update counter
         tracker->NumBlocks++;
+        lastErr = GetLastErrno();
         break;
     }
 
@@ -1947,6 +1963,7 @@ void* __cdecl MT_ucrtbase_calloc(uint num, uint size)
         }
         if (num == 0 || size == 0)
         {
+            lastErr = GetLastErrno();
             break;
         }
         // write heap block mark
@@ -1955,6 +1972,7 @@ void* __cdecl MT_ucrtbase_calloc(uint num, uint size)
         *tail = calcHeapMark(tracker, (uintptr)address, total);
         // update counter
         tracker->NumBlocks++;
+        lastErr = GetLastErrno();
         break;
     }
 
@@ -2031,6 +2049,7 @@ void* __cdecl MT_ucrtbase_realloc(void* ptr, uint size)
             oSize = msize(ptr);
             if (oSize == (SIZE_T)(-1))
             {
+                lastErr = GetLastErrno();
                 break;
             }
         }
@@ -2061,6 +2080,7 @@ void* __cdecl MT_ucrtbase_realloc(void* ptr, uint size)
         {
             tracker->NumBlocks++;
         }
+        lastErr = GetLastErrno();
         break;
     }
 
@@ -2140,6 +2160,7 @@ void __cdecl MT_ucrtbase_free(void* ptr)
         SIZE_T oSize = msize(ptr);
         if (oSize == (SIZE_T)(-1))
         {
+            lastErr = GetLastErrno();
             break;
         }
         // check it is a marked block before free
@@ -2161,6 +2182,7 @@ void __cdecl MT_ucrtbase_free(void* ptr)
         {
             tracker->NumBlocks--;
         }
+        lastErr = GetLastErrno();
         break;
     }
 
@@ -2216,6 +2238,7 @@ uint __cdecl MT_ucrtbase_msize(void* ptr)
         }
         // call msize
         memSize = msize(ptr);
+        lastErr = GetLastErrno();
         if (memSize < BLOCK_MARK_SIZE)
         {
             break;

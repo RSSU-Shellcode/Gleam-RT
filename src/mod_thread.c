@@ -790,20 +790,21 @@ DWORD TT_TlsAlloc()
     }
 
     DWORD index;
-    errno lastErr = NO_ERROR;
+
+    bool success = false;
     for (;;)
     {
         index = tracker->TlsAlloc();
         if (index == TLS_OUT_OF_INDEXES)
         {
-            lastErr = GetLastErrno();
             break;
         }
         if (!addTLSIndex(tracker, index))
         {
-            lastErr = ERR_THREAD_ADD_TLS_INDEX;
+            SetLastErrno(ERR_THREAD_ADD_TLS_INDEX);
             break;
         }
+        success = true;
         break;
     }
 
@@ -814,8 +815,7 @@ DWORD TT_TlsAlloc()
         return TLS_OUT_OF_INDEXES;
     }
 
-    SetLastErrno(lastErr);
-    if (lastErr != NO_ERROR)
+    if (!success)
     {
         return TLS_OUT_OF_INDEXES;
     }
@@ -832,13 +832,11 @@ BOOL TT_TlsFree(DWORD dwTlsIndex)
         return false;
     }
 
-    BOOL  success = false;
-    errno lastErr = NO_ERROR;
+    BOOL success = false;
     for (;;)
     {
         if (!tracker->TlsFree(dwTlsIndex))
         {
-            lastErr = GetLastErrno();
             break;
         }
         delTLSIndex(tracker, dwTlsIndex);
@@ -852,8 +850,6 @@ BOOL TT_TlsFree(DWORD dwTlsIndex)
     {
         return false;
     }
-
-    SetLastErrno(lastErr);
     return success;
 }
 

@@ -689,6 +689,7 @@ HANDLE RT_CreateMutexA(POINTER lpMutexAttributes, BOOL bInitialOwner, LPCSTR lpN
         if (!addHandleMu(tracker, hMutex, SRC_CREATE_MUTEX_A))
         {
             lastErr = ERR_RESOURCE_ADD_MUTEX;
+            hMutex = NULL;
             break;
         }
         break;
@@ -719,6 +720,7 @@ HANDLE RT_CreateMutexW(POINTER lpMutexAttributes, BOOL bInitialOwner, LPCWSTR lp
         if (!addHandleMu(tracker, hMutex, SRC_CREATE_MUTEX_W))
         {
             lastErr = ERR_RESOURCE_ADD_MUTEX;
+            hMutex = NULL;
             break;
         }
         break;
@@ -750,6 +752,7 @@ HANDLE RT_CreateMutexExA(
         if (!addHandleMu(tracker, hMutex, SRC_CREATE_MUTEX_EX_A))
         {
             lastErr = ERR_RESOURCE_ADD_MUTEX;
+            hMutex = NULL;
             break;
         }
         break;
@@ -781,6 +784,7 @@ HANDLE RT_CreateMutexExW(
         if (!addHandleMu(tracker, hMutex, SRC_CREATE_MUTEX_EX_W))
         {
             lastErr = ERR_RESOURCE_ADD_MUTEX;
+            hMutex = NULL;
             break;
         }
         break;
@@ -812,6 +816,7 @@ HANDLE RT_CreateEventA(
         if (!addHandleMu(tracker, hEvent, SRC_CREATE_EVENT_A))
         {
             lastErr = ERR_RESOURCE_ADD_EVENT;
+            hEvent = NULL;
             break;
         }
         break;
@@ -843,6 +848,7 @@ HANDLE RT_CreateEventW(
         if (!addHandleMu(tracker, hEvent, SRC_CREATE_EVENT_W))
         {
             lastErr = ERR_RESOURCE_ADD_EVENT;
+            hEvent = NULL;
             break;
         }
         break;
@@ -874,6 +880,7 @@ HANDLE RT_CreateEventExA(
         if (!addHandleMu(tracker, hEvent, SRC_CREATE_EVENT_EX_A))
         {
             lastErr = ERR_RESOURCE_ADD_EVENT;
+            hEvent = NULL;
             break;
         }
         break;
@@ -905,6 +912,7 @@ HANDLE RT_CreateEventExW(
         if (!addHandleMu(tracker, hEvent, SRC_CREATE_EVENT_EX_W))
         {
             lastErr = ERR_RESOURCE_ADD_EVENT;
+            hEvent = NULL;
             break;
         }
         break;
@@ -936,6 +944,7 @@ HANDLE RT_CreateSemaphoreA(
         if (!addHandleMu(tracker, hSempho, SRC_CREATE_SEMAPHORE_A))
         {
             lastErr = ERR_RESOURCE_ADD_SEMAPHORE;
+            hSempho = NULL;
             break;
         }
         break;
@@ -967,6 +976,7 @@ HANDLE RT_CreateSemaphoreW(
         if (!addHandleMu(tracker, hSempho, SRC_CREATE_SEMAPHORE_W))
         {
             lastErr = ERR_RESOURCE_ADD_SEMAPHORE;
+            hSempho = NULL;
             break;
         }
         break;
@@ -1000,6 +1010,7 @@ HANDLE RT_CreateSemaphoreExA(
         if (!addHandleMu(tracker, hSempho, SRC_CREATE_SEMAPHORE_EX_A))
         {
             lastErr = ERR_RESOURCE_ADD_SEMAPHORE;
+            hSempho = NULL;
             break;
         }
         break;
@@ -1033,6 +1044,7 @@ HANDLE RT_CreateSemaphoreExW(
         if (!addHandleMu(tracker, hSempho, SRC_CREATE_SEMAPHORE_EX_W))
         {
             lastErr = ERR_RESOURCE_ADD_SEMAPHORE;
+            hSempho = NULL;
             break;
         }
         break;
@@ -1064,6 +1076,7 @@ HANDLE RT_CreateWaitableTimerA(
         if (!addHandleMu(tracker, hTimer, SRC_CREATE_WAITABLE_TIMER_A))
         {
             lastErr = ERR_RESOURCE_ADD_WAITABLE_TIMER;
+            hTimer = NULL;
             break;
         }
         break;
@@ -1095,6 +1108,7 @@ HANDLE RT_CreateWaitableTimerW(
         if (!addHandleMu(tracker, hTimer, SRC_CREATE_WAITABLE_TIMER_W))
         {
             lastErr = ERR_RESOURCE_ADD_WAITABLE_TIMER;
+            hTimer = NULL;
             break;
         }
         break;
@@ -1126,6 +1140,7 @@ HANDLE RT_CreateWaitableTimerExA(
         if (!addHandleMu(tracker, hTimer, SRC_CREATE_WAITABLE_TIMER_EX_A))
         {
             lastErr = ERR_RESOURCE_ADD_WAITABLE_TIMER;
+            hTimer = NULL;
             break;
         }
         break;
@@ -1157,6 +1172,7 @@ HANDLE RT_CreateWaitableTimerExW(
         if (!addHandleMu(tracker, hTimer, SRC_CREATE_WAITABLE_TIMER_EX_W))
         {
             lastErr = ERR_RESOURCE_ADD_WAITABLE_TIMER;
+            hTimer = NULL;
             break;
         }
         break;
@@ -1191,6 +1207,7 @@ HANDLE RT_CreateFileA(
         if (!addHandleMu(tracker, hFile, SRC_CREATE_FILE_A))
         {
             lastErr = ERR_RESOURCE_ADD_FILE;
+            hFile = INVALID_HANDLE_VALUE;
             break;
         }
         break;
@@ -1225,6 +1242,7 @@ HANDLE RT_CreateFileW(
         if (!addHandleMu(tracker, hFile, SRC_CREATE_FILE_W))
         {
             lastErr = ERR_RESOURCE_ADD_FILE;
+            hFile = INVALID_HANDLE_VALUE;
             break;
         }
         break;
@@ -1258,6 +1276,7 @@ HANDLE RT_FindFirstFileA(LPCSTR lpFileName, POINTER lpFindFileData)
         if (!addHandle(tracker, hFindFile, SRC_FIND_FIRST_FILE_A))
         {
             lastErr = ERR_RESOURCE_ADD_DIRECTORY;
+            hFindFile = INVALID_HANDLE_VALUE;
             break;
         }
         break;
@@ -1296,6 +1315,7 @@ HANDLE RT_FindFirstFileW(LPCWSTR lpFileName, POINTER lpFindFileData)
         if (!addHandle(tracker, hFindFile, SRC_FIND_FIRST_FILE_W))
         {
             lastErr = ERR_RESOURCE_ADD_DIRECTORY;
+            hFindFile = INVALID_HANDLE_VALUE;
             break;
         }
         break;
@@ -1339,6 +1359,7 @@ HANDLE RT_FindFirstFileExA(
         if (!addHandle(tracker, hFindFile, SRC_FIND_FIRST_FILE_EX_A))
         {
             lastErr = ERR_RESOURCE_ADD_DIRECTORY;
+            hFindFile = INVALID_HANDLE_VALUE;
             break;
         }
         break;
@@ -1382,6 +1403,7 @@ HANDLE RT_FindFirstFileExW(
         if (!addHandle(tracker, hFindFile, SRC_FIND_FIRST_FILE_EX_W))
         {
             lastErr = ERR_RESOURCE_ADD_DIRECTORY;
+            hFindFile = INVALID_HANDLE_VALUE;
             break;
         }
         break;
@@ -1423,6 +1445,7 @@ HANDLE RT_CreateIoCompletionPort(
         if (!addHandleMu(tracker, hPort, SRC_CREATE_IOCP))
         {
             lastErr = ERR_RESOURCE_ADD_IOCP;
+            hPort = NULL;
             break;
         }
         break;
@@ -1875,6 +1898,7 @@ SOCKET RT_WSASocketA(
         if (!addHandleMu(tracker, hSocket, SRC_WSA_SOCKET_A))
         {
             lastErr = ERR_RESOURCE_ADD_SOCKET;
+            hSocket = INVALID_SOCKET;
             break;
         }
         break;
@@ -1925,6 +1949,7 @@ SOCKET RT_WSASocketW(
         if (!addHandleMu(tracker, hSocket, SRC_WSA_SOCKET_W))
         {
             lastErr = ERR_RESOURCE_ADD_SOCKET;
+            hSocket = INVALID_SOCKET;
             break;
         }
         break;
@@ -2040,6 +2065,7 @@ SOCKET RT_socket(int af, int type, int protocol)
         if (!addHandleMu(tracker, hSocket, SRC_SOCKET))
         {
             lastErr = ERR_RESOURCE_ADD_SOCKET;
+            hSocket = INVALID_SOCKET;
             break;
         }
         break;
@@ -2089,6 +2115,7 @@ SOCKET RT_accept(SOCKET s, POINTER addr, int* addrlen)
         if (!addHandleMu(tracker, hSocket, SRC_ACCEPT))
         {
             lastErr = ERR_RESOURCE_ADD_SOCKET;
+            hSocket = INVALID_SOCKET;
             break;
         }
         break;

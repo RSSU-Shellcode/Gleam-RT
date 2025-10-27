@@ -103,7 +103,7 @@ typedef struct {
     HANDLE hMutex_TT;
     HANDLE hMutex_RT;
     HANDLE hMutex_AS;
-    HANDLE hMutex_IMS;
+    HANDLE hMutex_IS;
 
     TT_NewThread_t        TT_NewThread;
     TT_RecoverThreads_t   TT_RecoverThreads;

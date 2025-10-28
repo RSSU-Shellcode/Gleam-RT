@@ -13,7 +13,7 @@
     #define NAME_RT_TT_TIMER_SLEEP   NULL
     #define NAME_RT_RT_MUTEX_GLOBAL  NULL
     #define NAME_RT_AS_MUTEX_GLOBAL  NULL
-    #define NAME_RT_IMS_MUTEX_GLOBAL NULL
+    #define NAME_RT_IS_MUTEX_GLOBAL  NULL
     #define NAME_RT_WIN_HTTP_MUTEX   NULL
     #define NAME_RT_WIN_CRYPTO_MUTEX NULL
     #define NAME_RT_SM_MUTEX_GLOBAL  NULL
@@ -34,7 +34,7 @@
     #define NAME_RT_TT_TIMER_SLEEP   "RT_ThreadTracker_Sleep-x64"
     #define NAME_RT_RT_MUTEX_GLOBAL  "RT_ResourceTracker_Global-x64"
     #define NAME_RT_AS_MUTEX_GLOBAL  "RT_ArgumentStore_Global-x64"
-    #define NAME_RT_IMS_MUTEX_GLOBAL "RT_InMemoryStorage_Global-x64"
+    #define NAME_RT_IS_MUTEX_GLOBAL  "RT_InMemoryStorage_Global-x64"
     #define NAME_RT_WIN_HTTP_MUTEX   "RT_WinHTTP-x64"
     #define NAME_RT_WIN_CRYPTO_MUTEX "RT_WinCrypto-x64"
     #define NAME_RT_SM_MUTEX_GLOBAL  "RT_Sysmon_Global-x64"
@@ -54,7 +54,7 @@
     #define NAME_RT_TT_TIMER_SLEEP   "RT_ThreadTracker_Sleep-x86"
     #define NAME_RT_RT_MUTEX_GLOBAL  "RT_ResourceTracker_Global-x86"
     #define NAME_RT_AS_MUTEX_GLOBAL  "RT_ArgumentStore_Global-x86"
-    #define NAME_RT_IMS_MUTEX_GLOBAL "RT_InMemoryStorage_Global-x86"
+    #define NAME_RT_IS_MUTEX_GLOBAL  "RT_InMemoryStorage_Global-x86"
     #define NAME_RT_WIN_HTTP_MUTEX   "RT_WinHTTP-x86"
     #define NAME_RT_WIN_CRYPTO_MUTEX "RT_WinCrypto-x86"
     #define NAME_RT_SM_MUTEX_GLOBAL  "RT_Sysmon_Global-x86"

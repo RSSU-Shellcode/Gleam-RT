@@ -270,6 +270,8 @@ typedef void (*GetSystemInfo_t)
     SYSTEM_INFO* lpSystemInfo
 );
 
+typedef DWORD (*GetTickCount_t)();
+
 typedef HMODULE (*LoadLibraryA_t)
 (
     LPCSTR lpLibFileName

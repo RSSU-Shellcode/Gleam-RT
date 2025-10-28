@@ -39,7 +39,7 @@ typedef struct {
     HANDLE hMutex_TT;
     HANDLE hMutex_RT;
     HANDLE hMutex_AS;
-    HANDLE hMutex_IMS;
+    HANDLE hMutex_IS;
 
     TT_RecoverThreads_t   TT_RecoverThreads;
     TT_ForceKillThreads_t TT_ForceKillThreads;
@@ -246,12 +246,12 @@ static bool initSysmonEnvironment(Sysmon* sysmon, Context* context)
     sysmon->RT_TryLockMods   = context->try_lock_mods;
     sysmon->RT_TryUnlockMods = context->try_unlock_mods;
     // copy mutex from context
-    sysmon->hMutex_LT  = context->hMutex_LT;
-    sysmon->hMutex_MT  = context->hMutex_MT;
-    sysmon->hMutex_TT  = context->hMutex_TT;
-    sysmon->hMutex_RT  = context->hMutex_RT;
-    sysmon->hMutex_AS  = context->hMutex_AS;
-    sysmon->hMutex_IMS = context->hMutex_IMS;
+    sysmon->hMutex_LT = context->hMutex_LT;
+    sysmon->hMutex_MT = context->hMutex_MT;
+    sysmon->hMutex_TT = context->hMutex_TT;
+    sysmon->hMutex_RT = context->hMutex_RT;
+    sysmon->hMutex_AS = context->hMutex_AS;
+    sysmon->hMutex_IS = context->hMutex_IS;
     // copy methods from context
     sysmon->TT_RecoverThreads   = context->TT_RecoverThreads;
     sysmon->TT_ForceKillThreads = context->TT_ForceKillThreads;
@@ -396,7 +396,7 @@ static uint sm_watch()
 
     HANDLE handles[] = {
         sysmon->hMutex_LT, sysmon->hMutex_MT, sysmon->hMutex_TT,
-        sysmon->hMutex_RT, sysmon->hMutex_AS, sysmon->hMutex_IMS,
+        sysmon->hMutex_RT, sysmon->hMutex_AS, sysmon->hMutex_IS,
     };
     uint result  = RESULT_SUCCESS;
     bool stopped = false;

@@ -9,6 +9,7 @@ echo ------------------------x64------------------------
 
 echo [Runtime Core]
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc GetSystemInfo
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc GetTickCount
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc LoadLibraryA
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc FreeLibrary
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc GetProcAddress
@@ -324,6 +325,7 @@ echo ------------------------x86------------------------
 
 echo [Runtime Core]
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc GetSystemInfo
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc GetTickCount
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc LoadLibraryA
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc FreeLibrary
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc GetProcAddress

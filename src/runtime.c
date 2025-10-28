@@ -47,6 +47,7 @@ typedef struct {
 
     // API addresses
     GetSystemInfo_t          GetSystemInfo;
+    GetTickCount_t           GetTickCount;
     LoadLibraryA_t           LoadLibraryA;
     FreeLibrary_t            FreeLibrary;
     GetProcAddress_t         GetProcAddress;
@@ -80,11 +81,10 @@ typedef struct {
     uint32 PageSize;    // for memory management
     HANDLE hMutex;      // global method mutex
 
-    // system information
-    SYSTEM_INFO SysInfo;
-
-    // record old error mode.
-    UINT ErrorMode;
+    // environment data 
+    SYSTEM_INFO SysInfo;   // system information
+    DWORD       InitTick;  // store initialize tick count
+    UINT        ErrorMode; // record old error mode.
 
     // Windows API redirector about GetProcAddress
     API_RDR Redirectors[68];
@@ -567,6 +567,7 @@ static bool initRuntimeAPI(Runtime* runtime)
 #ifdef _WIN64
     {
         { 0x81281D579CF95014, 0x86A86D57C8A841B1, 0x17525CC1E154BA98 }, // GetSystemInfo
+        { 0xEF5C643FACE01A7F, 0x77F988FFD6E5F17B, 0xBCCCFEDA4ECB5CB5 }, // GetTickCount
         { 0xE57ED03045CF8261, 0xB726BDCEE213B000, 0xBC41C33EE9102207 }, // LoadLibraryA
         { 0x39040AAE82DF6A27, 0x715D0BA3A37704ED, 0xF5E8C64F2FD1E69A }, // FreeLibrary
         { 0x8DEA92825258B43D, 0x1E1187BF74A001D9, 0x2457B30C5AFA694C }, // GetProcAddress
@@ -597,6 +598,7 @@ static bool initRuntimeAPI(Runtime* runtime)
 #elif _WIN32
     {
         { 0x48CAA960, 0x1BE725E8, 0x54FE3C56 }, // GetSystemInfo
+        { 0x8BDEE48D, 0x1330050A, 0x472D1883 }, // GetTickCount
         { 0x4C088F20, 0x8A1A09AF, 0x639DAAE1 }, // LoadLibraryA
         { 0x4FEEC1A5, 0x9DC3A7B5, 0x4C5DFFD2 }, // FreeLibrary
         { 0xFFD5608B, 0x3E95C861, 0xB86AF953 }, // GetProcAddress
@@ -637,32 +639,33 @@ static bool initRuntimeAPI(Runtime* runtime)
     }
 
     runtime->GetSystemInfo          = list[0x00].proc;
-    runtime->LoadLibraryA           = list[0x01].proc;
-    runtime->FreeLibrary            = list[0x02].proc;
-    runtime->GetProcAddress         = list[0x03].proc;
-    runtime->VirtualAlloc           = list[0x04].proc;
-    runtime->VirtualFree            = list[0x05].proc;
-    runtime->VirtualProtect         = list[0x06].proc;
-    runtime->VirtualQuery           = list[0x07].proc;
-    runtime->FlushInstructionCache  = list[0x08].proc;
-    runtime->SuspendThread          = list[0x09].proc;
-    runtime->ResumeThread           = list[0x0A].proc;
-    runtime->ExitThread             = list[0x0B].proc;
-    runtime->CreateMutexA           = list[0x0C].proc;
-    runtime->ReleaseMutex           = list[0x0D].proc;
-    runtime->CreateEventA           = list[0x0E].proc;
-    runtime->SetEvent               = list[0x0F].proc;
-    runtime->CreateWaitableTimerA   = list[0x10].proc;
-    runtime->SetWaitableTimer       = list[0x11].proc;
-    runtime->WaitForSingleObject    = list[0x12].proc;
-    runtime->WaitForMultipleObjects = list[0x13].proc;
-    runtime->DuplicateHandle        = list[0x14].proc;
-    runtime->CloseHandle            = list[0x15].proc;
-    runtime->SetCurrentDirectoryA   = list[0x16].proc;
-    runtime->SetCurrentDirectoryW   = list[0x17].proc;
-    runtime->SetErrorMode           = list[0x18].proc;
-    runtime->SleepEx                = list[0x19].proc;
-    runtime->ExitProcess            = list[0x1A].proc;
+    runtime->GetTickCount           = list[0x01].proc;
+    runtime->LoadLibraryA           = list[0x02].proc;
+    runtime->FreeLibrary            = list[0x03].proc;
+    runtime->GetProcAddress         = list[0x04].proc;
+    runtime->VirtualAlloc           = list[0x05].proc;
+    runtime->VirtualFree            = list[0x06].proc;
+    runtime->VirtualProtect         = list[0x07].proc;
+    runtime->VirtualQuery           = list[0x08].proc;
+    runtime->FlushInstructionCache  = list[0x09].proc;
+    runtime->SuspendThread          = list[0x0A].proc;
+    runtime->ResumeThread           = list[0x0B].proc;
+    runtime->ExitThread             = list[0x0C].proc;
+    runtime->CreateMutexA           = list[0x0D].proc;
+    runtime->ReleaseMutex           = list[0x0E].proc;
+    runtime->CreateEventA           = list[0x0F].proc;
+    runtime->SetEvent               = list[0x10].proc;
+    runtime->CreateWaitableTimerA   = list[0x11].proc;
+    runtime->SetWaitableTimer       = list[0x12].proc;
+    runtime->WaitForSingleObject    = list[0x13].proc;
+    runtime->WaitForMultipleObjects = list[0x14].proc;
+    runtime->DuplicateHandle        = list[0x15].proc;
+    runtime->CloseHandle            = list[0x16].proc;
+    runtime->SetCurrentDirectoryA   = list[0x17].proc;
+    runtime->SetCurrentDirectoryW   = list[0x18].proc;
+    runtime->SetErrorMode           = list[0x19].proc;
+    runtime->SleepEx                = list[0x1A].proc;
+    runtime->ExitProcess            = list[0x1B].proc;
     return true;
 }
 
@@ -712,6 +715,8 @@ static errno initRuntimeEnvironment(Runtime* runtime)
 {
     // get system information
     runtime->GetSystemInfo(&runtime->SysInfo);
+    // record initialize tick count
+    runtime->InitTick = runtime->GetTickCount();
     // store memory page size
     runtime->PageSize = runtime->SysInfo.PageSize;
     // create global mutex
@@ -777,6 +782,11 @@ static errno initSubmodules(Runtime* runtime)
 
         .flush_api_cache = GetFuncAddr(&RT_flush_api_cache),
     };
+
+    // initialize security submodule
+
+
+
 
     // initialize runtime submodules
     typedef errno (*module_t)(Runtime* runtime, Context* context);
@@ -2580,6 +2590,7 @@ static errno stop(bool exitThread)
     typedef errno (*submodule_t)();
     submodule_t submodules[] = 
     {
+        // reliability modules
         runtime->Watchdog->Stop,
         runtime->Sysmon->Stop,
 

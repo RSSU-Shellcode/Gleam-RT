@@ -176,6 +176,9 @@
     <ClCompile Include="src\watchdog_test.c">
       <Filter>Test</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\detector.c">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\crypto.h">
@@ -305,6 +308,9 @@
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="..\include\layout.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\detector.h">
       <Filter>Header</Filter>
     </ClInclude>
   </ItemGroup>

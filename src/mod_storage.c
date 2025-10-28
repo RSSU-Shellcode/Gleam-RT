@@ -199,7 +199,7 @@ static bool recoverStoragePointer(InMemoryStorage* storage)
 static bool initStorageEnvironment(InMemoryStorage* storage, Context* context)
 {
     // create mutex
-    HANDLE hMutex = context->CreateMutexA(NULL, false, NAME_RT_IMS_MUTEX_GLOBAL);
+    HANDLE hMutex = context->CreateMutexA(NULL, false, NAME_RT_IS_MUTEX_GLOBAL);
     if (hMutex == NULL)
     {
         return false;

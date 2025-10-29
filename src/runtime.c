@@ -741,6 +741,7 @@ static errno initSubmodules(Runtime* runtime)
         .PEB   = runtime->PEB,
         .IMOML = runtime->IMOML,
 
+        .GetTickCount           = runtime->GetTickCount,
         .LoadLibraryA           = runtime->LoadLibraryA,
         .FreeLibrary            = runtime->FreeLibrary,
         .VirtualAlloc           = runtime->VirtualAlloc,

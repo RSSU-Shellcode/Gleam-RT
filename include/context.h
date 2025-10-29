@@ -43,6 +43,7 @@ typedef struct {
     void* IMOML;
 
     // for initialize runtime submodules
+    GetTickCount_t           GetTickCount;
     LoadLibraryA_t           LoadLibraryA;
     FreeLibrary_t            FreeLibrary;
     VirtualAlloc_t           VirtualAlloc;

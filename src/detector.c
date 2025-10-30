@@ -51,6 +51,36 @@ Detector_M* InitDetector(Context* context)
     mem_init(detector, sizeof(Detector));
     // store options
     detector->NotEraseInstruction = context->NotEraseInstruction;
+    // initialize detector
+    errno errno = NO_ERROR;
+    for (;;)
+    {
+        if (!initDetectorAPI(detector, context))
+        {
+            errno = ERR_DETECTOR_INIT_API;
+            break;
+        }
+        if (!updateDetectorPointer(detector))
+        {
+            errno = ERR_DETECTOR_UPDATE_PTR;
+            break;
+        }
+        if (!initDetectorEnvironment(detector, context))
+        {
+            errno = ERR_DETECTOR_INIT_ENV;
+            break;
+        }
+        break;
+    }
+    eraseDetectorMethods(context);
+    if (errno != NO_ERROR)
+    {
+        cleanDetector(detector);
+        SetLastErrno(errno);
+        return NULL;
+    }
+
+
 
 }
 
@@ -107,3 +137,49 @@ static bool recoverDetectorPointer(Detector* detector)
     }
     return success;
 }
+
+__declspec(noinline)
+static bool initDetectorEnvironment(Detector* detector, Context* context)
+{
+    // create mutex
+    HANDLE hMutex = context->CreateMutexA(NULL, false, NAME_RT_DETECTOR_MUTEX);
+    if (hMutex == NULL)
+    {
+        return false;
+    }
+    detector->hMutex = hMutex;
+    return true;
+}
+
+__declspec(noinline)
+static void eraseDetectorMethods(Context* context)
+{
+    if (context->NotEraseInstruction)
+    {
+        return;
+    }
+    uintptr begin = (uintptr)(GetFuncAddr(&initDetectorAPI));
+    uintptr end   = (uintptr)(GetFuncAddr(&eraseDetectorMethods));
+    uintptr size  = end - begin;
+    RandBuffer((byte*)begin, (int64)size);
+}
+
+__declspec(noinline)
+static void cleanDetector(Detector* detector)
+{
+    if (detector->CloseHandle != NULL && detector->hMutex != NULL)
+    {
+        detector->CloseHandle(detector->hMutex);
+    }
+}
+
+// updateDetectorPointer will replace hard encode address to the actual address.
+// Must disable compiler optimize, otherwise updateDetectorPointer will fail.
+#pragma optimize("", off)
+static Detector* getDetectorPointer()
+{
+    uintptr pointer = DETECTOR_POINTER;
+    return (Detector*)(pointer);
+}
+#pragma optimize("", on)
+

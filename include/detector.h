@@ -13,18 +13,18 @@ typedef struct {
     bool InVirtualMachine;
     bool InEmulator;
     bool IsAccelerated;
-} DET_Status;
+} DT_Status;
 
-typedef errno (*DETDetect_t)();
-typedef errno (*DETStatus_t)(DET_Status* status);
+typedef errno (*DetDetect_t)();
+typedef errno (*DetStatus_t)(DT_Status* status);
 
-typedef errno (*DETStop_t)();
+typedef errno (*DetStop_t)();
 
 typedef struct {
-    DETDetect_t Detect;
-    DETStatus_t Status;
+    DetDetect_t Detect;
+    DetStatus_t Status;
 
-    DETStop_t Stop;
+    DetStop_t Stop;
 } Detector_M;
 
 Detector_M* InitDetector(Context* context);

@@ -23,7 +23,16 @@ typedef struct {
 
     // protect data
     HANDLE hMutex;
+
+
 } Detector;
+
+// methods for user
+errno DT_Detect();
+errno DT_GetStatus(DT_Status* status);
+
+// methods for runtime
+errno DT_Stop();
 
 // hard encoded address in getDetectorPointer for replacement
 #ifdef _WIN64
@@ -79,9 +88,14 @@ Detector_M* InitDetector(Context* context)
         SetLastErrno(errno);
         return NULL;
     }
-
-
-
+    // create methods for detector
+    Detector_M* method = (Detector_M*)methodAddr;
+    // methods for user
+    method->Detect = GetFuncAddr(&DT_Detect);
+    method->Status = GetFuncAddr(&DT_GetStatus);
+    // methods for runtime
+    method->Stop = GetFuncAddr(&DT_Stop);
+    return method;
 }
 
 __declspec(noinline)
@@ -183,3 +197,42 @@ static Detector* getDetectorPointer()
 }
 #pragma optimize("", on)
 
+__declspec(noinline)
+errno DT_Detect()
+{
+    Detector* detector = getDetectorPointer();
+
+    return NO_ERROR;
+}
+
+__declspec(noinline)
+errno DT_GetStatus(DT_Status* status)
+{
+    Detector* detector = getDetectorPointer();
+
+    return NO_ERROR;
+}
+
+__declspec(noinline)
+errno DT_Stop()
+{
+    Detector* detector = getDetectorPointer();
+
+    errno errno = NO_ERROR;
+
+    // close mutex
+    if (!detector->CloseHandle(detector->hMutex) && errno == NO_ERROR)
+    {
+        errno = ERR_DETECTOR_CLOSE_MUTEX;
+    }
+
+    // recover instructions
+    if (detector->NotEraseInstruction)
+    {
+        if (!recoverDetectorPointer(detector) && errno == NO_ERROR)
+        {
+            errno = ERR_DETECTOR_RECOVER_INST;
+        }
+    }
+    return errno;
+}

@@ -31,6 +31,22 @@
 typedef DWORD ALG_ID;
 #endif // DLL_ADVAPI32_H
 
+// about detector
+#ifndef DETECTOR_H
+typedef struct {
+    bool IsEnabled;
+    bool HasDebugger;
+    bool HasMemoryScanner;
+    bool InSandbox;
+    bool InVirtualMachine;
+    bool InEmulator;
+    bool IsAccelerated;
+} DT_Status;
+#endif // DETECTOR_H
+
+typedef errno (*DetDetect_t)();
+typedef errno (*DetGetStatus_t)(DT_Status* status);
+
 // about library tracker
 #ifndef MOD_LIBRARY_H
 #define HMODULE_GLEAM_RT ((HMODULE)(0x00001234))
@@ -547,6 +563,11 @@ typedef struct {
     } Procedure;
 
     struct {
+        DetDetect_t    Detect;
+        DetGetStatus_t Status;
+    } Detector;
+
+    struct {
         SMGetStatus_t Status;
         SMPause_t     Pause;
         SMContinue_t  Continue;
@@ -593,6 +614,9 @@ typedef struct {
     // protect instructions like boot before Runtime,
     // if it is NULL, Runtime will only protect self.
     void* BootInstAddress;
+
+    // disable detector for test or debug.
+    bool DisableDetector;
 
     // disable sysmon for implement single thread model.
     bool DisableSysmon;

@@ -456,6 +456,9 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->Procedure.GetProcByName   = GetFuncAddr(&RT_GetProcAddressByName);
     module->Procedure.GetProcByHash   = GetFuncAddr(&RT_GetProcAddressByHash);
     module->Procedure.GetProcByHashML = GetFuncAddr(&RT_GetProcAddressByHashML);
+    // about detector
+    module->Detector.Detect = runtime->Detector->Detect;
+    module->Detector.Status = runtime->Detector->GetStatus;
     // about system monitor
     module->Sysmon.Status   = runtime->Sysmon->GetStatus;
     module->Sysmon.Pause    = runtime->Sysmon->Pause;
@@ -797,6 +800,8 @@ static errno initSubmodules(Runtime* runtime)
         return err;
     }
     runtime->Detector->Detect();
+
+    // TODO check env
 
     // initialize runtime submodules
     typedef errno (*module_t)(Runtime* runtime, Context* context);
@@ -2491,6 +2496,10 @@ errno RT_GetMetrics(Runtime_Metrics* metrics)
     if (!runtime->ResourceTracker->GetStatus(&metrics->Resource))
     {
         errno = ERR_RUNTIME_GET_STATUS_RESOURCE;
+    }
+    if (!runtime->Detector->GetStatus(&metrics->Detector))
+    {
+        errno = ERR_RUNTIME_GET_STATUS_DETECTOR;
     }
     if (!runtime->Sysmon->GetStatus(&metrics->Sysmon))
     {

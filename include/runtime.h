@@ -19,11 +19,12 @@
 #define OPTION_STUB_SIZE  64
 #define OPTION_STUB_MAGIC 0xFC
 
-#define OPT_OFFSET_DISABLE_SYSMON        1
-#define OPT_OFFSET_DISABLE_WATCHDOG      2
-#define OPT_OFFSET_NOT_ERASE_INSTRUCTION 3
-#define OPT_OFFSET_NOT_ADJUST_PROTECT    4
-#define OPT_OFFSET_TRACK_CURRENT_THREAD  5
+#define OPT_OFFSET_DISABLE_DETECTOR      1
+#define OPT_OFFSET_DISABLE_SYSMON        2
+#define OPT_OFFSET_DISABLE_WATCHDOG      3
+#define OPT_OFFSET_NOT_ERASE_INSTRUCTION 4
+#define OPT_OFFSET_NOT_ADJUST_PROTECT    5
+#define OPT_OFFSET_TRACK_CURRENT_THREAD  6
 
 // for generic shellcode development.
 
@@ -396,6 +397,7 @@ typedef struct {
     MT_Status Memory;
     TT_Status Thread;
     RT_Status Resource;
+    DT_Status Detector;
     SM_Status Sysmon;
     WD_Status Watchdog;
 } Runtime_Metrics;

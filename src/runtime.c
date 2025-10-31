@@ -15,6 +15,7 @@
 #include "errno.h"
 #include "context.h"
 #include "layout.h"
+#include "detector.h"
 #include "mod_library.h"
 #include "mod_memory.h"
 #include "mod_thread.h"
@@ -92,6 +93,9 @@ typedef struct {
     // try to lock submodules mutex
     HANDLE ModMutexHandle[6];
     bool   ModMutexStatus[6];
+
+    // runtime security modules
+    Detector_M* Detector;
 
     // runtime submodules
     LibraryTracker_M*  LibraryTracker;
@@ -190,6 +194,7 @@ static bool  updateRuntimePointer(Runtime* runtime);
 static bool  recoverRuntimePointer(Runtime* runtime);
 static errno initRuntimeEnvironment(Runtime* runtime);
 static errno initSubmodules(Runtime* runtime);
+static errno initDetector(Runtime* runtime, Context* context);
 static errno initLibraryTracker(Runtime* runtime, Context* context);
 static errno initMemoryTracker(Runtime* runtime, Context* context);
 static errno initThreadTracker(Runtime* runtime, Context* context);
@@ -733,6 +738,7 @@ static errno initSubmodules(Runtime* runtime)
 {
     // create context data for initialize other modules
     Context context = {
+        .DisableDetector     = runtime->Options.DisableDetector,
         .DisableSysmon       = runtime->Options.DisableSysmon,
         .DisableWatchdog     = runtime->Options.DisableWatchdog,
         .NotEraseInstruction = runtime->Options.NotEraseInstruction,
@@ -785,9 +791,12 @@ static errno initSubmodules(Runtime* runtime)
     };
 
     // initialize security submodule
-
-
-
+    errno err = initDetector(runtime, &context);
+    if (err != NO_ERROR)
+    {
+        return err;
+    }
+    runtime->Detector->Detect();
 
     // initialize runtime submodules
     typedef errno (*module_t)(Runtime* runtime, Context* context);
@@ -877,6 +886,17 @@ static errno initSubmodules(Runtime* runtime)
     // clean useless API functions in runtime structure
     RandBuffer((byte*)(&runtime->GetSystemInfo), sizeof(uintptr));
     RandBuffer((byte*)(&runtime->CreateMutexA),  sizeof(uintptr));
+    return NO_ERROR;
+}
+
+static errno initDetector(Runtime* runtime, Context* context)
+{
+    Detector_M* detector = InitDetector(context);
+    if (detector == NULL)
+    {
+        return GetLastErrno();
+    }
+    runtime->Detector = detector;
     return NO_ERROR;
 }
 
@@ -2610,6 +2630,9 @@ static errno stop(bool exitThread)
         runtime->ResourceTracker->Clean,
         runtime->LibraryTracker->Clean,
         runtime->MemoryTracker->Clean,
+
+        // security module
+        runtime->Detector->Stop,
     };
     errno enmod = NO_ERROR;
     for (int i = 0; i < arrlen(submodules); i++)

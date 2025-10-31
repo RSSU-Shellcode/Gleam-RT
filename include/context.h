@@ -33,6 +33,7 @@ typedef bool (*WD_IsEnabled_t)();
 
 typedef struct {
     // runtime options
+    bool DisableDetector;
     bool DisableSysmon;
     bool DisableWatchdog;
     bool NotEraseInstruction;

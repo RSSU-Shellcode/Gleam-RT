@@ -13,6 +13,7 @@
 
 typedef struct {
     // store options
+    bool DisableDetector;
     bool NotEraseInstruction;
 
     // API addresses
@@ -24,7 +25,12 @@ typedef struct {
     // protect data
     HANDLE hMutex;
 
-
+    uint16 HasDebugger;
+    uint16 HasMemoryScanner;
+    uint16 InSandbox;
+    uint16 InVirtualMachine;
+    uint16 InEmulator;
+    uint16 IsAccelerated;
 } Detector;
 
 // methods for user
@@ -59,6 +65,7 @@ Detector_M* InitDetector(Context* context)
     Detector* detector = (Detector*)detectorAddr;
     mem_init(detector, sizeof(Detector));
     // store options
+    detector->DisableDetector     = context->DisableDetector;
     detector->NotEraseInstruction = context->NotEraseInstruction;
     // initialize detector
     errno errno = NO_ERROR;
@@ -91,8 +98,8 @@ Detector_M* InitDetector(Context* context)
     // create methods for detector
     Detector_M* method = (Detector_M*)methodAddr;
     // methods for user
-    method->Detect = GetFuncAddr(&DT_Detect);
-    method->Status = GetFuncAddr(&DT_GetStatus);
+    method->Detect    = GetFuncAddr(&DT_Detect);
+    method->GetStatus = GetFuncAddr(&DT_GetStatus);
     // methods for runtime
     method->Stop = GetFuncAddr(&DT_Stop);
     return method;
@@ -202,6 +209,11 @@ errno DT_Detect()
 {
     Detector* detector = getDetectorPointer();
 
+    if (detector->DisableDetector)
+    {
+        return NO_ERROR;
+    }
+
     return NO_ERROR;
 }
 
@@ -209,6 +221,12 @@ __declspec(noinline)
 errno DT_GetStatus(DT_Status* status)
 {
     Detector* detector = getDetectorPointer();
+
+    if (detector->DisableDetector)
+    {
+        status->IsEnabled = false;
+        return NO_ERROR;
+    }
 
     return NO_ERROR;
 }

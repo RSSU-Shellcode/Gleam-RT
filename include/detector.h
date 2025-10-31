@@ -16,13 +16,13 @@ typedef struct {
 } DT_Status;
 
 typedef errno (*DetDetect_t)();
-typedef errno (*DetStatus_t)(DT_Status* status);
+typedef errno (*DetGetStatus_t)(DT_Status* status);
 
 typedef errno (*DetStop_t)();
 
 typedef struct {
-    DetDetect_t Detect;
-    DetStatus_t Status;
+    DetDetect_t    Detect;
+    DetGetStatus_t GetStatus;
 
     DetStop_t Stop;
 } Detector_M;

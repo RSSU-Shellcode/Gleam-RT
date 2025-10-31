@@ -11,8 +11,8 @@
 
 // ----------runtime core-----------
 
-#define LAYOUT_RUNTIME_STRUCT 1000
-#define LAYOUT_RUNTIME_MODULE 2800
+#define LAYOUT_RUNTIME_STRUCT 256
+#define LAYOUT_RUNTIME_MODULE 2560
 
 // ------------submodule------------
 

@@ -19,12 +19,13 @@
 #define OPTION_STUB_SIZE  64
 #define OPTION_STUB_MAGIC 0xFC
 
-#define OPT_OFFSET_DISABLE_DETECTOR      1
-#define OPT_OFFSET_DISABLE_SYSMON        2
-#define OPT_OFFSET_DISABLE_WATCHDOG      3
-#define OPT_OFFSET_NOT_ERASE_INSTRUCTION 4
-#define OPT_OFFSET_NOT_ADJUST_PROTECT    5
-#define OPT_OFFSET_TRACK_CURRENT_THREAD  6
+#define OPT_OFFSET_ENABLE_SECURITY_MODE  1
+#define OPT_OFFSET_DISABLE_DETECTOR      2
+#define OPT_OFFSET_DISABLE_SYSMON        3
+#define OPT_OFFSET_DISABLE_WATCHDOG      4
+#define OPT_OFFSET_NOT_ERASE_INSTRUCTION 5
+#define OPT_OFFSET_NOT_ADJUST_PROTECT    6
+#define OPT_OFFSET_TRACK_CURRENT_THREAD  7
 
 // for generic shellcode development.
 
@@ -45,8 +46,8 @@ typedef struct {
 } DT_Status;
 #endif // DETECTOR_H
 
-typedef errno (*DetDetect_t)();
-typedef errno (*DetGetStatus_t)(DT_Status* status);
+typedef bool (*DetDetect_t)();
+typedef bool (*DetGetStatus_t)(DT_Status* status);
 
 // about library tracker
 #ifndef MOD_LIBRARY_H
@@ -339,6 +340,7 @@ typedef void* (*GetProcByHashML_t)(void* list, uint mHash, uint pHash, uint hKey
 // about sysmon
 #ifndef SYSMON_H
 typedef struct {
+    bool  IsEnabled;
     int64 NumNormal;
     int64 NumRecover;
     int64 NumPanic;
@@ -352,6 +354,7 @@ typedef errno (*SMContinue_t)();
 // about watchdog
 #ifndef WATCHDOG_H
 typedef struct {
+    bool  IsEnabled;
     int64 NumKick;
     int64 NumNormal;
     int64 NumReset;
@@ -576,11 +579,11 @@ typedef struct {
     } Sysmon;
 
     struct {
+        WDSetHandler_t SetHandler;
         WDKick_t       Kick;
         WDEnable_t     Enable;
         WDDisable_t    Disable;
         WDIsEnabled_t  IsEnabled;
-        WDSetHandler_t SetHandler;
         WDGetStatus_t  Status;
         WDPause_t      Pause;
         WDContinue_t   Continue;
@@ -616,6 +619,10 @@ typedef struct {
     // protect instructions like boot before Runtime,
     // if it is NULL, Runtime will only protect self.
     void* BootInstAddress;
+
+    // detect environment when initialize runtime, if not safe, 
+    // stop initialization and exit runtime at once.
+    bool EnableSecurityMode;
 
     // disable detector for test or debug.
     bool DisableDetector;

@@ -146,7 +146,9 @@ Sysmon_M* InitSysmon(Context* context)
         }
         sysmon->hThread = hThread;
     }
-    // create methods for tracker
+    // update sysmon status
+    sysmon->status.IsEnabled = !context->DisableSysmon;
+    // create methods for sysmon
     Sysmon_M* method = (Sysmon_M*)methodAddr;
     // methods for user
     method->GetStatus = GetFuncAddr(&SM_GetStatus);

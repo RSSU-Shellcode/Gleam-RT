@@ -56,11 +56,11 @@ typedef struct {
 } Watchdog;
 
 // methods for user
+void  WD_SetHandler(WDHandler_t handler);
 errno WD_Kick();
 errno WD_Enable();
 errno WD_Disable();
 bool  WD_IsEnabled();
-void  WD_SetHandler(WDHandler_t handler);
 bool  WD_GetStatus(WD_Status* status);
 
 // methods for runtime
@@ -136,14 +136,14 @@ Watchdog_M* InitWatchdog(Context* context)
         SetLastErrno(errno);
         return NULL;
     }
-    // create methods for tracker
+    // create methods for watchdog
     Watchdog_M* method = (Watchdog_M*)methodAddr;
     // methods for user
+    method->SetHandler = GetFuncAddr(&WD_SetHandler);
     method->Kick       = GetFuncAddr(&WD_Kick);
     method->Enable     = GetFuncAddr(&WD_Enable);
     method->Disable    = GetFuncAddr(&WD_Disable);
     method->IsEnabled  = GetFuncAddr(&WD_IsEnabled);
-    method->SetHandler = GetFuncAddr(&WD_SetHandler);
     method->GetStatus  = GetFuncAddr(&WD_GetStatus);
     // methods for runtime
     method->Lock     = GetFuncAddr(&WD_Lock);
@@ -552,6 +552,14 @@ static void wd_add_reset()
 }
 
 __declspec(noinline)
+void WD_SetHandler(WDHandler_t handler)
+{
+    Watchdog* watchdog = getWatchdogPointer();
+
+    watchdog->handler = handler;
+}
+
+__declspec(noinline)
 errno WD_Kick()
 {
     if (!WD_Lock())
@@ -652,14 +660,6 @@ bool WD_IsEnabled()
         return false;
     }
     return enabled;
-}
-
-__declspec(noinline)
-void WD_SetHandler(WDHandler_t handler)
-{
-    Watchdog* watchdog = getWatchdogPointer();
-
-    watchdog->handler = handler;
 }
 
 __declspec(noinline)

@@ -86,15 +86,16 @@ static void eraseWatchdogMethods(Context* context);
 static void cleanWatchdog(Watchdog* watchdog);
 
 static uint  wd_watcher();
-static int64 wd_get_kick();
 static uint  wd_sleep(uint32 milliseconds);
 static errno wd_stop();
+static bool  wd_is_enabled();
 
-static bool wd_lock_status();
-static bool wd_unlock_status();
-static void wd_add_kick();
-static void wd_add_normal();
-static void wd_add_reset();
+static bool  wd_lock_status();
+static bool  wd_unlock_status();
+static int64 wd_get_kick();
+static void  wd_add_kick();
+static void  wd_add_normal();
+static void  wd_add_reset();
 
 Watchdog_M* InitWatchdog(Context* context)
 {
@@ -373,25 +374,6 @@ static uint wd_watcher()
 }
 
 __declspec(noinline)
-static int64 wd_get_kick()
-{
-    Watchdog* watchdog = getWatchdogPointer();
-
-    if (!wd_lock_status())
-    {
-        return 0;
-    }
-
-    int64 num = watchdog->status.NumKick;
-
-    if (!wd_unlock_status())
-    {
-        return 0;
-    }
-    return num;
-}
-
-__declspec(noinline)
 static uint wd_sleep(uint32 milliseconds)
 {
     Watchdog* watchdog = getWatchdogPointer();
@@ -436,11 +418,6 @@ static errno wd_stop()
 {
     Watchdog* watchdog = getWatchdogPointer();
 
-    if (watchdog->DisableWatchdog)
-    {
-        return NO_ERROR;
-    }
-
     if (watchdog->hThread == NULL)
     {
         return NO_ERROR;
@@ -476,6 +453,14 @@ static errno wd_stop()
 }
 
 __declspec(noinline)
+static bool wd_is_enabled()
+{
+    Watchdog* watchdog = getWatchdogPointer();
+
+    return watchdog->hThread != NULL;
+}
+
+__declspec(noinline)
 static bool wd_lock_status()
 {
     Watchdog* watchdog = getWatchdogPointer();
@@ -490,6 +475,25 @@ static bool wd_unlock_status()
     Watchdog* watchdog = getWatchdogPointer();
 
     return watchdog->ReleaseMutex(watchdog->statusMu);
+}
+
+__declspec(noinline)
+static int64 wd_get_kick()
+{
+    Watchdog* watchdog = getWatchdogPointer();
+
+    if (!wd_lock_status())
+    {
+        return 0;
+    }
+
+    int64 num = watchdog->status.NumKick;
+
+    if (!wd_unlock_status())
+    {
+        return 0;
+    }
+    return num;
 }
 
 __declspec(noinline)
@@ -624,6 +628,13 @@ errno WD_Enable()
 __declspec(noinline)
 errno WD_Disable()
 {
+    Watchdog* watchdog = getWatchdogPointer();
+
+    if (watchdog->DisableWatchdog)
+    {
+        return NO_ERROR;
+    }
+
     if (!WD_Lock())
     {
         return ERR_WATCHDOG_LOCK;
@@ -653,7 +664,7 @@ bool WD_IsEnabled()
         return false;
     }
 
-    bool enabled = watchdog->hThread != NULL;
+    bool enabled = wd_is_enabled();
 
     if (!WD_Unlock())
     {
@@ -672,6 +683,7 @@ bool WD_GetStatus(WD_Status* status)
         return false;
     }
 
+    status->IsEnabled = wd_is_enabled();
     wd_lock_status();
     *status = watchdog->status;
     wd_unlock_status();

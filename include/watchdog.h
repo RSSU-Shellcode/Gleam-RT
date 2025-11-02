@@ -30,11 +30,11 @@ typedef errno (*WDContinue_t)();
 typedef errno (*WDStop_t)();
 
 typedef struct {
+    WDSetHandler_t SetHandler;
     WDKick_t       Kick;
     WDEnable_t     Enable;
     WDDisable_t    Disable;
     WDIsEnabled_t  IsEnabled;
-    WDSetHandler_t SetHandler;
     WDGetStatus_t  GetStatus;
 
     WDLock_t     Lock;

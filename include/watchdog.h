@@ -8,6 +8,7 @@
 #define WATCHDOG_KICK_TIMEOUT 5000 // 5s
 
 typedef struct {
+    bool  IsEnabled;
     int64 NumKick;
     int64 NumNormal;
     int64 NumReset;
@@ -15,11 +16,11 @@ typedef struct {
 
 typedef void (*WDHandler_t)();
 
+typedef void  (*WDSetHandler_t)(WDHandler_t handler);
 typedef errno (*WDKick_t)();
 typedef errno (*WDEnable_t)();
 typedef errno (*WDDisable_t)();
 typedef bool  (*WDIsEnabled_t)();
-typedef void  (*WDSetHandler_t)(WDHandler_t handler);
 typedef bool  (*WDGetStatus_t)(WD_Status* status);
 
 typedef bool  (*WDLock_t)();

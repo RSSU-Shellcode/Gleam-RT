@@ -464,11 +464,11 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->Sysmon.Pause    = runtime->Sysmon->Pause;
     module->Sysmon.Continue = runtime->Sysmon->Continue;
     // about watchdog
+    module->Watchdog.SetHandler = runtime->Watchdog->SetHandler;
     module->Watchdog.Kick       = runtime->Watchdog->Kick;
     module->Watchdog.Enable     = runtime->Watchdog->Enable;
     module->Watchdog.Disable    = runtime->Watchdog->Disable;
     module->Watchdog.IsEnabled  = runtime->Watchdog->IsEnabled;
-    module->Watchdog.SetHandler = runtime->Watchdog->SetHandler;
     module->Watchdog.Status     = runtime->Watchdog->GetStatus;
     module->Watchdog.Pause      = runtime->Watchdog->Pause;
     module->Watchdog.Continue   = runtime->Watchdog->Continue;

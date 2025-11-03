@@ -15,8 +15,8 @@ typedef struct {
     bool IsAccelerated;
 } DT_Status;
 
-typedef errno (*DetDetect_t)();
-typedef errno (*DetGetStatus_t)(DT_Status* status);
+typedef bool (*DetDetect_t)();
+typedef bool (*DetGetStatus_t)(DT_Status* status);
 
 typedef errno (*DetStop_t)();
 

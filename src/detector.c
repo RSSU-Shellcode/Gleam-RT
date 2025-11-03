@@ -25,6 +25,10 @@ typedef struct {
     // protect data
     HANDLE hMutex;
 
+    // some test items only run once
+    // but some items need detect loop.
+    bool isDetected;
+
     uint16 HasDebugger;
     uint16 HasMemoryScanner;
     uint16 InSandbox;
@@ -34,8 +38,8 @@ typedef struct {
 } Detector;
 
 // methods for user
-errno DT_Detect();
-errno DT_GetStatus(DT_Status* status);
+bool DT_Detect();
+bool DT_GetStatus(DT_Status* status);
 
 // methods for runtime
 errno DT_Stop();
@@ -47,6 +51,9 @@ errno DT_Stop();
     #define DETECTOR_POINTER 0x7FABCDD1
 #endif
 static Detector* getDetectorPointer();
+
+static bool dt_lock();
+static bool dt_unlock();
 
 static bool initDetectorAPI(Detector* detector, Context* context);
 static bool updateDetectorPointer(Detector* detector);
@@ -205,30 +212,67 @@ static Detector* getDetectorPointer()
 #pragma optimize("", on)
 
 __declspec(noinline)
-errno DT_Detect()
+static bool dt_lock()
+{
+    Detector* detector = getDetectorPointer();
+
+    DWORD event = detector->WaitForSingleObject(detector->hMutex, INFINITE);
+    return event == WAIT_OBJECT_0 || event == WAIT_ABANDONED;
+}
+
+__declspec(noinline)
+static bool dt_unlock()
+{
+    Detector* detector = getDetectorPointer();
+
+    return detector->ReleaseMutex(detector->hMutex);
+}
+
+__declspec(noinline)
+bool DT_Detect()
 {
     Detector* detector = getDetectorPointer();
 
     if (detector->DisableDetector)
     {
-        return NO_ERROR;
+        return true;
     }
 
-    return NO_ERROR;
+    if (!dt_lock())
+    {
+        return false;
+    }
+
+    if (!dt_unlock())
+    {
+        return false;
+    }
+
+    return true;
 }
 
 __declspec(noinline)
-errno DT_GetStatus(DT_Status* status)
+bool DT_GetStatus(DT_Status* status)
 {
     Detector* detector = getDetectorPointer();
 
     if (detector->DisableDetector)
     {
         status->IsEnabled = false;
-        return NO_ERROR;
+        return true;
     }
 
-    return NO_ERROR;
+    if (!dt_lock())
+    {
+        return false;
+    }
+
+    if (!dt_unlock())
+    {
+        return false;
+    }
+
+    return true;
 }
 
 __declspec(noinline)

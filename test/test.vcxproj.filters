@@ -179,6 +179,9 @@
     <ClCompile Include="..\src\detector.c">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="src\detector_test.c">
+      <Filter>Test</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\crypto.h">

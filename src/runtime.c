@@ -262,6 +262,8 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     {
         Runtime_Opts opt = {
             .BootInstAddress     = NULL,
+            .EnableSecurityMode  = false,
+            .DisableDetector     = false,
             .DisableSysmon       = false,
             .DisableWatchdog     = false,
             .NotEraseInstruction = false,
@@ -741,6 +743,7 @@ static errno initSubmodules(Runtime* runtime)
 {
     // create context data for initialize other modules
     Context context = {
+        .EnableSecurityMode  = runtime->Options.EnableSecurityMode,
         .DisableDetector     = runtime->Options.DisableDetector,
         .DisableSysmon       = runtime->Options.DisableSysmon,
         .DisableWatchdog     = runtime->Options.DisableWatchdog,
@@ -753,6 +756,7 @@ static errno initSubmodules(Runtime* runtime)
         .GetTickCount           = runtime->GetTickCount,
         .LoadLibraryA           = runtime->LoadLibraryA,
         .FreeLibrary            = runtime->FreeLibrary,
+        .GetProcAddress         = runtime->GetProcAddress,
         .VirtualAlloc           = runtime->VirtualAlloc,
         .VirtualFree            = runtime->VirtualFree,
         .VirtualProtect         = runtime->VirtualProtect,

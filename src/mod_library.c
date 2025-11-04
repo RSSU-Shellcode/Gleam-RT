@@ -36,6 +36,7 @@ typedef struct {
     LoadLibraryExW_t           LoadLibraryExW;
     FreeLibrary_t              FreeLibrary;
     FreeLibraryAndExitThread_t FreeLibraryAndExitThread;
+    GetProcAddress_t           GetProcAddress;
     ReleaseMutex_t             ReleaseMutex;
     WaitForSingleObject_t      WaitForSingleObject;
     CloseHandle_t              CloseHandle;
@@ -50,6 +51,9 @@ typedef struct {
     List Modules;
     byte ModulesKey[CRYPTO_KEY_SIZE];
     byte ModulesIV [CRYPTO_IV_SIZE];
+
+    // record the number of call GetProcAddress.
+    int64 NumProcedures;
 } LibraryTracker;
 
 // methods for API redirector
@@ -59,6 +63,7 @@ HMODULE LT_LoadLibraryExA(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags);
 HMODULE LT_LoadLibraryExW(LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags);
 BOOL    LT_FreeLibrary(HMODULE hLibModule);
 void    LT_FreeLibraryAndExitThread(HMODULE hLibModule, DWORD dwExitCode);
+FARPROC LT_GetProcAddress(HMODULE hModule, LPCSTR lpProcName);
 
 // methods for user
 bool LT_LockModule(HMODULE hModule);
@@ -144,6 +149,7 @@ LibraryTracker_M* InitLibraryTracker(Context* context)
     module->LoadLibraryExW           = GetFuncAddr(&LT_LoadLibraryExW);
     module->FreeLibrary              = GetFuncAddr(&LT_FreeLibrary);
     module->FreeLibraryAndExitThread = GetFuncAddr(&LT_FreeLibraryAndExitThread);
+    module->GetProcAddress           = GetFuncAddr(&LT_GetProcAddress);
     // methods for user
     module->LockModule   = GetFuncAddr(&LT_LockModule);
     module->UnlockModule = GetFuncAddr(&LT_UnlockModule);
@@ -579,6 +585,37 @@ void LT_FreeLibraryAndExitThread(HMODULE hLibModule, DWORD dwExitCode)
 }
 
 __declspec(noinline)
+FARPROC LT_GetProcAddress(HMODULE hModule, LPCSTR lpProcName)
+{
+    LibraryTracker* tracker = getTrackerPointer();
+
+    if (!LT_Lock())
+    {
+        return NULL;
+    }
+
+    FARPROC proc;
+    for (;;)
+    {
+        proc = tracker->GetProcAddress(hModule, lpProcName);
+        if (proc == NULL)
+        {
+            break;
+        }
+        tracker->NumProcedures++;
+        break;
+    }
+
+    dbg_log("[library]", "GetProcAddress: 0x%zX, %s", hModule, lpProcName);
+
+    if (!LT_Unlock())
+    {
+        return NULL;
+    }
+    return proc;
+}
+
+__declspec(noinline)
 static bool isGleamRT_A(LPCSTR lpLibFileName)
 {
     // build "GleamRT.dll" string
@@ -745,12 +782,15 @@ bool LT_GetStatus(LT_Status* status)
         num++;
     }
 
+    int64 numProcs = tracker->NumProcedures;
+
     if (!LT_Unlock())
     {
         return false;
     }
 
-    status->NumModules = numMods;
+    status->NumModules    = numMods;
+    status->NumProcedures = numProcs;
     return true;
 }
 
@@ -836,7 +876,8 @@ errno LT_Decrypt()
     byte* iv   = tracker->ModulesIV;
     DecryptBuf(list->Data, List_Size(list), key, iv);
 
-    dbg_log("[library]", "modules: %zu", list->Len);
+    dbg_log("[library]", "modules:    %zu", list->Len);
+    dbg_log("[library]", "procedures: %zu", tracker->NumProcedures);
     return NO_ERROR;
 }
 
@@ -878,7 +919,8 @@ errno LT_FreeAll()
         num++;
     }
 
-    dbg_log("[library]", "modules: %zu", modules->Len);
+    dbg_log("[library]", "modules:    %zu", modules->Len);
+    dbg_log("[library]", "procedures: %zu", tracker->NumProcedures);
     return errno;
 }
 
@@ -932,7 +974,8 @@ errno LT_Clean()
         }
     }
 
-    dbg_log("[library]", "modules: %zu", modules->Len);
+    dbg_log("[library]", "modules:    %zu", modules->Len);
+    dbg_log("[library]", "procedures: %zu", tracker->NumProcedures);
     return errno;
 }
 

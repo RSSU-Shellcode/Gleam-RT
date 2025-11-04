@@ -33,6 +33,7 @@ typedef bool (*WD_IsEnabled_t)();
 
 typedef struct {
     // runtime options
+    bool EnableSecurityMode;
     bool DisableDetector;
     bool DisableSysmon;
     bool DisableWatchdog;
@@ -47,6 +48,7 @@ typedef struct {
     GetTickCount_t           GetTickCount;
     LoadLibraryA_t           LoadLibraryA;
     FreeLibrary_t            FreeLibrary;
+    GetProcAddress_t         GetProcAddress;
     VirtualAlloc_t           VirtualAlloc;
     VirtualFree_t            VirtualFree;
     VirtualProtect_t         VirtualProtect;

@@ -1760,7 +1760,7 @@ void* RT_GetProcAddressByName(HMODULE hModule, LPCSTR lpProcName, bool redirect)
             SetLastErrno(ERR_RUNTIME_INVALID_HMODULE);
             return NULL;
         }
-        return runtime->GetProcAddress(hModule, lpProcName);
+        return runtime->LibraryTracker->GetProcAddress(hModule, lpProcName);
     }
     // use "mem_init" for prevent incorrect compiler
     // optimize and generate incorrect shellcode
@@ -1810,7 +1810,7 @@ void* RT_GetProcAddressByName(HMODULE hModule, LPCSTR lpProcName, bool redirect)
         SetLastErrno(ERR_RUNTIME_NOT_FOUND_METHOD);
         return NULL;
     }
-    return runtime->GetProcAddress(hModule, lpProcName);
+    return runtime->LibraryTracker->GetProcAddress(hModule, lpProcName);
 }
 
 __declspec(noinline)
@@ -1848,7 +1848,7 @@ void* RT_GetProcAddressByHashML(void* list, uint mHash, uint pHash, uint hKey, b
     return proc;
 }
 
-// disable optimize for use call NOT jmp to runtime->GetProcAddress.
+// disable optimize for use call, NOT jmp to runtime->GetProcAddress.
 #pragma optimize("", off)
 void* RT_GetProcAddressOriginal(HMODULE hModule, LPCSTR lpProcName)
 {

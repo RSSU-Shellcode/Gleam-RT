@@ -11,6 +11,7 @@
 
 typedef struct {
     int64 NumModules;
+    int64 NumProcedures;
 } LT_Status;
 
 typedef bool (*LibLockModule_t)(HMODULE hModule);
@@ -33,6 +34,7 @@ typedef struct {
     LoadLibraryExW_t           LoadLibraryExW;
     FreeLibrary_t              FreeLibrary;
     FreeLibraryAndExitThread_t FreeLibraryAndExitThread;
+    GetProcAddress_t           GetProcAddress;
 
     // for user
     LibLockModule_t   LockModule;

@@ -206,6 +206,7 @@ static bool initTrackerAPI(LibraryTracker* tracker, Context* context)
 
     tracker->LoadLibraryA        = context->LoadLibraryA;
     tracker->FreeLibrary         = context->FreeLibrary;
+    tracker->GetProcAddress      = context->GetProcAddress;
     tracker->ReleaseMutex        = context->ReleaseMutex;
     tracker->WaitForSingleObject = context->WaitForSingleObject;
     tracker->CloseHandle         = context->CloseHandle;
@@ -584,7 +585,8 @@ void LT_FreeLibraryAndExitThread(HMODULE hLibModule, DWORD dwExitCode)
     tracker->FreeLibraryAndExitThread(hLibModule, dwExitCode);
 }
 
-__declspec(noinline)
+// disable optimize for use call, NOT jmp to tracker->GetProcAddress.
+#pragma optimize("", off)
 FARPROC LT_GetProcAddress(HMODULE hModule, LPCSTR lpProcName)
 {
     LibraryTracker* tracker = getTrackerPointer();
@@ -606,7 +608,10 @@ FARPROC LT_GetProcAddress(HMODULE hModule, LPCSTR lpProcName)
         break;
     }
 
-    dbg_log("[library]", "GetProcAddress: 0x%zX, %s", hModule, lpProcName);
+    if (lpProcName > (LPCSTR)(0xFFFF))
+    {
+        dbg_log("[library]", "GetProcAddress: 0x%zX, %s", hModule, lpProcName);
+    }
 
     if (!LT_Unlock())
     {
@@ -614,6 +619,7 @@ FARPROC LT_GetProcAddress(HMODULE hModule, LPCSTR lpProcName)
     }
     return proc;
 }
+#pragma optimize("", on)
 
 __declspec(noinline)
 static bool isGleamRT_A(LPCSTR lpLibFileName)
@@ -763,9 +769,9 @@ bool LT_GetStatus(LT_Status* status)
         return false;
     }
 
+    // count the number of the tracked modules
     List* modules = &tracker->Modules;
     int64 numMods = 0;
-    // count the number of the tracked modules
     uint len = modules->Len;
     uint idx = 0;
     for (uint num = 0; num < len; idx++)
@@ -781,7 +787,7 @@ bool LT_GetStatus(LT_Status* status)
         }
         num++;
     }
-
+    // count the number of the call GetProcAddress
     int64 numProcs = tracker->NumProcedures;
 
     if (!LT_Unlock())

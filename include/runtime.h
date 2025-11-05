@@ -43,6 +43,7 @@ typedef struct {
     bool InVirtualMachine;
     bool InEmulator;
     bool IsAccelerated;
+    int8 SafeRank;
 } DT_Status;
 #endif // DETECTOR_H
 
@@ -54,6 +55,7 @@ typedef bool (*DetGetStatus_t)(DT_Status* status);
 #define HMODULE_GLEAM_RT ((HMODULE)(0x00001234))
 typedef struct {
     int64 NumModules;
+    int64 NumProcedures;
 } LT_Status;
 #endif // MOD_LIBRARY_H
 

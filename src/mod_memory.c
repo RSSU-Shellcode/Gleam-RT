@@ -2966,7 +2966,7 @@ static bool walkHeapBlocks(HANDLE hHeap, int operation)
         return false;
     }
 
-    dbg_log("[memory]", "heap block: %zu/%d", numFound, tracker->NumBlocks);
+    dbg_log("[memory]", "heap block: 0x%zX %zu/%d", hHeap, numFound, tracker->NumBlocks);
 
     bool success = lastErr == ERROR_NO_MORE_ITEMS;
     if (success)

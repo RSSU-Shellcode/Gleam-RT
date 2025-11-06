@@ -13,6 +13,7 @@ typedef struct {
     bool InVirtualMachine;
     bool InEmulator;
     bool IsAccelerated;
+    int8 SafeRank;
 } DT_Status;
 
 typedef bool (*DetDetect_t)();

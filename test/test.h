@@ -20,6 +20,7 @@ bool TestSerialize();
 bool TestMemScanner();
 
 bool TestInitRuntime();
+bool TestRuntime_Detector();
 bool TestRuntime_Memory();
 bool TestRuntime_Argument();
 bool TestRuntime_Storage();
@@ -49,6 +50,7 @@ static unit tests[] =
     { "Serialize",   TestSerialize  },
     { "Mem_Scanner", TestMemScanner },
 
+    { "Runtime_Detector",  TestRuntime_Detector  },
     { "Runtime_Memory",    TestRuntime_Memory    },
     { "Runtime_Argument",  TestRuntime_Argument  },
     { "Runtime_Storage",   TestRuntime_Storage   },

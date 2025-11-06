@@ -16,6 +16,8 @@ bool TestInitRuntime()
 {
     Runtime_Opts opts = {
         .BootInstAddress     = NULL,
+        .EnableSecurityMode  = false,
+        .DisableDetector     = false,
         .DisableSysmon       = false,
         .DisableWatchdog     = false,
         .NotEraseInstruction = true,
@@ -84,6 +86,8 @@ bool TestRuntime_Options()
 {
     Runtime_Opts opts = {
         .BootInstAddress     = NULL,
+        .EnableSecurityMode  = false,
+        .DisableDetector     = true,
         .DisableSysmon       = true,
         .DisableWatchdog     = true,
         .NotEraseInstruction = true,

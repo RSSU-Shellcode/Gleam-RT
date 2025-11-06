@@ -31,6 +31,8 @@ func (e *errno) Error() string {
 // Options contains options about initialize runtime.
 type Options struct {
 	BootInstAddress     uintptr `toml:"boot_inst_address"     json:"boot_inst_address"`
+	EnableSecurityMode  bool    `toml:"enable_security_mode"  json:"enable_security_mode"`
+	DisableDetector     bool    `toml:"disable_detector"      json:"disable_detector"`
 	DisableSysmon       bool    `toml:"disable_sysmon"        json:"disable_sysmon"`
 	DisableWatchdog     bool    `toml:"disable_watchdog"      json:"disable_watchdog"`
 	NotEraseInstruction bool    `toml:"not_erase_instruction" json:"not_erase_instruction"`
@@ -192,6 +194,11 @@ type RuntimeM struct {
 		GetProcByHashML uintptr
 	}
 
+	Detector struct {
+		Detect uintptr
+		Status uintptr
+	}
+
 	Sysmon struct {
 		Status   uintptr
 		Pause    uintptr
@@ -199,11 +206,11 @@ type RuntimeM struct {
 	}
 
 	Watchdog struct {
+		SetHandler uintptr
 		Kick       uintptr
 		Enable     uintptr
 		Disable    uintptr
 		IsEnabled  uintptr
-		SetHandler uintptr
 		Status     uintptr
 		Pause      uintptr
 		Continue   uintptr

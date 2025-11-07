@@ -530,7 +530,7 @@ BOOL LT_FreeLibrary(HMODULE hLibModule)
         return false;
     }
 
-    bool success = false;
+    BOOL success = false;
     for (;;)
     {
         if (!tracker->FreeLibrary(hLibModule))

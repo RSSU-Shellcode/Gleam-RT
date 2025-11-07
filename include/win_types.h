@@ -13,9 +13,9 @@ typedef int16 SHORT;
 typedef int32 LONG;
 typedef int64 LONGLONG;
 
-typedef uint UINT;
-typedef bool BOOL;
-typedef uint SIZE_T;
+typedef uint  UINT;
+typedef int32 BOOL;
+typedef uint  SIZE_T;
 
 typedef void* POINTER;
 typedef void* PVOID;

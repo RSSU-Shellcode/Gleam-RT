@@ -1973,7 +1973,7 @@ int RT_WSAIoctl(
         return SOCKET_ERROR;
     }
 
-    BOOL  success = false;
+    bool  success = false;
     errno lastErr = NO_ERROR;
     for (;;)
     {
@@ -2200,9 +2200,9 @@ BOOL RT_CloseHandle(HANDLE hObject)
     errno lastErr = NO_ERROR;
     for (;;)
     {
-        bool ok = tracker->CloseHandle(hObject);
+        success = tracker->CloseHandle(hObject);
         lastErr = GetLastErrno();
-        if (!ok)
+        if (!success)
         {
             break;
         }
@@ -2235,9 +2235,9 @@ BOOL RT_FindClose(HANDLE hFindFile)
     errno lastErr = NO_ERROR;
     for (;;)
     {
-        bool ok = tracker->FindClose(hFindFile);
+        success = tracker->FindClose(hFindFile);
         lastErr = GetLastErrno();
-        if (!ok)
+        if (!success)
         {
             break;
         }

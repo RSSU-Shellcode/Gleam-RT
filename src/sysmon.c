@@ -21,6 +21,7 @@ typedef struct {
 
     SuspendThread_t          SuspendThread;
     ResumeThread_t           ResumeThread;
+    GetThreadContext_t       GetThreadContext;
     CreateWaitableTimerA_t   CreateWaitableTimerA;
     SetWaitableTimer_t       SetWaitableTimer;
     SetEvent_t               SetEvent;
@@ -147,7 +148,7 @@ Sysmon_M* InitSysmon(Context* context)
         sysmon->hThread = hThread;
     }
     // update sysmon status
-    sysmon->status.IsEnabled = !context->DisableSysmon;
+    sysmon->status.IsEnabled = (int32)1;  // !context->DisableSysmon;
     // create methods for sysmon
     Sysmon_M* method = (Sysmon_M*)methodAddr;
     // methods for user
@@ -166,6 +167,7 @@ static bool initSysmonAPI(Sysmon* sysmon, Context* context)
 {
     sysmon->SuspendThread          = context->SuspendThread;
     sysmon->ResumeThread           = context->ResumeThread;
+    sysmon->GetThreadContext       = context->GetThreadContext;
     sysmon->CreateWaitableTimerA   = context->CreateWaitableTimerA;
     sysmon->SetWaitableTimer       = context->SetWaitableTimer;
     sysmon->SetEvent               = context->SetEvent;
@@ -590,6 +592,16 @@ errno SM_Pause()
 
     errno errno = NO_ERROR;
     if (sysmon->SuspendThread(sysmon->hThread) == (DWORD)(-1))
+    {
+        errno = GetLastErrno();
+    }
+    // must get the thread context because SuspendThread only
+    // requests a suspend. GetThreadContext actually blocks
+    // until it's suspended.
+    CONTEXT ctx;
+    mem_init(&ctx, sizeof(CONTEXT));
+    ctx.ContextFlags = CONTEXT_INTEGER;
+    if (!sysmon->GetThreadContext(sysmon->hThread, &ctx))
     {
         errno = GetLastErrno();
     }

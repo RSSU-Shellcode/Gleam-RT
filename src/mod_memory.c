@@ -2060,13 +2060,13 @@ void __cdecl MT_ucrtbase_free(void* ptr)
         if (free == NULL)
         {
         #ifdef _WIN64
-            uint mHash = 0x11B0889A6084A30F;
-            uint pHash = 0x438FC396E49E76F1;
-            uint hKey  = 0x2147D0F4BBF0BF25;
+            uint mHash = 0xCE9C8798388A6DA3;
+            uint pHash = 0x474EAF96B49B242D;
+            uint hKey  = 0x4664A17DDAE0B020;
         #elif _WIN32
-            uint mHash = 0x611CB923;
-            uint pHash = 0xADA4F1A3;
-            uint hKey  = 0x964B5F08;
+            uint mHash = 0xE42F7591;
+            uint pHash = 0x49DCB887;
+            uint hKey  = 0xA1753154;
         #endif
             free = tracker->FindAPI(mHash, pHash, hKey);
             if (free == NULL)

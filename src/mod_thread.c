@@ -1095,6 +1095,16 @@ errno TT_Suspend()
         if (count != (DWORD)(-1))
         {
             thread->numSuspend++;
+           	// must get the thread context because SuspendThread only 
+            // requests a suspend. GetThreadContext actually blocks 
+            // until it's suspended.
+            CONTEXT ctx;
+            mem_init(&ctx, sizeof(CONTEXT));
+            ctx.ContextFlags = CONTEXT_CONTROL;
+            if (!tracker->GetThreadContext(thread->hThread, &ctx))
+            {
+                errno = GetLastErrno();
+            }
         } else {
             delThread(tracker, thread->threadID);
             errno = ERR_THREAD_SUSPEND;

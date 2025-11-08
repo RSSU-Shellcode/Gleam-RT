@@ -21,6 +21,7 @@ typedef struct {
 
     SuspendThread_t          SuspendThread;
     ResumeThread_t           ResumeThread;
+    GetThreadContext_t       GetThreadContext;
     CreateWaitableTimerA_t   CreateWaitableTimerA;
     SetWaitableTimer_t       SetWaitableTimer;
     SetEvent_t               SetEvent;
@@ -184,6 +185,7 @@ static bool initWatchdogAPI(Watchdog* watchdog, Context* context)
 
     watchdog->SuspendThread          = context->SuspendThread;
     watchdog->ResumeThread           = context->ResumeThread;
+    watchdog->GetThreadContext       = context->GetThreadContext;
     watchdog->CreateWaitableTimerA   = context->CreateWaitableTimerA;
     watchdog->SetWaitableTimer       = context->SetWaitableTimer;
     watchdog->SetEvent               = context->SetEvent;
@@ -683,7 +685,7 @@ bool WD_GetStatus(WD_Status* status)
         return false;
     }
 
-    status->IsEnabled = wd_is_enabled();
+    status->IsEnabled = 1;
     wd_lock_status();
     *status = watchdog->status;
     wd_unlock_status();
@@ -717,18 +719,23 @@ errno WD_Pause()
 {
     Watchdog* watchdog = getWatchdogPointer();
 
-    if (watchdog->DisableWatchdog)
-    {
-        return NO_ERROR;
-    }
-
-    if (watchdog->hThread == NULL)
+    if (watchdog->DisableWatchdog || watchdog->hThread == NULL)
     {
         return NO_ERROR;
     }
 
     errno errno = NO_ERROR;
     if (watchdog->SuspendThread(watchdog->hThread) == (DWORD)(-1))
+    {
+        errno = GetLastErrno();
+    }
+    // must get the thread context because SuspendThread only
+    // requests a suspend. GetThreadContext actually blocks
+    // until it's suspended.
+    CONTEXT ctx;
+    mem_init(&ctx, sizeof(CONTEXT));
+    ctx.ContextFlags = CONTEXT_INTEGER;
+    if (!watchdog->GetThreadContext(watchdog->hThread, &ctx))
     {
         errno = GetLastErrno();
     }
@@ -740,12 +747,7 @@ errno WD_Continue()
 {
     Watchdog* watchdog = getWatchdogPointer();
 
-    if (watchdog->DisableWatchdog)
-    {
-        return NO_ERROR;
-    }
-
-    if (watchdog->hThread == NULL)
+    if (watchdog->DisableWatchdog || watchdog->hThread == NULL)
     {
         return NO_ERROR;
     }

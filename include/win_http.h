@@ -13,7 +13,7 @@
 // Init is used to initialize a HTTP request structure.
 // Free is used to try to free winhttp.dll after use.
 
-#pragma pack(1)
+#pragma pack(push, 1)
 typedef struct {
     UTF16 URL; // https://user:pass@www.example.com/test.txt
 
@@ -30,7 +30,7 @@ typedef struct {
 
     databuf* Body;
 } HTTP_Request;
-#pragma pack()
+#pragma pack(pop)
 
 typedef struct {
     int32 StatusCode; // example 200, 404

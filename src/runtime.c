@@ -59,6 +59,7 @@ typedef struct {
     FlushInstructionCache_t  FlushInstructionCache;
     SuspendThread_t          SuspendThread;
     ResumeThread_t           ResumeThread;
+    GetThreadContext_t       GetThreadContext;
     ExitThread_t             ExitThread;
     CreateMutexA_t           CreateMutexA;
     ReleaseMutex_t           ReleaseMutex;
@@ -588,6 +589,7 @@ static bool initRuntimeAPI(Runtime* runtime)
         { 0x2942F56B284BE6A0, 0x06172C4E43D310FB, 0xF2B7646EDF1ADF06 }, // FlushInstructionCache
         { 0x83E845755EFA1E95, 0xFC8825DC3C55B265, 0xCCBCA1685F8E8AD6 }, // SuspendThread
         { 0x392F3A38C3FA3EED, 0xB0CAB85785F06761, 0xF5EE69828D2BD6E1 }, // ResumeThread
+        { 0x9769C6F79A6F11AC, 0x07752F687020ED8D, 0xFEB03CCC4111D6D3 }, // GetThreadContext
         { 0x8C967347E10E2345, 0x9AD093D6D3F3F010, 0xE78BBF9830AA8844 }, // ExitThread
         { 0x4A7A5CA9B2E5DC14, 0x1201412A13AA4E6F, 0x7275A1F15DD85A1F }, // CreateMutexA
         { 0x821C92139935AD25, 0x34B5B1C885933D84, 0xE2276FF8F3AD2105 }, // ReleaseMutex
@@ -619,6 +621,7 @@ static bool initRuntimeAPI(Runtime* runtime)
         { 0x1EF0D6B9, 0xF3E223E4, 0x58D1C6E8 }, // FlushInstructionCache
         { 0xE5E1E669, 0xBFE496D9, 0x144C6CFA }, // SuspendThread
         { 0x87529AFE, 0xA848A36A, 0xF5703D40 }, // ResumeThread
+        { 0x41F1FB31, 0x0C1FE96C, 0x2E82C6B6 }, // GetThreadContext
         { 0x075404B1, 0x01C3A55A, 0x543BD02E }, // ExitThread
         { 0xAEF6CD4F, 0x7613A300, 0x2BE798B4 }, // CreateMutexA
         { 0x566023B1, 0x71D96B6C, 0x44DC831F }, // ReleaseMutex
@@ -660,22 +663,23 @@ static bool initRuntimeAPI(Runtime* runtime)
     runtime->FlushInstructionCache  = list[0x09].proc;
     runtime->SuspendThread          = list[0x0A].proc;
     runtime->ResumeThread           = list[0x0B].proc;
-    runtime->ExitThread             = list[0x0C].proc;
-    runtime->CreateMutexA           = list[0x0D].proc;
-    runtime->ReleaseMutex           = list[0x0E].proc;
-    runtime->CreateEventA           = list[0x0F].proc;
-    runtime->SetEvent               = list[0x10].proc;
-    runtime->CreateWaitableTimerA   = list[0x11].proc;
-    runtime->SetWaitableTimer       = list[0x12].proc;
-    runtime->WaitForSingleObject    = list[0x13].proc;
-    runtime->WaitForMultipleObjects = list[0x14].proc;
-    runtime->DuplicateHandle        = list[0x15].proc;
-    runtime->CloseHandle            = list[0x16].proc;
-    runtime->SetCurrentDirectoryA   = list[0x17].proc;
-    runtime->SetCurrentDirectoryW   = list[0x18].proc;
-    runtime->SetErrorMode           = list[0x19].proc;
-    runtime->SleepEx                = list[0x1A].proc;
-    runtime->ExitProcess            = list[0x1B].proc;
+    runtime->GetThreadContext       = list[0x0C].proc;
+    runtime->ExitThread             = list[0x0D].proc;
+    runtime->CreateMutexA           = list[0x0E].proc;
+    runtime->ReleaseMutex           = list[0x0F].proc;
+    runtime->CreateEventA           = list[0x10].proc;
+    runtime->SetEvent               = list[0x11].proc;
+    runtime->CreateWaitableTimerA   = list[0x12].proc;
+    runtime->SetWaitableTimer       = list[0x13].proc;
+    runtime->WaitForSingleObject    = list[0x14].proc;
+    runtime->WaitForMultipleObjects = list[0x15].proc;
+    runtime->DuplicateHandle        = list[0x16].proc;
+    runtime->CloseHandle            = list[0x17].proc;
+    runtime->SetCurrentDirectoryA   = list[0x18].proc;
+    runtime->SetCurrentDirectoryW   = list[0x19].proc;
+    runtime->SetErrorMode           = list[0x1A].proc;
+    runtime->SleepEx                = list[0x1B].proc;
+    runtime->ExitProcess            = list[0x1C].proc;
     return true;
 }
 
@@ -764,6 +768,7 @@ static errno initSubmodules(Runtime* runtime)
         .FlushInstructionCache  = runtime->FlushInstructionCache,
         .SuspendThread          = runtime->SuspendThread,
         .ResumeThread           = runtime->ResumeThread,
+        .GetThreadContext       = runtime->GetThreadContext,
         .ExitThread             = runtime->ExitThread,
         .CreateMutexA           = runtime->CreateMutexA,
         .ReleaseMutex           = runtime->ReleaseMutex,

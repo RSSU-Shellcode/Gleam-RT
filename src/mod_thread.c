@@ -218,7 +218,6 @@ static bool initTrackerAPI(ThreadTracker* tracker, Context* context)
     {
         { 0xBE904CF80CF17C39, 0x519776E56C20ED23, 0x5301991C18DCD17D }, // CreateThread
         { 0xF23240D671D7EC62, 0x0C68B86B8614EB50, 0x45ACC1750A672E67 }, // SwitchToThread
-        { 0x7ECC38B577C35684, 0x1FF7CABA157024A2, 0x899DCA1F272AF8EB }, // GetThreadContext
         { 0x8B18734C0789B973, 0xA2C60822A1BE2D5A, 0x76B5C9DD472F424A }, // SetThreadContext
         { 0x9994C637BC7D7FCB, 0xF2FE8E7A503389EA, 0x26E4C3B35DA8BD0E }, // GetThreadId
         { 0xB71E7C8FEFD05DB5, 0x8A0B3145841ADACF, 0xE46B1941576D6197 }, // GetCurrentThreadId
@@ -230,7 +229,6 @@ static bool initTrackerAPI(ThreadTracker* tracker, Context* context)
     {
         { 0x21B7D96A, 0xBFD234C5, 0x79B41A6D }, // CreateThread
         { 0x10389EFD, 0xFD4F3BAC, 0xDE25CF78 }, // SwitchToThread
-        { 0xBAB8418D, 0x9C6574EC, 0x0450B317 }, // GetThreadContext
         { 0xAF648BCE, 0xAB5EB7D9, 0x885A79B8 }, // SetThreadContext
         { 0xD932B610, 0x1EDB556A, 0xEAE314E1 }, // GetThreadId
         { 0x9DCDA638, 0xD7F7DC6A, 0xE476968C }, // GetCurrentThreadId
@@ -251,17 +249,17 @@ static bool initTrackerAPI(ThreadTracker* tracker, Context* context)
     }
     tracker->CreateThread       = list[0x00].proc;
     tracker->SwitchToThread     = list[0x01].proc;
-    tracker->GetThreadContext   = list[0x02].proc;
-    tracker->SetThreadContext   = list[0x03].proc;
-    tracker->GetThreadID        = list[0x04].proc;
-    tracker->GetCurrentThreadID = list[0x05].proc;
-    tracker->TerminateThread    = list[0x06].proc;
-    tracker->TlsAlloc           = list[0x07].proc;
-    tracker->TlsFree            = list[0x08].proc;
+    tracker->SetThreadContext   = list[0x02].proc;
+    tracker->GetThreadID        = list[0x03].proc;
+    tracker->GetCurrentThreadID = list[0x04].proc;
+    tracker->TerminateThread    = list[0x05].proc;
+    tracker->TlsAlloc           = list[0x06].proc;
+    tracker->TlsFree            = list[0x07].proc;
 
     tracker->ExitThread           = context->ExitThread;
     tracker->SuspendThread        = context->SuspendThread;
     tracker->ResumeThread         = context->ResumeThread;
+    tracker->GetThreadContext     = context->GetThreadContext;
     tracker->CreateWaitableTimerA = context->CreateWaitableTimerA;
     tracker->SetWaitableTimer     = context->SetWaitableTimer;
     tracker->ReleaseMutex         = context->ReleaseMutex;
@@ -1100,11 +1098,8 @@ errno TT_Suspend()
             // until it's suspended.
             CONTEXT ctx;
             mem_init(&ctx, sizeof(CONTEXT));
-            ctx.ContextFlags = CONTEXT_CONTROL;
-            if (!tracker->GetThreadContext(thread->hThread, &ctx))
-            {
-                errno = GetLastErrno();
-            }
+            ctx.ContextFlags = CONTEXT_INTEGER;
+            tracker->GetThreadContext(thread->hThread, &ctx);
         } else {
             delThread(tracker, thread->threadID);
             errno = ERR_THREAD_SUSPEND;

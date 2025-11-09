@@ -20,6 +20,7 @@ hash_api -fmt 64 -conc -mod "kernel32.dll" -proc VirtualQuery
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc FlushInstructionCache
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc SuspendThread
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc ResumeThread
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc GetThreadContext
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc ExitThread
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc CreateMutexA
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc ReleaseMutex
@@ -210,7 +211,6 @@ echo.
 echo [Thread Tracker]
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc CreateThread
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc SwitchToThread
-hash_api -fmt 64 -conc -mod "kernel32.dll" -proc GetThreadContext
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc SetThreadContext
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc GetThreadId
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc GetCurrentThreadId
@@ -336,6 +336,7 @@ hash_api -fmt 32 -conc -mod "kernel32.dll" -proc VirtualQuery
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc FlushInstructionCache
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc SuspendThread
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc ResumeThread
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc GetThreadContext
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc ExitThread
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc CreateMutexA
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc ReleaseMutex
@@ -526,7 +527,6 @@ echo.
 echo [Thread Tracker]
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc CreateThread
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc SwitchToThread
-hash_api -fmt 32 -conc -mod "kernel32.dll" -proc GetThreadContext
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc SetThreadContext
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc GetThreadId
 hash_api -fmt 32 -conc -mod "kernel32.dll" -proc GetCurrentThreadId

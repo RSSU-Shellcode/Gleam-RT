@@ -56,6 +56,7 @@ typedef struct {
     FlushInstructionCache_t  FlushInstructionCache;
     SuspendThread_t          SuspendThread;
     ResumeThread_t           ResumeThread;
+    GetThreadContext_t       GetThreadContext;
     ExitThread_t             ExitThread;
     CreateMutexA_t           CreateMutexA;
     ReleaseMutex_t           ReleaseMutex;

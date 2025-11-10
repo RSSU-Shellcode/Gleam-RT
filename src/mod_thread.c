@@ -130,6 +130,7 @@ static void delThread(ThreadTracker* tracker, DWORD threadID);
 static bool addTLSIndex(ThreadTracker* tracker, DWORD index);
 static void delTLSIndex(ThreadTracker* tracker, DWORD index);
 static bool setThreadLocker(DWORD threadID, bool lock);
+static bool suspendThread(ThreadTracker* tracker, HANDLE hThread);
 
 ThreadTracker_M* InitThreadTracker(Context* context)
 {
@@ -1089,17 +1090,9 @@ errno TT_Suspend()
             num++;
             continue;
         }
-        DWORD count = tracker->SuspendThread(thread->hThread);
-        if (count != (DWORD)(-1))
+        if (suspendThread(tracker, thread->hThread))
         {
             thread->numSuspend++;
-           	// must get the thread context because SuspendThread only 
-            // requests a suspend. GetThreadContext actually blocks 
-            // until it's suspended.
-            CONTEXT ctx;
-            mem_init(&ctx, sizeof(CONTEXT));
-            ctx.ContextFlags = CONTEXT_INTEGER;
-            tracker->GetThreadContext(thread->hThread, &ctx);
         } else {
             delThread(tracker, thread->threadID);
             errno = ERR_THREAD_SUSPEND;
@@ -1246,8 +1239,7 @@ errno TT_ForceKill()
         {
             continue;
         }
-        DWORD count = tracker->SuspendThread(thread->hThread);
-        if (count == (DWORD)(-1))
+        if (!suspendThread(tracker, thread->hThread))
         {
             errno = ERR_THREAD_SUSPEND;
         }
@@ -1320,8 +1312,7 @@ errno TT_KillAll()
             num++;
             continue;
         }
-        DWORD count = tracker->SuspendThread(thread->hThread);
-        if (count == (DWORD)(-1))
+        if (!suspendThread(tracker, thread->hThread))
         {
             errno = ERR_THREAD_SUSPEND;
         }
@@ -1424,8 +1415,7 @@ errno TT_Clean()
             num++;
             continue;
         }
-        DWORD count = tracker->SuspendThread(thread->hThread);
-        if (count == (DWORD)(-1) && errno == NO_ERROR)
+        if (!suspendThread(tracker, thread->hThread) && errno == NO_ERROR)
         {
             errno = ERR_THREAD_SUSPEND;
         }
@@ -1511,4 +1501,20 @@ errno TT_Clean()
     dbg_log("[thread]", "threads:   %zu", tracker->Threads.Len);
     dbg_log("[thread]", "TLS slots: %zu", tracker->TLSIndex.Len);
     return errno;
+}
+
+static bool suspendThread(ThreadTracker* tracker, HANDLE hThread)
+{
+    DWORD count = tracker->SuspendThread(hThread);
+    if (count == (DWORD)(-1))
+    {
+        return false;
+    }
+    // must get the thread context because SuspendThread only
+    // requests a suspend. GetThreadContext actually blocks
+    // until it's suspended.
+    CONTEXT ctx;
+    mem_init(&ctx, sizeof(CONTEXT));
+    ctx.ContextFlags = CONTEXT_INTEGER;
+    return tracker->GetThreadContext(hThread, &ctx);
 }

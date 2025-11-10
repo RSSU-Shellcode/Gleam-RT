@@ -685,10 +685,10 @@ bool WD_GetStatus(WD_Status* status)
         return false;
     }
 
-    status->IsEnabled = 1;
     wd_lock_status();
     *status = watchdog->status;
     wd_unlock_status();
+    status->IsEnabled = wd_is_enabled();
 
     if (!WD_Unlock())
     {
@@ -724,10 +724,9 @@ errno WD_Pause()
         return NO_ERROR;
     }
 
-    errno errno = NO_ERROR;
     if (watchdog->SuspendThread(watchdog->hThread) == (DWORD)(-1))
     {
-        errno = GetLastErrno();
+        return GetLastErrno();
     }
     // must get the thread context because SuspendThread only
     // requests a suspend. GetThreadContext actually blocks
@@ -737,9 +736,9 @@ errno WD_Pause()
     ctx.ContextFlags = CONTEXT_INTEGER;
     if (!watchdog->GetThreadContext(watchdog->hThread, &ctx))
     {
-        errno = GetLastErrno();
+        return GetLastErrno();
     }
-    return errno;
+    return NO_ERROR;
 }
 
 __declspec(noinline)

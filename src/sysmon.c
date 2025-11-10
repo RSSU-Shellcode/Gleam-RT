@@ -146,9 +146,9 @@ Sysmon_M* InitSysmon(Context* context)
             return NULL;
         }
         sysmon->hThread = hThread;
+        // update sysmon status
+        sysmon->status.IsEnabled = true;
     }
-    // update sysmon status
-    sysmon->status.IsEnabled = (int32)1;  // !context->DisableSysmon;
     // create methods for sysmon
     Sysmon_M* method = (Sysmon_M*)methodAddr;
     // methods for user
@@ -590,10 +590,9 @@ errno SM_Pause()
         return NO_ERROR;
     }
 
-    errno errno = NO_ERROR;
     if (sysmon->SuspendThread(sysmon->hThread) == (DWORD)(-1))
     {
-        errno = GetLastErrno();
+        return GetLastErrno();
     }
     // must get the thread context because SuspendThread only
     // requests a suspend. GetThreadContext actually blocks
@@ -603,9 +602,9 @@ errno SM_Pause()
     ctx.ContextFlags = CONTEXT_INTEGER;
     if (!sysmon->GetThreadContext(sysmon->hThread, &ctx))
     {
-        errno = GetLastErrno();
+        return GetLastErrno();
     }
-    return errno;
+    return NO_ERROR;
 }
 
 __declspec(noinline)

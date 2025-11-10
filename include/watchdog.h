@@ -8,7 +8,8 @@
 #define WATCHDOG_KICK_TIMEOUT 5000 // 5s
 
 typedef struct {
-    bool  IsEnabled;
+    BOOL  IsEnabled;
+    int32 Reserved;
     int64 NumKick;
     int64 NumNormal;
     int64 NumReset;

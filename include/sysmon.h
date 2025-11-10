@@ -6,7 +6,8 @@
 #include "context.h"
 
 typedef struct {
-    bool  IsEnabled;
+    BOOL  IsEnabled;
+    int32 Reserved;
     int64 NumNormal;
     int64 NumRecover;
     int64 NumPanic;

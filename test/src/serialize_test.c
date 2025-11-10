@@ -30,7 +30,7 @@ bool TestSerialize()
     return true;
 }
 
-#pragma pack(1)
+#pragma pack(push, 1)
 typedef struct {
     uint32 arg1;
     uint32 arg2[2];
@@ -39,7 +39,7 @@ typedef struct {
     uint8  arg5;
     uint16 arg6;
 } test_s;
-#pragma pack()
+#pragma pack(pop)
 
 static bool TestSer_Serialize()
 {
@@ -78,7 +78,7 @@ static bool TestSer_Serialize()
     }
 
     printHexBytes(serialized, len);
-    byte expecteds[] = {
+    byte expData[] = {
         0xFF, 0xFF, 0xFF, 0xFF, 0x04, 0x00, 0x00, 0x00, 
         0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80,
         0x04, 0x00, 0x00, 0x80, 0x01, 0x00, 0x00, 0x00, 
@@ -87,7 +87,7 @@ static bool TestSer_Serialize()
         0x15, 0x03, 0x00, 0x00, 0x31, 0x32, 0x33, 0x00, 
         0x19, 0x48, 0x15
     };
-    if (!mem_equal(expecteds, serialized, len))
+    if (!mem_equal(expData, serialized, len))
     {
         printf_s("serialize with invalid output data\n");
         return false;
@@ -147,37 +147,37 @@ static bool TestSer_Unserialize()
 
     if (s1.arg1 != s2.arg1)
     {
-        printf_s("invalid unserialized arg1\n");
+        printf_s("invalid unserialize arg1\n");
         return false;
     }
     if (s1.arg2[0] != s2.arg2[0])
     {
-        printf_s("invalid unserialized arg2[0]\n");
+        printf_s("invalid unserialize arg2[0]\n");
         return false;
     }
     if (s1.arg2[1] != s2.arg2[1])
     {
-        printf_s("invalid unserialized arg2[1]\n");
+        printf_s("invalid unserialize arg2[1]\n");
         return false;
     }
     if (s1.arg3 != s2.arg3)
     {
-        printf_s("invalid unserialized arg3\n");
+        printf_s("invalid unserialize arg3\n");
         return false;
     }
     if (strcmp_a(s1.arg4, s2.arg4))
     {
-        printf_s("invalid unserialized arg4\n");
+        printf_s("invalid unserialize arg4\n");
         return false;
     }
     if (s1.arg5 != s2.arg5)
     {
-        printf_s("invalid unserialized arg5\n");
+        printf_s("invalid unserialize arg5\n");
         return false;
     }
     if (s1.arg6 != s2.arg6)
     {
-        printf_s("invalid unserialized arg6\n");
+        printf_s("invalid unserialize arg6\n");
         return false;
     }
 

@@ -170,10 +170,10 @@ void* MT_MemRealloc(void* ptr, uint size);
 void  MT_MemFree(void* ptr);
 uint  MT_MemSize(void* ptr);
 uint  MT_MemCap(void* ptr);
-bool  MT_LockRegion(LPVOID address);
-bool  MT_UnlockRegion(LPVOID address);
-bool  MT_GetStatus(MT_Status* status);
-bool  MT_FreeAllMu();
+BOOL  MT_LockRegion(LPVOID address);
+BOOL  MT_UnlockRegion(LPVOID address);
+BOOL  MT_GetStatus(MT_Status* status);
+BOOL  MT_FreeAllMu();
 
 // methods for runtime
 bool  MT_Lock();
@@ -2425,7 +2425,7 @@ uint MT_MemCap(void* ptr)
 }
 
 __declspec(noinline)
-bool MT_LockRegion(LPVOID address)
+BOOL MT_LockRegion(LPVOID address)
 {
     if (!MT_Lock())
     {
@@ -2443,7 +2443,7 @@ bool MT_LockRegion(LPVOID address)
 }
 
 __declspec(noinline)
-bool MT_UnlockRegion(LPVOID address)
+BOOL MT_UnlockRegion(LPVOID address)
 {
     if (!MT_Lock())
     {
@@ -2525,7 +2525,7 @@ static bool setRegionLocker(uintptr address, bool lock)
 #pragma optimize("t", off)
 
 __declspec(noinline)
-bool MT_GetStatus(MT_Status* status)
+BOOL MT_GetStatus(MT_Status* status)
 {
     MemoryTracker* tracker = getTrackerPointer();
 
@@ -2549,7 +2549,7 @@ bool MT_GetStatus(MT_Status* status)
 }
 
 __declspec(noinline)
-bool MT_FreeAllMu()
+BOOL MT_FreeAllMu()
 {
     if (!MT_Lock())
     {

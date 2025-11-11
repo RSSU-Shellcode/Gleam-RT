@@ -25,10 +25,10 @@ typedef void  (*MemFree_t)(void* ptr);
 typedef uint  (*MemSize_t)(void* ptr);
 typedef uint  (*MemCap_t)(void* ptr);
 
-typedef bool (*MemLockRegion_t)(LPVOID address);
-typedef bool (*MemUnlockRegion_t)(LPVOID address);
-typedef bool (*MemGetStatus_t)(MT_Status* status);
-typedef bool (*MemFreeAllMu_t)();
+typedef BOOL (*MemLockRegion_t)(LPVOID address);
+typedef BOOL (*MemUnlockRegion_t)(LPVOID address);
+typedef BOOL (*MemGetStatus_t)(MT_Status* status);
+typedef BOOL (*MemFreeAllMu_t)();
 
 typedef bool  (*MemLock_t)();
 typedef bool  (*MemUnlock_t)();

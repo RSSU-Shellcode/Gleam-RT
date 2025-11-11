@@ -36,14 +36,14 @@ typedef DWORD ALG_ID;
 // about detector
 #ifndef DETECTOR_H
 typedef struct {
-    bool IsEnabled;
-    bool HasDebugger;
-    bool HasMemoryScanner;
-    bool InSandbox;
-    bool InVirtualMachine;
-    bool InEmulator;
-    bool IsAccelerated;
-    int8 SafeRank;
+    BOOL  IsEnabled;
+    BOOL  HasDebugger;
+    BOOL  HasMemoryScanner;
+    BOOL  InSandbox;
+    BOOL  InVirtualMachine;
+    BOOL  InEmulator;
+    BOOL  IsAccelerated;
+    int32 SafeRank;
 } DT_Status;
 #endif // DETECTOR_H
 
@@ -169,7 +169,7 @@ typedef errno (*WriteFileW_t)(LPWSTR path, databuf* file);
 // Init is used to initialize a HTTP request structure.
 // Free is used to try to free winhttp.dll after use.
 
-#pragma pack(1)
+#pragma pack(push, 1)
 typedef struct {
     UTF16 URL; // https://user:pass@www.example.com/test.txt
 
@@ -186,7 +186,7 @@ typedef struct {
 
     databuf* Body;
 } HTTP_Request;
-#pragma pack()
+#pragma pack(pop)
 
 typedef struct {
     int32 StatusCode; // example 200, 404
@@ -342,7 +342,8 @@ typedef void* (*GetProcByHashML_t)(void* list, uint mHash, uint pHash, uint hKey
 // about sysmon
 #ifndef SYSMON_H
 typedef struct {
-    bool  IsEnabled;
+    BOOL  IsEnabled;
+    int32 Reserved;
     int64 NumNormal;
     int64 NumRecover;
     int64 NumPanic;
@@ -356,7 +357,8 @@ typedef errno (*SMContinue_t)();
 // about watchdog
 #ifndef WATCHDOG_H
 typedef struct {
-    bool  IsEnabled;
+    BOOL  IsEnabled;
+    int32 Reserved;
     int64 NumKick;
     int64 NumNormal;
     int64 NumReset;

@@ -66,10 +66,10 @@ void    LT_FreeLibraryAndExitThread(HMODULE hLibModule, DWORD dwExitCode);
 FARPROC LT_GetProcAddress(HMODULE hModule, LPCSTR lpProcName);
 
 // methods for user
-bool LT_LockModule(HMODULE hModule);
-bool LT_UnlockModule(HMODULE hModule);
-bool LT_GetStatus(LT_Status* status);
-bool LT_FreeAllMu();
+BOOL LT_LockModule(HMODULE hModule);
+BOOL LT_UnlockModule(HMODULE hModule);
+BOOL LT_GetStatus(LT_Status* status);
+BOOL LT_FreeAllMu();
 
 // methods for runtime
 bool  LT_Lock();
@@ -707,7 +707,7 @@ static bool delModule(LibraryTracker* tracker, HMODULE hModule)
 }
 
 __declspec(noinline)
-bool LT_LockModule(HMODULE hModule)
+BOOL LT_LockModule(HMODULE hModule)
 {
     bool success = setModuleLocker(hModule, true);
     dbg_log("[library]", "lock module: 0x%zX", hModule);
@@ -715,7 +715,7 @@ bool LT_LockModule(HMODULE hModule)
 }
 
 __declspec(noinline)
-bool LT_UnlockModule(HMODULE hModule)
+BOOL LT_UnlockModule(HMODULE hModule)
 {
     bool success = setModuleLocker(hModule, false);
     dbg_log("[library]", "unlock module: 0x%zX", hModule);
@@ -760,7 +760,7 @@ static bool setModuleLocker(HMODULE hModule, bool lock)
 }
 
 __declspec(noinline)
-bool LT_GetStatus(LT_Status* status)
+BOOL LT_GetStatus(LT_Status* status)
 {
     LibraryTracker* tracker = getTrackerPointer();
 
@@ -801,7 +801,7 @@ bool LT_GetStatus(LT_Status* status)
 }
 
 __declspec(noinline)
-bool LT_FreeAllMu()
+BOOL LT_FreeAllMu()
 {
     LibraryTracker* tracker = getTrackerPointer();
 

@@ -14,10 +14,10 @@ typedef struct {
     int64 NumProcedures;
 } LT_Status;
 
-typedef bool (*LibLockModule_t)(HMODULE hModule);
-typedef bool (*LibUnlockModule_t)(HMODULE hModule);
-typedef bool (*LibGetStatus_t)(LT_Status* status);
-typedef bool (*LibFreeAllMu_t)();
+typedef BOOL (*LibLockModule_t)(HMODULE hModule);
+typedef BOOL (*LibUnlockModule_t)(HMODULE hModule);
+typedef BOOL (*LibGetStatus_t)(LT_Status* status);
+typedef BOOL (*LibFreeAllMu_t)();
 
 typedef bool  (*LibLock_t)();
 typedef bool  (*LibUnlock_t)();

@@ -47,8 +47,8 @@ typedef struct {
 } DT_Status;
 #endif // DETECTOR_H
 
-typedef bool (*DetDetect_t)();
-typedef bool (*DetGetStatus_t)(DT_Status* status);
+typedef BOOL (*DetDetect_t)();
+typedef BOOL (*DetGetStatus_t)(DT_Status* status);
 
 // about library tracker
 #ifndef MOD_LIBRARY_H
@@ -59,10 +59,10 @@ typedef struct {
 } LT_Status;
 #endif // MOD_LIBRARY_H
 
-typedef bool (*LibLockModule_t)(HMODULE hModule);
-typedef bool (*LibUnlockModule_t)(HMODULE hModule);
-typedef bool (*LibGetStatus_t)(LT_Status* status);
-typedef bool (*LibFreeAllMu_t)();
+typedef BOOL (*LibLockModule_t)(HMODULE hModule);
+typedef BOOL (*LibUnlockModule_t)(HMODULE hModule);
+typedef BOOL (*LibGetStatus_t)(LT_Status* status);
+typedef BOOL (*LibFreeAllMu_t)();
 
 // about memory tracker
 #ifndef MOD_MEMORY_H
@@ -82,10 +82,10 @@ typedef void* (*MemRealloc_t)(void* ptr, uint size);
 typedef void  (*MemFree_t)(void* ptr);
 typedef uint  (*MemSize_t)(void* ptr);
 typedef uint  (*MemCap_t)(void* ptr);
-typedef bool  (*MemLockRegion_t)(LPVOID address);
-typedef bool  (*MemUnlockRegion_t)(LPVOID address);
-typedef bool  (*MemGetStatus_t)(MT_Status* status);
-typedef bool  (*MemFreeAllMu_t)();
+typedef BOOL  (*MemLockRegion_t)(LPVOID address);
+typedef BOOL  (*MemUnlockRegion_t)(LPVOID address);
+typedef BOOL  (*MemGetStatus_t)(MT_Status* status);
+typedef BOOL  (*MemFreeAllMu_t)();
 
 // about thread tracker
 #ifndef MOD_THREAD_H
@@ -133,9 +133,9 @@ typedef bool (*ResFreeAllMu_t)();
 
 // about argument store
 // GetValue: if value is NULL, size must not NULL for receive argument size.
-typedef bool (*ArgGetValue_t)(uint32 id, void* value, uint32* size);
-typedef bool (*ArgGetPointer_t)(uint32 id, void** pointer, uint32* size);
-typedef bool (*ArgErase_t)(uint32 id);
+typedef BOOL (*ArgGetValue_t)(uint32 id, void* value, uint32* size);
+typedef BOOL (*ArgGetPointer_t)(uint32 id, void** pointer, uint32* size);
+typedef BOOL (*ArgErase_t)(uint32 id);
 typedef void (*ArgEraseAll_t)();
 
 // about in-memory storage
@@ -335,9 +335,9 @@ typedef void (*BinToPattern_t)(void* data, uint size, byte* pattern);
 // recommend use GetProcByName with redirect FALSE instead it.
 // 
 // These methods are used for API Redirector or common shellcode.
-typedef void* (*GetProcByName_t)(HMODULE hModule, LPCSTR lpProcName, bool redirect);
-typedef void* (*GetProcByHash_t)(uint mHash, uint pHash, uint hKey, bool redirect);
-typedef void* (*GetProcByHashML_t)(void* list, uint mHash, uint pHash, uint hKey, bool redirect);
+typedef void* (*GetProcByName_t)(HMODULE hModule, LPCSTR lpProcName, BOOL redirect);
+typedef void* (*GetProcByHash_t)(uint mHash, uint pHash, uint hKey, BOOL redirect);
+typedef void* (*GetProcByHashML_t)(void* list, uint mHash, uint pHash, uint hKey, BOOL redirect);
 
 // about sysmon
 #ifndef SYSMON_H

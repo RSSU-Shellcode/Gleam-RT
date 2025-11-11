@@ -6,14 +6,14 @@
 #include "context.h"
 
 typedef struct {
-    bool IsEnabled;
-    bool HasDebugger;
-    bool HasMemoryScanner;
-    bool InSandbox;
-    bool InVirtualMachine;
-    bool InEmulator;
-    bool IsAccelerated;
-    int8 SafeRank;
+    BOOL  IsEnabled;
+    BOOL  HasDebugger;
+    BOOL  HasMemoryScanner;
+    BOOL  InSandbox;
+    BOOL  InVirtualMachine;
+    BOOL  InEmulator;
+    BOOL  IsAccelerated;
+    int32 SafeRank;
 } DT_Status;
 
 typedef bool (*DetDetect_t)();

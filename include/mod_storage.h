@@ -5,11 +5,11 @@
 #include "errno.h"
 #include "context.h"
 
-typedef bool (*ImsSetValue_t)(int id, void* value, uint size);
-typedef bool (*ImsGetValue_t)(int id, void* value, uint* size);
-typedef bool (*ImsGetPointer_t)(int id, void** pointer, uint* size);
-typedef bool (*ImsDelete_t)(int id);
-typedef bool (*ImsDeleteAll_t)();
+typedef BOOL (*ImsSetValue_t)(int id, void* value, uint size);
+typedef BOOL (*ImsGetValue_t)(int id, void* value, uint* size);
+typedef BOOL (*ImsGetPointer_t)(int id, void** pointer, uint* size);
+typedef BOOL (*ImsDelete_t)(int id);
+typedef BOOL (*ImsDeleteAll_t)();
 
 typedef bool  (*ImsLock_t)();
 typedef bool  (*ImsUnlock_t)();

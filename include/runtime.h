@@ -140,11 +140,11 @@ typedef void (*ArgEraseAll_t)();
 
 // about in-memory storage
 // GetValue: if value is NULL, size must not NULL for receive data size.
-typedef bool (*ImsSetValue_t)(int id, void* value, uint size);
-typedef bool (*ImsGetValue_t)(int id, void* value, uint* size);
-typedef bool (*ImsGetPointer_t)(int id, void** pointer, uint* size);
-typedef bool (*ImsDelete_t)(int id);
-typedef bool (*ImsDeleteAll_t)();
+typedef BOOL (*ImsSetValue_t)(int id, void* value, uint size);
+typedef BOOL (*ImsGetValue_t)(int id, void* value, uint* size);
+typedef BOOL (*ImsGetPointer_t)(int id, void** pointer, uint* size);
+typedef BOOL (*ImsDelete_t)(int id);
+typedef BOOL (*ImsDeleteAll_t)();
 
 // about WinBase
 // The buffer allocated from methods must call Runtime_M.Memory.Free().

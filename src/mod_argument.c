@@ -41,9 +41,9 @@ typedef struct {
 } ArgumentStore;
 
 // methods for upper module
-bool AS_GetValue(uint32 id, void* value, uint32* size);
-bool AS_GetPointer(uint32 id, void** pointer, uint32* size);
-bool AS_Erase(uint32 id);
+BOOL AS_GetValue(uint32 id, void* value, uint32* size);
+BOOL AS_GetPointer(uint32 id, void** pointer, uint32* size);
+BOOL AS_Erase(uint32 id);
 void AS_EraseAll();
 
 // methods for runtime
@@ -327,7 +327,7 @@ static ArgumentStore* getStorePointer()
 #pragma optimize("", on)
 
 __declspec(noinline)
-bool AS_GetValue(uint32 id, void* value, uint32* size)
+BOOL AS_GetValue(uint32 id, void* value, uint32* size)
 {
     ArgumentStore* store = getStorePointer();
 
@@ -381,7 +381,7 @@ bool AS_GetValue(uint32 id, void* value, uint32* size)
 }
 
 __declspec(noinline)
-bool AS_GetPointer(uint32 id, void** pointer, uint32* size)
+BOOL AS_GetPointer(uint32 id, void** pointer, uint32* size)
 {
     ArgumentStore* store = getStorePointer();
 
@@ -432,7 +432,7 @@ bool AS_GetPointer(uint32 id, void** pointer, uint32* size)
 }
 
 __declspec(noinline)
-bool AS_Erase(uint32 id)
+BOOL AS_Erase(uint32 id)
 {
     ArgumentStore* store = getStorePointer();
 
@@ -550,10 +550,11 @@ errno AS_Clean()
 {
     ArgumentStore* store = getStorePointer();
 
-    errno errno = NO_ERROR;
-
     // erase all arguments
     RandBuffer(store->Address, store->Size);
+
+    errno errno = NO_ERROR;
+
     // free memory page
     if (!store->VirtualFree(store->Address, 0, MEM_RELEASE) && errno == NO_ERROR)
     {

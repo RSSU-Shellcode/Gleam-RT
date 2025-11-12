@@ -20,9 +20,9 @@
 #define ARG_OFFSET_CHECKSUM   (32 + 4 + 4)
 #define ARG_OFFSET_FIRST_ARG  (32 + 4 + 4 + 4)
 
-typedef bool (*ArgGetValue_t)(uint32 id, void* value, uint32* size);
-typedef bool (*ArgGetPointer_t)(uint32 id, void** pointer, uint32* size);
-typedef bool (*ArgErase_t)(uint32 id);
+typedef BOOL (*ArgGetValue_t)(uint32 id, void* value, uint32* size);
+typedef BOOL (*ArgGetPointer_t)(uint32 id, void** pointer, uint32* size);
+typedef BOOL (*ArgErase_t)(uint32 id);
 typedef void (*ArgEraseAll_t)();
 
 typedef bool  (*ArgLock_t)();

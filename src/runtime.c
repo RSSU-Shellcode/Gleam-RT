@@ -124,9 +124,9 @@ void* RT_FindAPI_A(byte* module, byte* procedure);
 void* RT_FindAPI_W(uint16* module, byte* procedure);
 
 void* RT_GetProcAddress(HMODULE hModule, LPCSTR lpProcName);
-void* RT_GetProcAddressByName(HMODULE hModule, LPCSTR lpProcName, bool redirect);
-void* RT_GetProcAddressByHash(uint mHash, uint pHash, uint hKey, bool redirect);
-void* RT_GetProcAddressByHashML(void* list, uint mHash, uint pHash, uint hKey, bool redirect);
+void* RT_GetProcAddressByName(HMODULE hModule, LPCSTR lpProcName, BOOL redirect);
+void* RT_GetProcAddressByHash(uint mHash, uint pHash, uint hKey, BOOL redirect);
+void* RT_GetProcAddressByHashML(void* list, uint mHash, uint pHash, uint hKey, BOOL redirect);
 void* RT_GetProcAddressOriginal(HMODULE hModule, LPCSTR lpProcName);
 
 void* RT_GetPEB();
@@ -1753,7 +1753,7 @@ void* RT_GetProcAddress(HMODULE hModule, LPCSTR lpProcName)
 }
 
 __declspec(noinline)
-void* RT_GetProcAddressByName(HMODULE hModule, LPCSTR lpProcName, bool redirect)
+void* RT_GetProcAddressByName(HMODULE hModule, LPCSTR lpProcName, BOOL redirect)
 {
     Runtime* runtime = getRuntimePointer();
 
@@ -1819,7 +1819,7 @@ void* RT_GetProcAddressByName(HMODULE hModule, LPCSTR lpProcName, bool redirect)
 }
 
 __declspec(noinline)
-void* RT_GetProcAddressByHash(uint mHash, uint pHash, uint hKey, bool redirect)
+void* RT_GetProcAddressByHash(uint mHash, uint pHash, uint hKey, BOOL redirect)
 {
     Runtime* runtime = getRuntimePointer();
 
@@ -1827,7 +1827,7 @@ void* RT_GetProcAddressByHash(uint mHash, uint pHash, uint hKey, bool redirect)
 }
 
 __declspec(noinline)
-void* RT_GetProcAddressByHashML(void* list, uint mHash, uint pHash, uint hKey, bool redirect)
+void* RT_GetProcAddressByHashML(void* list, uint mHash, uint pHash, uint hKey, BOOL redirect)
 {
     Runtime* runtime = getRuntimePointer();
 

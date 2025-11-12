@@ -46,11 +46,11 @@ typedef struct {
 } InMemoryStorage;
 
 // methods for upper module
-bool IMS_SetValue(int id, void* value, uint size);
-bool IMS_GetValue(int id, void* value, uint* size);
-bool IMS_GetPointer(int id, void** pointer, uint* size);
-bool IMS_Delete(int id);
-bool IMS_DeleteAll();
+BOOL IMS_SetValue(int id, void* value, uint size);
+BOOL IMS_GetValue(int id, void* value, uint* size);
+BOOL IMS_GetPointer(int id, void** pointer, uint* size);
+BOOL IMS_Delete(int id);
+BOOL IMS_DeleteAll();
 
 // methods for runtime
 bool  IMS_Lock();
@@ -253,7 +253,7 @@ static InMemoryStorage* getStoragePointer()
 
 // methods for upper module
 __declspec(noinline)
-bool IMS_SetValue(int id, void* value, uint size)
+BOOL IMS_SetValue(int id, void* value, uint size)
 {
     if (!IMS_Lock())
     {
@@ -299,7 +299,7 @@ bool IMS_SetValue(int id, void* value, uint size)
 }
 
 __declspec(noinline)
-bool IMS_GetValue(int id, void* value, uint* size)
+BOOL IMS_GetValue(int id, void* value, uint* size)
 {
     if (!IMS_Lock())
     {
@@ -349,7 +349,7 @@ bool IMS_GetValue(int id, void* value, uint* size)
 }
 
 __declspec(noinline)
-bool IMS_GetPointer(int id, void** pointer, uint* size)
+BOOL IMS_GetPointer(int id, void** pointer, uint* size)
 {
     if (!IMS_Lock())
     {
@@ -393,7 +393,7 @@ bool IMS_GetPointer(int id, void** pointer, uint* size)
 }
 
 __declspec(noinline)
-bool IMS_Delete(int id)
+BOOL IMS_Delete(int id)
 {
     if (!IMS_Lock())
     {
@@ -431,7 +431,7 @@ bool IMS_Delete(int id)
 }
 
 __declspec(noinline)
-bool IMS_DeleteAll()
+BOOL IMS_DeleteAll()
 {
     InMemoryStorage* storage = getStoragePointer();
 

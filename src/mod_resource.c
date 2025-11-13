@@ -290,18 +290,18 @@ int RT_WSAStartup(WORD wVersionRequired, POINTER lpWSAData);
 int RT_WSACleanup();
 
 // methods for user
-bool RT_LockMutex(HANDLE hMutex);
-bool RT_UnlockMutex(HANDLE hMutex);
-bool RT_LockEvent(HANDLE hEvent);
-bool RT_UnlockEvent(HANDLE hEvent);
-bool RT_LockSemaphore(HANDLE hSemaphore);
-bool RT_UnlockSemaphore(HANDLE hSemaphore);
-bool RT_LockWaitableTimer(HANDLE hTimer);
-bool RT_UnlockWaitableTimer(HANDLE hTimer);
-bool RT_LockFile(HANDLE hFile);
-bool RT_UnlockFile(HANDLE hFile);
-bool RT_GetStatus(RT_Status* status);
-bool RT_FreeAllMu();
+BOOL RT_LockMutex(HANDLE hMutex);
+BOOL RT_UnlockMutex(HANDLE hMutex);
+BOOL RT_LockEvent(HANDLE hEvent);
+BOOL RT_UnlockEvent(HANDLE hEvent);
+BOOL RT_LockSemaphore(HANDLE hSemaphore);
+BOOL RT_UnlockSemaphore(HANDLE hSemaphore);
+BOOL RT_LockWaitableTimer(HANDLE hTimer);
+BOOL RT_UnlockWaitableTimer(HANDLE hTimer);
+BOOL RT_LockFile(HANDLE hFile);
+BOOL RT_UnlockFile(HANDLE hFile);
+BOOL RT_GetStatus(RT_Status* status);
+BOOL RT_FreeAllMu();
 
 // methods for runtime
 bool  RT_Lock();
@@ -2610,7 +2610,7 @@ int RT_WSACleanup()
 }
 
 __declspec(noinline)
-bool RT_LockMutex(HANDLE hMutex)
+BOOL RT_LockMutex(HANDLE hMutex)
 {
     bool success = setHandleLocker(hMutex, FUNC_CREATE_MUTEX, true);
     dbg_log("[resource]", "lock mutex: 0x%zX", hMutex);
@@ -2618,7 +2618,7 @@ bool RT_LockMutex(HANDLE hMutex)
 }
 
 __declspec(noinline)
-bool RT_UnlockMutex(HANDLE hMutex)
+BOOL RT_UnlockMutex(HANDLE hMutex)
 {
     bool success = setHandleLocker(hMutex, FUNC_CREATE_MUTEX, false);
     dbg_log("[resource]", "unlock mutex: 0x%zX", hMutex);
@@ -2626,7 +2626,7 @@ bool RT_UnlockMutex(HANDLE hMutex)
 }
 
 __declspec(noinline)
-bool RT_LockEvent(HANDLE hEvent)
+BOOL RT_LockEvent(HANDLE hEvent)
 {
     bool success = setHandleLocker(hEvent, FUNC_CREATE_EVENT, true);
     dbg_log("[resource]", "lock event: 0x%zX", hEvent);
@@ -2634,7 +2634,7 @@ bool RT_LockEvent(HANDLE hEvent)
 }
 
 __declspec(noinline)
-bool RT_UnlockEvent(HANDLE hEvent)
+BOOL RT_UnlockEvent(HANDLE hEvent)
 {
     bool success = setHandleLocker(hEvent, FUNC_CREATE_EVENT, false);
     dbg_log("[resource]", "unlock event: 0x%zX", hEvent);
@@ -2642,7 +2642,7 @@ bool RT_UnlockEvent(HANDLE hEvent)
 }
 
 __declspec(noinline)
-bool RT_LockSemaphore(HANDLE hSemaphore)
+BOOL RT_LockSemaphore(HANDLE hSemaphore)
 {
     bool success = setHandleLocker(hSemaphore, FUNC_CREATE_SEMAPHORE, true);
     dbg_log("[resource]", "lock semaphore: 0x%zX", hSemaphore);
@@ -2650,7 +2650,7 @@ bool RT_LockSemaphore(HANDLE hSemaphore)
 }
 
 __declspec(noinline)
-bool RT_UnlockSemaphore(HANDLE hSemaphore)
+BOOL RT_UnlockSemaphore(HANDLE hSemaphore)
 {
     bool success = setHandleLocker(hSemaphore, FUNC_CREATE_SEMAPHORE, false);
     dbg_log("[resource]", "unlock semaphore: 0x%zX", hSemaphore);
@@ -2658,7 +2658,7 @@ bool RT_UnlockSemaphore(HANDLE hSemaphore)
 }
 
 __declspec(noinline)
-bool RT_LockWaitableTimer(HANDLE hTimer)
+BOOL RT_LockWaitableTimer(HANDLE hTimer)
 {
     bool success = setHandleLocker(hTimer, FUNC_CREATE_WAITABLE_TIMER, true);
     dbg_log("[resource]", "lock timer: 0x%zX", hTimer);
@@ -2666,7 +2666,7 @@ bool RT_LockWaitableTimer(HANDLE hTimer)
 }
 
 __declspec(noinline)
-bool RT_UnlockWaitableTimer(HANDLE hTimer)
+BOOL RT_UnlockWaitableTimer(HANDLE hTimer)
 {
     bool success = setHandleLocker(hTimer, FUNC_CREATE_WAITABLE_TIMER, false);
     dbg_log("[resource]", "unlock timer: 0x%zX", hTimer);
@@ -2674,7 +2674,7 @@ bool RT_UnlockWaitableTimer(HANDLE hTimer)
 }
 
 __declspec(noinline)
-bool RT_LockFile(HANDLE hFile)
+BOOL RT_LockFile(HANDLE hFile)
 {
     bool success = setHandleLocker(hFile, FUNC_CREATE_FILE, true);
     dbg_log("[resource]", "lock file: 0x%zX", hFile);
@@ -2682,7 +2682,7 @@ bool RT_LockFile(HANDLE hFile)
 }
 
 __declspec(noinline)
-bool RT_UnlockFile(HANDLE hFile)
+BOOL RT_UnlockFile(HANDLE hFile)
 {
     bool success = setHandleLocker(hFile, FUNC_CREATE_FILE, false);
     dbg_log("[resource]", "unlock file: 0x%zX", hFile);
@@ -2734,7 +2734,7 @@ static bool setHandleLocker(HANDLE hObject, uint32 func, bool lock)
 }
 
 __declspec(noinline)
-bool RT_GetStatus(RT_Status* status)
+BOOL RT_GetStatus(RT_Status* status)
 {
     ResourceTracker* tracker = getTrackerPointer();
 
@@ -2815,7 +2815,7 @@ bool RT_GetStatus(RT_Status* status)
 }
 
 __declspec(noinline)
-bool RT_FreeAllMu()
+BOOL RT_FreeAllMu()
 {
     if (!RT_Lock())
     {

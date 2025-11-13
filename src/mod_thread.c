@@ -86,13 +86,13 @@ DWORD TT_TlsAlloc();
 BOOL  TT_TlsFree(DWORD dwTlsIndex);
 
 // methods for user
-HANDLE TT_ThdNew(void* address, void* parameter, bool track);
+HANDLE TT_ThdNew(void* address, void* parameter, BOOL track);
 void   TT_ThdExit(uint32 code);
 void   TT_ThdSleep(uint32 milliseconds);
-bool   TT_LockThread(DWORD id);
-bool   TT_UnlockThread(DWORD id);
-bool   TT_GetStatus(TT_Status* status);
-bool   TT_KillAllMu();
+BOOL   TT_LockThread(DWORD id);
+BOOL   TT_UnlockThread(DWORD id);
+BOOL   TT_GetStatus(TT_Status* status);
+BOOL   TT_KillAllMu();
 
 // methods for runtime
 bool  TT_Lock();
@@ -880,7 +880,7 @@ static void delTLSIndex(ThreadTracker* tracker, DWORD index)
 }
 
 __declspec(noinline)
-HANDLE TT_ThdNew(void* address, void* parameter, bool track)
+HANDLE TT_ThdNew(void* address, void* parameter, BOOL track)
 {
     return tt_createThread(NULL, 0, address, parameter, 0, NULL, track);
 }
@@ -939,7 +939,7 @@ void TT_ThdSleep(uint32 milliseconds)
 }
 
 __declspec(noinline)
-bool TT_LockThread(DWORD id)
+BOOL TT_LockThread(DWORD id)
 {
     bool success = setThreadLocker(id, true);
     dbg_log("[thread]", "lock thread: %d", id);
@@ -947,7 +947,7 @@ bool TT_LockThread(DWORD id)
 }
 
 __declspec(noinline)
-bool TT_UnlockThread(DWORD id)
+BOOL TT_UnlockThread(DWORD id)
 {
     bool success = setThreadLocker(id, false);
     dbg_log("[thread]", "unlock thread: %d", id);
@@ -992,7 +992,7 @@ static bool setThreadLocker(DWORD id, bool lock)
 }
 
 __declspec(noinline)
-bool TT_GetStatus(TT_Status* status)
+BOOL TT_GetStatus(TT_Status* status)
 {
     ThreadTracker* tracker = getTrackerPointer();
 
@@ -1013,7 +1013,7 @@ bool TT_GetStatus(TT_Status* status)
 }
 
 __declspec(noinline)
-bool TT_KillAllMu()
+BOOL TT_KillAllMu()
 {
     ThreadTracker* tracker = getTrackerPointer();
 

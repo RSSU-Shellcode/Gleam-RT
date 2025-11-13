@@ -21,18 +21,18 @@ typedef struct {
     int64 NumSockets;
 } RT_Status;
 
-typedef bool (*ResLockMutex_t)(HANDLE hMutex);
-typedef bool (*ResUnlockMutex_t)(HANDLE hMutex);
-typedef bool (*ResLockEvent_t)(HANDLE hEvent);
-typedef bool (*ResUnlockEvent_t)(HANDLE hEvent);
-typedef bool (*ResLockSemaphore_t)(HANDLE hSemaphore);
-typedef bool (*ResUnlockSemaphore_t)(HANDLE hSemaphore);
-typedef bool (*ResLockWaitableTimer_t)(HANDLE hTimer);
-typedef bool (*ResUnlockWaitableTimer_t)(HANDLE hTimer);
-typedef bool (*ResLockFile_t)(HANDLE hFile);
-typedef bool (*ResUnlockFile_t)(HANDLE hFile);
-typedef bool (*ResGetStatus_t)(RT_Status* status);
-typedef bool (*ResFreeAllMu_t)();
+typedef BOOL (*ResLockMutex_t)(HANDLE hMutex);
+typedef BOOL (*ResUnlockMutex_t)(HANDLE hMutex);
+typedef BOOL (*ResLockEvent_t)(HANDLE hEvent);
+typedef BOOL (*ResUnlockEvent_t)(HANDLE hEvent);
+typedef BOOL (*ResLockSemaphore_t)(HANDLE hSemaphore);
+typedef BOOL (*ResUnlockSemaphore_t)(HANDLE hSemaphore);
+typedef BOOL (*ResLockWaitableTimer_t)(HANDLE hTimer);
+typedef BOOL (*ResUnlockWaitableTimer_t)(HANDLE hTimer);
+typedef BOOL (*ResLockFile_t)(HANDLE hFile);
+typedef BOOL (*ResUnlockFile_t)(HANDLE hFile);
+typedef BOOL (*ResGetStatus_t)(RT_Status* status);
+typedef BOOL (*ResFreeAllMu_t)();
 
 typedef bool  (*ResLock_t)();
 typedef bool  (*ResUnlock_t)();

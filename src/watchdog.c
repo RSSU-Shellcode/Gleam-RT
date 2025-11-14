@@ -61,8 +61,8 @@ void  WD_SetHandler(WDHandler_t handler);
 errno WD_Kick();
 errno WD_Enable();
 errno WD_Disable();
-bool  WD_IsEnabled();
-bool  WD_GetStatus(WD_Status* status);
+BOOL  WD_IsEnabled();
+BOOL  WD_GetStatus(WD_Status* status);
 
 // methods for runtime
 bool  WD_Lock();
@@ -652,7 +652,7 @@ errno WD_Disable()
 }
 
 __declspec(noinline)
-bool WD_IsEnabled()
+BOOL WD_IsEnabled()
 {
     Watchdog* watchdog = getWatchdogPointer();
 
@@ -676,7 +676,7 @@ bool WD_IsEnabled()
 }
 
 __declspec(noinline)
-bool WD_GetStatus(WD_Status* status)
+BOOL WD_GetStatus(WD_Status* status)
 {
     Watchdog* watchdog = getWatchdogPointer();
 

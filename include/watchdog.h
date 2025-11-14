@@ -21,8 +21,8 @@ typedef void  (*WDSetHandler_t)(WDHandler_t handler);
 typedef errno (*WDKick_t)();
 typedef errno (*WDEnable_t)();
 typedef errno (*WDDisable_t)();
-typedef bool  (*WDIsEnabled_t)();
-typedef bool  (*WDGetStatus_t)(WD_Status* status);
+typedef BOOL  (*WDIsEnabled_t)();
+typedef BOOL  (*WDGetStatus_t)(WD_Status* status);
 
 typedef bool  (*WDLock_t)();
 typedef bool  (*WDUnlock_t)();

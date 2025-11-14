@@ -61,7 +61,7 @@ typedef struct {
 } Sysmon;
 
 // methods for user
-bool SM_GetStatus(SM_Status* status);
+BOOL SM_GetStatus(SM_Status* status);
 
 // methods for runtime
 bool  SM_Lock();
@@ -543,7 +543,7 @@ static void sm_add_panic()
 }
 
 __declspec(noinline)
-bool SM_GetStatus(SM_Status* status)
+BOOL SM_GetStatus(SM_Status* status)
 {
     Sysmon* sysmon = getSysmonPointer();
 

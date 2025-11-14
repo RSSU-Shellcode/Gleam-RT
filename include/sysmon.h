@@ -13,7 +13,7 @@ typedef struct {
     int64 NumPanic;
 } SM_Status;
 
-typedef bool (*SMGetStatus_t)(SM_Status* status);
+typedef BOOL (*SMGetStatus_t)(SM_Status* status);
 
 typedef bool  (*SMLock_t)();
 typedef bool  (*SMUnlock_t)();

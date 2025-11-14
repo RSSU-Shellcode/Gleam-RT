@@ -96,12 +96,12 @@ typedef struct {
 } TT_Status;
 #endif // MOD_THREAD_H
 
-typedef HANDLE (*ThdNew_t)(void* address, void* parameter, bool track);
+typedef HANDLE (*ThdNew_t)(void* address, void* parameter, BOOL track);
 typedef void   (*ThdExit_t)();
-typedef bool   (*ThdLockThread_t)(DWORD id);
-typedef bool   (*ThdUnlockThread_t)(DWORD id);
-typedef bool   (*ThdGetStatus_t)(TT_Status* status);
-typedef bool   (*ThdKillAllMu_t)();
+typedef BOOL   (*ThdLockThread_t)(DWORD id);
+typedef BOOL   (*ThdUnlockThread_t)(DWORD id);
+typedef BOOL   (*ThdGetStatus_t)(TT_Status* status);
+typedef BOOL   (*ThdKillAllMu_t)();
 
 // about resource tracker
 #ifndef MOD_RESOURCE_H
@@ -118,18 +118,18 @@ typedef struct {
 } RT_Status;
 #endif // MOD_RESOURCE_H
 
-typedef bool (*ResLockMutex_t)(HANDLE hMutex);
-typedef bool (*ResUnlockMutex_t)(HANDLE hMutex);
-typedef bool (*ResLockEvent_t)(HANDLE hEvent);
-typedef bool (*ResUnlockEvent_t)(HANDLE hEvent);
-typedef bool (*ResLockSemaphore_t)(HANDLE hSemaphore);
-typedef bool (*ResUnlockSemaphore_t)(HANDLE hSemaphore);
-typedef bool (*ResLockWaitableTimer_t)(HANDLE hTimer);
-typedef bool (*ResUnlockWaitableTimer_t)(HANDLE hTimer);
-typedef bool (*ResLockFile_t)(HANDLE hFile);
-typedef bool (*ResUnlockFile_t)(HANDLE hFile);
-typedef bool (*ResGetStatus_t)(RT_Status* status);
-typedef bool (*ResFreeAllMu_t)();
+typedef BOOL (*ResLockMutex_t)(HANDLE hMutex);
+typedef BOOL (*ResUnlockMutex_t)(HANDLE hMutex);
+typedef BOOL (*ResLockEvent_t)(HANDLE hEvent);
+typedef BOOL (*ResUnlockEvent_t)(HANDLE hEvent);
+typedef BOOL (*ResLockSemaphore_t)(HANDLE hSemaphore);
+typedef BOOL (*ResUnlockSemaphore_t)(HANDLE hSemaphore);
+typedef BOOL (*ResLockWaitableTimer_t)(HANDLE hTimer);
+typedef BOOL (*ResUnlockWaitableTimer_t)(HANDLE hTimer);
+typedef BOOL (*ResLockFile_t)(HANDLE hFile);
+typedef BOOL (*ResUnlockFile_t)(HANDLE hFile);
+typedef BOOL (*ResGetStatus_t)(RT_Status* status);
+typedef BOOL (*ResFreeAllMu_t)();
 
 // about argument store
 // GetValue: if value is NULL, size must not NULL for receive argument size.

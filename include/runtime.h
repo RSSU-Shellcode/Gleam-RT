@@ -350,7 +350,7 @@ typedef struct {
 } SM_Status;
 #endif // SYSMON_H
 
-typedef bool  (*SMGetStatus_t)(SM_Status* status);
+typedef BOOL  (*SMGetStatus_t)(SM_Status* status);
 typedef errno (*SMPause_t)();
 typedef errno (*SMContinue_t)();
 
@@ -370,9 +370,9 @@ typedef void (*WDHandler_t)();
 typedef errno (*WDKick_t)();
 typedef errno (*WDEnable_t)();
 typedef errno (*WDDisable_t)();
-typedef bool  (*WDIsEnabled_t)();
+typedef BOOL  (*WDIsEnabled_t)();
 typedef void  (*WDSetHandler_t)(WDHandler_t handler);
-typedef bool  (*WDGetStatus_t)(WD_Status* status);
+typedef BOOL  (*WDGetStatus_t)(WD_Status* status);
 typedef errno (*WDPause_t)();
 typedef errno (*WDContinue_t)();
 
@@ -578,8 +578,10 @@ typedef struct {
 
     struct {
         SMGetStatus_t Status;
-        SMPause_t     Pause;
-        SMContinue_t  Continue;
+
+        // only for test, NOT use it.
+        SMPause_t    _Pause;
+        SMContinue_t _Continue;
     } Sysmon;
 
     struct {
@@ -589,8 +591,10 @@ typedef struct {
         WDDisable_t    Disable;
         WDIsEnabled_t  IsEnabled;
         WDGetStatus_t  Status;
-        WDPause_t      Pause;
-        WDContinue_t   Continue;
+
+        // only for test, NOT use it.
+        WDPause_t    _Pause;
+        WDContinue_t _Continue;
     } Watchdog;
 
     struct {

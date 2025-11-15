@@ -11,6 +11,16 @@
 #include "detector.h"
 #include "debug.h"
 
+#define THRESHOLD_HAS_DEBUGGER       50
+#define THRESHOLD_HAS_MEMORY_SCANNER 10
+#define THRESHOLD_IN_SANDBOX         80
+#define THRESHOLD_IN_VIRTUAL_MACHINE 70
+#define THRESHOLD_IN_EMULATOR        70
+#define THRESHOLD_IS_ACCELERATED     80
+
+// MUST be a multiple of 100.
+#define MAX_SAFE_RANK 200
+
 typedef struct {
     // store options
     bool DisableDetector;
@@ -25,7 +35,7 @@ typedef struct {
     // protect data
     HANDLE hMutex;
 
-    // some test items only run once
+    // most test items only run once,
     // but some items need detect loop.
     bool isDetected;
 
@@ -38,8 +48,8 @@ typedef struct {
 } Detector;
 
 // methods for user
-bool DT_Detect();
-bool DT_GetStatus(DT_Status* status);
+BOOL DT_Detect();
+BOOL DT_GetStatus(DT_Status* status);
 
 // methods for runtime
 errno DT_Stop();
@@ -229,7 +239,7 @@ static bool dt_unlock()
 }
 
 __declspec(noinline)
-bool DT_Detect()
+BOOL DT_Detect()
 {
     Detector* detector = getDetectorPointer();
 
@@ -243,16 +253,34 @@ bool DT_Detect()
         return false;
     }
 
+    BOOL success = false;
+    for (;;)
+    {
+        // items that need detect loop
+        if (detector->isDetected)
+        {
+
+
+            success = true;
+            break;
+        }
+        // common detect items
+
+
+        detector->isDetected = true;
+        success = true;
+        break;
+    }
+
     if (!dt_unlock())
     {
         return false;
     }
-
-    return true;
+    return success;
 }
 
 __declspec(noinline)
-bool DT_GetStatus(DT_Status* status)
+BOOL DT_GetStatus(DT_Status* status)
 {
     Detector* detector = getDetectorPointer();
 
@@ -261,17 +289,50 @@ bool DT_GetStatus(DT_Status* status)
         status->IsEnabled = false;
         return true;
     }
+    status->IsEnabled = true;
 
     if (!dt_lock())
     {
         return false;
     }
 
+    int32 total = 0;
+    typedef struct {
+        uint16 src; BOOL* dst; uint16 th;
+    } item;
+    item items[] = {
+        { detector->HasDebugger,      &status->HasDebugger,      THRESHOLD_HAS_DEBUGGER       },
+        { detector->HasMemoryScanner, &status->HasMemoryScanner, THRESHOLD_HAS_MEMORY_SCANNER },
+        { detector->InSandbox,        &status->InSandbox,        THRESHOLD_IN_SANDBOX         },
+        { detector->InVirtualMachine, &status->InVirtualMachine, THRESHOLD_IN_VIRTUAL_MACHINE },
+        { detector->InEmulator,       &status->InEmulator,       THRESHOLD_IN_EMULATOR        },
+        { detector->IsAccelerated,    &status->IsAccelerated,    THRESHOLD_IS_ACCELERATED     },
+    };
+    for (int i = 0; i < arrlen(items); i++)
+    {
+        item item = items[i];
+        if (item.src >= item.th)
+        {
+            total += item.src;
+            *item.dst = true;
+        } else {
+            *item.dst = false;
+        }
+    }
+
+    int32 rank;
+    if (total < MAX_SAFE_RANK)
+    {
+        rank = ((MAX_SAFE_RANK - total) / (MAX_SAFE_RANK / 100));
+    } else {
+        rank = 0;
+    }
+    status->SafeRank = rank;
+
     if (!dt_unlock())
     {
         return false;
     }
-
     return true;
 }
 

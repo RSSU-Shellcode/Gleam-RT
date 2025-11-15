@@ -149,7 +149,7 @@ static bool TestWatchdog_GetStatus()
 
 static bool TestWatchdog_Pause()
 {
-    errno errno = runtime->Watchdog.Pause();
+    errno errno = runtime->Watchdog._Pause();
     if (errno != NO_ERROR)
     {
         printf_s("failed to pause watchdog: 0x%X\n", errno);
@@ -162,7 +162,7 @@ static bool TestWatchdog_Pause()
 
 static bool TestWatchdog_Continue()
 {
-    errno errno = runtime->Watchdog.Continue();
+    errno errno = runtime->Watchdog._Continue();
     if (errno != NO_ERROR)
     {
         printf_s("failed to continue watchdog: 0x%X\n", errno);

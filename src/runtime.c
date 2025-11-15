@@ -463,18 +463,18 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->Detector.Detect = runtime->Detector->Detect;
     module->Detector.Status = runtime->Detector->GetStatus;
     // about system monitor
-    module->Sysmon.Status   = runtime->Sysmon->GetStatus;
-    module->Sysmon.Pause    = runtime->Sysmon->Pause;
-    module->Sysmon.Continue = runtime->Sysmon->Continue;
+    module->Sysmon.Status    = runtime->Sysmon->GetStatus;
+    module->Sysmon._Pause    = runtime->Sysmon->Pause;
+    module->Sysmon._Continue = runtime->Sysmon->Continue;
     // about watchdog
-    module->Watchdog.SetHandler = runtime->Watchdog->SetHandler;
-    module->Watchdog.Kick       = runtime->Watchdog->Kick;
-    module->Watchdog.Enable     = runtime->Watchdog->Enable;
-    module->Watchdog.Disable    = runtime->Watchdog->Disable;
-    module->Watchdog.IsEnabled  = runtime->Watchdog->IsEnabled;
-    module->Watchdog.Status     = runtime->Watchdog->GetStatus;
-    module->Watchdog.Pause      = runtime->Watchdog->Pause;
-    module->Watchdog.Continue   = runtime->Watchdog->Continue;
+    module->Watchdog.SetHandler  = runtime->Watchdog->SetHandler;
+    module->Watchdog.Kick        = runtime->Watchdog->Kick;
+    module->Watchdog.Enable      = runtime->Watchdog->Enable;
+    module->Watchdog.Disable     = runtime->Watchdog->Disable;
+    module->Watchdog.IsEnabled   = runtime->Watchdog->IsEnabled;
+    module->Watchdog.Status      = runtime->Watchdog->GetStatus;
+    module->Watchdog._Pause      = runtime->Watchdog->Pause;
+    module->Watchdog._Continue   = runtime->Watchdog->Continue;
     // about process environment
     module->Env.GetPEB   = GetFuncAddr(&RT_GetPEB);
     module->Env.GetTEB   = GetFuncAddr(&RT_GetTEB);

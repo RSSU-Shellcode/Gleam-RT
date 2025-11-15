@@ -50,7 +50,7 @@ static bool TestSysmon_GetStatus()
 
 static bool TestSysmon_Pause()
 {
-    errno errno = runtime->Sysmon.Pause();
+    errno errno = runtime->Sysmon._Pause();
     if (errno != NO_ERROR)
     {
         printf_s("failed to pause sysmon: 0x%X\n", errno);
@@ -63,7 +63,7 @@ static bool TestSysmon_Pause()
 
 static bool TestSysmon_Continue()
 {
-    errno errno = runtime->Sysmon.Continue();
+    errno errno = runtime->Sysmon._Continue();
     if (errno != NO_ERROR)
     {
         printf_s("failed to continue sysmon: 0x%X\n", errno);

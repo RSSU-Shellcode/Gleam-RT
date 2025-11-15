@@ -1874,6 +1874,7 @@ static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
 
     ArgumentStore_M*   AS = runtime->ArgumentStore;
     InMemoryStorage_M* IS = runtime->InMemoryStorage;
+    Detector_M*        DT = runtime->Detector;
     Sysmon_M*          SM = runtime->Sysmon;
     Watchdog_M*        WD = runtime->Watchdog;
 
@@ -1883,63 +1884,65 @@ static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
     method list[] =
 #ifdef _WIN64
     {
-        { 0x8CDF6BCCACFF5ECA, 0x4BC9F3FE3B59678C, 0x23173EFE31305341, GetFuncAddr(&RT_GetProcAddressByName)   },
-        { 0xF395D014FC4A9847, 0x2D6352C01B64C8CD, 0x02E1C76F946DD411, GetFuncAddr(&RT_GetProcAddressByHash)   },
-        { 0xD6B7CE32BE36AE15, 0x8C40B58C324BF998, 0x2EC1D940231B43F6, GetFuncAddr(&RT_GetProcAddressByHashML) },
-        { 0x3AB89D3D84B47DFE, 0x667F961CE2D5EE7A, 0x43BD143E1D761DB4, GetFuncAddr(&RT_GetProcAddressOriginal) },
-        { 0x87C47270364481C7, 0x0F85CE174F27B497, 0x42E184C4D600AB3B, GetFuncAddr(&RT_ExitProcess)            },
-        { 0x77FDDBA2139EE0B2, 0xD6697FF6099F7A3E, 0xE1F0A0A5A30EBBA5, GetFuncAddr(&RT_GetPEB)                 },
-        { 0x441F60BF21A3BBAD, 0x83C43C17A206D106, 0x9DEEE3CB173F1F9E, GetFuncAddr(&RT_GetTEB)                 },
-        { 0xF6E648984B4A7151, 0xE74FFBB9CA4DE14A, 0xF8596B745EFC93EA, GetFuncAddr(&RT_GetIMOML)               },
-        { 0x8297D36EE43D98B8, 0x5CC0ED58C88E507B, 0x48701A09531A893B, GetFuncAddr(&RT_GetMetrics)             },
-        { 0x172EB189DC662FCA, 0x0406D1ED1D897C2E, 0x11974ED8D65FEA41, AS->GetValue   }, // AS_GetValue
-        { 0xA884D08380DBB048, 0xBD7F30E36376638E, 0xDA5805C2D8B16DCE, AS->GetPointer }, // AS_GetPointer
-        { 0x777977B4AE250D4F, 0x032B55E616810E84, 0x8606E6C48610C9A8, AS->Erase      }, // AS_Erase
-        { 0x9BCB981B023D8DC2, 0x1DFCCEAD651F9B13, 0xD65D0195182A03E1, AS->EraseAll   }, // AS_EraseAll
-        { 0xCF596C48439AC8D9, 0x5ECE49DC91D671C6, 0xE1EA7702BE4D4C22, IS->SetValue   }, // IS_SetValue
-        { 0x621CC1A89E9F8B68, 0x704987B8E70F74E4, 0x968F7E69F7B7A703, IS->GetValue   }, // IS_GetValue
-        { 0x7A2F02E9472A6B4C, 0xB39AF5ACF1986924, 0xFC3098BE0DDFCEB9, IS->GetPointer }, // IS_GetPointer
-        { 0xC33D496665F15E79, 0x0AB50841540975E5, 0x15370ED87A82E6D9, IS->Delete     }, // IS_Delete
-        { 0xAF239943E7539B6D, 0xE17D724F9945D888, 0x1071FD5143C55971, IS->DeleteAll  }, // IS_DeleteAll
-        { 0x82216EF8B41FA151, 0x6607CDBDCF13CB3A, 0xFA9DF9D380BF1C1D, SM->Pause      }, // SM_Pause
-        { 0x555D764BE9610F60, 0xE2A53FFB78A3D65F, 0xC2C721E343F55454, SM->Continue   }, // SM_Continue
-        { 0x1F832C6CB8DF6133, 0x17E85FF98FA3DE49, 0x47A5C8F4268DBCBB, WD->Kick       }, // WD_Kick
-        { 0x2CC54142939DF1CD, 0x17CCD13B74E5BD4E, 0xB68C4DA23D4E97EA, WD->Enable     }, // WD_Enable
-        { 0x6A068C1FEDA531A6, 0x0E703295C00BB31C, 0x2B66D21CA04C1B46, WD->Disable    }, // WD_Disable
-        { 0x8BBD68697171657A, 0x16AAF7ACBFDE688C, 0x4A903075B3618895, WD->IsEnabled  }, // WD_IsEnabled
-        { 0x5E43342F61130B3C, 0xCFD5C2327927D96C, 0x592DCAB6E0E3AF86, WD->SetHandler }, // WD_SetHandler
-        { 0x63BC77634D5E0E9D, 0x8E64FFE3439A4630, 0xACFC6A9743F69813, WD->Pause      }, // WD_Pause
-        { 0xFCB2D70109AD55A3, 0x2C2A42D0F8090A2D, 0xB6EDE7B7946586E9, WD->Continue   }, // WD_Continue
+        { 0x9B99B67DCBC4E44D, 0x2A75C66DD3725A0C, 0x287E20BE28DA7C0D, GetFuncAddr(&RT_GetProcAddressByName)   },
+        { 0x78CEC2DB4F037F52, 0x4BBCE1822B520801, 0xA55992702A7F7347, GetFuncAddr(&RT_GetProcAddressByHash)   },
+        { 0xC908C623B4ABC7AD, 0xB6541A994E1BD9C9, 0x9674D54BD95FD0C4, GetFuncAddr(&RT_GetProcAddressByHashML) },
+        { 0x5C1AC22BE7C8F1D0, 0x733B11BFF5D380BD, 0xF9EEB584A92B88B3, GetFuncAddr(&RT_GetProcAddressOriginal) },
+        { 0x6D4433798536C490, 0x5C453B47673B57CC, 0x93836F9B160A8469, GetFuncAddr(&RT_GetPEB)                 },
+        { 0xF25FE9947684FF1C, 0x286F34B40136641A, 0xDA4C40DA3D7DAE2C, GetFuncAddr(&RT_GetTEB)                 },
+        { 0xA7D7243625100C78, 0x7514DD4C11FC145C, 0x85FC32B8E08BBBC0, GetFuncAddr(&RT_GetIMOML)               },
+        { 0x1942779A04B5511E, 0x3F0F1951378BA2D7, 0x3990B978D311CE13, GetFuncAddr(&RT_GetMetrics)             },
+        { 0x7A14CE974C2FBB45, 0xB98129CF9127D736, 0x440466012518F4D3, GetFuncAddr(&RT_SleepHR)                },
+        { 0x5CF5E9987810AD63, 0x7D7CFE6E023217B8, 0x51D583187BB49302, GetFuncAddr(&RT_ExitProcess)            },
+        { 0xD1068F18078E5118, 0x479C7B50DBFADEE7, 0x649073A187F0F0A9, AS->GetValue   }, // AS_GetValue
+        { 0x8613407F11759864, 0x41D042835BA4C499, 0xD74A73D3EE16AE15, AS->GetPointer }, // AS_GetPointer
+        { 0x38C3FA484C1D82DC, 0xE84B8AF19E5545A2, 0xCE033EAF91F7C68A, AS->Erase      }, // AS_Erase
+        { 0x581642DC5938951A, 0xD0E223D64B8DCDD0, 0x1CF6D4FF24ED869B, AS->EraseAll   }, // AS_EraseAll
+        { 0x92C30EE5A4E3665B, 0xC6CB35CD39A67EAC, 0x015D074AF57976A1, IS->SetValue   }, // IS_SetValue
+        { 0x2AFDB814282422CC, 0x6337FA1ECA8843D2, 0x36206F50F948F913, IS->GetValue   }, // IS_GetValue
+        { 0xE5D3E0C3B45E4E57, 0x773674E47B0053B8, 0x0A681F5428C13912, IS->GetPointer }, // IS_GetPointer
+        { 0xA327366E9188B9AD, 0x0B5E3CDD9E8D1718, 0x96E689FB7E624071, IS->Delete     }, // IS_Delete
+        { 0x063C8C5F8892F112, 0x20EF072CE85923F8, 0x0A63186150433F11, IS->DeleteAll  }, // IS_DeleteAll
+        { 0x25B52C97B0459C77, 0x581F53A28A65268E, 0xED463BBEAA5FD89F, DT->Detect     }, // DT_Detect
+        { 0x8B8360604FA3C9B3, 0x186269BED712913B, 0x6D2CF70F8043A826, DT->GetStatus  }, // DT_Status
+        { 0x93981B1E2C294E7D, 0x875CE09ECE01D337, 0x437686381E0B5F7B, SM->GetStatus  }, // SM_Status
+        { 0x33B8FBF493F076EE, 0xD08874D760CA7D86, 0xA4719EDF574FF3BD, WD->SetHandler }, // WD_SetHandler
+        { 0x7A05CE0EFFF7AD3F, 0xC452D582688E6748, 0x306E7BA258D6F057, WD->Kick       }, // WD_Kick
+        { 0x2217D5A7D8F87B58, 0x6466D654DC42A2F5, 0xDDF182373074C274, WD->Enable     }, // WD_Enable
+        { 0x6B11F72479C7BDCC, 0x93B95D821AC7FDBB, 0x292E300258544350, WD->Disable    }, // WD_Disable
+        { 0xE24990F5D9ECC90E, 0xA203A663F5364056, 0xDE186C4522AF6A07, WD->IsEnabled  }, // WD_IsEnabled
+        { 0x0D76A695E8206CC4, 0xBBAECC7687F42C00, 0xCBEC3C2610B77733, WD->GetStatus  }, // WD_Status
     };
 #elif _WIN32
     {
-        { 0xB45C0CFA, 0x2A5E9BBD, 0x15D1E23E, GetFuncAddr(&RT_GetProcAddressByName)   },
-        { 0x7431D137, 0x86263112, 0x01401C56, GetFuncAddr(&RT_GetProcAddressByHash)   },
-        { 0x6411C109, 0x7D9578EB, 0xACD88A68, GetFuncAddr(&RT_GetProcAddressByHashML) },
-        { 0x46AE0C6F, 0x9CA280BD, 0xE68B3680, GetFuncAddr(&RT_GetProcAddressOriginal) },
-        { 0x8ABE078B, 0xD3D543F1, 0xE132AE7B, GetFuncAddr(&RT_ExitProcess)            },
-        { 0xC204A230, 0xDAA40F54, 0x277959C8, GetFuncAddr(&RT_GetPEB)                 },
-        { 0x7084BF94, 0x0B8D1B33, 0x77115B80, GetFuncAddr(&RT_GetTEB)                 },
-        { 0xF8D5E5F2, 0x49036983, 0xF3AF827C, GetFuncAddr(&RT_GetIMOML)               },
-        { 0x2674137F, 0xD79A5D69, 0xB3C0A554, GetFuncAddr(&RT_GetMetrics)             },
-        { 0x2859483E, 0xBF4749F4, 0xCBEAF70B, AS->GetValue   }, // AS_GetValue
-        { 0xD2432243, 0x85A16057, 0xF762BF9F, AS->GetPointer }, // AS_GetPointer
-        { 0xB115F50E, 0xD1879F7C, 0xDB1CB9F6, AS->Erase      }, // AS_Erase
-        { 0x58F68F24, 0x1B504FA3, 0x4E62C4D7, AS->EraseAll   }, // AS_EraseAll
-        { 0xECB1ACB0, 0x4B4C9920, 0xDD8ADF4E, IS->SetValue   }, // IS_SetValue
-        { 0xDA7A10AE, 0xE5A612BF, 0xA41F7425, IS->GetValue   }, // IS_GetValue
-        { 0xEE91CD4F, 0x2EBA17AE, 0x67B0C201, IS->GetPointer }, // IS_GetPointer
-        { 0xD4E677A9, 0xDFA59DC0, 0x33A7EB51, IS->Delete     }, // IS_Delete
-        { 0x23A94E72, 0x22A1B412, 0xD86D4A3B, IS->DeleteAll  }, // IS_DeleteAll
-        { 0xEC9FDAA4, 0xF05F8702, 0x550FD573, SM->Pause      }, // SM_Pause
-        { 0xB3D350A9, 0xF1C68904, 0xBBD5FB89, SM->Continue   }, // SM_Continue
-        { 0x74153A99, 0x1104477F, 0x7012B5BD, WD->Kick       }, // WD_Kick
-        { 0xED75D7C9, 0x66E51765, 0xE8913E72, WD->Enable     }, // WD_Enable
-        { 0xC5150916, 0x7ECD2BA6, 0x5CE6A01B, WD->Disable    }, // WD_Disable
-        { 0x891B90D5, 0x5D354832, 0x359D27F4, WD->IsEnabled  }, // WD_IsEnabled
-        { 0xCCB874B6, 0x14974E8E, 0xD373B540, WD->SetHandler }, // WD_SetHandler
-        { 0x2458D941, 0xA02EF77B, 0xFD9F77F6, WD->Pause      }, // WD_Pause
-        { 0x77753D1A, 0xA8072E02, 0xA25C2C36, WD->Continue   }, // WD_Continue
+        { 0xCC8D1512, 0x4DC36689, 0x69994BCB, GetFuncAddr(&RT_GetProcAddressByName)   },
+        { 0x539A3936, 0x7D694658, 0xC93F4122, GetFuncAddr(&RT_GetProcAddressByHash)   },
+        { 0x3D7C4EDA, 0xECD00780, 0x7B64F177, GetFuncAddr(&RT_GetProcAddressByHashML) },
+        { 0xB35705B6, 0xB033EAFB, 0xA5A5546E, GetFuncAddr(&RT_GetProcAddressOriginal) },
+        { 0x1655EE6F, 0xC04FB496, 0x7EE9DDE8, GetFuncAddr(&RT_GetPEB)                 },
+        { 0x4B62B8F1, 0x87C8028B, 0xD697CA60, GetFuncAddr(&RT_GetTEB)                 },
+        { 0xE12D98E8, 0x03C40D02, 0x86625805, GetFuncAddr(&RT_GetIMOML)               },
+        { 0xAE398258, 0xD731BCE7, 0x1E7A2A1A, GetFuncAddr(&RT_GetMetrics)             },
+        { 0x0D56A3D5, 0x293D175E, 0xE6C8C8D5, GetFuncAddr(&RT_SleepHR)                },
+        { 0x29542BFC, 0xC661D6AC, 0x844DD401, GetFuncAddr(&RT_ExitProcess)            },
+        { 0xA70DF734, 0x6DD5CD24, 0xF0B9A21D, AS->GetValue   }, // AS_GetValue
+        { 0xADA5F2C9, 0xB8A08D9B, 0x7DB3ECC2, AS->GetPointer }, // AS_GetPointer
+        { 0x17D258A9, 0x18EF1CF3, 0x978EAC96, AS->Erase      }, // AS_Erase
+        { 0x8865F294, 0xF3F8E721, 0xB6B8CE66, AS->EraseAll   }, // AS_EraseAll
+        { 0x0E5C591D, 0x059C9C41, 0x580504E7, IS->SetValue   }, // IS_SetValue
+        { 0xBA1811D2, 0xCC98B76B, 0x607C67D7, IS->GetValue   }, // IS_GetValue
+        { 0x8A76A2BA, 0x8D311A4E, 0xDCEBC05E, IS->GetPointer }, // IS_GetPointer
+        { 0x1AAE139D, 0xC0182D65, 0x9990E05B, IS->Delete     }, // IS_Delete
+        { 0x813577DC, 0x985542B3, 0x41D8CA6A, IS->DeleteAll  }, // IS_DeleteAll
+        { 0x0D41CF65, 0xC1D58FC0, 0xB24370DA, DT->Detect     }, // DT_Detect
+        { 0x993D60ED, 0xA07B9091, 0x52CE44B2, DT->GetStatus  }, // DT_Status
+        { 0x18F200E3, 0x7DD1B99E, 0x7F4B2915, SM->GetStatus  }, // SM_Status
+        { 0x5CC35F98, 0x7F44D8EC, 0x5B3C26E3, WD->SetHandler }, // WD_SetHandler
+        { 0x48AE04AA, 0x22071C46, 0x98C6F05B, WD->Kick       }, // WD_Kick
+        { 0x5933C656, 0xD43187BC, 0x6247B19C, WD->Enable     }, // WD_Enable
+        { 0x0664499A, 0x2BFE9370, 0x0E5A84B4, WD->Disable    }, // WD_Disable
+        { 0x901B44AD, 0x219D299A, 0xBFCD277B, WD->IsEnabled  }, // WD_IsEnabled
+        { 0x8F5FA00C, 0x39DED160, 0x0134B86F, WD->GetStatus  }, // WD_Status
     };
 #endif
     for (int i = 0; i < arrlen(list); i++)
@@ -2601,7 +2604,7 @@ void RT_Stop()
 }
 
 __declspec(noinline)
-static errno stop(bool exitThread)
+static errno stop(bool exitThread) // TODO replace it to stop code
 {
     Runtime* runtime = getRuntimePointer();
 

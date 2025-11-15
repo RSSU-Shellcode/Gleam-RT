@@ -24,7 +24,7 @@ _GenerateSeed@0 proc
   ror edx, 5
   xor edx, esp
 
-  ; add, xor and ror
+  ; add, xor and ror with other registers
   add eax, ebx
   ror eax, 3
   add eax, ecx
@@ -39,7 +39,7 @@ _GenerateSeed@0 proc
   ror eax, 3
   add eax, esp
 
-  ; build eax
+  ; build eax with xor shift
   push esi
   mov esi, eax
   rol eax, 13
@@ -52,7 +52,7 @@ _GenerateSeed@0 proc
   xor eax, esi
   pop esi
 
-  ; build edx
+  ; build edx with xor shift
   mov edx, eax
   rol edx, 13
   xor edx, eax
@@ -73,7 +73,7 @@ GenerateSeed proc
   imul rax, rsp                ; rax * rsp
   add rax, rsp                 ; add rsp
 
-  ; add and ror rax
+  ; add and ror rax with other registers
   add rax, rbx
   ror rax, 16
   add rax, rcx
@@ -106,7 +106,8 @@ GenerateSeed proc
   add rax, r15
   ror rax, 16
 
-  ; change registers
+  ; active destroy volatile registers for
+  ; cooperate with the previous step
   add rax, 1024
   xor rcx, rax
   add rax, 2048
@@ -116,7 +117,7 @@ GenerateSeed proc
   add rax, 8192
   xor r9, rax
 
-  ; build rax
+  ; build rax with xor shift
   mov rcx, rax
   rol rax, 13
   xor rax, rcx

@@ -22,7 +22,7 @@ typedef void  (*mt_free_t)(void* ptr);
 typedef uint  (*mt_msize_t)(void* ptr);
 typedef uint  (*mt_mcap_t)(void* ptr);
 
-typedef HANDLE (*TT_NewThread_t)(void* address, void* parameter, bool track);
+typedef HANDLE (*TT_NewThread_t)(void* address, void* parameter, BOOL track);
 typedef errno  (*TT_RecoverThreads_t)();
 typedef errno  (*TT_ForceKillThreads_t)();
 

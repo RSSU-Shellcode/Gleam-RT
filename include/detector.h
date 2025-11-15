@@ -16,8 +16,8 @@ typedef struct {
     int32 SafeRank;
 } DT_Status;
 
-typedef bool (*DetDetect_t)();
-typedef bool (*DetGetStatus_t)(DT_Status* status);
+typedef BOOL (*DetDetect_t)();
+typedef BOOL (*DetGetStatus_t)(DT_Status* status);
 
 typedef errno (*DetStop_t)();
 

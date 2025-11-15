@@ -4,6 +4,7 @@ package gleamrt
 
 import (
 	"syscall"
+	"time"
 	"unsafe"
 
 	"github.com/RSSU-Shellcode/GRT-Develop/metric"
@@ -14,17 +15,19 @@ import (
 var (
 	modGleamRT = windows.NewLazyDLL("GleamRT.dll")
 
-	procGetProcAddressByName   = modGleamRT.NewProc("GetProcAddressByName")
-	procGetProcAddressByHash   = modGleamRT.NewProc("GetProcAddressByHash")
-	procGetProcAddressByHashML = modGleamRT.NewProc("GetProcAddressByHashML")
-	procGetProcAddressOriginal = modGleamRT.NewProc("GetProcAddressOriginal")
-	procExitProcess            = modGleamRT.NewProc("ExitProcess")
+	procGetProcAddressByName   = modGleamRT.NewProc("RT_GetProcAddressByName")
+	procGetProcAddressByHash   = modGleamRT.NewProc("RT_GetProcAddressByHash")
+	procGetProcAddressByHashML = modGleamRT.NewProc("RT_GetProcAddressByHashML")
+	procGetProcAddressOriginal = modGleamRT.NewProc("RT_GetProcAddressOriginal")
 
-	procGetPEB   = modGleamRT.NewProc("GetPEB")
-	procGetTEB   = modGleamRT.NewProc("GetTEB")
-	procGetIMOML = modGleamRT.NewProc("GetIMOML")
+	procGetPEB   = modGleamRT.NewProc("RT_GetPEB")
+	procGetTEB   = modGleamRT.NewProc("RT_GetTEB")
+	procGetIMOML = modGleamRT.NewProc("RT_GetIMOML")
 
-	procGetMetrics = modGleamRT.NewProc("GetMetrics")
+	procGetMetrics = modGleamRT.NewProc("RT_GetMetrics")
+	procSleep      = modGleamRT.NewProc("RT_Sleep")
+
+	procExitProcess = modGleamRT.NewProc("RT_ExitProcess")
 )
 
 // GetProcAddressByName is used to get procedure address by name.
@@ -79,11 +82,6 @@ func GetProcAddressOriginal(hModule uintptr, name string) (uintptr, error) {
 	return ret, nil
 }
 
-// ExitProcess is used to call original ExitProcess.
-func ExitProcess(code int) {
-	_, _, _ = procExitProcess.Call(uintptr(code))
-}
-
 // GetPEB is used to get process environment block.
 func GetPEB() uintptr {
 	ret, _, _ := procGetPEB.Call()
@@ -112,6 +110,20 @@ func GetMetrics() (*metric.Metrics, error) {
 		return nil, err
 	}
 	return &metrics, nil
+}
+
+// Sleep is used to hide and sleep, it is the core method.
+func Sleep(d time.Duration) error {
+	ret, _, err := procSleep.Call(uintptr(d.Milliseconds()))
+	if ret != windows.NO_ERROR {
+		return err
+	}
+	return nil
+}
+
+// ExitProcess is used to call original ExitProcess.
+func ExitProcess(code int) {
+	_, _, _ = procExitProcess.Call(uintptr(code))
 }
 
 func boolToUintptr(b bool) uintptr {

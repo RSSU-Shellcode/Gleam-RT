@@ -20,8 +20,8 @@
 #define SERIALIZE_FLAG_VALUE   0x00000000
 #define SERIALIZE_FLAG_POINTER 0x80000000
 
-#define SERIALIZE_MASK_FLAG   0x80000000
-#define SERIALIZE_MASK_LENGTH 0x7FFFFFFF
+#define SERIALIZE_MASK_FLAG    0x80000000
+#define SERIALIZE_MASK_LENGTH  0x7FFFFFFF
 
 // Serialize is used to serialize structure to a buffer.
 // If success, return the serialized data length. If failed, return 0.
@@ -29,6 +29,6 @@
 uint32 Serialize(uint32* descriptor, void* data, void* serialized);
 
 // Unserialize is used to unserialize data to a structure.
-bool Unserialize(void* serialized, void* data);
+BOOL Unserialize(void* serialized, void* data);
 
 #endif // SERIALIZE_H

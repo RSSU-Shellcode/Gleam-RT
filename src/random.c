@@ -61,13 +61,13 @@ byte RandByte(uint64 seed)
     return (byte)rand(seed, 256);
 }
 
-bool RandBool(uint64 seed)
+BOOL RandBool(uint64 seed)
 {
     if (seed < 4096)
     {
         seed += GenerateSeed();
     }
-    return (bool)rand(seed, 2);
+    return (BOOL)rand(seed, 2);
 }
 
 int RandInt(uint64 seed)

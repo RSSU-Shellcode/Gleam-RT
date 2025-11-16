@@ -4,9 +4,9 @@
 
 uint32 Serialize(uint32* descriptor, void* data, void* serialized)
 {
-    byte* buffer  = serialized;
-    byte* dataptr = data;
-    uint32 length = 0;
+    byte*  buffer  = serialized;
+    byte*  dataPtr = data;
+    uint32 length  = 0;
     // write magic number
     if (buffer != NULL)
     {
@@ -15,10 +15,10 @@ uint32 Serialize(uint32* descriptor, void* data, void* serialized)
     }
     length += sizeof(uint32);
     // calculate the serialized data length and write descriptor
-    uint32* desc_p = descriptor;
+    uint32* descPtr = descriptor;
     for (;;)
     {
-        uint32 desc = *desc_p;
+        uint32 desc = *descPtr;
         // write descriptor
         if (buffer != NULL)
         {
@@ -31,7 +31,7 @@ uint32 Serialize(uint32* descriptor, void* data, void* serialized)
             break;
         }
         length += desc & SERIALIZE_MASK_LENGTH;
-        desc_p++;
+        descPtr++;
     }
     // for only calculate the serialized data length
     if (buffer == NULL)
@@ -39,10 +39,10 @@ uint32 Serialize(uint32* descriptor, void* data, void* serialized)
         return length;
     }
     // write structure field value
-    desc_p = descriptor;
+    descPtr = descriptor;
     for (;;)
     {
-        uint32 desc = *desc_p;
+        uint32 desc = *descPtr;
         if (desc == SERIALIZE_ITEM_END)
         {
             break;
@@ -51,25 +51,25 @@ uint32 Serialize(uint32* descriptor, void* data, void* serialized)
         switch (desc & SERIALIZE_MASK_FLAG)
         {
         case SERIALIZE_FLAG_VALUE:
-            mem_copy(buffer, dataptr, size);
-            dataptr += size;
+            mem_copy(buffer, dataPtr, size);
+            dataPtr += size;
             break;
         case SERIALIZE_FLAG_POINTER:
-            uintptr ptr = *(uintptr*)(dataptr);
+            uintptr ptr = *(uintptr*)(dataPtr);
             mem_copy(buffer, (byte*)(ptr), size);
-            dataptr += sizeof(uintptr);
+            dataPtr += sizeof(uintptr);
             break;
         }
         buffer += size;
-        desc_p++;
+        descPtr++;
     }
     return length;
 }
 
-bool Unserialize(void* serialized, void* data)
+BOOL Unserialize(void* serialized, void* data)
 {
     byte* buffer  = serialized;
-    byte* dataptr = data;
+    byte* dataPtr = data;
     // check is valid serialized data
     if (*(uint32*)buffer != SERIALIZE_HEADER_MAGIC)
     {
@@ -78,23 +78,23 @@ bool Unserialize(void* serialized, void* data)
     buffer += sizeof(uint32);
     // calculate the number of the fields
     uint numFields = 0;
-    uint32* desc_p = (uint32*)buffer;
+    uint32* descPtr = (uint32*)buffer;
     for (;;)
     {
-        uint32 desc = *desc_p;
+        uint32 desc = *descPtr;
         if (desc == SERIALIZE_ITEM_END)
         {
             break;
         }
         numFields++;
-        desc_p++;
+        descPtr++;
     }
-    byte* datasrc = buffer + (numFields + 1) * 4;
+    byte* dataSrc = buffer + (numFields + 1) * 4;
     // unserialize data to structure field
-    desc_p = (uint32*)buffer;
+    descPtr = (uint32*)buffer;
     for (;;)
     {
-        uint32 desc = *desc_p;
+        uint32 desc = *descPtr;
         if (desc == SERIALIZE_ITEM_END)
         {
             break;
@@ -103,21 +103,21 @@ bool Unserialize(void* serialized, void* data)
         switch (desc & SERIALIZE_MASK_FLAG)
         {
         case SERIALIZE_FLAG_VALUE:
-            mem_copy(dataptr, datasrc, size);
-            dataptr += size;
+            mem_copy(dataPtr, dataSrc, size);
+            dataPtr += size;
             break;
         case SERIALIZE_FLAG_POINTER:
-            uintptr ptr = (uintptr)datasrc;
+            uintptr ptr = (uintptr)dataSrc;
             if (size == 0)
             {
                 ptr = 0; // set NULL pointer
             }
-            mem_copy(dataptr, &ptr, sizeof(uintptr));
-            dataptr += sizeof(uintptr);
+            mem_copy(dataPtr, &ptr, sizeof(uintptr));
+            dataPtr += sizeof(uintptr);
             break;
         }
-        datasrc += size;
-        desc_p++;
+        dataSrc += size;
+        descPtr++;
     }
     return true;
 }

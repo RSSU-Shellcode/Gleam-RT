@@ -13,7 +13,7 @@ void RandBuffer(void* buf, int64 size);
 byte RandByte(uint64 seed);
 
 // RandBool is used to generate random bool.
-bool RandBool(uint64 seed);
+BOOL RandBool(uint64 seed);
 
 // RandInt is used to generate random int.
 int RandInt(uint64 seed);

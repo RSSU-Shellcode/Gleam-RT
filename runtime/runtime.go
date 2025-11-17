@@ -200,9 +200,10 @@ type RuntimeM struct {
 	}
 
 	Sysmon struct {
-		Status   uintptr
-		Pause    uintptr
-		Continue uintptr
+		Status uintptr
+
+		_ uintptr
+		_ uintptr
 	}
 
 	Watchdog struct {
@@ -212,8 +213,9 @@ type RuntimeM struct {
 		Disable    uintptr
 		IsEnabled  uintptr
 		Status     uintptr
-		Pause      uintptr
-		Continue   uintptr
+
+		_ uintptr
+		_ uintptr
 	}
 
 	Env struct {

@@ -248,7 +248,7 @@ typedef errno (*CryptoFreeDLL_t)();
 
 // about random module
 typedef void   (*RandBuffer_t)(void* buf, int64 size);
-typedef bool   (*RandBool_t)(uint64 seed);
+typedef BOOL   (*RandBool_t)(uint64 seed);
 typedef int64  (*RandInt64_t)(uint64 seed);
 typedef uint64 (*RandUint64_t)(uint64 seed);
 typedef int64  (*RandInt64N_t)(uint64 seed, int64 n);
@@ -308,7 +308,7 @@ typedef uint (*Decompress_t)(void* dst, void* src, uint len);
 #endif // SERIALIZE_H
 
 typedef uint32 (*Serialize_t)(uint32* descriptor, void* data, void* serialized);
-typedef bool   (*Unserialize_t)(void* serialized, void* data);
+typedef BOOL   (*Unserialize_t)(void* serialized, void* data);
 
 // about memory scanner module
 // 

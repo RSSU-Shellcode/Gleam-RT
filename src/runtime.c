@@ -339,6 +339,12 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     {
         errno = ERR_RUNTIME_FLUSH_INST;
     }
+    // check initialize elapsed time is too long
+    int32 tick = runtime->GetTickCount();
+    if (tick - runtime->InitTick > 150)
+    {
+        errno = ERR_RUNTIME_INIT_TIMEOUT;
+    }
     if (errno != NO_ERROR)
     {
         cleanRuntime(runtime);

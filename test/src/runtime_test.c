@@ -34,6 +34,7 @@ bool TestInitRuntime()
     if (runtime == NULL)
     {
         printf_s("failed to initialize runtime: 0x%X\n", GetLastErrno());
+        panic(PANIC_UNREACHABLE_CODE);
         return false;
     }
     return true;

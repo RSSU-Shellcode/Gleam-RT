@@ -32,9 +32,13 @@ typedef struct {
 
     // API addresses
     GetTickCount_t        GetTickCount;
+    VirtualFree_t         VirtualFree;
     ReleaseMutex_t        ReleaseMutex;
     WaitForSingleObject_t WaitForSingleObject;
     CloseHandle_t         CloseHandle;
+
+    // for detector memory scanner
+    LPVOID trapMemPage;
 
     // protect data
     HANDLE hMutex;
@@ -140,6 +144,7 @@ __declspec(noinline)
 static bool initDetectorAPI(Detector* detector, Context* context)
 {
     detector->GetTickCount        = context->GetTickCount;
+    detector->VirtualFree         = context->VirtualFree;
     detector->ReleaseMutex        = context->ReleaseMutex;
     detector->WaitForSingleObject = context->WaitForSingleObject;
     detector->CloseHandle         = context->CloseHandle;
@@ -200,6 +205,14 @@ static bool initDetectorEnvironment(Detector* detector, Context* context)
         return false;
     }
     detector->hMutex = hMutex;
+    // allocate trap memory page
+    SIZE_T size = (3 + RandUintN(0, 16)) * 1024;
+    LPVOID page = context->VirtualAlloc(NULL, size, MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
+    if (page == NULL)
+    {
+        return false;
+    }
+    detector->trapMemPage = page;
     return true;
 }
 
@@ -222,6 +235,10 @@ static void cleanDetector(Detector* detector)
     if (detector->CloseHandle != NULL && detector->hMutex != NULL)
     {
         detector->CloseHandle(detector->hMutex);
+    }
+    if (detector->VirtualFree != NULL && detector->trapMemPage != NULL)
+    {
+        detector->VirtualFree(detector->trapMemPage, 0, MEM_RELEASE);
     }
 }
 
@@ -419,6 +436,12 @@ errno DT_Stop()
     if (!detector->CloseHandle(detector->hMutex) && errno == NO_ERROR)
     {
         errno = ERR_DETECTOR_CLOSE_MUTEX;
+    }
+
+    // free trap memory page
+    if (!detector->VirtualFree(detector->trapMemPage, 0, MEM_RELEASE) && errno == NO_ERROR)
+    {
+        errno = ERR_DETECTOR_FREE_TRAP_MEM;
     }
 
     // recover instructions

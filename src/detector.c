@@ -26,6 +26,10 @@ typedef struct {
     bool DisableDetector;
     bool NotEraseInstruction;
 
+    // process environment
+    void* PEB;
+    void* IMOML;
+
     // API addresses
     GetTickCount_t        GetTickCount;
     ReleaseMutex_t        ReleaseMutex;
@@ -72,6 +76,13 @@ static bool initDetectorEnvironment(Detector* detector, Context* context);
 static void eraseDetectorMethods(Context* context);
 static void cleanDetector(Detector* detector);
 
+static bool detectDebugger();
+static bool detectMemScanner();
+static bool detectSandbox();
+static bool detectVirtualMachine();
+static bool detectEmulator();
+static bool detectAccelerator();
+
 Detector_M* InitDetector(Context* context)
 {
     // set structure address
@@ -84,6 +95,9 @@ Detector_M* InitDetector(Context* context)
     // store options
     detector->DisableDetector     = context->DisableDetector;
     detector->NotEraseInstruction = context->NotEraseInstruction;
+    // store process environment
+    detector->PEB   = context->PEB;
+    detector->IMOML = context->IMOML;
     // initialize detector
     errno errno = NO_ERROR;
     for (;;)
@@ -259,14 +273,17 @@ BOOL DT_Detect()
         // items that need detect loop
         if (detector->isDetected)
         {
-
-
+            detectMemScanner();
             success = true;
             break;
         }
         // common detect items
-
-
+        detectDebugger();
+        detectMemScanner();
+        detectSandbox();
+        detectVirtualMachine();
+        detectEmulator();
+        detectAccelerator();
         detector->isDetected = true;
         success = true;
         break;
@@ -277,6 +294,61 @@ BOOL DT_Detect()
         return false;
     }
     return success;
+}
+
+__declspec(noinline)
+static bool detectDebugger()
+{
+    Detector* detector = getDetectorPointer();
+
+    uintptr peb = (uintptr)(detector->PEB);
+    bool BeingDebugged = *(bool*)(peb + 2);
+    if (BeingDebugged)
+    {
+        detector->HasDebugger += 100;
+        return true;
+    }
+    return true;
+}
+
+__declspec(noinline)
+static bool detectMemScanner()
+{
+    Detector* detector = getDetectorPointer();
+
+    return true;
+}
+
+__declspec(noinline)
+static bool detectSandbox()
+{
+    Detector* detector = getDetectorPointer();
+
+    return true;
+}
+
+__declspec(noinline)
+static bool detectVirtualMachine()
+{
+    Detector* detector = getDetectorPointer();
+
+    return true;
+}
+
+__declspec(noinline)
+static bool detectEmulator()
+{
+    Detector* detector = getDetectorPointer();
+
+    return true;
+}
+
+__declspec(noinline)
+static bool detectAccelerator()
+{
+    Detector* detector = getDetectorPointer();
+
+    return true;
 }
 
 __declspec(noinline)

@@ -6,9 +6,6 @@
 // [reference]
 // https://en.wikipedia.org/wiki/xorshift
 
-// RandBuffer is used to fill random bytes to the memory.
-void RandBuffer(void* buf, int64 size);
-
 // RandByte is used to generate random byte.
 byte RandByte(uint64 seed);
 
@@ -38,6 +35,13 @@ int64 RandInt64N(uint64 seed, int64 n);
 
 // RandUint64N is used to generate random uint64 with range.
 uint64 RandUint64N(uint64 seed, uint64 n);
+
+// RandBuffer is used to fill random bytes to the memory.
+void RandBuffer(void* buf, int64 size);
+
+// RandSequence is used to generate random sequence with range.
+// example: RandSequence(array, 4) will set array like [0, 3, 1, 2]
+void RandSequence(int* array, int n);
 
 // for generate random data fast.
 uint   XORShift(uint seed);

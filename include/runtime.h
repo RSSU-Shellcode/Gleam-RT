@@ -247,12 +247,13 @@ typedef errno (*CryptoFreeDLL_t)();
 // =================================Runtime=================================
 
 // about random module
-typedef void   (*RandBuffer_t)(void* buf, int64 size);
 typedef BOOL   (*RandBool_t)(uint64 seed);
 typedef int64  (*RandInt64_t)(uint64 seed);
 typedef uint64 (*RandUint64_t)(uint64 seed);
 typedef int64  (*RandInt64N_t)(uint64 seed, int64 n);
 typedef uint64 (*RandUint64N_t)(uint64 seed, uint64 n);
+typedef void   (*RandBuffer_t)(void* buf, int64 size);
+typedef void   (*RandSequence_t)(int* array, int n);
 
 // about crypto module
 typedef void (*Encrypt_t)(void* buf, uint size, byte* key, byte* iv);
@@ -536,12 +537,13 @@ typedef struct {
     } WinCrypto;
 
     struct {
-        RandBuffer_t  Buffer;
-        RandBool_t    Bool;
-        RandInt64_t   Int64;
-        RandUint64_t  Uint64;
-        RandInt64N_t  Int64N;
-        RandUint64N_t Uint64N;
+        RandBool_t     Bool;
+        RandInt64_t    Int64;
+        RandUint64_t   Uint64;
+        RandInt64N_t   Int64N;
+        RandUint64N_t  Uint64N;
+        RandBuffer_t   Buffer;
+        RandSequence_t Sequence;
     } Random;
 
     struct {

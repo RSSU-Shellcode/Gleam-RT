@@ -8,50 +8,6 @@ static uintptr getStackAddr();
 
 #pragma optimize("t", on)
 
-__declspec(noinline)
-void RandBuffer(void* buf, int64 size)
-{
-    if (size < 1)
-    {
-        return;
-    }
-    byte* buffer = buf;
-    // limit the max loop times
-    int64 times = size;
-    if (times > 16)
-    {
-        times = 16;
-    }
-    // generate seed from buffer address
-    uint64 seed = (uint64)(buffer);
-    seed += GenerateSeed();
-    for (int64 i = 0; i < times; i++)
-    {
-        byte b = *(buffer + i);
-        if (b == 0)
-        {
-            b = 170;
-        }
-        seed += ror(seed, b % 4);
-        seed += b;
-    }
-    for (int64 i = 0; i < size; i++)
-    {
-        // xor shift
-    #ifdef _WIN64
-        seed ^= seed << 13;
-        seed ^= seed >> 7;
-        seed ^= seed << 17;
-    #elif _WIN32
-        seed ^= seed << 13;
-        seed ^= seed >> 17;
-        seed ^= seed << 5;
-    #endif
-        // write generate byte
-        *(buffer + i) = (byte)seed;
-    }
-}
-
 byte RandByte(uint64 seed)
 {
     if (seed < 4096)
@@ -158,6 +114,70 @@ uint64 RandUint64N(uint64 seed, uint64 n)
         seed += GenerateSeed();
     }
     return RandUint64(seed) % n;
+}
+
+void RandBuffer(void* buf, int64 size)
+{
+    if (size < 1)
+    {
+        return;
+    }
+    byte* buffer = buf;
+    // limit the max loop times
+    int64 times = size;
+    if (times > 16)
+    {
+        times = 16;
+    }
+    // generate seed from buffer address
+    uint64 seed = (uint64)(buffer);
+    seed += GenerateSeed();
+    for (int64 i = 0; i < times; i++)
+    {
+        byte b = *(buffer + i);
+        if (b == 0)
+        {
+            b = 170;
+        }
+        seed += ror(seed, b % 4);
+        seed += b;
+    }
+    for (int64 i = 0; i < size; i++)
+    {
+        // xor shift
+    #ifdef _WIN64
+        seed ^= seed << 13;
+        seed ^= seed >> 7;
+        seed ^= seed << 17;
+    #elif _WIN32
+        seed ^= seed << 13;
+        seed ^= seed >> 17;
+        seed ^= seed << 5;
+    #endif
+        // write generate byte
+        *(buffer + i) = (byte)seed;
+    }
+}
+
+void RandSequence(int* array, int n)
+{
+    // initialize input array
+    for (int i = 0; i < n; i++)
+    {
+        array[i] = i;
+    }
+    // swap with random index
+    uint64 seed = GenerateSeed();
+    for (int i = n - 1; i > 0; i--)
+    {
+        int j = RandIntN(seed, i + 1);
+        int valA = array[i];
+        int valB = array[j];
+        array[i] = valB;
+        array[j] = valA;
+        // update seed
+        seed += ror(seed, (uint8)n);
+    }
 }
 
 __declspec(noinline)

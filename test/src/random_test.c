@@ -4,7 +4,6 @@
 #include "test.h"
 
 static void TestGenerateSeed();
-static void TestRandBuffer();
 static void TestRandByte();
 static void TestRandBool();
 static void TestRandInt();
@@ -15,6 +14,8 @@ static void TestRandIntN();
 static void TestRandUintN();
 static void TestRandInt64N();
 static void TestRandUint64N();
+static void TestRandBuffer();
+static void TestRandSequence();
 
 bool TestRandom()
 {
@@ -22,7 +23,6 @@ bool TestRandom()
     test_t tests[] = 
     {
         { TestGenerateSeed },
-        { TestRandBuffer   },
         { TestRandByte     },
         { TestRandBool     },
         { TestRandInt      },
@@ -33,6 +33,8 @@ bool TestRandom()
         { TestRandUintN    },
         { TestRandInt64N   },
         { TestRandUint64N  },
+        { TestRandBuffer   },
+        { TestRandSequence },
     };
     for (int i = 0; i < arrlen(tests); i++)
     {
@@ -51,23 +53,6 @@ static void TestGenerateSeed()
     }
 
     printf_s("======TestGenerateSeed passed======\n\n");
-}
-
-static void TestRandBuffer()
-{
-    printf_s("=======TestRandBuffer begin========\n");
-
-    byte buf[16];
-    RandBuffer(buf, 16);
-
-    printf_s("buf: ");
-    for (int i = 0; i < sizeof(buf); i++)
-    {
-        printf_s("%d ", buf[i]);
-    }
-    printf_s("\n");
-
-    printf_s("=======TestRandBuffer passed=======\n\n");
 }
 
 static void TestRandByte()
@@ -278,4 +263,38 @@ static void TestRandUint64N()
     }
 
     printf_s("========RandUint64N passed=========\n\n");
+}
+
+static void TestRandBuffer()
+{
+    printf_s("=======TestRandBuffer begin========\n");
+
+    byte buf[16];
+    RandBuffer(buf, arrlen(buf));
+
+    printf_s("buf: ");
+    for (int i = 0; i < arrlen(buf); i++)
+    {
+        printf_s("%d ", buf[i]);
+    }
+    printf_s("\n");
+
+    printf_s("=======TestRandBuffer passed=======\n\n");
+}
+
+static void TestRandSequence()
+{
+    printf_s("========RandSequence begin==========\n");
+
+    int seq[8];
+    RandSequence(seq, arrlen(seq));
+
+    printf_s("seq: [ ");
+    for (int i = 0; i < arrlen(seq); i++)
+    {
+        printf_s("%d ", seq[i]);
+    }
+    printf_s("]\n");
+
+    printf_s("========RandSequence passed=========\n\n");
 }

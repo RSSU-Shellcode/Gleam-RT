@@ -442,12 +442,13 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->WinCrypto.RSADecrypt = runtime->WinCrypto->RSADecrypt;
     module->WinCrypto.FreeDLL    = runtime->WinCrypto->FreeDLL;
     // random module
-    module->Random.Buffer  = GetFuncAddr(&RandBuffer);
-    module->Random.Bool    = GetFuncAddr(&RandBool);
-    module->Random.Int64   = GetFuncAddr(&RandInt64);
-    module->Random.Uint64  = GetFuncAddr(&RandUint64);
-    module->Random.Int64N  = GetFuncAddr(&RandInt64N);
-    module->Random.Uint64N = GetFuncAddr(&RandUint64N);
+    module->Random.Bool     = GetFuncAddr(&RandBool);
+    module->Random.Int64    = GetFuncAddr(&RandInt64);
+    module->Random.Uint64   = GetFuncAddr(&RandUint64);
+    module->Random.Int64N   = GetFuncAddr(&RandInt64N);
+    module->Random.Uint64N  = GetFuncAddr(&RandUint64N);
+    module->Random.Buffer   = GetFuncAddr(&RandBuffer);
+    module->Random.Sequence = GetFuncAddr(&RandSequence);
     // crypto module
     module->Crypto.Encrypt = GetFuncAddr(&EncryptBuf);
     module->Crypto.Decrypt = GetFuncAddr(&DecryptBuf);

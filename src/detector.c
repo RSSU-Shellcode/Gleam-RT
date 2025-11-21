@@ -81,7 +81,7 @@ static void eraseDetectorMethods(Context* context);
 static void cleanDetector(Detector* detector);
 
 static bool detectDebugger();
-static bool detectMemScanner();
+static bool detectMemoryScanner();
 static bool detectSandbox();
 static bool detectVirtualMachine();
 static bool detectEmulator();
@@ -284,25 +284,37 @@ BOOL DT_Detect()
         return false;
     }
 
-    BOOL success = false;
+    BOOL success = true;
     for (;;)
     {
         // items that need detect loop
         if (detector->isDetected)
         {
-            detectMemScanner();
-            success = true;
+            detectMemoryScanner();
             break;
         }
         // common detect items
-        detectDebugger();
-        detectMemScanner();
-        detectSandbox();
-        detectVirtualMachine();
-        detectEmulator();
-        detectAccelerator();
+        typedef bool (*detection_t)();
+        detection_t list[] = {
+            detectDebugger,
+            detectMemoryScanner,
+            detectSandbox,
+            detectVirtualMachine,
+            detectEmulator,
+            detectAccelerator,
+        };
+        int seq[arrlen(list)];
+        RandSequence(seq, arrlen(seq));
+        for (int i = 0; i < arrlen(seq); i++)
+        {
+            int idx = seq[i];
+            if (!list[idx]())
+            {
+                success = false;
+                break;
+            }
+        }
         detector->isDetected = true;
-        success = true;
         break;
     }
 
@@ -329,7 +341,7 @@ static bool detectDebugger()
 }
 
 __declspec(noinline)
-static bool detectMemScanner()
+static bool detectMemoryScanner()
 {
     Detector* detector = getDetectorPointer();
 

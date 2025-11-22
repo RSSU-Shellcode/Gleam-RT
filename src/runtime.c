@@ -443,8 +443,13 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->WinCrypto.FreeDLL    = runtime->WinCrypto->FreeDLL;
     // random module
     module->Random.Bool     = GetFuncAddr(&RandBool);
+    module->Random.Byte     = GetFuncAddr(&RandByte);
+    module->Random.Int      = GetFuncAddr(&RandInt);
+    module->Random.Uint     = GetFuncAddr(&RandUint);
     module->Random.Int64    = GetFuncAddr(&RandInt64);
     module->Random.Uint64   = GetFuncAddr(&RandUint64);
+    module->Random.IntN     = GetFuncAddr(&RandIntN);
+    module->Random.UintN    = GetFuncAddr(&RandUintN);
     module->Random.Int64N   = GetFuncAddr(&RandInt64N);
     module->Random.Uint64N  = GetFuncAddr(&RandUint64N);
     module->Random.Buffer   = GetFuncAddr(&RandBuffer);

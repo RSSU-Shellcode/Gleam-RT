@@ -1,9 +1,11 @@
 #include "c_types.h"
 #include "win_types.h"
 #include "dll_kernel32.h"
+#include "dll_psapi.h"
 #include "lib_memory.h"
 #include "rel_addr.h"
 #include "random.h"
+#include "crypto.h"
 #include "win_api.h"
 #include "errno.h"
 #include "context.h"
@@ -32,13 +34,18 @@ typedef struct {
 
     // API addresses
     GetTickCount_t        GetTickCount;
+    FreeLibrary_t         FreeLibrary;
     VirtualFree_t         VirtualFree;
     ReleaseMutex_t        ReleaseMutex;
     WaitForSingleObject_t WaitForSingleObject;
     CloseHandle_t         CloseHandle;
 
+    // lazy API addresses
+    QueryWorkingSetEx_t QueryWorkingSetEx;
+
     // for detector memory scanner
-    LPVOID trapMemPage;
+    LPVOID  trapMemPage;
+    HMODULE hPsapi;
 
     // protect data
     HANDLE hMutex;
@@ -144,6 +151,7 @@ __declspec(noinline)
 static bool initDetectorAPI(Detector* detector, Context* context)
 {
     detector->GetTickCount        = context->GetTickCount;
+    detector->FreeLibrary         = context->FreeLibrary;
     detector->VirtualFree         = context->VirtualFree;
     detector->ReleaseMutex        = context->ReleaseMutex;
     detector->WaitForSingleObject = context->WaitForSingleObject;
@@ -213,6 +221,31 @@ static bool initDetectorEnvironment(Detector* detector, Context* context)
         return false;
     }
     detector->trapMemPage = page;
+    // make sure psapi.dll is loaded
+    byte dllName[] = {
+        'p'^0x3A, 's'^0x49, 'a'^0xC7, 'p'^0x19,
+        'i'^0x3A, '.'^0x49, 'd'^0xC7, 'l'^0x19,
+        'l'^0x3A, 000^0x49, 000^0xC7, 000^0x19,
+    };
+    byte key[] = {0x3A, 0x49, 0xC7, 0x19};
+    XORBuf(dllName, sizeof(dllName), key, sizeof(key));
+    HMODULE hPsapi = context->LoadLibraryA(dllName);
+    if (hPsapi == NULL)
+    {
+        return false;
+    }
+    detector->hPsapi = hPsapi;
+    // QueryWorkingSetEx is not exist on old Windows
+#ifdef _WIN64
+    uint mHash = 0xB8B3D1CE23700017;
+    uint pHash = 0x75F48436269D0717;
+    uint hKey  = 0x0DB79DD5BA6DDEBC;
+#elif _WIN32
+    uint mHash = 0x3859A4AC;
+    uint pHash = 0x06333B8D;
+    uint hKey  = 0xE9D6A09C;
+#endif
+    detector->QueryWorkingSetEx = context->FindAPI(mHash, pHash, hKey);
     return true;
 }
 
@@ -345,6 +378,13 @@ static bool detectMemoryScanner()
 {
     Detector* detector = getDetectorPointer();
 
+    // check API is existed
+    if (detector->QueryWorkingSetEx == NULL)
+    {
+        return true;
+    }
+
+
     return true;
 }
 
@@ -454,6 +494,15 @@ errno DT_Stop()
     if (!detector->VirtualFree(detector->trapMemPage, 0, MEM_RELEASE) && errno == NO_ERROR)
     {
         errno = ERR_DETECTOR_FREE_TRAP_MEM;
+    }
+
+    // free psapi.dll handle
+    if (detector->hPsapi != NULL)
+    {
+        if (!detector->FreeLibrary(detector->hPsapi) && errno == NO_ERROR)
+        {
+            errno = ERR_DETECTOR_FREE_PSAPI;
+        }
     }
 
     // recover instructions

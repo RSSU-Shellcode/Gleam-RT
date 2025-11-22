@@ -172,6 +172,10 @@ hash_api -fmt 64 -conc -mod "ws2_32.dll" -proc shutdown
 hash_api -fmt 64 -conc -mod "ws2_32.dll" -proc closesocket
 echo.
 
+echo [Detector]
+hash_api -fmt 64 -conc -mod "psapi.dll" -proc QueryWorkingSetEx
+echo.
+
 echo [Library Tracker]
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc LoadLibraryW
 hash_api -fmt 64 -conc -mod "kernel32.dll" -proc LoadLibraryExA
@@ -487,6 +491,10 @@ hash_api -fmt 32 -conc -mod "ws2_32.dll" -proc socket
 hash_api -fmt 32 -conc -mod "ws2_32.dll" -proc accept
 hash_api -fmt 32 -conc -mod "ws2_32.dll" -proc shutdown
 hash_api -fmt 32 -conc -mod "ws2_32.dll" -proc closesocket
+echo.
+
+echo [Detector]
+hash_api -fmt 32 -conc -mod "psapi.dll" -proc QueryWorkingSetEx
 echo.
 
 echo [Library Tracker]

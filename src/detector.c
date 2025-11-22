@@ -296,12 +296,12 @@ BOOL DT_Detect()
         // common detect items
         typedef bool (*detection_t)();
         detection_t list[] = {
-            detectDebugger,
-            detectMemoryScanner,
-            detectSandbox,
-            detectVirtualMachine,
-            detectEmulator,
-            detectAccelerator,
+            GetFuncAddr(&detectDebugger),
+            GetFuncAddr(&detectMemoryScanner),
+            GetFuncAddr(&detectSandbox),
+            GetFuncAddr(&detectVirtualMachine),
+            GetFuncAddr(&detectEmulator),
+            GetFuncAddr(&detectAccelerator),
         };
         int seq[arrlen(list)];
         RandSequence(seq, arrlen(seq));

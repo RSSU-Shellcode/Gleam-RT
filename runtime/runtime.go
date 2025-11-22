@@ -159,12 +159,18 @@ type RuntimeM struct {
 	}
 
 	Random struct {
-		Buffer  uintptr
-		Bool    uintptr
-		Int64   uintptr
-		Uint64  uintptr
-		Int64N  uintptr
-		Uint64N uintptr
+		Bool     uintptr
+		Byte     uintptr
+		Int      uintptr
+		Uint     uintptr
+		Int64    uintptr
+		Uint64   uintptr
+		IntN     uintptr
+		UintN    uintptr
+		Int64N   uintptr
+		Uint64N  uintptr
+		Buffer   uintptr
+		Sequence uintptr
 	}
 
 	Crypto struct {

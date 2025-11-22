@@ -248,8 +248,13 @@ typedef errno (*CryptoFreeDLL_t)();
 
 // about random module
 typedef BOOL   (*RandBool_t)(uint64 seed);
+typedef byte   (*RandByte_t)(uint64 seed);
+typedef int    (*RandInt_t)(uint64 seed);
+typedef uint   (*RandUint_t)(uint64 seed);
 typedef int64  (*RandInt64_t)(uint64 seed);
 typedef uint64 (*RandUint64_t)(uint64 seed);
+typedef int    (*RandIntN_t)(uint64 seed, int n);
+typedef uint   (*RandUintN_t)(uint64 seed, uint n);
 typedef int64  (*RandInt64N_t)(uint64 seed, int64 n);
 typedef uint64 (*RandUint64N_t)(uint64 seed, uint64 n);
 typedef void   (*RandBuffer_t)(void* buf, int64 size);
@@ -538,8 +543,13 @@ typedef struct {
 
     struct {
         RandBool_t     Bool;
+        RandByte_t     Byte;
+        RandInt_t      Int;
+        RandUint_t     Uint;
         RandInt64_t    Int64;
         RandUint64_t   Uint64;
+        RandIntN_t     IntN;
+        RandUintN_t    UintN;
         RandInt64N_t   Int64N;
         RandUint64N_t  Uint64N;
         RandBuffer_t   Buffer;

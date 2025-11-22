@@ -57,6 +57,9 @@ https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-findfirst
 https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-findclose
 https://learn.microsoft.com/en-us/windows/win32/fileio/createiocompletionport
 https://learn.microsoft.com/en-us/windows/win32/api/ioapiset/nf-ioapiset-cancelioex
+https://learn.microsoft.com/en-us/windows/win32/api/psapi/nf-psapi-queryworkingsetex
+https://learn.microsoft.com/en-us/windows/win32/api/psapi/ns-psapi-psapi_working_set_ex_information
+https://learn.microsoft.com/en-us/windows/win32/api/psapi/ns-psapi-psapi_working_set_ex_block
 https://learn.microsoft.com/en-us/windows/win32/api/winreg/nf-winreg-regcreatekeya
 https://learn.microsoft.com/en-us/windows/win32/api/winreg/nf-winreg-regcreatekeyw
 https://learn.microsoft.com/en-us/windows/win32/api/winreg/nf-winreg-regcreatekeyexa

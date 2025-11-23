@@ -2307,6 +2307,9 @@ errno RT_SleepHR(DWORD dwMilliseconds)
         }
     }
 
+    // detect environment after each sleep
+    runtime->Detector->Detect();
+
     errno errum = RT_unlock_mods();
     if (errum != NO_ERROR)
     {

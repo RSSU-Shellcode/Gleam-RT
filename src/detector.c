@@ -54,6 +54,9 @@ typedef struct {
     // but some items need detect loop.
     bool isDetected;
 
+    bool PrevDebugged;
+    bool StepOnMemTrap;
+
     uint16 HasDebugger;
     uint16 HasMemoryScanner;
     uint16 InSandbox;
@@ -86,6 +89,9 @@ static bool recoverDetectorPointer(Detector* detector);
 static bool initDetectorEnvironment(Detector* detector, Context* context);
 static void eraseDetectorMethods(Context* context);
 static void cleanDetector(Detector* detector);
+
+static bool detectOnceItem();
+static bool detectLoopItem();
 
 static bool detectDebugger();
 static bool detectMemoryScanner();
@@ -323,30 +329,11 @@ BOOL DT_Detect()
         // items that need detect loop
         if (detector->isDetected)
         {
-            detectMemoryScanner();
+            success = detectLoopItem();
             break;
         }
         // common detect items
-        typedef bool (*detection_t)();
-        detection_t list[] = {
-            GetFuncAddr(&detectDebugger),
-            GetFuncAddr(&detectMemoryScanner),
-            GetFuncAddr(&detectSandbox),
-            GetFuncAddr(&detectVirtualMachine),
-            GetFuncAddr(&detectEmulator),
-            GetFuncAddr(&detectAccelerator),
-        };
-        int seq[arrlen(list)];
-        RandSequence(seq, arrlen(seq));
-        for (int i = 0; i < arrlen(seq); i++)
-        {
-            int idx = seq[i];
-            if (!list[idx]())
-            {
-                success = false;
-                break;
-            }
-        }
+        success = detectOnceItem();
         detector->isDetected = true;
         break;
     }
@@ -359,15 +346,71 @@ BOOL DT_Detect()
 }
 
 __declspec(noinline)
+static bool detectOnceItem()
+{
+    bool success = true;
+    typedef bool (*detection_t)();
+    detection_t list[] = {
+        GetFuncAddr(&detectDebugger),
+        GetFuncAddr(&detectMemoryScanner),
+        GetFuncAddr(&detectSandbox),
+        GetFuncAddr(&detectVirtualMachine),
+        GetFuncAddr(&detectEmulator),
+        GetFuncAddr(&detectAccelerator),
+    };
+    int seq[arrlen(list)];
+    RandSequence(seq, arrlen(seq));
+    for (int i = 0; i < arrlen(seq); i++)
+    {
+        int idx = seq[i];
+        if (!list[idx]())
+        {
+            success = false;
+            break;
+        }
+    }
+    return success;
+}
+
+__declspec(noinline)
+static bool detectLoopItem()
+{
+    bool success = true;
+    typedef bool (*detection_t)();
+    detection_t list[] = {
+        GetFuncAddr(&detectDebugger),
+        GetFuncAddr(&detectMemoryScanner),
+    };
+    int seq[arrlen(list)];
+    RandSequence(seq, arrlen(seq));
+    for (int i = 0; i < arrlen(seq); i++)
+    {
+        int idx = seq[i];
+        if (!list[idx]())
+        {
+            success = false;
+            break;
+        }
+    }
+    return success;
+}
+
+__declspec(noinline)
 static bool detectDebugger()
 {
     Detector* detector = getDetectorPointer();
+
+    if (detector->PrevDebugged)
+    {
+        return true;
+    }
 
     uintptr peb = (uintptr)(detector->PEB);
     bool BeingDebugged = *(bool*)(peb + 2);
     if (BeingDebugged)
     {
         detector->HasDebugger += 100;
+        detector->PrevDebugged = true;
         return true;
     }
     return true;
@@ -384,6 +427,11 @@ static bool detectMemoryScanner()
         return true;
     }
 
+    if (detector->StepOnMemTrap)
+    {
+        return true;
+    }
+
     PSAPI_WORKING_SET_EX_INFORMATION info = {
         .VirtualAddress = detector->trapMemPage,
     };
@@ -395,6 +443,7 @@ static bool detectMemoryScanner()
     if (info.VirtualAttributes.Valid)
     {
         detector->HasMemoryScanner += 100;
+        detector->StepOnMemTrap = true;
     }
     return true;
 }

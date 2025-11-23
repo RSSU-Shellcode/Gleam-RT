@@ -1206,8 +1206,11 @@ errno TT_Recover()
         for (int32 i = 0; i < numSuspend; i++)
         {
             DWORD count = tracker->ResumeThread(thread->hThread);
-            if (count == (DWORD)(-1))
+            if (count != (DWORD)(-1))
             {
+                thread->numSuspend--;
+                tracker->NumSuspend--;
+            } else {
                 errno = ERR_THREAD_RESUME;
             }
         }
@@ -1218,6 +1221,8 @@ errno TT_Recover()
     {
         tracker->ReleaseMutex(tracker->hMutex);
     }
+
+    dbg_log("[thread]", "threads: %zu", tracker->Threads.Len);
     return errno;
 }
 
@@ -1272,6 +1277,11 @@ errno TT_ForceKill()
         }
         num++;
     }
+
+    // reset counter
+    tracker->NumSuspend = 0;
+
+    dbg_log("[thread]", "threads: %zu", tracker->Threads.Len);
     return errno;
 }
 
@@ -1378,6 +1388,9 @@ errno TT_KillAll()
         }
         num++;
     }
+
+    // reset counter
+    tracker->NumSuspend = 0;
 
     dbg_log("[thread]", "threads:   %zu", tracker->Threads.Len);
     dbg_log("[thread]", "TLS slots: %zu", tracker->TLSIndex.Len);

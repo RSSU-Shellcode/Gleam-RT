@@ -19,6 +19,7 @@
     <ClInclude Include="..\include\dll_ntdll.h" />
     <ClInclude Include="..\include\dll_msvcrt.h" />
     <ClInclude Include="..\include\dll_ucrtbase.h" />
+	<ClInclude Include="..\include\dll_psapi.h" />
     <ClInclude Include="..\include\dll_ws2_32.h" />
     <ClInclude Include="..\include\dll_winhttp.h" />
     <ClInclude Include="..\include\dll_advapi32.h" />
@@ -67,7 +68,7 @@
     <ClCompile Include="src\serialize_test.c" />
     <ClCompile Include="src\mem_scanner_test.c" />
     <ClCompile Include="src\runtime_test.c" />
-	<ClCompile Include="src\detector_test.c" />
+    <ClCompile Include="src\detector_test.c" />
     <ClCompile Include="src\mod_library_test.c" />
     <ClCompile Include="src\mod_memory_test.c" />
     <ClCompile Include="src\mod_thread_test.c" />

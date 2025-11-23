@@ -384,7 +384,18 @@ static bool detectMemoryScanner()
         return true;
     }
 
-
+    PSAPI_WORKING_SET_EX_INFORMATION info = {
+        .VirtualAddress = detector->trapMemPage,
+    };
+    DWORD cb = sizeof(PSAPI_WORKING_SET_EX_INFORMATION);
+    if (!detector->QueryWorkingSetEx(CURRENT_PROCESS, &info, cb))
+    {
+        return false;
+    }
+    if (info.VirtualAttributes.Valid)
+    {
+        detector->HasMemoryScanner += 100;
+    }
     return true;
 }
 

@@ -121,6 +121,7 @@
     <ClInclude Include="..\include\dll_ntdll.h" />
     <ClInclude Include="..\include\dll_msvcrt.h" />
     <ClInclude Include="..\include\dll_ucrtbase.h" />
+	<ClInclude Include="..\include\dll_psapi.h" />
     <ClInclude Include="..\include\dll_ws2_32.h" />
     <ClInclude Include="..\include\dll_winhttp.h" />
     <ClInclude Include="..\include\dll_advapi32.h" />
@@ -141,7 +142,7 @@
     <ClInclude Include="..\include\errno.h" />
     <ClInclude Include="..\include\context.h" />
     <ClInclude Include="..\include\layout.h" />
-	<ClInclude Include="..\include\detector.h" />
+    <ClInclude Include="..\include\detector.h" />
     <ClInclude Include="..\include\mod_library.h" />
     <ClInclude Include="..\include\mod_memory.h" />
     <ClInclude Include="..\include\mod_thread.h" />
@@ -176,7 +177,7 @@
     <ClCompile Include="..\src\thread.c" />
     <ClCompile Include="..\src\win_api.c" />
     <ClCompile Include="..\src\errno.c" />
-	<ClCompile Include="..\src\detector.c" />
+    <ClCompile Include="..\src\detector.c" />
     <ClCompile Include="..\src\mod_library.c" />
     <ClCompile Include="..\src\mod_memory.c" />
     <ClCompile Include="..\src\mod_thread.c" />

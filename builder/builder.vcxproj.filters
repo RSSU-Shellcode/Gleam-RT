@@ -241,6 +241,9 @@
     <ClInclude Include="..\include\detector.h">
       <Filter>Header</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\dll_psapi.h">
+      <Filter>Header</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <MASM Include="..\asm\args_stub.asm">

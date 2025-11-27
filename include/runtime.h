@@ -247,16 +247,30 @@ typedef errno (*CryptoFreeDLL_t)();
 // =================================Runtime=================================
 
 // about random module
-typedef BOOL   (*RandBool_t)(uint64 seed);
-typedef byte   (*RandByte_t)(uint64 seed);
+typedef uint64 (*RandSeed_t)();
 typedef int    (*RandInt_t)(uint64 seed);
-typedef uint   (*RandUint_t)(uint64 seed);
+typedef int8   (*RandInt8_t)(uint64 seed);
+typedef int16  (*RandInt16_t)(uint64 seed);
+typedef int32  (*RandInt32_t)(uint64 seed);
 typedef int64  (*RandInt64_t)(uint64 seed);
+typedef uint   (*RandUint_t)(uint64 seed);
+typedef uint8  (*RandUint8_t)(uint64 seed);
+typedef uint16 (*RandUint16_t)(uint64 seed);
+typedef uint32 (*RandUint32_t)(uint64 seed);
 typedef uint64 (*RandUint64_t)(uint64 seed);
 typedef int    (*RandIntN_t)(uint64 seed, int n);
-typedef uint   (*RandUintN_t)(uint64 seed, uint n);
+typedef int8   (*RandInt8N_t)(uint64 seed, int8 n);
+typedef int16  (*RandInt16N_t)(uint64 seed, int16 n);
+typedef int32  (*RandInt32N_t)(uint64 seed, int32 n);
 typedef int64  (*RandInt64N_t)(uint64 seed, int64 n);
+typedef uint   (*RandUintN_t)(uint64 seed, uint n);
+typedef uint8  (*RandUint8N_t)(uint64 seed, uint8 n);
+typedef uint16 (*RandUint16N_t)(uint64 seed, uint16 n);
+typedef uint32 (*RandUint32N_t)(uint64 seed, uint32 n);
 typedef uint64 (*RandUint64N_t)(uint64 seed, uint64 n);
+typedef byte   (*RandByte_t)(uint64 seed);
+typedef bool   (*RandBool_t)(uint64 seed);
+typedef BOOL   (*RandBOOL_t)(uint64 seed);
 typedef void   (*RandBuffer_t)(void* buf, int64 size);
 typedef void   (*RandSequence_t)(int* array, int n);
 
@@ -542,16 +556,30 @@ typedef struct {
     } WinCrypto;
 
     struct {
-        RandBool_t     Bool;
-        RandByte_t     Byte;
+        RandSeed_t     Seed;
         RandInt_t      Int;
-        RandUint_t     Uint;
+        RandInt8_t     Int8;
+        RandInt16_t    Int16;
+        RandInt32_t    Int32;
         RandInt64_t    Int64;
+        RandUint_t     Uint;
+        RandUint8_t    Uint8;
+        RandUint16_t   Uint16;
+        RandUint32_t   Uint32;
         RandUint64_t   Uint64;
         RandIntN_t     IntN;
-        RandUintN_t    UintN;
+        RandInt8N_t    Int8N;
+        RandInt16N_t   Int16N;
+        RandInt32N_t   Int32N;
         RandInt64N_t   Int64N;
+        RandUintN_t    UintN;
+        RandUint8N_t   Uint8N;
+        RandUint16N_t  Uint16N;
+        RandUint32N_t  Uint32N;
         RandUint64N_t  Uint64N;
+        RandByte_t     Byte;
+        RandBool_t     Bool;
+        RandBOOL_t     BOOL;
         RandBuffer_t   Buffer;
         RandSequence_t Sequence;
     } Random;

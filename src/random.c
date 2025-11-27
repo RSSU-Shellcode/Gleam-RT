@@ -8,24 +8,6 @@ static uintptr getStackAddr();
 
 #pragma optimize("t", on)
 
-byte RandByte(uint64 seed)
-{
-    if (seed < 4096)
-    {
-        seed += GenerateSeed();
-    }
-    return (byte)rand(seed, 256);
-}
-
-BOOL RandBool(uint64 seed)
-{
-    if (seed < 4096)
-    {
-        seed += GenerateSeed();
-    }
-    return (BOOL)rand(seed, 2);
-}
-
 int RandInt(uint64 seed)
 {
     if (seed < 4096)
@@ -33,10 +15,46 @@ int RandInt(uint64 seed)
         seed += GenerateSeed();
     }
 #ifdef _WIN64
-    return (int)rand(seed, UINT64_MAX);
+    return (int)rand(seed, INT64_MAX);
 #elif _WIN32
-    return (int)rand(seed, UINT32_MAX);
+    return (int)rand(seed, INT32_MAX);
 #endif
+}
+
+int8 RandInt8(uint64 seed)
+{
+    if (seed < 4096)
+    {
+        seed += GenerateSeed();
+    }
+    return (int8)rand(seed, INT8_MAX);
+}
+
+int16 RandInt16(uint64 seed)
+{
+    if (seed < 4096)
+    {
+        seed += GenerateSeed();
+    }
+    return (int16)rand(seed, INT16_MAX);
+}
+
+int32 RandInt32(uint64 seed)
+{
+    if (seed < 4096)
+    {
+        seed += GenerateSeed();
+    }
+    return (int32)rand(seed, INT32_MAX);
+}
+
+int64 RandInt64(uint64 seed)
+{
+    if (seed < 4096)
+    {
+        seed += GenerateSeed();
+    }
+    return (int64)rand(seed, INT64_MAX);
 }
 
 uint RandUint(uint64 seed)
@@ -52,13 +70,31 @@ uint RandUint(uint64 seed)
 #endif
 }
 
-int64 RandInt64(uint64 seed)
+uint8 RandUint8(uint64 seed)
 {
     if (seed < 4096)
     {
         seed += GenerateSeed();
     }
-    return (int64)rand(seed, UINT64_MAX);
+    return (uint8)rand(seed, UINT8_MAX);
+}
+
+uint16 RandUint16(uint64 seed)
+{
+    if (seed < 4096)
+    {
+        seed += GenerateSeed();
+    }
+    return (uint16)rand(seed, UINT16_MAX);
+}
+
+uint32 RandUint32(uint64 seed)
+{
+    if (seed < 4096)
+    {
+        seed += GenerateSeed();
+    }
+    return (uint32)rand(seed, UINT32_MAX);
 }
 
 uint64 RandUint64(uint64 seed)
@@ -84,13 +120,46 @@ int RandIntN(uint64 seed, int n)
     return num;
 }
 
-uint RandUintN(uint64 seed, uint n)
+int8 RandInt8N(uint64 seed, int8 n)
 {
     if (seed < 4096)
     {
         seed += GenerateSeed();
     }
-    return RandUint(seed) % n;
+    int8 num = RandInt8(seed) % n;
+    if (num < 0)
+    {
+        return -num;
+    }
+    return num;
+}
+
+int16 RandInt16N(uint64 seed, int16 n)
+{
+    if (seed < 4096)
+    {
+        seed += GenerateSeed();
+    }
+    int16 num = RandInt16(seed) % n;
+    if (num < 0)
+    {
+        return -num;
+    }
+    return num;
+}
+
+int32 RandInt32N(uint64 seed, int32 n)
+{
+    if (seed < 4096)
+    {
+        seed += GenerateSeed();
+    }
+    int32 num = RandInt32(seed) % n;
+    if (num < 0)
+    {
+        return -num;
+    }
+    return num;
 }
 
 int64 RandInt64N(uint64 seed, int64 n)
@@ -107,6 +176,42 @@ int64 RandInt64N(uint64 seed, int64 n)
     return num;
 }
 
+uint RandUintN(uint64 seed, uint n)
+{
+    if (seed < 4096)
+    {
+        seed += GenerateSeed();
+    }
+    return RandUint(seed) % n;
+}
+
+uint8 RandUint8N(uint64 seed, uint8 n)
+{
+    if (seed < 4096)
+    {
+        seed += GenerateSeed();
+    }
+    return RandUint(seed) % n;
+}
+
+uint16 RandUint16N(uint64 seed, uint16 n)
+{
+    if (seed < 4096)
+    {
+        seed += GenerateSeed();
+    }
+    return RandUint16(seed) % n;
+}
+
+uint32 RandUint32N(uint64 seed, uint32 n)
+{
+    if (seed < 4096)
+    {
+        seed += GenerateSeed();
+    }
+    return RandUint32(seed) % n;
+}
+
 uint64 RandUint64N(uint64 seed, uint64 n)
 {
     if (seed < 4096)
@@ -114,6 +219,33 @@ uint64 RandUint64N(uint64 seed, uint64 n)
         seed += GenerateSeed();
     }
     return RandUint64(seed) % n;
+}
+
+byte RandByte(uint64 seed)
+{
+    if (seed < 4096)
+    {
+        seed += GenerateSeed();
+    }
+    return (byte)rand(seed, 256);
+}
+
+bool RandBool(uint64 seed)
+{
+    if (seed < 4096)
+    {
+        seed += GenerateSeed();
+    }
+    return (bool)rand(seed, 2);
+}
+
+BOOL RandBOOL(uint64 seed)
+{
+    if (seed < 4096)
+    {
+        seed += GenerateSeed();
+    }
+    return (BOOL)rand(seed, 2);
 }
 
 void RandBuffer(void* buf, int64 size)

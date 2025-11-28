@@ -15,9 +15,9 @@ int RandInt(uint64 seed)
         seed += GenerateSeed();
     }
 #ifdef _WIN64
-    return (int)rand(seed, INT64_MAX);
+    return (int)rand(seed, UINT64_MAX);
 #elif _WIN32
-    return (int)rand(seed, INT32_MAX);
+    return (int)rand(seed, UINT32_MAX);
 #endif
 }
 
@@ -27,7 +27,7 @@ int8 RandInt8(uint64 seed)
     {
         seed += GenerateSeed();
     }
-    return (int8)rand(seed, INT8_MAX);
+    return (int8)rand(seed, UINT8_MAX);
 }
 
 int16 RandInt16(uint64 seed)
@@ -36,7 +36,7 @@ int16 RandInt16(uint64 seed)
     {
         seed += GenerateSeed();
     }
-    return (int16)rand(seed, INT16_MAX);
+    return (int16)rand(seed, UINT16_MAX);
 }
 
 int32 RandInt32(uint64 seed)
@@ -45,7 +45,7 @@ int32 RandInt32(uint64 seed)
     {
         seed += GenerateSeed();
     }
-    return (int32)rand(seed, INT32_MAX);
+    return (int32)rand(seed, UINT32_MAX);
 }
 
 int64 RandInt64(uint64 seed)
@@ -54,7 +54,7 @@ int64 RandInt64(uint64 seed)
     {
         seed += GenerateSeed();
     }
-    return (int64)rand(seed, INT64_MAX);
+    return (int64)rand(seed, UINT64_MAX);
 }
 
 uint RandUint(uint64 seed)

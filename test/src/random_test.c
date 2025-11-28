@@ -9,6 +9,7 @@ static void TestRandInt8();
 static void TestRandInt16();
 static void TestRandInt32();
 static void TestRandInt64();
+static void TestRandUint();
 static void TestRandUint8();
 static void TestRandUint16();
 static void TestRandUint32();
@@ -18,6 +19,7 @@ static void TestRandInt8N();
 static void TestRandInt16N();
 static void TestRandInt32N();
 static void TestRandInt64N();
+static void TestRandUintN();
 static void TestRandUint8N();
 static void TestRandUint16N();
 static void TestRandUint32N();
@@ -39,6 +41,7 @@ bool TestRandom()
         { TestRandInt16    },
         { TestRandInt32    },
         { TestRandInt64    },
+        { TestRandUint     },
         { TestRandUint8    },
         { TestRandUint16   },
         { TestRandUint32   },
@@ -48,6 +51,7 @@ bool TestRandom()
         { TestRandInt16N   },
         { TestRandInt32N   },
         { TestRandInt64N   },
+        { TestRandUintN    },
         { TestRandUint8N   },
         { TestRandUint16N  },
         { TestRandUint32N  },
@@ -100,6 +104,75 @@ static void TestRandInt()
     printf_s("=========TestRandInt passed========\n\n");
 }
 
+static void TestRandInt8()
+{
+    printf_s("=========TestRandInt8 begin=========\n");
+
+    for (int i = 0; i < 3; i++)
+    {
+        uint64 seed = GenerateSeed();
+        printf_s("int8: %lld\n", (uint64)RandInt8(seed));
+    }
+    printf_s("\n");
+
+    // iteration
+    uint64 last = (uint64)(&TestRandBuffer);
+    for (int i = 0; i < 5; i++)
+    {
+        uint64 val = (uint64)RandInt8(last);
+        printf_s("int8: %lld\n", val);
+        last += val;
+    }
+
+    printf_s("=========TestRandInt8 passed========\n\n");
+}
+
+static void TestRandInt16()
+{
+    printf_s("=========TestRandInt16 begin=========\n");
+
+    for (int i = 0; i < 3; i++)
+    {
+        uint64 seed = GenerateSeed();
+        printf_s("int16: %lld\n", (uint64)RandInt16(seed));
+    }
+    printf_s("\n");
+
+    // iteration
+    uint64 last = (uint64)(&TestRandBuffer);
+    for (int i = 0; i < 5; i++)
+    {
+        uint64 val = (uint64)RandInt16(last);
+        printf_s("int16: %lld\n", val);
+        last += val;
+    }
+
+    printf_s("=========TestRandInt16 passed========\n\n");
+}
+
+static void TestRandInt32()
+{
+    printf_s("=========TestRandInt32 begin=========\n");
+
+    for (int i = 0; i < 3; i++)
+    {
+        uint64 seed = GenerateSeed();
+        printf_s("int32: %lld\n", (uint64)RandInt32(seed));
+    }
+    printf_s("\n");
+
+    // iteration
+    uint64 last = (uint64)(&TestRandBuffer);
+    for (int i = 0; i < 5; i++)
+    {
+        uint64 val = (uint64)RandInt32(last);
+        printf_s("int32: %lld\n", val);
+        last += val;
+    }
+
+    printf_s("=========TestRandInt32 passed========\n\n");
+}
+
 static void TestRandInt64()
 {
     printf_s("========TestRandInt64 begin========\n");
@@ -146,6 +219,75 @@ static void TestRandUint()
     printf_s("========TestRandUint passed========\n\n");
 }
 
+static void TestRandUint8()
+{
+    printf_s("=======TestRandUint8 begin========\n");
+
+    for (int i = 0; i < 3; i++)
+    {
+        uint64 seed = GenerateSeed();
+        printf_s("uint8: %llu\n", (uint64)RandUint8(seed));
+    }
+    printf_s("\n");
+
+    // iteration
+    uint64 last = (uint64)(&TestRandBuffer);
+    for (int i = 0; i < 5; i++)
+    {
+        uint64 val = RandUint8(last);
+        printf_s("uint8: %llu\n", val);
+        last += val;
+    }
+
+    printf_s("=======TestRandUint8 passed=======\n\n");
+}
+
+static void TestRandUint16()
+{
+    printf_s("=========TestRandUint16 begin========\n");
+
+    for (int i = 0; i < 3; i++)
+    {
+        uint64 seed = GenerateSeed();
+        printf_s("uint16: %llu\n", (uint64)RandUint16(seed));
+    }
+    printf_s("\n");
+
+    // iteration
+    uint64 last = (uint64)(&TestRandBuffer);
+    for (int i = 0; i < 5; i++)
+    {
+        uint64 val = (uint64)RandUint16(last);
+        printf_s("uint16: %llu\n", val);
+        last += val;
+    }
+
+    printf_s("========TestRandUint16 passed========\n\n");
+}
+
+static void TestRandUint32()
+{
+    printf_s("=========TestRandUint32 begin========\n");
+
+    for (int i = 0; i < 3; i++)
+    {
+        uint64 seed = GenerateSeed();
+        printf_s("uint32: %llu\n", (uint64)RandUint32(seed));
+    }
+    printf_s("\n");
+
+    // iteration
+    uint64 last = (uint64)(&TestRandBuffer);
+    for (int i = 0; i < 5; i++)
+    {
+        uint64 val = (uint64)RandUint32(last);
+        printf_s("uint32: %llu\n", val);
+        last += val;
+    }
+
+    printf_s("========TestRandUint32 passed========\n\n");
+}
+
 static void TestRandUint64()
 {
     printf_s("=======TestRandUint64 begin========\n");
@@ -187,6 +329,60 @@ static void TestRandIntN()
     printf_s("==========RandIntN passed==========\n\n");
 }
 
+static void TestRandInt8N()
+{
+    printf_s("==========RandInt8N begin===========\n");
+
+    for (int i = 0; i < 5; i++)
+    {
+        uint64 seed = GenerateSeed();
+        uint64 val  = (uint64)RandInt8N(seed, 100);
+        if (val > 100)
+        {
+            panic(PANIC_UNREACHABLE_CODE);
+        }
+        printf_s("int8: %lld\n", val);
+    }
+
+    printf_s("==========RandInt8N passed==========\n\n");
+}
+
+static void TestRandInt16N()
+{
+    printf_s("==========RandInt16N begin===========\n");
+
+    for (int i = 0; i < 5; i++)
+    {
+        uint64 seed = GenerateSeed();
+        uint64 val  = (uint64)RandInt16N(seed, 1024);
+        if (val > 1024)
+        {
+            panic(PANIC_UNREACHABLE_CODE);
+        }
+        printf_s("int16: %lld\n", val);
+    }
+
+    printf_s("==========RandInt16N passed==========\n\n");
+}
+
+static void TestRandInt32N()
+{
+    printf_s("==========RandInt32N begin===========\n");
+
+    for (int i = 0; i < 5; i++)
+    {
+        uint64 seed = GenerateSeed();
+        uint64 val  = (uint64)RandInt32N(seed, 1024);
+        if (val > 1024)
+        {
+            panic(PANIC_UNREACHABLE_CODE);
+        }
+        printf_s("int32: %lld\n", val);
+    }
+
+    printf_s("==========RandInt32N passed==========\n\n");
+}
+
 static void TestRandInt64N()
 {
     printf_s("=========RandInt64N begin==========\n");
@@ -221,6 +417,60 @@ static void TestRandUintN()
     }
 
     printf_s("=========RandUintN passed==========\n\n");
+}
+
+static void TestRandUint8N()
+{
+    printf_s("=========RandUint8N begin===========\n");
+
+    for (int i = 0; i < 5; i++)
+    {
+        uint64 seed = GenerateSeed();
+        uint64 val  = (uint64)RandUint8N(seed, 200);
+        if (val > 200)
+        {
+            panic(PANIC_UNREACHABLE_CODE);
+        }
+        printf_s("uint8: %llu\n", val);
+    }
+
+    printf_s("=========RandUint8N passed==========\n\n");
+}
+
+static void TestRandUint16N()
+{
+    printf_s("=========RandUint16N begin===========\n");
+
+    for (int i = 0; i < 5; i++)
+    {
+        uint64 seed = GenerateSeed();
+        uint64 val  = (uint64)RandUint16N(seed, 1024);
+        if (val > 1024)
+        {
+            panic(PANIC_UNREACHABLE_CODE);
+        }
+        printf_s("uint16: %llu\n", val);
+    }
+
+    printf_s("=========RandUint16N passed==========\n\n");
+}
+
+static void TestRandUint32N()
+{
+    printf_s("=========RandUint32N begin===========\n");
+
+    for (int i = 0; i < 5; i++)
+    {
+        uint64 seed = GenerateSeed();
+        uint64 val  = (uint64)RandUint32N(seed, 1024);
+        if (val > 1024)
+        {
+            panic(PANIC_UNREACHABLE_CODE);
+        }
+        printf_s("uint32: %llu\n", val);
+    }
+
+    printf_s("=========RandUint32N passed==========\n\n");
 }
 
 static void TestRandUint64N()

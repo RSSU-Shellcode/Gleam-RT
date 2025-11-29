@@ -1,6 +1,7 @@
 #include "c_types.h"
 #include "lib_memory.h"
 #include "lib_match.h"
+#include "dll_kernel32.h"
 #include "errno.h"
 #include "mem_scanner.h"
 
@@ -29,21 +30,25 @@ uint MemScanByValue(MemScan_Ctx* ctx, void* value, uint size, uintptr* results, 
     }
     byte pattern[MAX_NUM_CONDITION * 3 + 1];
     BinToPattern(value, size, pattern);
-    return MemScanByPattern(ctx, pattern, results, maxItem);
+    MemScan_Cfg config = {
+        .Pattern = pattern,
+        .Protect = PAGE_READWRITE,
+        .Type    = MEM_PRIVATE,
+    };
+    return MemScanByConfig(ctx, &config, results, maxItem);
 }
 
-uint MemScanByPattern(MemScan_Ctx* ctx, byte* pattern, uintptr* results, uint maxItem)
+uint MemScanByConfig(MemScan_Ctx* ctx, MemScan_Cfg* config, uintptr* results, uint maxItem)
 {
     // parse pattern to condition array
     uint16 condition[MAX_NUM_CONDITION];
     mem_init(condition, sizeof(condition));
-    uint numCond = parsePattern(pattern, condition);
+    uint numCond = parsePattern(config->Pattern, condition);
     if (numCond == 0)
     {
         SetLastErrno(ERR_MEM_SCANNER_INVALID_CONDITION);
         return (uint)(-1);
     }
-
     // check condition is valid and can use fast mode
     byte fastValue[MAX_NUM_CONDITION];
     mem_init(fastValue, sizeof(fastValue));
@@ -63,6 +68,18 @@ uint MemScanByPattern(MemScan_Ctx* ctx, byte* pattern, uintptr* results, uint ma
     if (!hasExact)
     {
         SetLastErrno(ERR_MEM_SCANNER_INVALID_CONDITION);
+        return (uint)(-1);
+    }
+
+    // check memory region protect and type
+    if (config->Protect == 0)
+    {
+        SetLastErrno(ERR_MEM_SCANNER_INVALID_PROTECT);
+        return (uint)(-1);
+    }
+    if (config->Type == 0)
+    {
+        SetLastErrno(ERR_MEM_SCANNER_INVALID_TYPE);
         return (uint)(-1);
     }
 
@@ -86,6 +103,12 @@ uint MemScanByPattern(MemScan_Ctx* ctx, byte* pattern, uintptr* results, uint ma
         }
         uint size = mbi.RegionSize - (address - (uintptr)(mbi.BaseAddress));
         if (mbi.State != MEM_COMMIT || !isRegionReadable(mbi.Protect))
+        {
+            address += size;
+            continue;
+        }
+        // compare type and protect
+        if ((mbi.Type & config->Type) == 0 || (mbi.Protect & config->Protect) == 0)
         {
             address += size;
             continue;

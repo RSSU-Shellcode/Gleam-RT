@@ -2,10 +2,11 @@
 #include "c_types.h"
 #include "lib_memory.h"
 #include "lib_string.h"
+#include "mem_scanner.h"
 #include "test.h"
 
 static bool TestMemScanByValue();
-static bool TestMemScanByPattern();
+static bool TestMemScanByConfig();
 static bool TestBinToPattern();
 
 static void printResults(uintptr* results, uint num);
@@ -14,9 +15,9 @@ bool TestMemScanner()
 {
     test_t tests[] = 
     {
-        { TestMemScanByValue   },
-        { TestMemScanByPattern },
-        { TestBinToPattern     },
+        { TestMemScanByValue  },
+        { TestMemScanByConfig },
+        { TestBinToPattern    },
     };
     for (int i = 0; i < arrlen(tests); i++)
     {
@@ -45,12 +46,18 @@ static bool TestMemScanByValue()
     return true;
 }
 
-static bool TestMemScanByPattern()
+static bool TestMemScanByConfig()
 {
-    uintptr results[100]; // "test"
+    uintptr results[100];
 
     // exact value
-    uint num = runtime->MemScanner.ScanByPattern("74 65 73 74", results, arrlen(results));
+    MemScan_Cfg config = {
+        .Pattern = "74 65 73 74", // "test"
+        .Protect = PAGE_READONLY|PAGE_READWRITE|PAGE_EXECUTE_READ,
+        .Type    = MEM_PRIVATE|MEM_IMAGE,
+    };
+
+    uint num = runtime->MemScanner.ScanByConfig(&config, results, arrlen(results));
     if (num == -1 || num == 0)
     {
         printf_s("failed to scan target data: 0x%X\n", GetLastErrno());
@@ -59,7 +66,8 @@ static bool TestMemScanByPattern()
     printResults(results, num);
 
     // contains arbitrary value
-    num = runtime->MemScanner.ScanByPattern("74 65 ?? 74", results, arrlen(results));
+    config.Pattern = "74 65 ?? 74";
+    num = runtime->MemScanner.ScanByConfig(&config, results, arrlen(results));
     if (num == -1 || num == 0)
     {
         printf_s("failed to scan target data: 0x%X\n", GetLastErrno());
@@ -77,7 +85,8 @@ static bool TestMemScanByPattern()
     };
     for (int i = 0; i < arrlen(patterns); i++)
     {
-        num = runtime->MemScanner.ScanByPattern(patterns[i], results, arrlen(results));
+        config.Pattern = patterns[i];
+        num = runtime->MemScanner.ScanByConfig(&config, results, arrlen(results));
         if (num != -1 || GetLastErrno() != ERR_MEM_SCANNER_INVALID_CONDITION)
         {
             printf_s("unexcepted return value or errno\n");
@@ -85,7 +94,7 @@ static bool TestMemScanByPattern()
         }
     }
 
-    printf_s("test MemScanByPattern passed\n");
+    printf_s("test MemScanByConfig passed\n");
     return true;
 }
 

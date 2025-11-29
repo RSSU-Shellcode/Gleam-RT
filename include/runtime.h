@@ -336,15 +336,32 @@ typedef BOOL   (*Unserialize_t)(void* serialized, void* data);
 // The return value is the number of results scanned, if failed to
 // scan, it will return -1, use the GetLastErrno for get error code.
 // 
+// BinToPattern is used to convert binary data to pattern for MemScan.
+// The pattern buffer size must greater the [data size * 3 + 1].
+// 
 // [WARNING]
 // You need to manually exclude certain scan results, such as the "value"
 // stored in the stack as a argument for MemScanByValue.
 // 
 // example:
+//   MemScan_Cfg config = {
+//      .Pattern = "F1 ?2 ?? A?",
+//      .Protect = PAGE_READWRITE|PAGE_EXECUTE_READ,
+//      .Type    = MEM_PRIVATE|MEM_IMAGE,
+//   };
 //   uintptr results[10];
-//   MemScanByPattern("F1 F2 ?? A1", results, arrlen(results));
+//   MemScanByConfig(&config, results, arrlen(results));
+
+#ifndef MEM_SCANNER_H
+typedef struct {
+    byte* Pattern;
+    DWORD Protect; // default PAGE_READWRITE
+    DWORD Type;    // default MEM_PRIVATE
+} MemScan_Cfg;
+#endif // MEM_SCANNER_H
+
 typedef uint (*MemScanByValue_t)(void* value, uint size, uintptr* results, uint maxItem);
-typedef uint (*MemScanByPattern_t)(byte* pattern, uintptr* results, uint maxItem);
+typedef uint (*MemScanByConfig_t)(MemScan_Cfg* config, uintptr* results, uint maxItem);
 typedef void (*BinToPattern_t)(void* data, uint size, byte* pattern);
 
 // GetProcByName and GetProcByHash are use HashAPI module for
@@ -601,7 +618,7 @@ typedef struct {
 
     struct {
         MemScanByValue_t   ScanByValue;
-        MemScanByPattern_t ScanByPattern;
+        MemScanByConfig_t  ScanByConfig;
         BinToPattern_t     BinToPattern;
     } MemScanner;
 

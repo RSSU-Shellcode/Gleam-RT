@@ -165,7 +165,7 @@ bool RT_flush_api_cache();
 
 // method wrapper for user and Runtime submodules
 uint MW_MemScanByValue(void* value, uint size, uintptr* results, uint maxItem);
-uint MW_MemScanByPattern(byte* pattern, uintptr* results, uint maxItem);
+uint MW_MemScanByConfig(MemScan_Cfg* config, uintptr* results, uint maxItem);
 bool MW_WD_IsEnabled();
 
 // HashAPI with spoof call (forge GetProcAddress)
@@ -479,7 +479,7 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->Serialization.Unserialize = GetFuncAddr(&Unserialize);
     // memory scanner
     module->MemScanner.ScanByValue   = GetFuncAddr(&MW_MemScanByValue);
-    module->MemScanner.ScanByPattern = GetFuncAddr(&MW_MemScanByPattern);
+    module->MemScanner.ScanByConfig  = GetFuncAddr(&MW_MemScanByConfig);
     module->MemScanner.BinToPattern  = GetFuncAddr(&BinToPattern);
     // get procedure address
     module->Procedure.GetProcByName   = GetFuncAddr(&RT_GetProcAddressByName);
@@ -1698,7 +1698,7 @@ uint MW_MemScanByValue(void* value, uint size, uintptr* results, uint maxItem)
 }
 
 __declspec(noinline)
-uint MW_MemScanByPattern(byte* pattern, uintptr* results, uint maxItem)
+uint MW_MemScanByConfig(MemScan_Cfg* config, uintptr* results, uint maxItem)
 {
     Runtime* runtime = getRuntimePointer();
 
@@ -1708,7 +1708,7 @@ uint MW_MemScanByPattern(byte* pattern, uintptr* results, uint maxItem)
 
         .VirtualQuery = runtime->VirtualQuery,
     };
-    return MemScanByPattern(&ctx, pattern, results, maxItem);
+    return MemScanByConfig(&ctx, config, results, maxItem);
 }
 
 __declspec(noinline)

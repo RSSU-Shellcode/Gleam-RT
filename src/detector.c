@@ -227,12 +227,28 @@ static bool initDetectorEnvironment(Detector* detector, Context* context)
         return false;
     }
     detector->trapMemPage = page;
-    // not load psapi.dll if Detector is disabled
+    // not try to find QueryWorkingSetEx if Detector is disabled
     if (context->DisableDetector)
     {
         return true;
     }
-    // make sure psapi.dll is loaded
+    // try to find QueryWorkingSetEx in kernel32.dll
+#ifdef _WIN64
+    uint mHash = 0xB85339B93FAFCA27;
+    uint pHash = 0x712F73BAA281B7A7;
+    uint hKey  = 0xC3107C1D3C0E7E7A;
+#elif _WIN32
+    uint mHash = 0x7A2E2DB8;
+    uint pHash = 0x79D1EEA9;
+    uint hKey  = 0x0F43DE10;
+#endif
+    QueryWorkingSetEx_t QueryWorkingSetEx = context->FindAPI(mHash, pHash, hKey);
+    if (QueryWorkingSetEx != NULL)
+    {
+        detector->QueryWorkingSetEx = QueryWorkingSetEx;
+        return true;
+    }
+    // make sure psapi.dll is loaded for old Windows
     byte dllName[] = {
         'p'^0x3A, 's'^0x49, 'a'^0xC7, 'p'^0x19,
         'i'^0x3A, '.'^0x49, 'd'^0xC7, 'l'^0x19,
@@ -245,18 +261,24 @@ static bool initDetectorEnvironment(Detector* detector, Context* context)
     {
         return false;
     }
-    detector->hPsapi = hPsapi;
-    // QueryWorkingSetEx is not exist on old Windows
+    // psapi.QueryWorkingSetEx is not exist on old Windows
 #ifdef _WIN64
-    uint mHash = 0xB8B3D1CE23700017;
-    uint pHash = 0x75F48436269D0717;
-    uint hKey  = 0x0DB79DD5BA6DDEBC;
+    mHash = 0xB8B3D1CE23700017;
+    pHash = 0x75F48436269D0717;
+    hKey  = 0x0DB79DD5BA6DDEBC;
 #elif _WIN32
-    uint mHash = 0x3859A4AC;
-    uint pHash = 0x06333B8D;
-    uint hKey  = 0xE9D6A09C;
+    mHash = 0x3859A4AC;
+    pHash = 0x06333B8D;
+    hKey  = 0xE9D6A09C;
 #endif
-    detector->QueryWorkingSetEx = context->FindAPI(mHash, pHash, hKey);
+    QueryWorkingSetEx = context->FindAPI(mHash, pHash, hKey);
+    if (QueryWorkingSetEx == NULL)
+    {
+        context->FreeLibrary(hPsapi);
+        return true;
+    }
+    detector->QueryWorkingSetEx = QueryWorkingSetEx;
+    detector->hPsapi = hPsapi;
     return true;
 }
 

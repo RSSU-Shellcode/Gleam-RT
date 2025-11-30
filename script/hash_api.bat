@@ -173,6 +173,7 @@ hash_api -fmt 64 -conc -mod "ws2_32.dll" -proc closesocket
 echo.
 
 echo [Detector]
+hash_api -fmt 64 -conc -mod "kernel32.dll" -proc K32QueryWorkingSetEx
 hash_api -fmt 64 -conc -mod "psapi.dll" -proc QueryWorkingSetEx
 echo.
 
@@ -494,6 +495,7 @@ hash_api -fmt 32 -conc -mod "ws2_32.dll" -proc closesocket
 echo.
 
 echo [Detector]
+hash_api -fmt 32 -conc -mod "kernel32.dll" -proc K32QueryWorkingSetEx
 hash_api -fmt 32 -conc -mod "psapi.dll" -proc QueryWorkingSetEx
 echo.
 

@@ -7,8 +7,10 @@
 
 #define MAX_NUM_CONDITION 64
 
-#define COND_TYPE_EXACT_VAL 0x01
-#define COND_TYPE_ARBITRARY 0x02
+#define COND_TYPE_EXACT_VAL  0x01
+#define COND_TYPE_HALF_LEFT  0x02
+#define COND_TYPE_HALF_RIGHT 0x03
+#define COND_TYPE_ARBITRARY  0x04
 
 #define PATTERN_TYPE_ARBITRARY 0xFE
 #define PATTERN_TYPE_INVALID   0xFF
@@ -57,7 +59,7 @@ uint MemScanByConfig(MemScan_Ctx* ctx, MemScan_Cfg* config, uintptr* results, ui
     for (uint i = 0; i < numCond; i++)
     {
         uint16 cond = condition[i];
-        if ((cond >> 8) == COND_TYPE_ARBITRARY)
+        if ((cond >> 8) != COND_TYPE_EXACT_VAL)
         {
             canFast = false;
         } else {
@@ -165,12 +167,19 @@ static uint scanRegion(uintptr addr, uint size, uint16* condition, uint numCond)
         for (uint i = 0; i < numCond; i++)
         {
             uint16 cond = condition[i];
-            switch (cond >> 8)
+            byte typ  = (byte)(cond >> 8);
+            byte val  = (byte)(cond & 0x00FF);
+            byte data = *(byte*)(address + i);
+            switch (typ)
             {
             case COND_TYPE_EXACT_VAL:
-                byte data = *(byte*)(address + i);
-                byte val  = (byte)(cond & 0x00FF);
                 same = data == val;
+                break;
+            case COND_TYPE_HALF_LEFT:
+                same = (data >> 4) == val;
+                break;
+            case COND_TYPE_HALF_RIGHT:
+                same = (data & 0x0F) == val;
                 break;
             case COND_TYPE_ARBITRARY:
                 break;
@@ -194,8 +203,9 @@ static uint scanRegion(uintptr addr, uint size, uint16* condition, uint numCond)
 
 static uint parsePattern(byte* pattern, uint16* condition)
 {
-    uint numCond   = 0;
-    bool arbitrary = false;
+    uint numCond = 0;
+    bool arb1 = false;
+    bool arb2 = false;
     for (;;)
     {
         if (numCond >= MAX_NUM_CONDITION)
@@ -214,7 +224,7 @@ static uint parsePattern(byte* pattern, uint16* condition)
         default:
             break;
         case PATTERN_TYPE_ARBITRARY:
-            arbitrary = true;
+            arb1 = true;
             break;
         case PATTERN_TYPE_INVALID:
             return 0;
@@ -222,32 +232,33 @@ static uint parsePattern(byte* pattern, uint16* condition)
         // parse the second character
         pattern++;
         byte val2 = charToValue(*pattern);
-        // process invalid type with "?A"
-        if (arbitrary && val2 != PATTERN_TYPE_ARBITRARY)
-        {
-            return 0;
-        }
         switch (val2)
         {
         default:
             break;
         case PATTERN_TYPE_ARBITRARY:
-            // process invalid type with "A?"
-            if (!arbitrary)
-            {
-                return 0;
-            }
+            arb2 = true;
             break;
         case PATTERN_TYPE_INVALID:
             return 0;
         }
         // generate the condition
-        if (arbitrary)
+        if (!arb1 && !arb2)
         {
-            condition[numCond] = (COND_TYPE_ARBITRARY << 8) + 0;
-        } else {
             byte exactVal = val1 * 16 + val2;
             condition[numCond] = (COND_TYPE_EXACT_VAL << 8) + exactVal;
+        }
+        if (!arb1 && arb2)
+        {
+            condition[numCond] = (COND_TYPE_HALF_LEFT << 8) + val1;
+        }
+        if (arb1 && !arb2)
+        {
+            condition[numCond] = (COND_TYPE_HALF_RIGHT << 8) + val2;
+        }
+        if (arb1 && arb2)
+        {
+            condition[numCond] = (COND_TYPE_ARBITRARY << 8) + 0;
         }
         numCond++;
         // parse the third character
@@ -262,7 +273,8 @@ static uint parsePattern(byte* pattern, uint16* condition)
             return 0;
         }
         // reset status
-        arbitrary = false;
+        arb1 = false;
+        arb2 = false;
         // update pointer
         pattern++;
     }

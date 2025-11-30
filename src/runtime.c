@@ -834,9 +834,20 @@ static errno initSubmodules(Runtime* runtime)
     {
         return err;
     }
-    runtime->Detector->Detect();
-
-    // TODO check env
+    BOOL success = runtime->Detector->Detect();
+    if (context.EnableSecurityMode)
+    {
+        if (!success)
+        {
+            return ERR_RUNTIME_DETECT_UNSAFE_ENV;
+        }
+        DT_Status status;
+        runtime->Detector->GetStatus(&status);
+        if (status.IsEnabled && status.SafeRank < 60)
+        {
+            return ERR_RUNTIME_DETECT_UNSAFE_ENV;
+        }
+    }
 
     // initialize runtime submodules
     typedef errno (*module_t)(Runtime* runtime, Context* context);
@@ -1637,7 +1648,8 @@ void RT_try_lock_mods()
 
     for (int i = 0; i < arrlen(runtime->ModMutexHandle); i++)
     {
-        DWORD event = runtime->WaitForSingleObject(runtime->ModMutexHandle[i], 3000);
+        HANDLE hMutex = runtime->ModMutexHandle[i];
+        DWORD  event  = runtime->WaitForSingleObject(hMutex, 3000);
         if (event == WAIT_OBJECT_0 || event == WAIT_ABANDONED)
         {
             runtime->ModMutexStatus[i] = true;

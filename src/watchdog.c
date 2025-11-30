@@ -320,7 +320,7 @@ static uint wd_watcher()
     Watchdog* watchdog = getWatchdogPointer();
 
     int64 numKick = 0;
-    int32 numFail = 0;
+    int16 numFail = 0;
     for (;;)
     {
         int64 num = wd_get_kick();
@@ -360,7 +360,7 @@ static uint wd_watcher()
             return 2;
         }
 
-        switch (wd_sleep(3000 + RandIntN(0, 3000)))
+        switch (wd_sleep(5000 + RandIntN(0, 5000)))
         {
         case RESULT_SUCCESS:
             break;

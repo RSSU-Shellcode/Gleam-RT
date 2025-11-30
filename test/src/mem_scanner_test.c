@@ -65,6 +65,26 @@ static bool TestMemScanByConfig()
     }
     printResults(results, num);
 
+    // contains half left arbitrary value
+    config.Pattern = "74 6? 73 7?";
+    num = runtime->MemScanner.ScanByConfig(&config, results, arrlen(results));
+    if (num == -1 || num == 0)
+    {
+        printf_s("failed to scan target data: 0x%X\n", GetLastErrno());
+        return false;
+    }
+    printResults(results, num);
+
+    // contains half right arbitrary value
+    config.Pattern = "74 ?5 73 ?4";
+    num = runtime->MemScanner.ScanByConfig(&config, results, arrlen(results));
+    if (num == -1 || num == 0)
+    {
+        printf_s("failed to scan target data: 0x%X\n", GetLastErrno());
+        return false;
+    }
+    printResults(results, num);
+
     // contains arbitrary value
     config.Pattern = "74 65 ?? 74";
     num = runtime->MemScanner.ScanByConfig(&config, results, arrlen(results));
@@ -77,8 +97,6 @@ static bool TestMemScanByConfig()
 
     // invalid patterns
     byte* patterns[] = {
-        "74 65 A? 74",
-        "74 65 ?A 74",
         "74 65 7474",
         "74 65 7G",
         "?? ?? ?? ??",

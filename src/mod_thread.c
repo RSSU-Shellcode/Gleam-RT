@@ -1529,5 +1529,8 @@ static bool suspendThread(ThreadTracker* tracker, HANDLE hThread)
     CONTEXT ctx;
     mem_init(&ctx, sizeof(CONTEXT));
     ctx.ContextFlags = CONTEXT_INTEGER;
-    return tracker->GetThreadContext(hThread, &ctx);
+    tracker->GetThreadContext(hThread, &ctx);
+    // due to the suspended thread maybe terminated by another
+    // thread, so we ignore the return value of GetThreadContext.
+    return true;
 }

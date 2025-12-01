@@ -356,7 +356,7 @@ static uint wd_watcher()
 
         if (numFail >= 6)
         {
-            watchdog->RT_Stop();
+            watchdog->RT_Stop(true, ERR_STOP_CODE_TOO_MANY_FAILURE);
             return 2;
         }
 

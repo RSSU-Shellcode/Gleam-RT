@@ -215,6 +215,7 @@ static void  eraseRuntimeMethods(Runtime* runtime);
 static void  recoverErrorMode(Runtime* runtime);
 static errno cleanRuntime(Runtime* runtime);
 static errno closeHandles(Runtime* runtime);
+static void  interruptInit(Runtime* runtime);
 
 static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName);
 static void* getAPIRedirector(Runtime* runtime, void* proc);
@@ -347,6 +348,7 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     }
     if (errno != NO_ERROR)
     {
+        interruptInit(runtime);
         cleanRuntime(runtime);
         SetLastErrno(errno);
         return NULL;
@@ -1378,7 +1380,6 @@ static errno cleanRuntime(Runtime* runtime)
     return err;
 }
 
-// TODO need remove?
 static errno closeHandles(Runtime* runtime)
 {
     if (runtime->CloseHandle == NULL)
@@ -1405,6 +1406,67 @@ static errno closeHandles(Runtime* runtime)
         }
     }
     return errno;
+}
+
+__declspec(noinline)
+static void interruptInit(Runtime* runtime)
+{
+    // clean submodules if it has been initialized
+    if (runtime->Watchdog != NULL)
+    {
+        runtime->Watchdog->Stop();
+    }
+    if (runtime->Sysmon != NULL)
+    {
+        runtime->Sysmon->Stop();
+    }
+
+    if (runtime->WinBase != NULL)
+    {
+        runtime->WinBase->Uninstall();
+    }
+    if (runtime->WinFile != NULL)
+    {
+        runtime->WinFile->Uninstall();
+    }
+    if (runtime->WinHTTP != NULL)
+    {
+        runtime->WinHTTP->Uninstall();
+    }
+    if (runtime->WinCrypto != NULL)
+    {
+        runtime->WinCrypto->Uninstall();
+    }
+
+    if (runtime->LibraryTracker != NULL)
+    {
+        runtime->LibraryTracker->Clean();
+    }
+    if (runtime->MemoryTracker != NULL)
+    {
+        runtime->MemoryTracker->Clean();
+    }
+    if (runtime->ThreadTracker != NULL)
+    {
+        runtime->ThreadTracker->Clean();
+    }
+    if (runtime->ResourceTracker != NULL)
+    {
+        runtime->ResourceTracker->Clean();
+    }
+    if (runtime->ArgumentStore != NULL)
+    {
+        runtime->ArgumentStore->Clean();
+    }
+    if (runtime->InMemoryStorage != NULL)
+    {
+        runtime->InMemoryStorage->Clean();
+    }
+
+    if (runtime->Detector != NULL)
+    {
+        runtime->Detector->Stop();
+    }
 }
 
 // updateRuntimePointer will replace hard encode address to the actual address.

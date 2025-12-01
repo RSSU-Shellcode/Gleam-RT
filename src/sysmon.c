@@ -351,7 +351,7 @@ static uint sm_watcher()
             // if watchdog is disabled, exit runtime.
             if (!sysmon->WD_IsEnabled())
             {
-                sysmon->RT_Stop();
+                sysmon->RT_Stop(true, ERR_STOP_CODE_WATCHDOG_DISABLED);
                 break;
             }
             // if failed to recover, use force kill threads,
@@ -374,7 +374,7 @@ static uint sm_watcher()
         default:
             // if failed to reset program or watchdog 
             // is disabled, exit runtime.
-            sysmon->RT_Stop();
+            sysmon->RT_Stop(true, ERR_STOP_CODE_RESET_PROGRAM);
             break;
         }
 

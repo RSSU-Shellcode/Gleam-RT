@@ -407,8 +407,7 @@ static uint sm_watch()
     for (int i = 0; i < arrlen(handles); i++)
     {
         HANDLE objects[] = { handles[i], sysmon->hEvent };
-        DWORD  timeout   = (DWORD)(5000 + RandUintN(0, 10000));
-        switch (sysmon->WaitForMultipleObjects(2, objects, false, timeout))
+        switch (sysmon->WaitForMultipleObjects(2, objects, false, 3000))
         {
         case WAIT_OBJECT_0+0: case WAIT_ABANDONED+0:
             if (!sysmon->ReleaseMutex(handles[i]))

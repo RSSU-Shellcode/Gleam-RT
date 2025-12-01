@@ -27,7 +27,7 @@ typedef errno  (*TT_RecoverThreads_t)();
 typedef errno  (*TT_ForceKillThreads_t)();
 
 typedef errno (*RT_Cleanup_t)();
-typedef void  (*RT_Stop_t)();
+typedef errno (*RT_Stop_t)(bool exitThread, uint32 code);
 
 typedef bool (*WD_IsEnabled_t)();
 

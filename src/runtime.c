@@ -163,6 +163,8 @@ void  RT_try_unlock_mods();
 
 bool RT_flush_api_cache();
 
+errno RT_stop(bool exitThread, uint32 code);
+
 // method wrapper for user and Runtime submodules
 uint MW_MemScanByValue(void* value, uint size, uintptr* results, uint maxItem);
 uint MW_MemScanByConfig(MemScan_Cfg* config, uintptr* results, uint maxItem);
@@ -224,7 +226,6 @@ static void* getLazyAPIRedirector(Runtime* runtime, void* proc);
 static errno sleep(Runtime* runtime, HANDLE hTimer);
 static errno hide(Runtime* runtime);
 static errno recover(Runtime* runtime);
-static errno stop(bool exitThread);
 
 static void eraseMemory(uintptr address, uintptr size);
 static void rt_epilogue();
@@ -909,7 +910,7 @@ static errno initSubmodules(Runtime* runtime)
     context.TT_ForceKillThreads = runtime->ThreadTracker->ForceKill;
 
     context.RT_Cleanup = GetFuncAddr(&RT_Cleanup);
-    context.RT_Stop    = GetFuncAddr(&RT_Stop);
+    context.RT_Stop    = GetFuncAddr(&RT_stop);
 
     context.WD_IsEnabled = GetFuncAddr(&MW_WD_IsEnabled);
 
@@ -2697,17 +2698,17 @@ errno RT_Cleanup()
 __declspec(noinline)
 errno RT_Exit()
 {
-    return stop(false);
+    return RT_stop(false, 0);
 }
 
 __declspec(noinline)
 void RT_Stop()
 {
-    stop(true);
+    RT_stop(true, 0);
 }
 
 __declspec(noinline)
-static errno stop(bool exitThread) // TODO replace it to stop code
+errno RT_stop(bool exitThread, uint32 code)
 {
     Runtime* runtime = getRuntimePointer();
 
@@ -2846,7 +2847,7 @@ static errno stop(bool exitThread) // TODO replace it to stop code
 
     if (exitThread)
     {
-        ExitThread(0);
+        ExitThread(code);
     }
     return error;
 }

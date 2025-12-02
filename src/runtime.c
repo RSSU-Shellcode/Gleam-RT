@@ -2816,7 +2816,7 @@ errno RT_stop(bool exitThread, uint32 code)
     if (!runtime->Options.NotEraseInstruction)
     {
         uintptr begin = (uintptr)(GetFuncAddr(&InitRuntime));
-        uintptr end   = (uintptr)(GetFuncAddr(&RT_Stop));
+        uintptr end   = (uintptr)(GetFuncAddr(&RT_Exit));
         uintptr size  = end - begin;
         eraseMemory(begin, size);
         begin = (uintptr)(GetFuncAddr(&rt_epilogue));

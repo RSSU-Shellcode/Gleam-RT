@@ -61,6 +61,8 @@ bool testShellcode(bool erase)
 {
     Runtime_Opts opt = {
         .BootInstAddress     = NULL,
+        .EnableSecurityMode  = false,
+        .DisableDetector     = false,
         .DisableSysmon       = false,
         .DisableWatchdog     = false,
         .NotEraseInstruction = !erase,

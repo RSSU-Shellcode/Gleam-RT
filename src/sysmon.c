@@ -401,13 +401,14 @@ static uint sm_watch()
     HANDLE handles[] = {
         sysmon->hMutex_LT, sysmon->hMutex_MT, sysmon->hMutex_TT,
         sysmon->hMutex_RT, sysmon->hMutex_AS, sysmon->hMutex_IS,
+        // TODO other modules
     };
     uint result  = RESULT_SUCCESS;
     bool stopped = false;
     for (int i = 0; i < arrlen(handles); i++)
     {
         HANDLE objects[] = { handles[i], sysmon->hEvent };
-        switch (sysmon->WaitForMultipleObjects(2, objects, false, 3000))
+        switch (sysmon->WaitForMultipleObjects(2, objects, false, 10000))
         {
         case WAIT_OBJECT_0+0: case WAIT_ABANDONED+0:
             if (!sysmon->ReleaseMutex(handles[i]))

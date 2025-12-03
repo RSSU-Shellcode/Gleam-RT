@@ -1712,7 +1712,7 @@ void RT_try_lock_mods()
     for (int i = 0; i < arrlen(runtime->ModMutexHandle); i++)
     {
         HANDLE hMutex = runtime->ModMutexHandle[i];
-        DWORD  event  = runtime->WaitForSingleObject(hMutex, 3000);
+        DWORD  event  = runtime->WaitForSingleObject(hMutex, 10000);
         if (event == WAIT_OBJECT_0 || event == WAIT_ABANDONED)
         {
             runtime->ModMutexStatus[i] = true;
@@ -2361,28 +2361,19 @@ errno RT_SleepHR(DWORD dwMilliseconds)
             break;
         }
         errno err = hide(runtime);
-        if (err != NO_ERROR)
+        if (err != NO_ERROR && error == NO_ERROR)
         {
-            if (!(err & ERR_FLAG_CAN_IGNORE) && error == NO_ERROR)
-            {
-                error = err;
-            }
+            error = err;
         }
         err = sleep(runtime, hTimer);
-        if (err != NO_ERROR)
+        if (err != NO_ERROR && error == NO_ERROR)
         {
-            if (!(err & ERR_FLAG_CAN_IGNORE) && error == NO_ERROR)
-            {
-                error = err;
-            }
+            error = err;
         }
         err = recover(runtime);
-        if (err != NO_ERROR)
+        if (err != NO_ERROR && error == NO_ERROR)
         {
-            if (!(err & ERR_FLAG_CAN_IGNORE) && error == NO_ERROR)
-            {
-                error = err;
-            }
+            error = err;
         }
         break;
     }

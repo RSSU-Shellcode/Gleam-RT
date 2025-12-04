@@ -33,8 +33,8 @@ type Options struct {
 	BootInstAddress     uintptr `toml:"boot_inst_address"     json:"boot_inst_address"`
 	EnableSecurityMode  bool    `toml:"enable_security_mode"  json:"enable_security_mode"`
 	DisableDetector     bool    `toml:"disable_detector"      json:"disable_detector"`
-	DisableSysmon       bool    `toml:"disable_sysmon"        json:"disable_sysmon"`
 	DisableWatchdog     bool    `toml:"disable_watchdog"      json:"disable_watchdog"`
+	DisableSysmon       bool    `toml:"disable_sysmon"        json:"disable_sysmon"`
 	NotEraseInstruction bool    `toml:"not_erase_instruction" json:"not_erase_instruction"`
 	NotAdjustProtect    bool    `toml:"not_adjust_protect"    json:"not_adjust_protect"`
 	TrackCurrentThread  bool    `toml:"track_current_thread"  json:"track_current_thread"`
@@ -219,13 +219,6 @@ type RuntimeM struct {
 		Status uintptr
 	}
 
-	Sysmon struct {
-		Status uintptr
-
-		_ uintptr
-		_ uintptr
-	}
-
 	Watchdog struct {
 		SetHandler uintptr
 		Kick       uintptr
@@ -233,6 +226,13 @@ type RuntimeM struct {
 		Disable    uintptr
 		IsEnabled  uintptr
 		Status     uintptr
+
+		_ uintptr
+		_ uintptr
+	}
+
+	Sysmon struct {
+		Status uintptr
 
 		_ uintptr
 		_ uintptr

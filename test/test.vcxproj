@@ -51,10 +51,10 @@
     <ClInclude Include="..\include\win_file.h" />
     <ClInclude Include="..\include\win_http.h" />
     <ClInclude Include="..\include\win_crypto.h" />
+	<ClInclude Include="..\include\watchdog.h" />
     <ClInclude Include="..\include\sysmon.h" />
-    <ClInclude Include="..\include\watchdog.h" />
+	<ClInclude Include="..\include\shield.h" />
     <ClInclude Include="..\include\runtime.h" />
-    <ClInclude Include="..\include\shield.h" />
     <ClInclude Include="..\include\debug.h" />
   </ItemGroup>
   <ItemGroup>
@@ -108,8 +108,8 @@
     <ClCompile Include="..\src\win_file.c" />
     <ClCompile Include="..\src\win_http.c" />
     <ClCompile Include="..\src\win_crypto.c" />
+	<ClCompile Include="..\src\watchdog.c" />
     <ClCompile Include="..\src\sysmon.c" />
-    <ClCompile Include="..\src\watchdog.c" />
     <ClCompile Include="..\src\shield.c" />
     <ClCompile Include="..\src\debug.c" />
   </ItemGroup>

@@ -442,8 +442,8 @@ typedef struct {
     TT_Status Thread;
     RT_Status Resource;
     DT_Status Detector;
-    SM_Status Sysmon;
     WD_Status Watchdog;
+    SM_Status Sysmon;
 } Runtime_Metrics;
 
 typedef errno (*RTSleepHR_t)(uint32 milliseconds);
@@ -634,14 +634,6 @@ typedef struct {
     } Detector;
 
     struct {
-        SMGetStatus_t Status;
-
-        // only for test, NOT use it.
-        SMPause_t    _Pause;
-        SMContinue_t _Continue;
-    } Sysmon;
-
-    struct {
         WDSetHandler_t SetHandler;
         WDKick_t       Kick;
         WDEnable_t     Enable;
@@ -653,6 +645,14 @@ typedef struct {
         WDPause_t    _Pause;
         WDContinue_t _Continue;
     } Watchdog;
+
+    struct {
+        SMGetStatus_t Status;
+
+        // only for test, NOT use it.
+        SMPause_t    _Pause;
+        SMContinue_t _Continue;
+    } Sysmon;
 
     struct {
         GetPEB_t   GetPEB;
@@ -692,12 +692,12 @@ typedef struct {
     // disable detector for test or debug.
     bool DisableDetector;
 
-    // disable sysmon for implement single thread model.
-    bool DisableSysmon;
-
     // disable watchdog for implement single thread model.
     // it will overwrite the control from upper module.
     bool DisableWatchdog;
+
+    // disable sysmon for implement single thread model.
+    bool DisableSysmon;
 
     // not erase runtime instructions after call Runtime_M.Exit
     bool NotEraseInstruction;

@@ -19,13 +19,17 @@ typedef struct {
 typedef BOOL (*DetDetect_t)();
 typedef BOOL (*DetGetStatus_t)(DT_Status* status);
 
+typedef bool  (*DetLock_t)();
+typedef bool  (*DetUnlock_t)();
 typedef errno (*DetStop_t)();
 
 typedef struct {
     DetDetect_t    Detect;
     DetGetStatus_t GetStatus;
 
-    DetStop_t Stop;
+    DetLock_t   Lock;
+    DetUnlock_t Unlock;
+    DetStop_t   Stop;
 } Detector_M;
 
 Detector_M* InitDetector(Context* context);

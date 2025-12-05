@@ -7,6 +7,7 @@ import (
 	"crypto/tls"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -63,8 +64,6 @@ func main() {
 	fileServer := http.FileServer(http.Dir(dir))
 	handlerFn := func(w http.ResponseWriter, r *http.Request) {
 		dumpRequest(r)
-		// prevent incorrect cache
-		r.Header.Del("If-Modified-Since")
 		// redirect for process file directory
 		path := strings.Replace(r.URL.Path, handler, "/", 1)
 		// prevent directory traversal
@@ -78,16 +77,27 @@ func main() {
 		case strings.Contains(encoding, "gzip"):
 			w.Header().Set("Content-Encoding", "gzip")
 			gzw := gzip.NewWriter(w)
-			defer func() { _ = gzw.Close() }()
+			defer func() {
+				if w.Header().Get("Content-Encoding") == "gzip" {
+					_ = gzw.Close()
+				}
+			}()
 			w = &gzipResponseWriter{ResponseWriter: w, w: gzw}
 		case strings.Contains(encoding, "deflate"):
 			w.Header().Set("Content-Encoding", "deflate")
 			dw, _ := flate.NewWriter(w, flate.BestCompression)
-			defer func() { _ = dw.Close() }()
+			defer func() {
+				if w.Header().Get("Content-Encoding") == "deflate" {
+					_ = dw.Close()
+				}
+			}()
 			w = &flateResponseWriter{ResponseWriter: w, w: dw}
 		}
 		// process file
 		r.URL.Path = path
+		// prevent incorrect cache
+		r.Header.Del("If-Modified-Since")
+		// process file
 		fileServer.ServeHTTP(w, r)
 	}
 	serveMux := http.NewServeMux()
@@ -106,12 +116,20 @@ func main() {
 }
 
 func dumpRequest(r *http.Request) {
-	buf := bytes.NewBuffer(make([]byte, 0, 1024))
-	_, _ = fmt.Fprintf(buf, "Remote: %s\n", r.RemoteAddr)
-	_, _ = fmt.Fprintf(buf, "%s %s %s", r.Method, r.RequestURI, r.Proto)
-	_, _ = fmt.Fprintf(buf, "\nHost: %s", r.Host)
+	// print income request
+	buf := bytes.NewBuffer(make([]byte, 0, 512))
+	_, _ = fmt.Fprintf(buf, "Remote: %s\n", r.RemoteAddr)                  // client ip
+	_, _ = fmt.Fprintf(buf, "%s %s %s\n", r.Method, r.RequestURI, r.Proto) // header line
+	_, _ = fmt.Fprintf(buf, "Host: %s", r.Host)                            // dump host
+	// dump other header
 	for k, v := range r.Header {
 		_, _ = fmt.Fprintf(buf, "\n%s: %s", k, v[0])
+	}
+	buf.WriteString("\n")
+	// print post body if exists
+	if r.ContentLength != 0 {
+		_, _ = io.CopyN(buf, r.Body, 32*1024)
+		buf.WriteString("\n")
 	}
 	log.Printf("[handle request]\n%s\n\n", buf)
 }
@@ -132,17 +150,37 @@ func isDir(path string) bool {
 type gzipResponseWriter struct {
 	http.ResponseWriter
 	w *gzip.Writer
+
+	written bool
+	enabled bool
 }
 
 func (rw *gzipResponseWriter) Write(b []byte) (int, error) {
-	return rw.w.Write(b)
+	if !rw.written {
+		rw.enabled = rw.Header().Get("Content-Encoding") == "gzip"
+		rw.written = true
+	}
+	if rw.enabled {
+		return rw.w.Write(b)
+	}
+	return rw.ResponseWriter.Write(b)
 }
 
 type flateResponseWriter struct {
 	http.ResponseWriter
 	w *flate.Writer
+
+	written bool
+	enabled bool
 }
 
 func (rw *flateResponseWriter) Write(b []byte) (int, error) {
-	return rw.w.Write(b)
+	if !rw.written {
+		rw.enabled = rw.Header().Get("Content-Encoding") == "deflate"
+		rw.written = true
+	}
+	if rw.enabled {
+		return rw.w.Write(b)
+	}
+	return rw.ResponseWriter.Write(b)
 }

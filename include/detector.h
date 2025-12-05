@@ -24,12 +24,17 @@ typedef bool  (*DetUnlock_t)();
 typedef errno (*DetStop_t)();
 
 typedef struct {
+    // for user
     DetDetect_t    Detect;
     DetGetStatus_t GetStatus;
 
+    // for runtime internal usage
     DetLock_t   Lock;
     DetUnlock_t Unlock;
     DetStop_t   Stop;
+
+    // data for sysmon
+    HANDLE hMutex;
 } Detector_M;
 
 Detector_M* InitDetector(Context* context);

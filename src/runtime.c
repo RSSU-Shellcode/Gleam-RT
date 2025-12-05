@@ -26,8 +26,8 @@
 #include "win_file.h"
 #include "win_http.h"
 #include "win_crypto.h"
-#include "sysmon.h"
 #include "watchdog.h"
+#include "sysmon.h"
 #include "shield.h"
 #include "runtime.h"
 #include "debug.h"
@@ -113,8 +113,8 @@ typedef struct {
     WinCrypto_M* WinCrypto;
 
     // reliability modules
-    Sysmon_M*   Sysmon;
     Watchdog_M* Watchdog;
+    Sysmon_M*   Sysmon;
 } Runtime;
 
 // export methods about Runtime
@@ -208,8 +208,8 @@ static errno initWinBase(Runtime* runtime, Context* context);
 static errno initWinFile(Runtime* runtime, Context* context);
 static errno initWinHTTP(Runtime* runtime, Context* context);
 static errno initWinCrypto(Runtime* runtime, Context* context);
-static errno initSysmon(Runtime* runtime, Context* context);
 static errno initWatchdog(Runtime* runtime, Context* context);
+static errno initSysmon(Runtime* runtime, Context* context);
 static bool  initAPIRedirector(Runtime* runtime);
 static bool  flushInstructionCache(Runtime* runtime);
 static void  eraseArgumentStub(Runtime* runtime);
@@ -267,8 +267,8 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
             .BootInstAddress     = NULL,
             .EnableSecurityMode  = false,
             .DisableDetector     = false,
-            .DisableSysmon       = false,
             .DisableWatchdog     = false,
+            .DisableSysmon       = false,
             .NotEraseInstruction = false,
             .NotAdjustProtect    = false,
             .TrackCurrentThread  = false,
@@ -491,10 +491,6 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     // about detector
     module->Detector.Detect = runtime->Detector->Detect;
     module->Detector.Status = runtime->Detector->GetStatus;
-    // about system monitor
-    module->Sysmon.Status    = runtime->Sysmon->GetStatus;
-    module->Sysmon._Pause    = runtime->Sysmon->Pause;
-    module->Sysmon._Continue = runtime->Sysmon->Continue;
     // about watchdog
     module->Watchdog.SetHandler  = runtime->Watchdog->SetHandler;
     module->Watchdog.Kick        = runtime->Watchdog->Kick;
@@ -504,6 +500,10 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->Watchdog.Status      = runtime->Watchdog->GetStatus;
     module->Watchdog._Pause      = runtime->Watchdog->Pause;
     module->Watchdog._Continue   = runtime->Watchdog->Continue;
+    // about system monitor
+    module->Sysmon.Status    = runtime->Sysmon->GetStatus;
+    module->Sysmon._Pause    = runtime->Sysmon->Pause;
+    module->Sysmon._Continue = runtime->Sysmon->Continue;
     // about process environment
     module->Env.GetPEB   = GetFuncAddr(&RT_GetPEB);
     module->Env.GetTEB   = GetFuncAddr(&RT_GetTEB);
@@ -778,8 +778,8 @@ static errno initSubmodules(Runtime* runtime)
     Context context = {
         .EnableSecurityMode  = runtime->Options.EnableSecurityMode,
         .DisableDetector     = runtime->Options.DisableDetector,
-        .DisableSysmon       = runtime->Options.DisableSysmon,
         .DisableWatchdog     = runtime->Options.DisableWatchdog,
+        .DisableSysmon       = runtime->Options.DisableSysmon,
         .NotEraseInstruction = runtime->Options.NotEraseInstruction,
         .TrackCurrentThread  = runtime->Options.TrackCurrentThread,
 
@@ -917,8 +917,8 @@ static errno initSubmodules(Runtime* runtime)
     // initialize reliability modules
     module_t rel_modules[] = 
     {
-        GetFuncAddr(&initSysmon),
         GetFuncAddr(&initWatchdog),
+        GetFuncAddr(&initSysmon),
     };
     for (int i = 0; i < arrlen(rel_modules); i++)
     {
@@ -1064,17 +1064,6 @@ static errno initWinCrypto(Runtime* runtime, Context* context)
     return NO_ERROR;
 }
 
-static errno initSysmon(Runtime* runtime, Context* context)
-{
-    Sysmon_M* Sysmon = InitSysmon(context);
-    if (Sysmon == NULL)
-    {
-        return GetLastErrno();
-    }
-    runtime->Sysmon = Sysmon;
-    return NO_ERROR;
-}
-
 static errno initWatchdog(Runtime* runtime, Context* context)
 {
     Watchdog_M* Watchdog = InitWatchdog(context);
@@ -1083,6 +1072,17 @@ static errno initWatchdog(Runtime* runtime, Context* context)
         return GetLastErrno();
     }
     runtime->Watchdog = Watchdog;
+    return NO_ERROR;
+}
+
+static errno initSysmon(Runtime* runtime, Context* context)
+{
+    Sysmon_M* Sysmon = InitSysmon(context);
+    if (Sysmon == NULL)
+    {
+        return GetLastErrno();
+    }
+    runtime->Sysmon = Sysmon;
     return NO_ERROR;
 }
 
@@ -1413,13 +1413,13 @@ __declspec(noinline)
 static void interruptInit(Runtime* runtime)
 {
     // clean submodules if it has been initialized
-    if (runtime->Watchdog != NULL)
-    {
-        runtime->Watchdog->Stop();
-    }
     if (runtime->Sysmon != NULL)
     {
         runtime->Sysmon->Stop();
+    }
+    if (runtime->Watchdog != NULL)
+    {
+        runtime->Watchdog->Stop();
     }
 
     if (runtime->WinBase != NULL)

@@ -21,8 +21,8 @@
 
 #define OPT_OFFSET_ENABLE_SECURITY_MODE  1
 #define OPT_OFFSET_DISABLE_DETECTOR      2
-#define OPT_OFFSET_DISABLE_SYSMON        3
-#define OPT_OFFSET_DISABLE_WATCHDOG      4
+#define OPT_OFFSET_DISABLE_WATCHDOG      3
+#define OPT_OFFSET_DISABLE_SYSMON        4
 #define OPT_OFFSET_NOT_ERASE_INSTRUCTION 5
 #define OPT_OFFSET_NOT_ADJUST_PROTECT    6
 #define OPT_OFFSET_TRACK_CURRENT_THREAD  7
@@ -322,8 +322,8 @@ typedef uint (*Decompress_t)(void* dst, void* src, uint len);
 #define SERIALIZE_FLAG_VALUE   0x00000000
 #define SERIALIZE_FLAG_POINTER 0x80000000
 
-#define SERIALIZE_MASK_FLAG   0x80000000
-#define SERIALIZE_MASK_LENGTH 0x7FFFFFFF
+#define SERIALIZE_MASK_FLAG    0x80000000
+#define SERIALIZE_MASK_LENGTH  0x7FFFFFFF
 
 #endif // SERIALIZE_H
 
@@ -376,21 +376,6 @@ typedef void* (*GetProcByName_t)(HMODULE hModule, LPCSTR lpProcName, BOOL redire
 typedef void* (*GetProcByHash_t)(uint mHash, uint pHash, uint hKey, BOOL redirect);
 typedef void* (*GetProcByHashML_t)(void* list, uint mHash, uint pHash, uint hKey, BOOL redirect);
 
-// about sysmon
-#ifndef SYSMON_H
-typedef struct {
-    BOOL  IsEnabled;
-    int32 Reserved;
-    int64 NumNormal;
-    int64 NumRecover;
-    int64 NumPanic;
-} SM_Status;
-#endif // SYSMON_H
-
-typedef BOOL  (*SMGetStatus_t)(SM_Status* status);
-typedef errno (*SMPause_t)();
-typedef errno (*SMContinue_t)();
-
 // about watchdog
 #ifndef WATCHDOG_H
 typedef struct {
@@ -412,6 +397,21 @@ typedef void  (*WDSetHandler_t)(WDHandler_t handler);
 typedef BOOL  (*WDGetStatus_t)(WD_Status* status);
 typedef errno (*WDPause_t)();
 typedef errno (*WDContinue_t)();
+
+// about sysmon
+#ifndef SYSMON_H
+typedef struct {
+    BOOL  IsEnabled;
+    int32 Reserved;
+    int64 NumNormal;
+    int64 NumRecover;
+    int64 NumPanic;
+} SM_Status;
+#endif // SYSMON_H
+
+typedef BOOL  (*SMGetStatus_t)(SM_Status* status);
+typedef errno (*SMPause_t)();
+typedef errno (*SMContinue_t)();
 
 // about process environment
 //

@@ -151,6 +151,8 @@ Detector_M* InitDetector(Context* context)
     method->Lock   = GetFuncAddr(&DT_Lock);
     method->Unlock = GetFuncAddr(&DT_Unlock);
     method->Stop   = GetFuncAddr(&DT_Stop);
+    // data for sysmon
+    method->hMutex = detector->hMutex;
     return method;
 }
 

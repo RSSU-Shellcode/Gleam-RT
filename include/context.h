@@ -35,8 +35,8 @@ typedef struct {
     // runtime options
     bool EnableSecurityMode;
     bool DisableDetector;
-    bool DisableSysmon;
     bool DisableWatchdog;
+    bool DisableSysmon;
     bool NotEraseInstruction;
     bool TrackCurrentThread;
 
@@ -102,22 +102,24 @@ typedef struct {
     mt_msize_t   mt_msize;
     mt_mcap_t    mt_mcap;
 
-    // for initialize sysmon and watchdog
+    // for initialize watchdog and sysmon
+    HANDLE hMutex_DT;
     HANDLE hMutex_LT;
     HANDLE hMutex_MT;
     HANDLE hMutex_TT;
     HANDLE hMutex_RT;
     HANDLE hMutex_AS;
     HANDLE hMutex_IS;
+    HANDLE hMutex_WD;
 
     TT_NewThread_t        TT_NewThread;
     TT_RecoverThreads_t   TT_RecoverThreads;
     TT_ForceKillThreads_t TT_ForceKillThreads;
 
+    WD_IsEnabled_t WD_IsEnabled;
+
     RT_Cleanup_t RT_Cleanup;
     RT_Stop_t    RT_Stop;
-
-    WD_IsEnabled_t WD_IsEnabled;
 } Context;
 
 #endif // CONTEXT_H

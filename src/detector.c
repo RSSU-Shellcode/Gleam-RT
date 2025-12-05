@@ -70,6 +70,8 @@ BOOL DT_Detect();
 BOOL DT_GetStatus(DT_Status* status);
 
 // methods for runtime
+bool  DT_Lock();
+bool  DT_Unlock();
 errno DT_Stop();
 
 // hard encoded address in getDetectorPointer for replacement
@@ -79,9 +81,6 @@ errno DT_Stop();
     #define DETECTOR_POINTER 0x7FABCDD1
 #endif
 static Detector* getDetectorPointer();
-
-static bool dt_lock();
-static bool dt_unlock();
 
 static bool initDetectorAPI(Detector* detector, Context* context);
 static bool updateDetectorPointer(Detector* detector);
@@ -149,7 +148,9 @@ Detector_M* InitDetector(Context* context)
     method->Detect    = GetFuncAddr(&DT_Detect);
     method->GetStatus = GetFuncAddr(&DT_GetStatus);
     // methods for runtime
-    method->Stop = GetFuncAddr(&DT_Stop);
+    method->Lock   = GetFuncAddr(&DT_Lock);
+    method->Unlock = GetFuncAddr(&DT_Unlock);
+    method->Stop   = GetFuncAddr(&DT_Stop);
     return method;
 }
 
@@ -319,23 +320,6 @@ static Detector* getDetectorPointer()
 #pragma optimize("", on)
 
 __declspec(noinline)
-static bool dt_lock()
-{
-    Detector* detector = getDetectorPointer();
-
-    DWORD event = detector->WaitForSingleObject(detector->hMutex, INFINITE);
-    return event == WAIT_OBJECT_0 || event == WAIT_ABANDONED;
-}
-
-__declspec(noinline)
-static bool dt_unlock()
-{
-    Detector* detector = getDetectorPointer();
-
-    return detector->ReleaseMutex(detector->hMutex);
-}
-
-__declspec(noinline)
 BOOL DT_Detect()
 {
     Detector* detector = getDetectorPointer();
@@ -345,7 +329,7 @@ BOOL DT_Detect()
         return true;
     }
 
-    if (!dt_lock())
+    if (!DT_Lock())
     {
         return false;
     }
@@ -365,7 +349,7 @@ BOOL DT_Detect()
         break;
     }
 
-    if (!dt_unlock())
+    if (!DT_Unlock())
     {
         return false;
     }
@@ -532,7 +516,7 @@ BOOL DT_GetStatus(DT_Status* status)
     }
     status->IsEnabled = true;
 
-    if (!dt_lock())
+    if (!DT_Lock())
     {
         return false;
     }
@@ -570,11 +554,28 @@ BOOL DT_GetStatus(DT_Status* status)
     }
     status->SafeRank = rank;
 
-    if (!dt_unlock())
+    if (!DT_Unlock())
     {
         return false;
     }
     return true;
+}
+
+__declspec(noinline)
+static bool DT_Lock()
+{
+    Detector* detector = getDetectorPointer();
+
+    DWORD event = detector->WaitForSingleObject(detector->hMutex, INFINITE);
+    return event == WAIT_OBJECT_0 || event == WAIT_ABANDONED;
+}
+
+__declspec(noinline)
+static bool DT_Unlock()
+{
+    Detector* detector = getDetectorPointer();
+
+    return detector->ReleaseMutex(detector->hMutex);
 }
 
 __declspec(noinline)

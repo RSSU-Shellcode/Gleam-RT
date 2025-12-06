@@ -22,8 +22,10 @@ typedef errno (*SMContinue_t)();
 typedef errno (*SMStop_t)();
 
 typedef struct {
+    // for user
     SMGetStatus_t GetStatus;
 
+    // for runtime internal usage
     SMLock_t     Lock;
     SMUnlock_t   Unlock;
     SMPause_t    Pause;

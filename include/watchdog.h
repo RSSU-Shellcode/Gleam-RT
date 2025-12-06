@@ -2,6 +2,7 @@
 #define WATCHDOG_H
 
 #include "c_types.h"
+#include "win_types.h"
 #include "errno.h"
 #include "context.h"
 
@@ -31,6 +32,7 @@ typedef errno (*WDContinue_t)();
 typedef errno (*WDStop_t)();
 
 typedef struct {
+    // for user
     WDSetHandler_t SetHandler;
     WDKick_t       Kick;
     WDEnable_t     Enable;
@@ -38,11 +40,15 @@ typedef struct {
     WDIsEnabled_t  IsEnabled;
     WDGetStatus_t  GetStatus;
 
+    // for runtime internal usage
     WDLock_t     Lock;
     WDUnlock_t   Unlock;
     WDPause_t    Pause;
     WDContinue_t Continue;
     WDStop_t     Stop;
+
+    // data for sysmon
+    HANDLE hMutex;
 } Watchdog_M;
 
 Watchdog_M* InitWatchdog(Context* context);

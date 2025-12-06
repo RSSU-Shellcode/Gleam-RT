@@ -153,6 +153,8 @@ Watchdog_M* InitWatchdog(Context* context)
     method->Pause    = GetFuncAddr(&WD_Pause);
     method->Continue = GetFuncAddr(&WD_Continue);
     method->Stop     = GetFuncAddr(&WD_Stop);
+    // data for sysmon
+    method->hMutex = watchdog->hMutex;
     return method;
 }
 
@@ -589,7 +591,7 @@ errno WD_Enable()
 
     if (watchdog->DisableWatchdog)
     {
-        return NO_ERROR;
+        return ERR_WATCHDOG_RT_DISABLED;
     }
 
     if (!WD_Lock())

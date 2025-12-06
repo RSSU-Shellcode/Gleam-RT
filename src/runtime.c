@@ -92,8 +92,8 @@ typedef struct {
     API_RDR Redirectors[68];
 
     // try to lock submodules mutex
-    HANDLE ModMutexHandle[6];
-    bool   ModMutexStatus[6];
+    HANDLE ModMutexHandle[8];
+    bool   ModMutexStatus[8];
 
     // runtime security modules
     Detector_M* Detector;
@@ -168,7 +168,6 @@ errno RT_stop(bool exitThread, uint32 code);
 // method wrapper for user and Runtime submodules
 uint MW_MemScanByValue(void* value, uint size, uintptr* results, uint maxItem);
 uint MW_MemScanByConfig(MemScan_Cfg* config, uintptr* results, uint maxItem);
-bool MW_WD_IsEnabled();
 
 // HashAPI with spoof call (forge GetProcAddress)
 void* FindAPI_SC(uint module, uint procedure, uint key);
@@ -898,13 +897,6 @@ static errno initSubmodules(Runtime* runtime)
     }
 
     // update context about continue modules
-    context.hMutex_LT = runtime->LibraryTracker->hMutex;
-    context.hMutex_MT = runtime->MemoryTracker->hMutex;
-    context.hMutex_TT = runtime->ThreadTracker->hMutex;
-    context.hMutex_RT = runtime->ResourceTracker->hMutex;
-    context.hMutex_AS = runtime->ArgumentStore->hMutex;
-    context.hMutex_IS = runtime->InMemoryStorage->hMutex;
-
     context.TT_NewThread        = runtime->ThreadTracker->New;
     context.TT_RecoverThreads   = runtime->ThreadTracker->Recover;
     context.TT_ForceKillThreads = runtime->ThreadTracker->ForceKill;
@@ -912,30 +904,33 @@ static errno initSubmodules(Runtime* runtime)
     context.RT_Cleanup = GetFuncAddr(&RT_Cleanup);
     context.RT_Stop    = GetFuncAddr(&RT_stop);
 
-    context.WD_IsEnabled = GetFuncAddr(&MW_WD_IsEnabled);
-
     // initialize reliability modules
-    module_t rel_modules[] = 
+    err = initWatchdog(runtime, &context);
+    if (err != NO_ERROR)
     {
-        GetFuncAddr(&initWatchdog),
-        GetFuncAddr(&initSysmon),
-    };
-    for (int i = 0; i < arrlen(rel_modules); i++)
+        return err;
+    }
+
+    // update context about sysmon
+    context.ModMutex[0] = runtime->Detector->hMutex;
+    context.ModMutex[1] = runtime->LibraryTracker->hMutex;
+    context.ModMutex[2] = runtime->MemoryTracker->hMutex;
+    context.ModMutex[3] = runtime->ThreadTracker->hMutex;
+    context.ModMutex[4] = runtime->ResourceTracker->hMutex;
+    context.ModMutex[5] = runtime->ArgumentStore->hMutex;
+    context.ModMutex[6] = runtime->InMemoryStorage->hMutex;
+    context.ModMutex[7] = runtime->Watchdog->hMutex;
+
+    context.WD_IsEnabled = runtime->Watchdog->IsEnabled;
+
+    err = initSysmon(runtime, &context);
+    if (err != NO_ERROR)
     {
-        errno errno = rel_modules[i](runtime, &context);
-        if (errno != NO_ERROR)
-        {
-            return errno;
-        }
+        return err;
     }
 
     // copy mutex handle for runtime
-    runtime->ModMutexHandle[0] = runtime->LibraryTracker->hMutex;
-    runtime->ModMutexHandle[1] = runtime->MemoryTracker->hMutex;
-    runtime->ModMutexHandle[2] = runtime->ThreadTracker->hMutex;
-    runtime->ModMutexHandle[3] = runtime->ResourceTracker->hMutex;
-    runtime->ModMutexHandle[4] = runtime->ArgumentStore->hMutex;
-    runtime->ModMutexHandle[5] = runtime->InMemoryStorage->hMutex;
+    mem_copy(runtime->ModMutexHandle, context.ModMutex, sizeof(context.ModMutex));
 
     // clean useless API functions in runtime structure
     RandBuffer((byte*)(&runtime->GetSystemInfo), sizeof(uintptr));
@@ -1784,14 +1779,6 @@ uint MW_MemScanByConfig(MemScan_Cfg* config, uintptr* results, uint maxItem)
         .VirtualQuery = runtime->VirtualQuery,
     };
     return MemScanByConfig(&ctx, config, results, maxItem);
-}
-
-__declspec(noinline)
-bool MW_WD_IsEnabled()
-{
-    Runtime* runtime = getRuntimePointer();
-
-    return runtime->Watchdog->IsEnabled();
 }
 
 __declspec(noinline)

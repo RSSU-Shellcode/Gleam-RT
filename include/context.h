@@ -26,10 +26,10 @@ typedef HANDLE (*TT_NewThread_t)(void* address, void* parameter, BOOL track);
 typedef errno  (*TT_RecoverThreads_t)();
 typedef errno  (*TT_ForceKillThreads_t)();
 
+typedef bool (*WD_IsEnabled_t)();
+
 typedef errno (*RT_Cleanup_t)();
 typedef errno (*RT_Stop_t)(bool exitThread, uint32 code);
-
-typedef bool (*WD_IsEnabled_t)();
 
 typedef struct {
     // runtime options

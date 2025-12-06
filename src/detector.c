@@ -564,7 +564,7 @@ BOOL DT_GetStatus(DT_Status* status)
 }
 
 __declspec(noinline)
-static bool DT_Lock()
+bool DT_Lock()
 {
     Detector* detector = getDetectorPointer();
 
@@ -573,7 +573,7 @@ static bool DT_Lock()
 }
 
 __declspec(noinline)
-static bool DT_Unlock()
+bool DT_Unlock()
 {
     Detector* detector = getDetectorPointer();
 

@@ -2,6 +2,7 @@
 #define MOD_ARGUMENT_H
 
 #include "c_types.h"
+#include "win_types.h"
 #include "errno.h"
 #include "context.h"
 

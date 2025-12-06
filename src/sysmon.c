@@ -35,18 +35,13 @@ typedef struct {
     rt_try_unlock_mods_t RT_TryUnlockMods;
 
     // copy from runtime submodules
-    HANDLE hMutex_LT;
-    HANDLE hMutex_MT;
-    HANDLE hMutex_TT;
-    HANDLE hMutex_RT;
-    HANDLE hMutex_AS;
-    HANDLE hMutex_IS;
-
     TT_RecoverThreads_t   TT_RecoverThreads;
     TT_ForceKillThreads_t TT_ForceKillThreads;
+    WD_IsEnabled_t        WD_IsEnabled;
     RT_Cleanup_t          RT_Cleanup;
     RT_Stop_t             RT_Stop;
-    WD_IsEnabled_t        WD_IsEnabled;
+
+    HANDLE ModMutex[8];
 
     // global mutex
     HANDLE hMutex;
@@ -249,19 +244,14 @@ static bool initSysmonEnvironment(Sysmon* sysmon, Context* context)
     // copy runtime methods
     sysmon->RT_TryLockMods   = context->try_lock_mods;
     sysmon->RT_TryUnlockMods = context->try_unlock_mods;
-    // copy mutex from context
-    sysmon->hMutex_LT = context->hMutex_LT;
-    sysmon->hMutex_MT = context->hMutex_MT;
-    sysmon->hMutex_TT = context->hMutex_TT;
-    sysmon->hMutex_RT = context->hMutex_RT;
-    sysmon->hMutex_AS = context->hMutex_AS;
-    sysmon->hMutex_IS = context->hMutex_IS;
     // copy methods from context
     sysmon->TT_RecoverThreads   = context->TT_RecoverThreads;
     sysmon->TT_ForceKillThreads = context->TT_ForceKillThreads;
+    sysmon->WD_IsEnabled        = context->WD_IsEnabled;
     sysmon->RT_Cleanup          = context->RT_Cleanup;
     sysmon->RT_Stop             = context->RT_Stop;
-    sysmon->WD_IsEnabled        = context->WD_IsEnabled;
+    // copy mutex from context
+    mem_copy(sysmon->ModMutex, context->ModMutex, sizeof(context->ModMutex));
     return true;
 }
 
@@ -398,20 +388,15 @@ static uint sm_watch()
 {
     Sysmon* sysmon = getSysmonPointer();
 
-    HANDLE handles[] = {
-        sysmon->hMutex_LT, sysmon->hMutex_MT, sysmon->hMutex_TT,
-        sysmon->hMutex_RT, sysmon->hMutex_AS, sysmon->hMutex_IS,
-        // TODO other modules
-    };
     uint result  = RESULT_SUCCESS;
     bool stopped = false;
-    for (int i = 0; i < arrlen(handles); i++)
+    for (int i = 0; i < arrlen(sysmon->ModMutex); i++)
     {
-        HANDLE objects[] = { handles[i], sysmon->hEvent };
+        HANDLE objects[] = { sysmon->ModMutex[i], sysmon->hEvent };
         switch (sysmon->WaitForMultipleObjects(2, objects, false, 10000))
         {
         case WAIT_OBJECT_0+0: case WAIT_ABANDONED+0:
-            if (!sysmon->ReleaseMutex(handles[i]))
+            if (!sysmon->ReleaseMutex(sysmon->ModMutex[i]))
             {
                 result = RESULT_FAILED;
             }

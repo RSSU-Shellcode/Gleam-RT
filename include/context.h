@@ -26,7 +26,7 @@ typedef HANDLE (*TT_NewThread_t)(void* address, void* parameter, BOOL track);
 typedef errno  (*TT_RecoverThreads_t)();
 typedef errno  (*TT_ForceKillThreads_t)();
 
-typedef bool (*WD_IsEnabled_t)();
+typedef BOOL (*WD_IsEnabled_t)();
 
 typedef errno (*RT_Cleanup_t)();
 typedef errno (*RT_Stop_t)(bool exitThread, uint32 code);
@@ -103,15 +103,6 @@ typedef struct {
     mt_mcap_t    mt_mcap;
 
     // for initialize watchdog and sysmon
-    HANDLE hMutex_DT;
-    HANDLE hMutex_LT;
-    HANDLE hMutex_MT;
-    HANDLE hMutex_TT;
-    HANDLE hMutex_RT;
-    HANDLE hMutex_AS;
-    HANDLE hMutex_IS;
-    HANDLE hMutex_WD;
-
     TT_NewThread_t        TT_NewThread;
     TT_RecoverThreads_t   TT_RecoverThreads;
     TT_ForceKillThreads_t TT_ForceKillThreads;
@@ -120,6 +111,8 @@ typedef struct {
 
     RT_Cleanup_t RT_Cleanup;
     RT_Stop_t    RT_Stop;
+
+    HANDLE ModMutex[8];
 } Context;
 
 #endif // CONTEXT_H

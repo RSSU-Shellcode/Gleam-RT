@@ -1643,14 +1643,15 @@ errno RT_lock_mods()
 
     submodule_t list[] = 
     {
-        { runtime->Watchdog->Lock,        ERR_RUNTIME_LOCK_WATCHDOG },
         { runtime->Sysmon->Lock,          ERR_RUNTIME_LOCK_SYSMON   },
+        { runtime->Watchdog->Lock,        ERR_RUNTIME_LOCK_WATCHDOG },
         { runtime->WinHTTP->Lock,         ERR_RUNTIME_LOCK_WIN_HTTP },
         { runtime->LibraryTracker->Lock,  ERR_RUNTIME_LOCK_LIBRARY  },
         { runtime->MemoryTracker->Lock,   ERR_RUNTIME_LOCK_MEMORY   },
         { runtime->ResourceTracker->Lock, ERR_RUNTIME_LOCK_RESOURCE },
         { runtime->ArgumentStore->Lock,   ERR_RUNTIME_LOCK_ARGUMENT },
         { runtime->InMemoryStorage->Lock, ERR_RUNTIME_LOCK_STORAGE  },
+        { runtime->Detector->Lock,        ERR_RUNTIME_LOCK_DETECTOR },
         { runtime->ThreadTracker->Lock,   ERR_RUNTIME_LOCK_THREAD   },
     };
 
@@ -1678,14 +1679,15 @@ errno RT_unlock_mods()
     submodule_t list[] = 
     {
         { runtime->ThreadTracker->Unlock,   ERR_RUNTIME_UNLOCK_THREAD   },
+        { runtime->Detector->Unlock,        ERR_RUNTIME_UNLOCK_DETECTOR },
         { runtime->LibraryTracker->Unlock,  ERR_RUNTIME_UNLOCK_LIBRARY  },
         { runtime->MemoryTracker->Unlock,   ERR_RUNTIME_UNLOCK_MEMORY   },
         { runtime->ResourceTracker->Unlock, ERR_RUNTIME_UNLOCK_RESOURCE },
         { runtime->ArgumentStore->Unlock,   ERR_RUNTIME_UNLOCK_ARGUMENT },
         { runtime->InMemoryStorage->Unlock, ERR_RUNTIME_UNLOCK_STORAGE  },
         { runtime->WinHTTP->Unlock,         ERR_RUNTIME_UNLOCK_WIN_HTTP },
-        { runtime->Sysmon->Unlock,          ERR_RUNTIME_UNLOCK_SYSMON   },
         { runtime->Watchdog->Unlock,        ERR_RUNTIME_UNLOCK_WATCHDOG },
+        { runtime->Sysmon->Unlock,          ERR_RUNTIME_UNLOCK_SYSMON   },
     };
 
     errno errno = NO_ERROR;
@@ -1963,8 +1965,8 @@ static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
     ArgumentStore_M*   AS = runtime->ArgumentStore;
     InMemoryStorage_M* IS = runtime->InMemoryStorage;
     Detector_M*        DT = runtime->Detector;
-    Sysmon_M*          SM = runtime->Sysmon;
     Watchdog_M*        WD = runtime->Watchdog;
+    Sysmon_M*          SM = runtime->Sysmon;
 
     typedef struct {
         uint mHash; uint pHash; uint hKey; void* method;
@@ -1993,13 +1995,13 @@ static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
         { 0x063C8C5F8892F112, 0x20EF072CE85923F8, 0x0A63186150433F11, IS->DeleteAll  }, // IS_DeleteAll
         { 0x25B52C97B0459C77, 0x581F53A28A65268E, 0xED463BBEAA5FD89F, DT->Detect     }, // DT_Detect
         { 0x8B8360604FA3C9B3, 0x186269BED712913B, 0x6D2CF70F8043A826, DT->GetStatus  }, // DT_Status
-        { 0x93981B1E2C294E7D, 0x875CE09ECE01D337, 0x437686381E0B5F7B, SM->GetStatus  }, // SM_Status
         { 0x33B8FBF493F076EE, 0xD08874D760CA7D86, 0xA4719EDF574FF3BD, WD->SetHandler }, // WD_SetHandler
         { 0x7A05CE0EFFF7AD3F, 0xC452D582688E6748, 0x306E7BA258D6F057, WD->Kick       }, // WD_Kick
         { 0x2217D5A7D8F87B58, 0x6466D654DC42A2F5, 0xDDF182373074C274, WD->Enable     }, // WD_Enable
         { 0x6B11F72479C7BDCC, 0x93B95D821AC7FDBB, 0x292E300258544350, WD->Disable    }, // WD_Disable
         { 0xE24990F5D9ECC90E, 0xA203A663F5364056, 0xDE186C4522AF6A07, WD->IsEnabled  }, // WD_IsEnabled
         { 0x0D76A695E8206CC4, 0xBBAECC7687F42C00, 0xCBEC3C2610B77733, WD->GetStatus  }, // WD_Status
+        { 0x93981B1E2C294E7D, 0x875CE09ECE01D337, 0x437686381E0B5F7B, SM->GetStatus  }, // SM_Status
     };
 #elif _WIN32
     {
@@ -2024,13 +2026,13 @@ static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
         { 0x813577DC, 0x985542B3, 0x41D8CA6A, IS->DeleteAll  }, // IS_DeleteAll
         { 0x0D41CF65, 0xC1D58FC0, 0xB24370DA, DT->Detect     }, // DT_Detect
         { 0x993D60ED, 0xA07B9091, 0x52CE44B2, DT->GetStatus  }, // DT_Status
-        { 0x18F200E3, 0x7DD1B99E, 0x7F4B2915, SM->GetStatus  }, // SM_Status
         { 0x5CC35F98, 0x7F44D8EC, 0x5B3C26E3, WD->SetHandler }, // WD_SetHandler
         { 0x48AE04AA, 0x22071C46, 0x98C6F05B, WD->Kick       }, // WD_Kick
         { 0x5933C656, 0xD43187BC, 0x6247B19C, WD->Enable     }, // WD_Enable
         { 0x0664499A, 0x2BFE9370, 0x0E5A84B4, WD->Disable    }, // WD_Disable
         { 0x901B44AD, 0x219D299A, 0xBFCD277B, WD->IsEnabled  }, // WD_IsEnabled
         { 0x8F5FA00C, 0x39DED160, 0x0134B86F, WD->GetStatus  }, // WD_Status
+        { 0x18F200E3, 0x7DD1B99E, 0x7F4B2915, SM->GetStatus  }, // SM_Status
     };
 #endif
     for (int i = 0; i < arrlen(list); i++)
@@ -2396,8 +2398,8 @@ static errno hide(Runtime* runtime)
     submodule_t submodules[] = {
         runtime->ThreadTracker->Suspend,
 
-        runtime->Watchdog->Pause,
         runtime->Sysmon->Pause,
+        runtime->Watchdog->Pause,
 
         runtime->WinHTTP->Clean,
         runtime->WinCrypto->Clean,
@@ -2431,8 +2433,8 @@ static errno recover(Runtime* runtime)
         runtime->MemoryTracker->Decrypt,
         runtime->LibraryTracker->Decrypt,
 
-        runtime->Sysmon->Continue,
         runtime->Watchdog->Continue,
+        runtime->Sysmon->Continue,
 
         runtime->ThreadTracker->Resume,
     };
@@ -2595,13 +2597,13 @@ errno RT_GetMetrics(Runtime_Metrics* metrics)
     {
         errno = ERR_RUNTIME_GET_STATUS_DETECTOR;
     }
-    if (!runtime->Sysmon->GetStatus(&metrics->Sysmon))
-    {
-        errno = ERR_RUNTIME_GET_STATUS_SYSMON;
-    }
     if (!runtime->Watchdog->GetStatus(&metrics->Watchdog))
     {
         errno = ERR_RUNTIME_GET_STATUS_WATCHDOG;
+    }
+    if (!runtime->Sysmon->GetStatus(&metrics->Sysmon))
+    {
+        errno = ERR_RUNTIME_GET_STATUS_SYSMON;
     }
 
     if (!rt_unlock())
@@ -2715,8 +2717,8 @@ errno RT_stop(bool exitThread, uint32 code)
     submodule_t submodules[] = 
     {
         // reliability modules
-        runtime->Watchdog->Stop,
         runtime->Sysmon->Stop,
+        runtime->Watchdog->Stop,
 
         // kill all threads
         runtime->ThreadTracker->Clean,

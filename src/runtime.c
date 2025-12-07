@@ -828,6 +828,9 @@ static errno initSubmodules(Runtime* runtime)
         .try_unlock_mods = GetFuncAddr(&RT_try_unlock_mods),
 
         .flush_api_cache = GetFuncAddr(&RT_flush_api_cache),
+
+        // for prevent link to internal "memset"
+        .ModMutex = {0},
     };
 
     // initialize security submodule

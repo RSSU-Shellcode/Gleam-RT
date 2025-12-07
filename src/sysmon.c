@@ -1,6 +1,7 @@
 #include "c_types.h"
 #include "win_types.h"
 #include "dll_kernel32.h"
+#include "lib_memory.h"
 #include "rel_addr.h"
 #include "hash_api.h"
 #include "random.h"

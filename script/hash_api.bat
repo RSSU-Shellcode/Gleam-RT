@@ -132,13 +132,13 @@ hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc IS_Delete
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc IS_DeleteAll
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc DT_Detect
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc DT_Status
-hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc SM_Status
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc WD_SetHandler
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc WD_Kick
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc WD_Enable
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc WD_Disable
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc WD_IsEnabled
 hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc WD_Status
+hash_api -fmt 64 -conc -mod "GleamRT.dll" -proc SM_Status
 echo.
 
 echo [Lazy API Redirector]
@@ -454,13 +454,13 @@ hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc IS_Delete
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc IS_DeleteAll
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc DT_Detect
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc DT_Status
-hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc SM_Status
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc WD_SetHandler
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc WD_Kick
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc WD_Enable
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc WD_Disable
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc WD_IsEnabled
 hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc WD_Status
+hash_api -fmt 32 -conc -mod "GleamRT.dll" -proc SM_Status
 echo.
 
 echo [Lazy API Redirector]

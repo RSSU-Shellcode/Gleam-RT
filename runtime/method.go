@@ -3,13 +3,14 @@
 package gleamrt
 
 import (
+	"fmt"
 	"syscall"
 	"time"
 	"unsafe"
 
-	"github.com/RSSU-Shellcode/GRT-Develop/metric"
-
 	"golang.org/x/sys/windows"
+
+	"github.com/RSSU-Shellcode/GRT-Develop/metric"
 )
 
 var (
@@ -40,7 +41,7 @@ func GetProcAddressByName(hModule uintptr, name string, redirect bool) (uintptr,
 		hModule, uintptr(unsafe.Pointer(namePtr)), boolToUintptr(redirect),
 	) // #nosec
 	if ret == 0 {
-		return 0, err
+		return 0, fmt.Errorf("failed to call GetProcAddressByName: 0x%8X", err.(syscall.Errno))
 	}
 	return ret, nil
 }
@@ -51,7 +52,7 @@ func GetProcAddressByHash(mHash, pHash, hKey uint, redirect bool) (uintptr, erro
 		uintptr(mHash), uintptr(pHash), uintptr(hKey), boolToUintptr(redirect),
 	) // #nosec
 	if ret == 0 {
-		return 0, err
+		return 0, fmt.Errorf("failed to call GetProcAddressByHash: 0x%8X", err.(syscall.Errno))
 	}
 	return ret, nil
 }
@@ -62,7 +63,7 @@ func GetProcAddressByHashML(list uintptr, mHash, pHash, hKey uint, redirect bool
 		list, uintptr(mHash), uintptr(pHash), uintptr(hKey), boolToUintptr(redirect),
 	) // #nosec
 	if ret == 0 {
-		return 0, err
+		return 0, fmt.Errorf("failed to call GetProcAddressByHashML: 0x%8X", err.(syscall.Errno))
 	}
 	return ret, nil
 }
@@ -77,7 +78,7 @@ func GetProcAddressOriginal(hModule uintptr, name string) (uintptr, error) {
 		hModule, uintptr(unsafe.Pointer(namePtr)),
 	) // #nosec
 	if ret == 0 {
-		return 0, err
+		return 0, fmt.Errorf("failed to call GetProcAddressOriginal: 0x%8X", err.(syscall.Errno))
 	}
 	return ret, nil
 }
@@ -103,11 +104,9 @@ func GetIMOML() uintptr {
 // GetMetrics is used to get runtime metrics.
 func GetMetrics() (*metric.Metrics, error) {
 	var metrics metric.Metrics
-	ret, _, err := procGetMetrics.Call(
-		uintptr(unsafe.Pointer(&metrics)),
-	) // #nosec
+	ret, _, err := procGetMetrics.Call(uintptr(unsafe.Pointer(&metrics))) // #nosec
 	if ret != windows.NO_ERROR {
-		return nil, err
+		return nil, fmt.Errorf("failed to call GetMetrics: 0x%8X", err.(syscall.Errno))
 	}
 	return &metrics, nil
 }
@@ -116,7 +115,7 @@ func GetMetrics() (*metric.Metrics, error) {
 func Sleep(d time.Duration) error {
 	ret, _, err := procSleep.Call(uintptr(d.Milliseconds()))
 	if ret != windows.NO_ERROR {
-		return err
+		return fmt.Errorf("failed to call Sleep: 0x%8X", err.(syscall.Errno))
 	}
 	return nil
 }

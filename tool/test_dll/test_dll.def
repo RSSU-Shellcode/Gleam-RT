@@ -1,0 +1,19 @@
+LIBRARY
+EXPORTS
+    RT_Init = Init
+
+    RT_GetProcAddressByName   = RT_GetProcAddressByName
+    RT_GetProcAddressByHash   = RT_GetProcAddressByHash
+    RT_GetProcAddressByHashML = RT_GetProcAddressByHashML
+    RT_GetProcAddressOriginal = RT_GetProcAddressOriginal
+    RT_GetPEB                 = RT_GetPEB
+	RT_GetTEB                 = RT_GetTEB
+	RT_GetIMOML               = RT_GetIMOML
+	RT_GetMetrics             = RT_GetMetrics
+	RT_Sleep                  = RT_Sleep
+	RT_ExitProcess            = RT_ExitProcess
+
+    AS_GetValue               = AS_GetValue
+    AS_GetPointer             = AS_GetPointer
+    AS_Erase                  = AS_Erase
+    AS_EraseAll               = AS_EraseAll

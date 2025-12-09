@@ -16,6 +16,8 @@ import (
 var (
 	modGleamRT = windows.NewLazyDLL("GleamRT.dll")
 
+	procInit = modGleamRT.NewProc("RT_Init")
+
 	procGetProcAddressByName   = modGleamRT.NewProc("RT_GetProcAddressByName")
 	procGetProcAddressByHash   = modGleamRT.NewProc("RT_GetProcAddressByHash")
 	procGetProcAddressByHashML = modGleamRT.NewProc("RT_GetProcAddressByHashML")
@@ -30,6 +32,15 @@ var (
 
 	procExitProcess = modGleamRT.NewProc("RT_ExitProcess")
 )
+
+// Init is used to initialize runtime dll(only for test).
+func Init(opts *Options) error {
+	ret, _, err := procInit.Call(uintptr(unsafe.Pointer(opts)))
+	if ret == 0 {
+		return fmt.Errorf("failed to initialize runtime: 0x%8X", err.(syscall.Errno))
+	}
+	return nil
+}
 
 // GetProcAddressByName is used to get procedure address by name.
 func GetProcAddressByName(hModule uintptr, name string, redirect bool) (uintptr, error) {

@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{c71847ce-c104-43f1-90f8-4bf4781de35a}</ProjectGuid>
+    <RootNamespace>test_dll</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>test_dll</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <GenerateManifest>false</GenerateManifest>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <GenerateManifest>false</GenerateManifest>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>EnableAllWarnings</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)include</AdditionalIncludeDirectories>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <CallingConvention>StdCall</CallingConvention>
+      <Optimization>MinSpace</Optimization>
+      <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+    </Link>
+    <MASM>
+      <PreprocessorDefinitions>_WIN32</PreprocessorDefinitions>
+    </MASM>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>EnableAllWarnings</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)include</AdditionalIncludeDirectories>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <CallingConvention>StdCall</CallingConvention>
+      <Optimization>MinSpace</Optimization>
+      <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+    </Link>
+    <MASM>
+      <PreprocessorDefinitions>
+      </PreprocessorDefinitions>
+    </MASM>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="build.h" />
+    <ClInclude Include="..\..\include\c_types.h" />
+    <ClInclude Include="..\..\include\win_types.h" />
+    <ClInclude Include="..\..\include\dll_kernel32.h" />
+    <ClInclude Include="..\..\include\dll_ntdll.h" />
+    <ClInclude Include="..\..\include\dll_msvcrt.h" />
+    <ClInclude Include="..\..\include\dll_ucrtbase.h" />
+    <ClInclude Include="..\..\include\dll_psapi.h" />
+    <ClInclude Include="..\..\include\dll_ws2_32.h" />
+    <ClInclude Include="..\..\include\dll_winhttp.h" />
+    <ClInclude Include="..\..\include\dll_advapi32.h" />
+    <ClInclude Include="..\..\include\lib_memory.h" />
+    <ClInclude Include="..\..\include\lib_string.h" />
+    <ClInclude Include="..\..\include\lib_match.h" />
+    <ClInclude Include="..\..\include\rel_addr.h" />
+    <ClInclude Include="..\..\include\hash_api.h" />
+    <ClInclude Include="..\..\include\list_md.h" />
+    <ClInclude Include="..\..\include\random.h" />
+    <ClInclude Include="..\..\include\crypto.h" />
+    <ClInclude Include="..\..\include\compress.h" />
+    <ClInclude Include="..\..\include\serialize.h" />
+    <ClInclude Include="..\..\include\mem_scanner.h" />
+    <ClInclude Include="..\..\include\pe_image.h" />
+    <ClInclude Include="..\..\include\thread.h" />
+    <ClInclude Include="..\..\include\win_api.h" />
+    <ClInclude Include="..\..\include\errno.h" />
+    <ClInclude Include="..\..\include\context.h" />
+    <ClInclude Include="..\..\include\layout.h" />
+    <ClInclude Include="..\..\include\detector.h" />
+    <ClInclude Include="..\..\include\mod_library.h" />
+    <ClInclude Include="..\..\include\mod_memory.h" />
+    <ClInclude Include="..\..\include\mod_thread.h" />
+    <ClInclude Include="..\..\include\mod_resource.h" />
+    <ClInclude Include="..\..\include\mod_argument.h" />
+    <ClInclude Include="..\..\include\mod_storage.h" />
+    <ClInclude Include="..\..\include\win_base.h" />
+    <ClInclude Include="..\..\include\win_file.h" />
+    <ClInclude Include="..\..\include\win_http.h" />
+    <ClInclude Include="..\..\include\win_crypto.h" />
+    <ClInclude Include="..\..\include\watchdog.h" />
+    <ClInclude Include="..\..\include\sysmon.h" />
+    <ClInclude Include="..\..\include\shield.h" />
+    <ClInclude Include="..\..\include\runtime.h" />
+    <ClInclude Include="..\..\include\debug.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="dll_main.c" />
+    <ClCompile Include="..\..\src\runtime.c" />
+    <ClCompile Include="..\..\src\lib_memory.c" />
+    <ClCompile Include="..\..\src\lib_string.c" />
+    <ClCompile Include="..\..\src\lib_match.c" />
+    <ClCompile Include="..\..\src\rel_addr.c" />
+    <ClCompile Include="..\..\src\hash_api.c" />
+    <ClCompile Include="..\..\src\list_md.c" />
+    <ClCompile Include="..\..\src\random.c" />
+    <ClCompile Include="..\..\src\crypto.c" />
+    <ClCompile Include="..\..\src\compress.c" />
+    <ClCompile Include="..\..\src\serialize.c" />
+    <ClCompile Include="..\..\src\mem_scanner.c" />
+    <ClCompile Include="..\..\src\pe_image.c" />
+    <ClCompile Include="..\..\src\thread.c" />
+    <ClCompile Include="..\..\src\win_api.c" />
+    <ClCompile Include="..\..\src\errno.c" />
+    <ClCompile Include="..\..\src\detector.c" />
+    <ClCompile Include="..\..\src\mod_library.c" />
+    <ClCompile Include="..\..\src\mod_memory.c" />
+    <ClCompile Include="..\..\src\mod_thread.c" />
+    <ClCompile Include="..\..\src\mod_resource.c" />
+    <ClCompile Include="..\..\src\mod_argument.c" />
+    <ClCompile Include="..\..\src\mod_storage.c" />
+    <ClCompile Include="..\..\src\win_base.c" />
+    <ClCompile Include="..\..\src\win_file.c" />
+    <ClCompile Include="..\..\src\win_http.c" />
+    <ClCompile Include="..\..\src\win_crypto.c" />
+    <ClCompile Include="..\..\src\watchdog.c" />
+    <ClCompile Include="..\..\src\sysmon.c" />
+    <ClCompile Include="..\..\src\shield.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="..\..\asm\msvc\llmul.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="..\..\asm\msvc\llrem.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="..\..\asm\msvc\llshl.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="..\..\asm\msvc\llshr.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="..\..\asm\msvc\ullrem.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="..\..\asm\msvc\ullshr.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="..\..\asm\_random.asm" />
+    <MASM Include="..\..\asm\align_stub.asm" />
+    <MASM Include="..\..\asm\opts_stub.asm" />
+    <MASM Include="..\..\asm\args_stub.asm" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
+  </ImportGroup>
+</Project>

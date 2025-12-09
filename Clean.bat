@@ -22,6 +22,11 @@ rd /S /Q "test\Release"
 rd /S /Q "test\x64"
 rd /S /Q "test\x86"
 
+rd /S /Q "tool\test_dll\Debug"
+rd /S /Q "tool\test_dll\Release"
+rd /S /Q "tool\test_dll\x64"
+rd /S /Q "tool\test_dll\x86"
+
 rd /S /Q "tool\sc_loader\Debug"
 rd /S /Q "tool\sc_loader\Release"
 rd /S /Q "tool\sc_loader\x64"

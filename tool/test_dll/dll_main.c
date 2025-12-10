@@ -5,7 +5,7 @@
 #include "errno.h"
 #include "runtime.h"
 
-bool initialized = false;
+Runtime_M* RuntimeM = NULL;
 
 #pragma comment(linker, "/ENTRY:DllMain")
 BOOL DllMain(HMODULE hModule, DWORD dwReason, LPVOID lpReserved)
@@ -15,28 +15,33 @@ BOOL DllMain(HMODULE hModule, DWORD dwReason, LPVOID lpReserved)
     case DLL_PROCESS_ATTACH:
         return true;
     case DLL_PROCESS_DETACH:
-        if (!initialized)
+        if (RuntimeM == NULL)
         {
             return true;
         }
-        return RT_Exit() == NO_ERROR;
+        errno err = RuntimeM->Core.Exit();
+        if (err != NO_ERROR)
+        {
+            SetLastErrno(err);
+            return false;
+        }
+        return true;
     case DLL_THREAD_ATTACH:
         return true;
     case DLL_THREAD_DETACH:
         return true;
-    default:
-        return false;
     }
     (void)hModule;
     (void)lpReserved;
+    return false;
 }
 
 BOOL Init(Runtime_Opts* opts)
 {
-    if (InitRuntime(opts) == NULL)
+    RuntimeM = InitRuntime(opts);
+    if (RuntimeM == NULL)
     {
         return false;
     }
-    initialized = true;
     return true;
 }

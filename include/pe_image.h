@@ -6,6 +6,11 @@
 
 #define DOS_HEADER_SIZE 64
 
+#define DLL_PROCESS_ATTACH 1
+#define DLL_PROCESS_DETACH 0
+#define DLL_THREAD_ATTACH  2
+#define DLL_THREAD_DETACH  3
+
 typedef struct {
     WORD  Machine;
     WORD  NumberOfSections;

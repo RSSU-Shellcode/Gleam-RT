@@ -399,7 +399,6 @@ FodyWeavers.xsd
 
 # Ignore utility executables for scripts
 *.exe
-*.dll
 
 # Ignore JetBrains GoLand
 .idea

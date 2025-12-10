@@ -714,4 +714,7 @@ typedef struct {
 // If failed to initialize, use GetLastError to get error code.
 Runtime_M* InitRuntime(Runtime_Opts* opts);
 
+// RT_Exit is used to export method for test_dll when DLL_PROCESS_DETACH.
+errno RT_Exit();
+
 #endif // RUNTIME_H

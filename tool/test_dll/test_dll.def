@@ -13,7 +13,25 @@ EXPORTS
 	RT_Sleep                  = RT_Sleep
 	RT_ExitProcess            = RT_ExitProcess
 
-    AS_GetValue               = AS_GetValue
-    AS_GetPointer             = AS_GetPointer
-    AS_Erase                  = AS_Erase
-    AS_EraseAll               = AS_EraseAll
+    AS_GetValue   = AS_GetValue
+    AS_GetPointer = AS_GetPointer
+    AS_Erase      = AS_Erase
+    AS_EraseAll   = AS_EraseAll
+
+    IS_SetValue   = IMS_SetValue
+    IS_GetValue   = IMS_GetValue
+    IS_GetPointer = IMS_GetPointer
+    IS_Delete     = IMS_Delete
+    IS_DeleteAll  = IMS_DeleteAll
+
+    DT_Detect = DT_Detect
+    DT_Status = DT_GetStatus
+
+    WD_SetHandler = WD_SetHandler
+    WD_Kick       = WD_Kick
+    WD_Enable     = WD_Enable
+    WD_Disable    = WD_Disable
+    WD_IsEnabled  = WD_IsEnabled
+    WD_Status     = WD_GetStatus
+
+    SM_Status = SM_GetStatus

@@ -16,7 +16,7 @@ import (
 var (
 	modGleamRT = windows.NewLazyDLL("GleamRT.dll")
 
-	procInit = modGleamRT.NewProc("RT_Init")
+	procInitialize = modGleamRT.NewProc("RT_Initialize")
 
 	procGetProcAddressByName   = modGleamRT.NewProc("RT_GetProcAddressByName")
 	procGetProcAddressByHash   = modGleamRT.NewProc("RT_GetProcAddressByHash")
@@ -33,11 +33,12 @@ var (
 	procExitProcess = modGleamRT.NewProc("RT_ExitProcess")
 )
 
-// Init is used to initialize runtime dll(only for test).
-func Init(opts *Options) error {
-	ret, _, err := procInit.Call(uintptr(unsafe.Pointer(opts)))
+// Initialize is used to call InitRuntime(only for test).
+func Initialize(opts *Options) error {
+	ret, _, err := procInitialize.Call(uintptr(unsafe.Pointer(opts)))
 	if ret == 0 {
-		return fmt.Errorf("failed to initialize runtime: 0x%8X", err.(syscall.Errno))
+		en := uintptr(err.(syscall.Errno))
+		return fmt.Errorf("failed to initialize runtime: 0x%8X", en)
 	}
 	return nil
 }
@@ -52,7 +53,8 @@ func GetProcAddressByName(hModule uintptr, name string, redirect bool) (uintptr,
 		hModule, uintptr(unsafe.Pointer(namePtr)), boolToUintptr(redirect),
 	) // #nosec
 	if ret == 0 {
-		return 0, fmt.Errorf("failed to call GetProcAddressByName: 0x%8X", err.(syscall.Errno))
+		en := uintptr(err.(syscall.Errno))
+		return 0, fmt.Errorf("failed to call GetProcAddressByName: 0x%8X", en)
 	}
 	return ret, nil
 }
@@ -63,7 +65,8 @@ func GetProcAddressByHash(mHash, pHash, hKey uint, redirect bool) (uintptr, erro
 		uintptr(mHash), uintptr(pHash), uintptr(hKey), boolToUintptr(redirect),
 	) // #nosec
 	if ret == 0 {
-		return 0, fmt.Errorf("failed to call GetProcAddressByHash: 0x%8X", err.(syscall.Errno))
+		en := uintptr(err.(syscall.Errno))
+		return 0, fmt.Errorf("failed to call GetProcAddressByHash: 0x%8X", en)
 	}
 	return ret, nil
 }
@@ -74,7 +77,8 @@ func GetProcAddressByHashML(list uintptr, mHash, pHash, hKey uint, redirect bool
 		list, uintptr(mHash), uintptr(pHash), uintptr(hKey), boolToUintptr(redirect),
 	) // #nosec
 	if ret == 0 {
-		return 0, fmt.Errorf("failed to call GetProcAddressByHashML: 0x%8X", err.(syscall.Errno))
+		en := uintptr(err.(syscall.Errno))
+		return 0, fmt.Errorf("failed to call GetProcAddressByHashML: 0x%8X", en)
 	}
 	return ret, nil
 }
@@ -89,7 +93,8 @@ func GetProcAddressOriginal(hModule uintptr, name string) (uintptr, error) {
 		hModule, uintptr(unsafe.Pointer(namePtr)),
 	) // #nosec
 	if ret == 0 {
-		return 0, fmt.Errorf("failed to call GetProcAddressOriginal: 0x%8X", err.(syscall.Errno))
+		en := uintptr(err.(syscall.Errno))
+		return 0, fmt.Errorf("failed to call GetProcAddressOriginal: 0x%8X", en)
 	}
 	return ret, nil
 }
@@ -117,7 +122,8 @@ func GetMetrics() (*metric.Metrics, error) {
 	var metrics metric.Metrics
 	ret, _, err := procGetMetrics.Call(uintptr(unsafe.Pointer(&metrics))) // #nosec
 	if ret != windows.NO_ERROR {
-		return nil, fmt.Errorf("failed to call GetMetrics: 0x%8X", err.(syscall.Errno))
+		en := uintptr(err.(syscall.Errno))
+		return nil, fmt.Errorf("failed to call GetMetrics: 0x%8X", en)
 	}
 	return &metrics, nil
 }
@@ -126,7 +132,8 @@ func GetMetrics() (*metric.Metrics, error) {
 func Sleep(d time.Duration) error {
 	ret, _, err := procSleep.Call(uintptr(d.Milliseconds()))
 	if ret != windows.NO_ERROR {
-		return fmt.Errorf("failed to call Sleep: 0x%8X", err.(syscall.Errno))
+		en := uintptr(err.(syscall.Errno))
+		return fmt.Errorf("failed to call Sleep: 0x%8X", en)
 	}
 	return nil
 }

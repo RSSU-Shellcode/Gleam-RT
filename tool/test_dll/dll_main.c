@@ -36,8 +36,12 @@ BOOL DllMain(HMODULE hModule, DWORD dwReason, LPVOID lpReserved)
     return false;
 }
 
-BOOL Init(Runtime_Opts* opts)
+BOOL Initialize(Runtime_Opts* opts)
 {
+    if (RuntimeM != NULL)
+    {
+        return true;
+    }
     RuntimeM = InitRuntime(opts);
     if (RuntimeM == NULL)
     {

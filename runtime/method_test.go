@@ -44,7 +44,32 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func TestInit(t *testing.T) {
-	err := Init(nil)
+func TestInitialize(t *testing.T) {
+	err := Initialize(nil)
 	require.NoError(t, err)
+}
+
+func TestGetProcAddressByName(t *testing.T) {
+	err := Initialize(nil)
+	require.NoError(t, err)
+
+	libKernel32, err := windows.LoadLibrary("kernel32.dll")
+	require.NoError(t, err)
+	hKernel32 := uintptr(libKernel32)
+
+	VirtualAlloc, err := windows.GetProcAddress(libKernel32, "VirtualAlloc")
+	require.NoError(t, err)
+
+	t.Run("redirected", func(t *testing.T) {
+		proc, err := GetProcAddressByName(hKernel32, "VirtualAlloc", true)
+		require.NoError(t, err)
+		require.NotZero(t, proc)
+		require.NotEqual(t, VirtualAlloc, proc)
+	})
+
+	t.Run("not redirected", func(t *testing.T) {
+		proc, err := GetProcAddressByName(hKernel32, "VirtualAlloc", false)
+		require.NoError(t, err)
+		require.Equal(t, VirtualAlloc, proc)
+	})
 }

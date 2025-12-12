@@ -3,9 +3,11 @@
 package gleamrt
 
 import (
+	"fmt"
 	"os"
 	"runtime"
 	"testing"
+	"unsafe"
 
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sys/windows"
@@ -69,6 +71,91 @@ func TestGetProcAddressByName(t *testing.T) {
 
 	t.Run("not redirected", func(t *testing.T) {
 		proc, err := GetProcAddressByName(hKernel32, "VirtualAlloc", false)
+		require.NoError(t, err)
+		require.Equal(t, VirtualAlloc, proc)
+	})
+}
+
+func TestGetProcAddressByHash(t *testing.T) {
+	err := Initialize(nil)
+	require.NoError(t, err)
+
+	hKernel32, err := windows.LoadLibrary("kernel32.dll")
+	require.NoError(t, err)
+	VirtualAlloc, err := windows.GetProcAddress(hKernel32, "VirtualAlloc")
+	require.NoError(t, err)
+
+	var (
+		mHash uint64
+		pHash uint64
+		hhKey uint64
+	)
+	switch runtime.GOARCH {
+	case "386":
+		mHash = 0xED38BE94
+		pHash = 0x2EC158C4
+		hhKey = 0xB33593DB
+	case "amd64":
+		mHash = 0x01D79EDD3081D078
+		pHash = 0x447B8E23EA19AFBF
+		hhKey = 0xC733FDBD9B57119F
+	}
+
+	t.Run("redirected", func(t *testing.T) {
+		proc, err := GetProcAddressByHash(uint(mHash), uint(pHash), uint(hhKey), true)
+		require.NoError(t, err)
+		require.NotZero(t, proc)
+		require.NotEqual(t, VirtualAlloc, proc)
+	})
+
+	t.Run("not redirected", func(t *testing.T) {
+		proc, err := GetProcAddressByHash(uint(mHash), uint(pHash), uint(hhKey), false)
+		require.NoError(t, err)
+		require.Equal(t, VirtualAlloc, proc)
+	})
+}
+
+func TestGetProcAddressByHashML(t *testing.T) {
+	err := Initialize(nil)
+	require.NoError(t, err)
+
+	hKernel32, err := windows.LoadLibrary("kernel32.dll")
+	require.NoError(t, err)
+	VirtualAlloc, err := windows.GetProcAddress(hKernel32, "VirtualAlloc")
+	require.NoError(t, err)
+
+	imoml := &windows.RtlGetCurrentPeb().Ldr.InMemoryOrderModuleList
+	list := uintptr(unsafe.Pointer(imoml)) // #nosec
+	fmt.Printf("0x%X\n", list)
+
+	list = GetIMOML()
+	fmt.Printf("0x%X\n", list)
+
+	var (
+		mHash uint64
+		pHash uint64
+		hhKey uint64
+	)
+	switch runtime.GOARCH {
+	case "386":
+		mHash = 0xED38BE94
+		pHash = 0x2EC158C4
+		hhKey = 0xB33593DB
+	case "amd64":
+		mHash = 0x01D79EDD3081D078
+		pHash = 0x447B8E23EA19AFBF
+		hhKey = 0xC733FDBD9B57119F
+	}
+
+	t.Run("redirected", func(t *testing.T) {
+		proc, err := GetProcAddressByHashML(list, uint(mHash), uint(pHash), uint(hhKey), true)
+		require.NoError(t, err)
+		require.NotZero(t, proc)
+		require.NotEqual(t, VirtualAlloc, proc)
+	})
+
+	t.Run("not redirected", func(t *testing.T) {
+		proc, err := GetProcAddressByHashML(list, uint(mHash), uint(pHash), uint(hhKey), false)
 		require.NoError(t, err)
 		require.Equal(t, VirtualAlloc, proc)
 	})

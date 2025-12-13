@@ -3,7 +3,6 @@
 package gleamrt
 
 import (
-	"fmt"
 	"os"
 	"runtime"
 	"testing"
@@ -124,13 +123,7 @@ func TestGetProcAddressByHashML(t *testing.T) {
 	VirtualAlloc, err := windows.GetProcAddress(hKernel32, "VirtualAlloc")
 	require.NoError(t, err)
 
-	imoml := &windows.RtlGetCurrentPeb().Ldr.InMemoryOrderModuleList
-	list := uintptr(unsafe.Pointer(imoml)) // #nosec
-	fmt.Printf("0x%X\n", list)
-
-	list = GetIMOML()
-	fmt.Printf("0x%X\n", list)
-
+	list := GetIMOML()
 	var (
 		mHash uint64
 		pHash uint64
@@ -158,5 +151,48 @@ func TestGetProcAddressByHashML(t *testing.T) {
 		proc, err := GetProcAddressByHashML(list, uint(mHash), uint(pHash), uint(hhKey), false)
 		require.NoError(t, err)
 		require.Equal(t, VirtualAlloc, proc)
+	})
+}
+
+func TestGetProcAddressOriginal(t *testing.T) {
+	err := Initialize(nil)
+	require.NoError(t, err)
+
+	libKernel32, err := windows.LoadLibrary("kernel32.dll")
+	require.NoError(t, err)
+	hKernel32 := uintptr(libKernel32)
+
+	VirtualAlloc, err := windows.GetProcAddress(libKernel32, "VirtualAlloc")
+	require.NoError(t, err)
+
+	proc, err := GetProcAddressOriginal(hKernel32, "VirtualAlloc")
+	require.NoError(t, err)
+	require.Equal(t, VirtualAlloc, proc)
+}
+
+func TestGetIMOML(t *testing.T) {
+	actual := GetIMOML()
+
+	peb := windows.RtlGetCurrentPeb()
+	addr := uintptr(unsafe.Pointer(peb)) // #nosec
+
+	t.Run("x86", func(t *testing.T) {
+		if runtime.GOARCH != "386" {
+			return
+		}
+
+		ldr := *(*uintptr)(unsafe.Pointer(addr + 0x0C)) // #nosec
+		mod := *(*uintptr)(unsafe.Pointer(ldr + 0x14))  // #nosec
+		require.Equal(t, mod, actual)
+	})
+
+	t.Run("x64", func(t *testing.T) {
+		if runtime.GOARCH != "amd64" {
+			return
+		}
+
+		ldr := *(*uintptr)(unsafe.Pointer(addr + 0x18)) // #nosec
+		mod := *(*uintptr)(unsafe.Pointer(ldr + 0x20))  // #nosec
+		require.Equal(t, mod, actual)
 	})
 }

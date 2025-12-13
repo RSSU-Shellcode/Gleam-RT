@@ -38,7 +38,7 @@ func Initialize(opts *Options) error {
 	ret, _, err := procInitialize.Call(uintptr(unsafe.Pointer(opts)))
 	if ret == 0 {
 		en := uintptr(err.(syscall.Errno))
-		return fmt.Errorf("failed to initialize runtime: 0x%8X", en)
+		return fmt.Errorf("failed to initialize runtime: 0x%08X", en)
 	}
 	return nil
 }
@@ -54,7 +54,7 @@ func GetProcAddressByName(hModule uintptr, name string, redirect bool) (uintptr,
 	) // #nosec
 	if ret == 0 {
 		en := uintptr(err.(syscall.Errno))
-		return 0, fmt.Errorf("failed to call GetProcAddressByName: 0x%8X", en)
+		return 0, fmt.Errorf("failed to call GetProcAddressByName: 0x%08X", en)
 	}
 	return ret, nil
 }
@@ -66,7 +66,7 @@ func GetProcAddressByHash(mHash, pHash, hKey uint, redirect bool) (uintptr, erro
 	) // #nosec
 	if ret == 0 {
 		en := uintptr(err.(syscall.Errno))
-		return 0, fmt.Errorf("failed to call GetProcAddressByHash: 0x%8X", en)
+		return 0, fmt.Errorf("failed to call GetProcAddressByHash: 0x%08X", en)
 	}
 	return ret, nil
 }
@@ -78,7 +78,7 @@ func GetProcAddressByHashML(list uintptr, mHash, pHash, hKey uint, redirect bool
 	) // #nosec
 	if ret == 0 {
 		en := uintptr(err.(syscall.Errno))
-		return 0, fmt.Errorf("failed to call GetProcAddressByHashML: 0x%8X", en)
+		return 0, fmt.Errorf("failed to call GetProcAddressByHashML: 0x%08X", en)
 	}
 	return ret, nil
 }
@@ -94,7 +94,7 @@ func GetProcAddressOriginal(hModule uintptr, name string) (uintptr, error) {
 	) // #nosec
 	if ret == 0 {
 		en := uintptr(err.(syscall.Errno))
-		return 0, fmt.Errorf("failed to call GetProcAddressOriginal: 0x%8X", en)
+		return 0, fmt.Errorf("failed to call GetProcAddressOriginal: 0x%08X", en)
 	}
 	return ret, nil
 }
@@ -123,7 +123,7 @@ func GetMetrics() (*metric.Metrics, error) {
 	ret, _, err := procGetMetrics.Call(uintptr(unsafe.Pointer(&metrics))) // #nosec
 	if ret != windows.NO_ERROR {
 		en := uintptr(err.(syscall.Errno))
-		return nil, fmt.Errorf("failed to call GetMetrics: 0x%8X", en)
+		return nil, fmt.Errorf("failed to call GetMetrics: 0x%08X", en)
 	}
 	return &metrics, nil
 }
@@ -133,7 +133,7 @@ func Sleep(d time.Duration) error {
 	ret, _, err := procSleep.Call(uintptr(d.Milliseconds()))
 	if ret != windows.NO_ERROR {
 		en := uintptr(err.(syscall.Errno))
-		return fmt.Errorf("failed to call Sleep: 0x%8X", en)
+		return fmt.Errorf("failed to call Sleep: 0x%08X", en)
 	}
 	return nil
 }

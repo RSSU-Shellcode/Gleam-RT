@@ -120,20 +120,18 @@ func GetIMOML() uintptr {
 // GetMetrics is used to get runtime metrics.
 func GetMetrics() (*metric.Metrics, error) {
 	var metrics metric.Metrics
-	ret, _, err := procGetMetrics.Call(uintptr(unsafe.Pointer(&metrics))) // #nosec
+	ret, _, _ := procGetMetrics.Call(uintptr(unsafe.Pointer(&metrics))) // #nosec
 	if ret != windows.NO_ERROR {
-		en := uintptr(err.(syscall.Errno))
-		return nil, fmt.Errorf("failed to call GetMetrics: 0x%08X", en)
+		return nil, fmt.Errorf("failed to call GetMetrics: 0x%08X", ret)
 	}
 	return &metrics, nil
 }
 
 // Sleep is used to hide and sleep, it is the core method.
 func Sleep(d time.Duration) error {
-	ret, _, err := procSleep.Call(uintptr(d.Milliseconds()))
+	ret, _, _ := procSleep.Call(uintptr(d.Milliseconds()))
 	if ret != windows.NO_ERROR {
-		en := uintptr(err.(syscall.Errno))
-		return fmt.Errorf("failed to call Sleep: 0x%08X", en)
+		return fmt.Errorf("failed to call Sleep: 0x%08X", ret)
 	}
 	return nil
 }

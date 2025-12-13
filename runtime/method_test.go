@@ -33,9 +33,14 @@ func init() {
 }
 
 func TestMain(m *testing.M) {
+	err := Initialize(nil)
+	if err != nil {
+		panic(err)
+	}
+
 	code := m.Run()
 
-	err := windows.FreeLibrary(windows.Handle(modGleamRT.Handle()))
+	err = windows.FreeLibrary(windows.Handle(modGleamRT.Handle()))
 	if err != nil {
 		panic(err)
 	}
@@ -53,9 +58,6 @@ func TestInitialize(t *testing.T) {
 }
 
 func TestGetProcAddressByName(t *testing.T) {
-	err := Initialize(nil)
-	require.NoError(t, err)
-
 	libKernel32, err := windows.LoadLibrary("kernel32.dll")
 	require.NoError(t, err)
 	hKernel32 := uintptr(libKernel32)
@@ -78,9 +80,6 @@ func TestGetProcAddressByName(t *testing.T) {
 }
 
 func TestGetProcAddressByHash(t *testing.T) {
-	err := Initialize(nil)
-	require.NoError(t, err)
-
 	hKernel32, err := windows.LoadLibrary("kernel32.dll")
 	require.NoError(t, err)
 	VirtualAlloc, err := windows.GetProcAddress(hKernel32, "VirtualAlloc")
@@ -117,9 +116,6 @@ func TestGetProcAddressByHash(t *testing.T) {
 }
 
 func TestGetProcAddressByHashML(t *testing.T) {
-	err := Initialize(nil)
-	require.NoError(t, err)
-
 	hKernel32, err := windows.LoadLibrary("kernel32.dll")
 	require.NoError(t, err)
 	VirtualAlloc, err := windows.GetProcAddress(hKernel32, "VirtualAlloc")
@@ -157,9 +153,6 @@ func TestGetProcAddressByHashML(t *testing.T) {
 }
 
 func TestGetProcAddressOriginal(t *testing.T) {
-	err := Initialize(nil)
-	require.NoError(t, err)
-
 	libKernel32, err := windows.LoadLibrary("kernel32.dll")
 	require.NoError(t, err)
 	hKernel32 := uintptr(libKernel32)
@@ -173,9 +166,6 @@ func TestGetProcAddressOriginal(t *testing.T) {
 }
 
 func TestGetPEB(t *testing.T) {
-	err := Initialize(nil)
-	require.NoError(t, err)
-
 	peb := windows.RtlGetCurrentPeb()
 	expect := uintptr(unsafe.Pointer(peb)) // #nosec
 	actual := GetPEB()
@@ -183,17 +173,11 @@ func TestGetPEB(t *testing.T) {
 }
 
 func TestGetTEB(t *testing.T) {
-	err := Initialize(nil)
-	require.NoError(t, err)
-
 	teb := GetTEB()
 	require.NotZero(t, teb)
 }
 
 func TestGetIMOML(t *testing.T) {
-	err := Initialize(nil)
-	require.NoError(t, err)
-
 	actual := GetIMOML()
 
 	peb := windows.RtlGetCurrentPeb()
@@ -221,21 +205,15 @@ func TestGetIMOML(t *testing.T) {
 }
 
 func TestGetMetrics(t *testing.T) {
-	err := Initialize(nil)
-	require.NoError(t, err)
-
 	metrics, err := GetMetrics()
 	require.NoError(t, err)
 	spew.Dump(metrics)
 }
 
 func TestSleep(t *testing.T) {
-	err := Initialize(nil)
-	require.NoError(t, err)
-
 	now := time.Now()
 
-	err = Sleep(time.Second)
+	err := Sleep(time.Second)
 	require.NoError(t, err)
 
 	d := time.Since(now)

@@ -6,8 +6,10 @@ import (
 	"os"
 	"runtime"
 	"testing"
+	"time"
 	"unsafe"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sys/windows"
 )
@@ -170,7 +172,28 @@ func TestGetProcAddressOriginal(t *testing.T) {
 	require.Equal(t, VirtualAlloc, proc)
 }
 
+func TestGetPEB(t *testing.T) {
+	err := Initialize(nil)
+	require.NoError(t, err)
+
+	peb := windows.RtlGetCurrentPeb()
+	expect := uintptr(unsafe.Pointer(peb)) // #nosec
+	actual := GetPEB()
+	require.Equal(t, expect, actual)
+}
+
+func TestGetTEB(t *testing.T) {
+	err := Initialize(nil)
+	require.NoError(t, err)
+
+	teb := GetTEB()
+	require.NotZero(t, teb)
+}
+
 func TestGetIMOML(t *testing.T) {
+	err := Initialize(nil)
+	require.NoError(t, err)
+
 	actual := GetIMOML()
 
 	peb := windows.RtlGetCurrentPeb()
@@ -195,4 +218,26 @@ func TestGetIMOML(t *testing.T) {
 		mod := *(*uintptr)(unsafe.Pointer(ldr + 0x20))  // #nosec
 		require.Equal(t, mod, actual)
 	})
+}
+
+func TestGetMetrics(t *testing.T) {
+	err := Initialize(nil)
+	require.NoError(t, err)
+
+	metrics, err := GetMetrics()
+	require.NoError(t, err)
+	spew.Dump(metrics)
+}
+
+func TestSleep(t *testing.T) {
+	err := Initialize(nil)
+	require.NoError(t, err)
+
+	now := time.Now()
+
+	err = Sleep(time.Second)
+	require.NoError(t, err)
+
+	d := time.Since(now)
+	require.Greater(t, d, time.Second)
 }

@@ -35,7 +35,7 @@ var (
 
 // Initialize is used to call InitRuntime(only for test).
 func Initialize(opts *Options) error {
-	ret, _, err := procInitialize.Call(uintptr(unsafe.Pointer(opts)))
+	ret, _, err := procInitialize.Call(uintptr(unsafe.Pointer(opts))) // #nosec
 	if ret == 0 {
 		en := uintptr(err.(syscall.Errno))
 		return fmt.Errorf("failed to initialize runtime: 0x%08X", en)

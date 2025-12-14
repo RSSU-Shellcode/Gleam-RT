@@ -60,11 +60,23 @@ func TestMain(m *testing.M) {
 // reference: script/args_gen.go
 
 func TestGetValue(t *testing.T) {
-	data, exist := GetValue(0)
-	if !exist {
-		t.Fatal("argument 0 is not exists")
-	}
+	t.Run("common", func(t *testing.T) {
+		data, exist := GetValue(0)
+		require.True(t, exist, "argument 0 is not exists")
 
-	expected := []byte{0x78, 0x56, 0x34, 0x12}
-	require.Equal(t, expected, data)
+		expected := []byte{0x78, 0x56, 0x34, 0x12}
+		require.Equal(t, expected, data)
+	})
+
+	t.Run("not exists", func(t *testing.T) {
+		data, exist := GetValue(123)
+		require.False(t, exist)
+		require.Nil(t, data)
+	})
+
+	t.Run("empty data", func(t *testing.T) {
+		data, exist := GetValue(2)
+		require.True(t, exist, "argument 2 is not exists")
+		require.Nil(t, data)
+	})
 }

@@ -13,6 +13,9 @@ import (
 	"github.com/RSSU-Shellcode/GRT-Develop/metric"
 )
 
+// Handle is the pseudo handle for GleamRT.
+const Handle = uintptr(0x00001234)
+
 var (
 	modGleamRT = windows.NewLazyDLL("GleamRT.dll")
 

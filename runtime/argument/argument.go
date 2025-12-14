@@ -26,6 +26,9 @@ func GetValue(id uint32) ([]byte, bool) {
 	if ret == 0 {
 		return nil, false
 	}
+	if size == 0 {
+		return nil, true
+	}
 	value := make([]byte, size)
 	ret, _, _ = procGetValue.Call(
 		uintptr(id), uintptr(unsafe.Pointer(&value[0])), uintptr(unsafe.Pointer(&size)),

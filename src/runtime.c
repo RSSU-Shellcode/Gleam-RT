@@ -1878,7 +1878,7 @@ void* RT_GetProcAddressByName(HMODULE hModule, LPCSTR lpProcName, BOOL redirect)
     } else {
         if (GetModuleFileName(runtime->IMOML, hModule, module, sizeof(module)) == 0)
         {
-            SetLastErrno(ERR_RUNTIME_NOT_FOUND_MODULE);
+            SetLastErrno(ERR_RUNTIME_MODULE_NOT_FOUND);
             return NULL;
         }
     }
@@ -1905,7 +1905,7 @@ void* RT_GetProcAddressByName(HMODULE hModule, LPCSTR lpProcName, BOOL redirect)
     // if all not found, use native GetProcAddress
     if (hModule == HMODULE_GLEAM_RT)
     {
-        SetLastErrno(ERR_RUNTIME_NOT_FOUND_METHOD);
+        SetLastErrno(ERR_RUNTIME_METHOD_NOT_FOUND);
         return NULL;
     }
     return runtime->LibraryTracker->GetProcAddress(hModule, lpProcName);
@@ -1927,6 +1927,7 @@ void* RT_GetProcAddressByHashML(void* list, uint mHash, uint pHash, uint hKey, B
     void* proc = FindAPI_SC_ML(list, mHash, pHash, hKey);
     if (proc == NULL)
     {
+        SetLastErrno(ERR_RUNTIME_PROCEDURE_NOT_FOUND);
         return NULL;
     }
     if (!redirect)

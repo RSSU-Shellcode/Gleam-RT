@@ -77,6 +77,18 @@ func TestGetProcAddressByName(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, VirtualAlloc, proc)
 	})
+
+	t.Run("not found procedure", func(t *testing.T) {
+		proc, err := GetProcAddressByName(hKernel32, "NotFound", false)
+		require.EqualError(t, err, "failed to call GetProcAddressByName: 0x0000007F")
+		require.Zero(t, proc)
+	})
+
+	t.Run("not found method", func(t *testing.T) {
+		proc, err := GetProcAddressByName(Handle, "NotFound", false)
+		require.EqualError(t, err, "failed to call GetProcAddressByName: 0xFF000304")
+		require.Zero(t, proc)
+	})
 }
 
 func TestGetProcAddressByHash(t *testing.T) {
@@ -112,6 +124,12 @@ func TestGetProcAddressByHash(t *testing.T) {
 		proc, err := GetProcAddressByHash(uint(mHash), uint(pHash), uint(hhKey), false)
 		require.NoError(t, err)
 		require.Equal(t, VirtualAlloc, proc)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		proc, err := GetProcAddressByHash(0x1111, 0x2222, 0x3333, false)
+		require.EqualError(t, err, "failed to call GetProcAddressByHash: 0xFF000303")
+		require.Zero(t, proc)
 	})
 }
 
@@ -149,6 +167,12 @@ func TestGetProcAddressByHashML(t *testing.T) {
 		proc, err := GetProcAddressByHashML(list, uint(mHash), uint(pHash), uint(hhKey), false)
 		require.NoError(t, err)
 		require.Equal(t, VirtualAlloc, proc)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		proc, err := GetProcAddressByHashML(list, 0x1111, 0x2222, 0x3333, false)
+		require.EqualError(t, err, "failed to call GetProcAddressByHashML: 0xFF000303")
+		require.Zero(t, proc)
 	})
 }
 

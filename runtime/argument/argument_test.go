@@ -6,6 +6,7 @@ import (
 	"os"
 	"runtime"
 	"testing"
+	"unsafe"
 
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sys/windows"
@@ -87,6 +88,10 @@ func TestGetPointer(t *testing.T) {
 		require.True(t, exist, "argument 1 is not exists")
 		require.Equal(t, uint32(12), size)
 		require.NotZero(t, ptr)
+
+		expected := "aaaabbbbccc\x00"
+		actual := unsafe.String((*byte)(unsafe.Pointer(ptr)), int(size)) // #nosec
+		require.Equal(t, expected, actual)
 	})
 
 	t.Run("not exists", func(t *testing.T) {

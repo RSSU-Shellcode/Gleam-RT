@@ -1,0 +1,79 @@
+package storage
+
+import (
+	"os"
+	"runtime"
+	"testing"
+
+	"github.com/stretchr/testify/require"
+	"golang.org/x/sys/windows"
+
+	"github.com/RSSU-Shellcode/Gleam-RT/runtime"
+)
+
+func init() {
+	var src string
+	switch runtime.GOARCH {
+	case "386":
+		src = "../../dist/GleamRT_x86.dll"
+	case "amd64":
+		src = "../../dist/GleamRT_x64.dll"
+	}
+	dll, err := os.ReadFile(src)
+	if err != nil {
+		panic(err)
+	}
+	err = os.WriteFile("GleamRT.dll", dll, 0644)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func TestMain(m *testing.M) {
+	err := gleamrt.Initialize(nil)
+	if err != nil {
+		panic(err)
+	}
+
+	code := m.Run()
+
+	// must free twice for runtime package
+	err = windows.FreeLibrary(windows.Handle(modGleamRT.Handle()))
+	if err != nil {
+		panic(err)
+	}
+	err = windows.FreeLibrary(windows.Handle(modGleamRT.Handle()))
+	if err != nil {
+		panic(err)
+	}
+
+	err = os.Remove("GleamRT.dll")
+	if err != nil {
+		panic(err)
+	}
+
+	os.Exit(code)
+}
+
+func TestSetValue(t *testing.T) {
+	t.Run("add value", func(t *testing.T) {
+		data := []byte("secret")
+		err := SetValue(0, data)
+		require.NoError(t, err)
+	})
+
+	t.Run("set value", func(t *testing.T) {
+		data1 := []byte("secret1")
+		err := SetValue(1, data1)
+		require.NoError(t, err)
+
+		data2 := []byte("secret2")
+		err = SetValue(1, data2)
+		require.NoError(t, err)
+	})
+
+	t.Run("set empty value", func(t *testing.T) {
+		err := SetValue(0, nil)
+		require.NoError(t, err)
+	})
+}

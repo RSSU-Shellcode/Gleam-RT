@@ -251,7 +251,6 @@ static InMemoryStorage* getStoragePointer()
 }
 #pragma optimize("", on)
 
-// methods for upper module
 __declspec(noinline)
 BOOL IMS_SetValue(int id, void* value, uint size)
 {
@@ -272,11 +271,21 @@ BOOL IMS_SetValue(int id, void* value, uint size)
         imsItem* item = getItem(id);
         if (item == NULL)
         {
+            if (size == 0)
+            {
+                lastErr = ERR_STORAGE_EMPTY_VALUE;
+                break;
+            }
             if (!addItem(id, value, size))
             {
                 lastErr = ERR_STORAGE_ADD_ITEM;
             }
         } else {
+            if (size == 0)
+            {
+                delItem(id);
+                break;
+            }
             if (!setItem(item, value, size))
             {
                 lastErr = ERR_STORAGE_SET_ITEM;

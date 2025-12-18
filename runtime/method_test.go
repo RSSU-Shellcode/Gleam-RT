@@ -181,12 +181,20 @@ func TestGetProcAddressOriginal(t *testing.T) {
 	require.NoError(t, err)
 	hKernel32 := uintptr(libKernel32)
 
-	VirtualAlloc, err := windows.GetProcAddress(libKernel32, "VirtualAlloc")
-	require.NoError(t, err)
+	t.Run("common", func(t *testing.T) {
+		VirtualAlloc, err := windows.GetProcAddress(libKernel32, "VirtualAlloc")
+		require.NoError(t, err)
 
-	proc, err := GetProcAddressOriginal(hKernel32, "VirtualAlloc")
-	require.NoError(t, err)
-	require.Equal(t, VirtualAlloc, proc)
+		proc, err := GetProcAddressOriginal(hKernel32, "VirtualAlloc")
+		require.NoError(t, err)
+		require.Equal(t, VirtualAlloc, proc)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		proc, err := GetProcAddressOriginal(hKernel32, "NotFound")
+		require.EqualError(t, err, "failed to call GetProcAddressOriginal: 0x0000007F")
+		require.Zero(t, proc)
+	})
 }
 
 func TestGetPEB(t *testing.T) {

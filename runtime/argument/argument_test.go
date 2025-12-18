@@ -80,3 +80,57 @@ func TestGetValue(t *testing.T) {
 		require.Nil(t, data)
 	})
 }
+
+func TestGetPointer(t *testing.T) {
+	t.Run("common", func(t *testing.T) {
+		ptr, size, exist := GetPointer(1)
+		require.True(t, exist, "argument 1 is not exists")
+		require.Equal(t, uint32(12), size)
+		require.NotZero(t, ptr)
+	})
+
+	t.Run("not exists", func(t *testing.T) {
+		ptr, size, exist := GetPointer(123)
+		require.False(t, exist)
+		require.Zero(t, size)
+		require.Zero(t, ptr)
+	})
+}
+
+func TestErase(t *testing.T) {
+	t.Run("common", func(t *testing.T) {
+		ok := Erase(0)
+		require.True(t, ok)
+
+		data, exist := GetValue(0)
+		require.False(t, exist, "argument 0 is still exists")
+		require.Nil(t, data)
+	})
+
+	t.Run("not exists", func(t *testing.T) {
+		ok := Erase(123)
+		require.False(t, ok)
+	})
+
+	t.Run("erase twice", func(t *testing.T) {
+		ok := Erase(0)
+		require.True(t, ok)
+		ok = Erase(0)
+		require.True(t, ok)
+	})
+}
+
+func TestEraseAll(t *testing.T) {
+	t.Run("common", func(t *testing.T) {
+		EraseAll()
+
+		data, exist := GetValue(1)
+		require.False(t, exist, "argument 1 is still exists")
+		require.Nil(t, data)
+	})
+
+	t.Run("erase twice", func(t *testing.T) {
+		EraseAll()
+		EraseAll()
+	})
+}

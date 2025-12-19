@@ -53,9 +53,6 @@ func GetValue(id int) ([]byte, error) {
 		en := uintptr(err.(syscall.Errno))
 		return nil, fmt.Errorf("failed to call storage.GetValue: 0x%08X", en)
 	}
-	if size == 0 {
-		return nil, nil
-	}
 	value := make([]byte, size)
 	ret, _, err = procGetValue.Call(
 		uintptr(id), uintptr(unsafe.Pointer(&value[0])), uintptr(unsafe.Pointer(&size)),

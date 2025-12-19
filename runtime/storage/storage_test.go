@@ -73,7 +73,16 @@ func TestSetValue(t *testing.T) {
 	})
 
 	t.Run("set empty value", func(t *testing.T) {
-		err := SetValue(0, nil)
+		err := SetValue(123, nil)
+		require.EqualError(t, err, "failed to call storage.SetValue: 0xC6000102")
+	})
+
+	t.Run("delete value", func(t *testing.T) {
+		data := []byte("secret")
+		err := SetValue(5, data)
+		require.NoError(t, err)
+
+		err = SetValue(5, nil)
 		require.NoError(t, err)
 	})
 }

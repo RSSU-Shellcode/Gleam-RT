@@ -454,14 +454,14 @@ BOOL AS_Erase(uint32 id)
             continue;
         }
         // check argument is erased
-        bool erased = *(bool*)(addr + 8);
-        if (erased)
+        bool* erased = (bool*)(addr + 8);
+        if (*erased)
         {
             found = true;
             break;
         }
         // write the erased flag
-        *(bool*)(addr + 4 + 4) = true;
+        *erased = true;
         // erase argument data
         RandBuffer(addr + OFFSET_ARGUMENT_DATA, (int64)asz);
         found = true;
@@ -490,11 +490,11 @@ void AS_EraseAll()
     {
         uint32 asz = *(uint32*)(addr + 4);
         // if not erased, overwrite it
-        bool erased = *(bool*)(addr + 8);
-        if (!erased)
+        bool* erased = (bool*)(addr + 8);
+        if (!*erased)
         {
             // write the erased flag
-            *(bool*)(addr + 4 + 4) = true;
+            *erased = true;
             // erase argument data
             RandBuffer(addr + OFFSET_ARGUMENT_DATA, (int64)asz);
         }

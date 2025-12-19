@@ -42,7 +42,7 @@ func Detect() error {
 // GetStatus is used to get detector status.
 func GetStatus() (*Status, error) {
 	var status metric.DTStatus
-	ret, _, err := procStatus.Call(uintptr(unsafe.Pointer(&status)))
+	ret, _, err := procStatus.Call(uintptr(unsafe.Pointer(&status))) // #nosec
 	if ret == 0 {
 		en := uintptr(err.(syscall.Errno))
 		return nil, fmt.Errorf("failed to call detector.Status: 0x%08X", en)

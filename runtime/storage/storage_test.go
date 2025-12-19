@@ -4,6 +4,7 @@ import (
 	"os"
 	"runtime"
 	"testing"
+	"unsafe"
 
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sys/windows"
@@ -84,5 +85,47 @@ func TestSetValue(t *testing.T) {
 
 		err = SetValue(5, nil)
 		require.NoError(t, err)
+	})
+}
+
+func TestGetValue(t *testing.T) {
+	t.Run("common", func(t *testing.T) {
+		data := []byte("secret")
+		err := SetValue(0, data)
+		require.NoError(t, err)
+
+		val, err := GetValue(0)
+		require.NoError(t, err)
+		require.Equal(t, data, val)
+	})
+
+	t.Run("not exists", func(t *testing.T) {
+		val, err := GetValue(123)
+		require.EqualError(t, err, "failed to call storage.GetValue: 0xC6000105")
+		require.Nil(t, val)
+	})
+}
+
+func TestGetPointer(t *testing.T) {
+	t.Run("common", func(t *testing.T) {
+		data := []byte("secret")
+		err := SetValue(0, data)
+		require.NoError(t, err)
+
+		ptr, size, err := GetPointer(0)
+		require.NoError(t, err)
+		require.Equal(t, uint32(6), size)
+		require.NotZero(t, ptr)
+
+		expected := "secret"
+		actual := unsafe.String((*byte)(unsafe.Pointer(ptr)), int(size)) // #nosec
+		require.Equal(t, expected, actual)
+	})
+
+	t.Run("not exists", func(t *testing.T) {
+		ptr, size, err := GetPointer(123)
+		require.EqualError(t, err, "failed to call storage.GetPointer: 0xC6000105")
+		require.Zero(t, size)
+		require.Zero(t, ptr)
 	})
 }

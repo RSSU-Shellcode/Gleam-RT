@@ -5,6 +5,8 @@ import (
 	"runtime"
 	"testing"
 
+	"github.com/davecgh/go-spew/spew"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/sys/windows"
 
 	"github.com/RSSU-Shellcode/Gleam-RT/runtime"
@@ -52,4 +54,17 @@ func TestMain(m *testing.M) {
 	}
 
 	os.Exit(code)
+}
+
+func TestDetect(t *testing.T) {
+	err := Detect()
+	require.NoError(t, err)
+}
+
+func TestGetStatus(t *testing.T) {
+	status, err := GetStatus()
+	require.NoError(t, err)
+
+	require.True(t, status.IsEnabled)
+	spew.Dump(status)
 }

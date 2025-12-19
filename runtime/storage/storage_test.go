@@ -129,3 +129,36 @@ func TestGetPointer(t *testing.T) {
 		require.Zero(t, ptr)
 	})
 }
+
+func TestDelete(t *testing.T) {
+	t.Run("common", func(t *testing.T) {
+		data := []byte("secret")
+		err := SetValue(0, data)
+		require.NoError(t, err)
+
+		err = Delete(0)
+		require.NoError(t, err)
+
+		val, err := GetValue(0)
+		require.EqualError(t, err, "failed to call storage.GetValue: 0xC6000105")
+		require.Nil(t, val)
+	})
+
+	t.Run("not exists", func(t *testing.T) {
+		err := Delete(0)
+		require.EqualError(t, err, "failed to call storage.Delete: 0xC6000106")
+	})
+}
+
+func TestDeleteAll(t *testing.T) {
+	data := []byte("secret")
+	err := SetValue(0, data)
+	require.NoError(t, err)
+
+	err = DeleteAll()
+	require.NoError(t, err)
+
+	val, err := GetValue(0)
+	require.EqualError(t, err, "failed to call storage.GetValue: 0xC6000105")
+	require.Nil(t, val)
+}

@@ -389,10 +389,11 @@ static uint sm_watch()
 {
     Sysmon* sysmon = getSysmonPointer();
 
-    uint result  = RESULT_SUCCESS;
-    bool stopped = false;
+    uint result = RESULT_SUCCESS;
     for (int i = 0; i < arrlen(sysmon->ModMutex); i++)
     {
+        bool stopped = false;
+
         HANDLE objects[] = { sysmon->ModMutex[i], sysmon->hEvent };
         switch (sysmon->WaitForMultipleObjects(2, objects, false, 10000))
         {
@@ -409,10 +410,11 @@ static uint sm_watch()
             result = RESULT_FAILED;
             break;
         }
-    }
-    if (stopped)
-    {
-        return RESULT_STOP_EVENT;
+
+        if (stopped)
+        {
+            return RESULT_STOP_EVENT;
+        }
     }
     return result;
 }

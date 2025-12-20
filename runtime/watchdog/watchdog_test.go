@@ -3,12 +3,17 @@ package watchdog
 import (
 	"os"
 	"runtime"
+	"syscall"
 	"testing"
 
+	"github.com/davecgh/go-spew/spew"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/sys/windows"
 
 	"github.com/RSSU-Shellcode/Gleam-RT/runtime"
 )
+
+var procSetHandler = modGleamRT.NewProc("WD_SetHandler")
 
 func init() {
 	var src string
@@ -34,6 +39,11 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 
+	// for enable watchdog
+	testSetHandler(func() uintptr {
+		return 0
+	})
+
 	code := m.Run()
 
 	// must free twice for runtime package
@@ -52,4 +62,67 @@ func TestMain(m *testing.M) {
 	}
 
 	os.Exit(code)
+}
+
+func testSetHandler(handler interface{}) {
+	_, _, _ = procSetHandler.Call(syscall.NewCallback(handler))
+}
+
+func TestKick(t *testing.T) {
+	err := Kick()
+	require.NoError(t, err)
+}
+
+func TestEnable(t *testing.T) {
+	err := Enable()
+	require.NoError(t, err)
+
+	err = Enable()
+	require.NoError(t, err)
+}
+
+func TestDisable(t *testing.T) {
+	err := Enable()
+	require.NoError(t, err)
+
+	err = Disable()
+	require.NoError(t, err)
+
+	err = Disable()
+	require.NoError(t, err)
+}
+
+func TestIsEnabled(t *testing.T) {
+	err := Disable()
+	require.NoError(t, err)
+
+	enabled := IsEnabled()
+	require.False(t, enabled)
+
+	err = Enable()
+	require.NoError(t, err)
+
+	enabled = IsEnabled()
+	require.True(t, enabled)
+
+	err = Disable()
+	require.NoError(t, err)
+}
+
+func TestGetStatus(t *testing.T) {
+	err := Enable()
+	require.NoError(t, err)
+
+	err = Kick()
+	require.NoError(t, err)
+
+	status, err := GetStatus()
+	require.NoError(t, err)
+
+	require.True(t, status.IsEnabled)
+	require.NotZero(t, status.NumKick)
+	spew.Dump(status)
+
+	err = Disable()
+	require.NoError(t, err)
 }

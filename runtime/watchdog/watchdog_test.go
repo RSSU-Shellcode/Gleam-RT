@@ -5,6 +5,7 @@ import (
 	"runtime"
 	"syscall"
 	"testing"
+	"time"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/require"
@@ -122,6 +123,29 @@ func TestGetStatus(t *testing.T) {
 	require.True(t, status.IsEnabled)
 	require.NotZero(t, status.NumKick)
 	spew.Dump(status)
+
+	// TODO not disable before exit runtime
+	err = Disable()
+	require.NoError(t, err)
+}
+
+func TestWatchdog(t *testing.T) {
+	signal := make(chan struct{}, 1)
+	resetHandler := func() uintptr {
+		signal <- struct{}{}
+		return 0
+	}
+	testSetHandler(resetHandler)
+
+	err := Enable()
+	require.NoError(t, err)
+
+	// wait reset signal
+	select {
+	case <-signal:
+	case <-time.After(30 * time.Second):
+		t.Fatal("timed out waiting for reset signal")
+	}
 
 	err = Disable()
 	require.NoError(t, err)

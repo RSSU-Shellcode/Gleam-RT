@@ -16,6 +16,7 @@ static bool TestWatchdog_Disable();
 static bool TestWatchdog_GetStatus();
 static bool TestWatchdog_Pause();
 static bool TestWatchdog_Continue();
+static bool TestWatchdog_Stop();
 
 bool TestRuntime_Watchdog()
 {
@@ -26,6 +27,7 @@ bool TestRuntime_Watchdog()
         { TestWatchdog_GetStatus },
         { TestWatchdog_Pause     },
         { TestWatchdog_Continue  },
+        { TestWatchdog_Stop      },
     };
     for (int i = 0; i < arrlen(tests); i++)
     {
@@ -170,5 +172,20 @@ static bool TestWatchdog_Continue()
     }
 
     printf_s("test Watchdog_Continue passed\n");
+    return true;
+}
+
+static bool TestWatchdog_Stop()
+{
+    errno errno = runtime->Watchdog.Enable();
+    if (errno != NO_ERROR)
+    {
+        printf_s("failed to enable watchdog: 0x%X\n", errno);
+        return false;
+    }
+
+    // not disable watchdog before stop runtime
+
+    printf_s("test Watchdog_Stop passed\n");
     return true;
 }

@@ -564,6 +564,11 @@ void WD_SetHandler(WDHandler_t handler)
 {
     Watchdog* watchdog = getWatchdogPointer();
 
+    if (wd_is_enabled())
+    {
+        panic(PANIC_UNREACHABLE_CODE);
+    }
+
     watchdog->handler = handler;
 }
 

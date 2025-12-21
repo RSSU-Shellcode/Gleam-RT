@@ -221,6 +221,7 @@ type RuntimeM struct {
 
 	Watchdog struct {
 		SetHandler uintptr
+		SetTimeout uintptr
 		Kick       uintptr
 		Enable     uintptr
 		Disable    uintptr

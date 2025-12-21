@@ -14,7 +14,10 @@ import (
 	"github.com/RSSU-Shellcode/Gleam-RT/runtime"
 )
 
-var procSetHandler = modGleamRT.NewProc("WD_SetHandler")
+var (
+	procSetHandler = modGleamRT.NewProc("WD_SetHandler")
+	procSetTimeout = modGleamRT.NewProc("WD_SetTimeout")
+)
 
 func init() {
 	var src string
@@ -44,6 +47,8 @@ func TestMain(m *testing.M) {
 	testSetHandler(func() uintptr {
 		return 0
 	})
+	// set kick timeout
+	_, _, _ = procSetTimeout.Call(uintptr(1000))
 
 	code := m.Run()
 
@@ -129,7 +134,7 @@ func TestGetStatus(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestWatchdog(t *testing.T) {
+func TestResetHandler(t *testing.T) {
 	signal := make(chan struct{}, 1)
 	resetHandler := func() uintptr {
 		signal <- struct{}{}

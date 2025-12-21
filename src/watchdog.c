@@ -41,8 +41,9 @@ typedef struct {
     RT_Cleanup_t          RT_Cleanup;
     RT_Stop_t             RT_Stop;
 
-    // reset handler
-    WDHandler_t handler;
+    // configuration
+    WDHandler_t handler; // reset handler
+    uint32      timeout; // custom kick timeout
 
     // global mutex
     HANDLE hMutex;
@@ -58,6 +59,7 @@ typedef struct {
 
 // methods for user
 void  WD_SetHandler(WDHandler_t handler);
+void  WD_SetTimeout(uint32 timeout);
 errno WD_Kick();
 errno WD_Enable();
 errno WD_Disable();
@@ -142,6 +144,7 @@ Watchdog_M* InitWatchdog(Context* context)
     Watchdog_M* method = (Watchdog_M*)methodAddr;
     // methods for user
     method->SetHandler = GetFuncAddr(&WD_SetHandler);
+    method->SetTimeout = GetFuncAddr(&WD_SetTimeout);
     method->Kick       = GetFuncAddr(&WD_Kick);
     method->Enable     = GetFuncAddr(&WD_Enable);
     method->Disable    = GetFuncAddr(&WD_Disable);
@@ -362,7 +365,16 @@ static uint wd_watcher()
             return 2;
         }
 
-        switch (wd_sleep(5000 + RandIntN(0, 5000)))
+        // set custom sleep duration for test faster
+        uint32 duration;
+        if (watchdog->timeout != 0)
+        {
+            duration = watchdog->timeout;
+        } else {
+            duration = 5000 + RandUint32N(0, 5000);
+        }
+
+        switch (wd_sleep(duration))
         {
         case RESULT_SUCCESS:
             break;
@@ -570,6 +582,19 @@ void WD_SetHandler(WDHandler_t handler)
     }
 
     watchdog->handler = handler;
+}
+
+__declspec(noinline)
+void WD_SetTimeout(uint32 timeout)
+{
+    Watchdog* watchdog = getWatchdogPointer();
+
+    if (wd_is_enabled())
+    {
+        panic(PANIC_UNREACHABLE_CODE);
+    }
+
+    watchdog->timeout = timeout;
 }
 
 __declspec(noinline)

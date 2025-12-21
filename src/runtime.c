@@ -480,9 +480,9 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->Serialization.Serialize   = GetFuncAddr(&Serialize);
     module->Serialization.Unserialize = GetFuncAddr(&Unserialize);
     // memory scanner
-    module->MemScanner.ScanByValue   = GetFuncAddr(&MW_MemScanByValue);
-    module->MemScanner.ScanByConfig  = GetFuncAddr(&MW_MemScanByConfig);
-    module->MemScanner.BinToPattern  = GetFuncAddr(&BinToPattern);
+    module->MemScanner.ScanByValue  = GetFuncAddr(&MW_MemScanByValue);
+    module->MemScanner.ScanByConfig = GetFuncAddr(&MW_MemScanByConfig);
+    module->MemScanner.BinToPattern = GetFuncAddr(&BinToPattern);
     // get procedure address
     module->Procedure.GetProcByName   = GetFuncAddr(&RT_GetProcAddressByName);
     module->Procedure.GetProcByHash   = GetFuncAddr(&RT_GetProcAddressByHash);
@@ -491,14 +491,15 @@ Runtime_M* InitRuntime(Runtime_Opts* opts)
     module->Detector.Detect = runtime->Detector->Detect;
     module->Detector.Status = runtime->Detector->GetStatus;
     // about watchdog
-    module->Watchdog.SetHandler  = runtime->Watchdog->SetHandler;
-    module->Watchdog.Kick        = runtime->Watchdog->Kick;
-    module->Watchdog.Enable      = runtime->Watchdog->Enable;
-    module->Watchdog.Disable     = runtime->Watchdog->Disable;
-    module->Watchdog.IsEnabled   = runtime->Watchdog->IsEnabled;
-    module->Watchdog.Status      = runtime->Watchdog->GetStatus;
-    module->Watchdog._Pause      = runtime->Watchdog->Pause;
-    module->Watchdog._Continue   = runtime->Watchdog->Continue;
+    module->Watchdog.SetHandler = runtime->Watchdog->SetHandler;
+    module->Watchdog.SetTimeout = runtime->Watchdog->SetTimeout;
+    module->Watchdog.Kick       = runtime->Watchdog->Kick;
+    module->Watchdog.Enable     = runtime->Watchdog->Enable;
+    module->Watchdog.Disable    = runtime->Watchdog->Disable;
+    module->Watchdog.IsEnabled  = runtime->Watchdog->IsEnabled;
+    module->Watchdog.Status     = runtime->Watchdog->GetStatus;
+    module->Watchdog._Pause     = runtime->Watchdog->Pause;
+    module->Watchdog._Continue  = runtime->Watchdog->Continue;
     // about system monitor
     module->Sysmon.Status    = runtime->Sysmon->GetStatus;
     module->Sysmon._Pause    = runtime->Sysmon->Pause;
@@ -2000,6 +2001,7 @@ static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
         { 0x25B52C97B0459C77, 0x581F53A28A65268E, 0xED463BBEAA5FD89F, DT->Detect     }, // DT_Detect
         { 0x8B8360604FA3C9B3, 0x186269BED712913B, 0x6D2CF70F8043A826, DT->GetStatus  }, // DT_Status
         { 0x33B8FBF493F076EE, 0xD08874D760CA7D86, 0xA4719EDF574FF3BD, WD->SetHandler }, // WD_SetHandler
+        { 0xD0949D318914CAFB, 0x43F0DB91ACB312F1, 0x6188D3AFB7FF35FD, WD->SetTimeout }, // WD_SetTimeout
         { 0x7A05CE0EFFF7AD3F, 0xC452D582688E6748, 0x306E7BA258D6F057, WD->Kick       }, // WD_Kick
         { 0x2217D5A7D8F87B58, 0x6466D654DC42A2F5, 0xDDF182373074C274, WD->Enable     }, // WD_Enable
         { 0x6B11F72479C7BDCC, 0x93B95D821AC7FDBB, 0x292E300258544350, WD->Disable    }, // WD_Disable
@@ -2031,6 +2033,7 @@ static void* getRuntimeMethods(LPCWSTR module, LPCSTR lpProcName)
         { 0x0D41CF65, 0xC1D58FC0, 0xB24370DA, DT->Detect     }, // DT_Detect
         { 0x993D60ED, 0xA07B9091, 0x52CE44B2, DT->GetStatus  }, // DT_Status
         { 0x5CC35F98, 0x7F44D8EC, 0x5B3C26E3, WD->SetHandler }, // WD_SetHandler
+        { 0x3918A007, 0x5BEBCA2A, 0xF523475E, WD->SetTimeout }, // WD_SetTimeout
         { 0x48AE04AA, 0x22071C46, 0x98C6F05B, WD->Kick       }, // WD_Kick
         { 0x5933C656, 0xD43187BC, 0x6247B19C, WD->Enable     }, // WD_Enable
         { 0x0664499A, 0x2BFE9370, 0x0E5A84B4, WD->Disable    }, // WD_Disable

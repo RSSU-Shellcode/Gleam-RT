@@ -19,6 +19,7 @@ typedef struct {
 typedef void (*WDHandler_t)();
 
 typedef void  (*WDSetHandler_t)(WDHandler_t handler);
+typedef void  (*WDSetTimeout_t)(uint32 milliseconds);
 typedef errno (*WDKick_t)();
 typedef errno (*WDEnable_t)();
 typedef errno (*WDDisable_t)();
@@ -34,6 +35,7 @@ typedef errno (*WDStop_t)();
 typedef struct {
     // for user
     WDSetHandler_t SetHandler;
+    WDSetTimeout_t SetTimeout;
     WDKick_t       Kick;
     WDEnable_t     Enable;
     WDDisable_t    Disable;

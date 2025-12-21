@@ -28,6 +28,7 @@ EXPORTS
     DT_Status = DT_GetStatus
 
     WD_SetHandler = WD_SetHandler
+    WD_SetTimeout = WD_SetTimeout
     WD_Kick       = WD_Kick
     WD_Enable     = WD_Enable
     WD_Disable    = WD_Disable

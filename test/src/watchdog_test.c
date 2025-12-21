@@ -54,6 +54,9 @@ static bool TestWatchdog_Watcher()
     }
     runtime->Watchdog.SetHandler(&reset_handler);
 
+    // set kick timeout for test faster
+    runtime->Watchdog.SetTimeout(1000);
+
     errno errno = runtime->Watchdog.Enable();
     if (errno != NO_ERROR)
     {

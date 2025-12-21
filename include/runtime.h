@@ -33,23 +33,6 @@
 typedef DWORD ALG_ID;
 #endif // DLL_ADVAPI32_H
 
-// about detector
-#ifndef DETECTOR_H
-typedef struct {
-    BOOL  IsEnabled;
-    BOOL  HasDebugger;
-    BOOL  HasMemoryScanner;
-    BOOL  InSandbox;
-    BOOL  InVirtualMachine;
-    BOOL  InEmulator;
-    BOOL  IsAccelerated;
-    int32 SafeRank;
-} DT_Status;
-#endif // DETECTOR_H
-
-typedef BOOL (*DetDetect_t)();
-typedef BOOL (*DetGetStatus_t)(DT_Status* status);
-
 // about library tracker
 #ifndef MOD_LIBRARY_H
 #define HMODULE_GLEAM_RT ((HMODULE)(0x00001234))
@@ -376,6 +359,23 @@ typedef void* (*GetProcByName_t)(HMODULE hModule, LPCSTR lpProcName, BOOL redire
 typedef void* (*GetProcByHash_t)(uint mHash, uint pHash, uint hKey, BOOL redirect);
 typedef void* (*GetProcByHashML_t)(void* list, uint mHash, uint pHash, uint hKey, BOOL redirect);
 
+// about detector
+#ifndef DETECTOR_H
+typedef struct {
+    BOOL  IsEnabled;
+    BOOL  HasDebugger;
+    BOOL  HasMemoryScanner;
+    BOOL  InSandbox;
+    BOOL  InVirtualMachine;
+    BOOL  InEmulator;
+    BOOL  IsAccelerated;
+    int32 SafeRank;
+} DT_Status;
+#endif // DETECTOR_H
+
+typedef BOOL (*DetDetect_t)();
+typedef BOOL (*DetGetStatus_t)(DT_Status* status);
+
 // about watchdog
 #ifndef WATCHDOG_H
 typedef struct {
@@ -389,11 +389,12 @@ typedef struct {
 
 typedef void (*WDHandler_t)();
 
+typedef void  (*WDSetHandler_t)(WDHandler_t handler);
+typedef void  (*WDSetTimeout_t)(uint32 milliseconds);
 typedef errno (*WDKick_t)();
 typedef errno (*WDEnable_t)();
 typedef errno (*WDDisable_t)();
 typedef BOOL  (*WDIsEnabled_t)();
-typedef void  (*WDSetHandler_t)(WDHandler_t handler);
 typedef BOOL  (*WDGetStatus_t)(WD_Status* status);
 typedef errno (*WDPause_t)();
 typedef errno (*WDContinue_t)();
@@ -635,6 +636,7 @@ typedef struct {
 
     struct {
         WDSetHandler_t SetHandler;
+        WDSetTimeout_t SetTimeout;
         WDKick_t       Kick;
         WDEnable_t     Enable;
         WDDisable_t    Disable;

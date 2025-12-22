@@ -83,7 +83,7 @@ static void cleanSysmon(Sysmon* sysmon);
 
 static uint sm_watcher();
 static uint sm_watch();
-static uint sm_sleep(uint32 milliseconds);
+static uint sm_sleep(uint32 seconds);
 
 static bool sm_lock_status();
 static bool sm_unlock_status();
@@ -369,7 +369,7 @@ static uint sm_watcher()
             break;
         }
 
-        switch (sm_sleep(3000 + RandIntN(0, 3000)))
+        switch (sm_sleep(3 + RandIntN(0, 3)))
         {
         case RESULT_SUCCESS:
             break;
@@ -420,7 +420,7 @@ static uint sm_watch()
 }
 
 __declspec(noinline)
-static uint sm_sleep(uint32 milliseconds)
+static uint sm_sleep(uint32 seconds)
 {
     Sysmon* sysmon = getSysmonPointer();
 
@@ -432,11 +432,7 @@ static uint sm_sleep(uint32 milliseconds)
     }
     for (;;)
     {
-        if (milliseconds < 10)
-        {
-            milliseconds = 10;
-        }
-        int64 dueTime = -((int64)milliseconds * 1000 * 10);
+        int64 dueTime = -((int64)seconds * 1000 * 1000 * 10);
         if (!sysmon->SetWaitableTimer(hTimer, &dueTime, 0, NULL, NULL, true))
         {
             break;

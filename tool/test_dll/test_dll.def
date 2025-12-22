@@ -1,6 +1,7 @@
 LIBRARY
 EXPORTS
-    RT_Initialize = Initialize
+    RT_Initialize   = Initialize
+    RT_Uninitialize = Uninitialize
 
     RT_GetProcAddressByName   = RT_GetProcAddressByName
     RT_GetProcAddressByHash   = RT_GetProcAddressByHash

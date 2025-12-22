@@ -59,7 +59,7 @@ typedef struct {
 
 // methods for user
 void  WD_SetHandler(WDHandler_t handler);
-void  WD_SetTimeout(uint32 timeout);
+void  WD_SetTimeout(uint32 milliseconds);
 errno WD_Kick();
 errno WD_Enable();
 errno WD_Disable();
@@ -371,7 +371,7 @@ static uint wd_watcher()
         {
             duration = watchdog->timeout;
         } else {
-            duration = 5000 + RandUint32N(0, 5000);
+            duration = 5000 + RandUint32N(0, 5) * 1000;
         }
 
         switch (wd_sleep(duration))
@@ -402,10 +402,6 @@ static uint wd_sleep(uint32 milliseconds)
     }
     for (;;)
     {
-        if (milliseconds < 10)
-        {
-            milliseconds = 10;
-        }
         int64 dueTime = -((int64)milliseconds * 1000 * 10);
         if (!watchdog->SetWaitableTimer(hTimer, &dueTime, 0, NULL, NULL, true))
         {
@@ -585,7 +581,7 @@ void WD_SetHandler(WDHandler_t handler)
 }
 
 __declspec(noinline)
-void WD_SetTimeout(uint32 timeout)
+void WD_SetTimeout(uint32 milliseconds)
 {
     Watchdog* watchdog = getWatchdogPointer();
 
@@ -594,7 +590,7 @@ void WD_SetTimeout(uint32 timeout)
         panic(PANIC_UNREACHABLE_CODE);
     }
 
-    watchdog->timeout = timeout;
+    watchdog->timeout = milliseconds;
 }
 
 __declspec(noinline)

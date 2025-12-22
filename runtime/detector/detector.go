@@ -1,3 +1,5 @@
+//go:build windows
+
 package detector
 
 import (
@@ -19,14 +21,14 @@ var (
 
 // Status contains detector status.
 type Status struct {
-	IsEnabled        bool  `toml:"is_enabled"         json:"is_enabled"`
-	HasDebugger      bool  `toml:"has_debugger"       json:"has_debugger"`
-	HasMemoryScanner bool  `toml:"has_memory_scanner" json:"has_memory_scanner"`
-	InSandbox        bool  `toml:"in_sandbox"         json:"in_sandbox"`
-	InVirtualMachine bool  `toml:"in_virtual_machine" json:"in_virtual_machine"`
-	InEmulator       bool  `toml:"in_emulator"        json:"in_emulator"`
-	IsAccelerated    bool  `toml:"is_accelerated"     json:"is_accelerated"`
-	SafeRank         int32 `toml:"safe_rank"          json:"safe_rank"`
+	IsEnabled        bool  `json:"is_enabled"`
+	HasDebugger      bool  `json:"has_debugger"`
+	HasMemoryScanner bool  `json:"has_memory_scanner"`
+	InSandbox        bool  `json:"in_sandbox"`
+	InVirtualMachine bool  `json:"in_virtual_machine"`
+	InEmulator       bool  `json:"in_emulator"`
+	IsAccelerated    bool  `json:"is_accelerated"`
+	SafeRank         int32 `json:"safe_rank"`
 }
 
 // Detect is used to detect current environment.

@@ -20,10 +20,10 @@ var (
 
 // Status contains sysmon status.
 type Status struct {
-	IsEnabled  bool  `toml:"is_enabled"  json:"is_enabled"`
-	NumNormal  int64 `toml:"num_normal"  json:"num_normal"`
-	NumRecover int64 `toml:"num_recover" json:"num_recover"`
-	NumPanic   int64 `toml:"num_panic"   json:"num_panic"`
+	IsEnabled  bool  `json:"is_enabled"`
+	NumNormal  int64 `json:"num_normal"`
+	NumRecover int64 `json:"num_recover"`
+	NumPanic   int64 `json:"num_panic"`
 }
 
 // GetStatus is used to get sysmon status.

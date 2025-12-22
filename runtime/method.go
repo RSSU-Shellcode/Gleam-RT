@@ -19,7 +19,8 @@ const Handle = uintptr(0x00001234)
 var (
 	modGleamRT = windows.NewLazyDLL("GleamRT.dll")
 
-	procInitialize = modGleamRT.NewProc("RT_Initialize")
+	procInitialize   = modGleamRT.NewProc("RT_Initialize")
+	procUninitialize = modGleamRT.NewProc("RT_Uninitialize")
 
 	procGetProcAddressByName   = modGleamRT.NewProc("RT_GetProcAddressByName")
 	procGetProcAddressByHash   = modGleamRT.NewProc("RT_GetProcAddressByHash")
@@ -36,12 +37,22 @@ var (
 	procExitProcess = modGleamRT.NewProc("RT_ExitProcess")
 )
 
-// Initialize is used to call InitRuntime(only for test).
+// Initialize is used to call InitRuntime (only for test runtime package).
 func Initialize(opts *Options) error {
 	ret, _, err := procInitialize.Call(uintptr(unsafe.Pointer(opts))) // #nosec
 	if ret == 0 {
 		en := uintptr(err.(syscall.Errno))
 		return fmt.Errorf("failed to initialize runtime: 0x%08X", en)
+	}
+	return nil
+}
+
+// Uninitialize is used to exit runtime for free dll (only for test runtime package).
+func Uninitialize() error {
+	ret, _, err := procUninitialize.Call()
+	if ret == 0 {
+		en := uintptr(err.(syscall.Errno))
+		return fmt.Errorf("failed to uninitialize runtime: 0x%08X", en)
 	}
 	return nil
 }

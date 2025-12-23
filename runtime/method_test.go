@@ -40,6 +40,11 @@ func TestMain(m *testing.M) {
 
 	code := m.Run()
 
+	err = Uninitialize()
+	if err != nil {
+		panic(err)
+	}
+
 	err = windows.FreeLibrary(windows.Handle(modGleamRT.Handle()))
 	if err != nil {
 		panic(err)

@@ -40,6 +40,11 @@ func TestMain(m *testing.M) {
 
 	code := m.Run()
 
+	err = gleamrt.Uninitialize()
+	if err != nil {
+		panic(err)
+	}
+
 	// must free twice for runtime package
 	err = windows.FreeLibrary(windows.Handle(modGleamRT.Handle()))
 	if err != nil {

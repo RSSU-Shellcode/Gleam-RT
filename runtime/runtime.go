@@ -278,7 +278,7 @@ func NewRuntime(ptr uintptr) *RuntimeM {
 func InitRuntime(addr uintptr, opts *Options) (*RuntimeM, error) {
 	ptr, _, err := syscall.SyscallN(addr, uintptr(unsafe.Pointer(opts))) // #nosec
 	if ptr == null {
-		return nil, fmt.Errorf("failed to initialize runtime: 0x%X", err)
+		return nil, fmt.Errorf("failed to initialize runtime: 0x%08X", int(err))
 	}
 	return NewRuntime(ptr), nil
 }

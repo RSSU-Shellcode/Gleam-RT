@@ -1,3 +1,5 @@
+//go:build windows
+
 package watchdog
 
 import (
@@ -48,9 +50,14 @@ func TestMain(m *testing.M) {
 		return 0
 	})
 	// set kick timeout
-	_, _, _ = procSetTimeout.Call(uintptr(1000))
+	_, _, _ = procSetTimeout.Call(500)
 
 	code := m.Run()
+
+	err = gleamrt.Uninitialize()
+	if err != nil {
+		panic(err)
+	}
 
 	// must free twice for runtime package
 	err = windows.FreeLibrary(windows.Handle(modGleamRT.Handle()))
@@ -129,7 +136,6 @@ func TestGetStatus(t *testing.T) {
 	require.NotZero(t, status.NumKick)
 	spew.Dump(status)
 
-	// TODO not disable before exit runtime
 	err = Disable()
 	require.NoError(t, err)
 }

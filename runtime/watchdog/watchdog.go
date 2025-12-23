@@ -24,10 +24,10 @@ var (
 
 // Status contains watchdog status.
 type Status struct {
-	IsEnabled bool  `toml:"is_enabled" json:"is_enabled"`
-	NumKick   int64 `toml:"num_kick"   json:"num_kick"`
-	NumNormal int64 `toml:"num_normal" json:"num_normal"`
-	NumReset  int64 `toml:"num_reset"  json:"num_reset"`
+	IsEnabled bool  `json:"is_enabled"`
+	NumKick   int64 `json:"num_kick"`
+	NumNormal int64 `json:"num_normal"`
+	NumReset  int64 `json:"num_reset"`
 }
 
 // Kick is used to kick to the watchdog for report alive.
